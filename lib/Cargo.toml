@@ -1,0 +1,15 @@
+[package]
+name = "gong"
+version = "1.0.0"
+authors = ["Lyndon Brown"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+description = """
+A next-gen getopt replacement for command line argument processing
+"""
+keywords = ["gong", "getopt", "terminal", "command-line"]
+
+[dependencies]
+
+[badges]
+travis-ci = { repository = "jnqnfe/gong" }

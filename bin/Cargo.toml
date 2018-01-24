@@ -1,0 +1,20 @@
+[package]
+name = "gong-test"
+version = "1.0.0"
+authors = ["Lyndon Brown"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+description = """
+A test program for the `libgong` library, which prints analysis of given command line arguments
+"""
+publish = false
+
+[dependencies]
+gong = { path = "../lib" }
+libc = "0.2"
+
+[features]
+default = []
+alt_mode = []
+keep_prog_name = []
+no_abbreviations = []
