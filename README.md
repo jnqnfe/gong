@@ -19,7 +19,7 @@ library, however there is extremely little to it, and with respect to copyright 
 can certainly be considered fair-use to copy pieces of it for the purposes of writing code that uses
 the library. (It can be considered an example of basic usage).
 
-The logo images files are derivatives of the Rust programming language icon.
+The logo image files are derivatives of the Rust programming language icon.
 
 Source Code Contents
 ====================
