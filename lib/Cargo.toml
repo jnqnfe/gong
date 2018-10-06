@@ -4,6 +4,8 @@ version = "1.0.1"
 authors = ["Lyndon Brown <jnqnfe@gmail.com>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
+homepage = "https://github.com/jnqnfe/gong"
+repository = "https://github.com/jnqnfe/gong"
 description = """
 A next-gen getopt replacement for command line argument processing
 """
