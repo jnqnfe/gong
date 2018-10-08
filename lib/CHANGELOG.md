@@ -1,4 +1,4 @@
-# ???? (???? ??, ????)
+# 1.0.2 (October 9th, 2018)
 
  * Added homepage and repo links to toml file
  * Bundled the changelog file into the published package
