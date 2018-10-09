@@ -1,5 +1,5 @@
-gong-test
-=========
+gong-playground
+===============
 
 A test program for the `gong` "next-gen" getopt replacement for Rust programs.
 

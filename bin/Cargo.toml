@@ -1,5 +1,5 @@
 [package]
-name = "gong-test"
+name = "gong-playground"
 version = "1.0.3"
 authors = ["Lyndon Brown <jnqnfe@gmail.com>"]
 license = "MIT/Apache-2.0"
