@@ -5,7 +5,8 @@ authors = ["Lyndon Brown <jnqnfe@gmail.com>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
 description = """
-A test program for the `libgong` library, which prints analysis of given command line arguments
+An interactive "playground" program for testing out the `gong` library crate's functionality. It
+prints analysis of given command line arguments.
 """
 publish = false
 
