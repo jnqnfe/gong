@@ -28,8 +28,8 @@ use gong::OptionsMode;
 
 fn main() {
     // Color output
-    let color = con::color_supported();
-    let col_header = con::MAGENTA_B;
+    let color = con::fmt_supported_stdout();
+    let col_header = con::color1_bold::MAGENTA;
 
     #[cfg(not(windows))]
     macro_rules! c {
@@ -65,9 +65,9 @@ fn main() {
     println!("\n[ {}Mode{} ]\n", c!(col_header), c!(con::RESET));
 
     #[cfg(not(feature = "alt_mode"))]
-    println!("{}STANDARD{}\n", c!(con::BLUE_2), c!(con::RESET));
+    println!("{}STANDARD{}\n", c!(con::color2::BLUE), c!(con::RESET));
     #[cfg(feature = "alt_mode")]
-    println!("{}ALTERNATE{}\n", c!(con::BLUE_2), c!(con::RESET));
+    println!("{}ALTERNATE{}\n", c!(con::color2::BLUE), c!(con::RESET));
 
     #[cfg(not(feature = "keep_prog_name"))]
     println!("Skipping auto prog-name entry!\n(Compile with the `keep_prog_name` feature to not skip)\n");
@@ -79,7 +79,7 @@ fn main() {
 
     println!("Standard = {0}Short options with single dash prefix and long options with double dash \
               prefix; compile with `alt_mode` feature for `alternate` mode.{1}\nAlternate = {0}Long \
-              options with single dash prefix only.{1}\n", c!(con::ITALIC), c!(con::RESET));
+              options with single dash prefix only.{1}\n", c!(con::effects::ITALIC), c!(con::RESET));
 
     println!("[ {}Available options for test{} ]\n", c!(col_header), c!(con::RESET));
 
@@ -118,16 +118,20 @@ fn main() {
 
     println!("\n[ {}Analysis{} ]\n", c!(col_header), c!(con::RESET));
 
-    let col_o = con::GREEN; //okay
-    let col_e = con::RED; //error
-    let col_w = con::YELLOW; //warning
+    let col_o = con::color1::GREEN; //okay
+    let col_e = con::color1::RED; //error
+    let col_w = con::color1::YELLOW; //warning
     match results.error {
         true => { println!("Errors: {}true{}", c!(col_e), c!(con::RESET)); },
-        false => { println!("Errors: {}false{}", c!(con::GREEN), c!(con::RESET)); },
+        false => {
+            println!("Errors: {}false{}", c!(con::color1::GREEN), c!(con::RESET));
+        },
     }
     match results.warn {
         true => { println!("Warnings: {}true{}", c!(col_w), c!(con::RESET)); },
-        false => { println!("Warnings: {}false{}", c!(con::GREEN), c!(con::RESET)); },
+        false => {
+            println!("Warnings: {}false{}", c!(con::color1::GREEN), c!(con::RESET));
+        },
     }
     println!("Items: {}\n", results.items.len());
     for result in &results.items {
@@ -142,12 +146,14 @@ fn main() {
                 println!("[arg {}] {}LongWithData{}: {}", i, c!(col_o), c!(con::RESET), n);
                 match *l {
                     DataLocation::SameArg =>
-                        println!("    {}data found in SAME arg!{}", c!(con::ITALIC), c!(con::RESET)),
+                        println!("    {}data found in SAME arg!{}", c!(con::effects::ITALIC),
+                            c!(con::RESET)),
                     DataLocation::NextArg =>
-                        println!("    {}data found in NEXT arg!{}", c!(con::ITALIC), c!(con::RESET)),
+                        println!("    {}data found in NEXT arg!{}", c!(con::effects::ITALIC),
+                            c!(con::RESET)),
                 }
                 match d.is_empty() {
-                    true => println!("    {}empty-data{}", c!(con::ITALIC), c!(con::RESET)),
+                    true => println!("    {}empty-data{}", c!(con::effects::ITALIC), c!(con::RESET)),
                     false => println!("    data: {}", d),
                 }
             },
@@ -164,27 +170,29 @@ fn main() {
                 println!("[arg {}] {}UnknownLong{}: {}", i, c!(col_w), c!(con::RESET), n),
             ItemClass::Ok(Item::Short(i, c)) =>
                 println!("[arg {}] {}Short{}: {} {}({}){}", i, c!(col_o), c!(con::RESET), c,
-                    c!(con::BLUE_2), c.escape_unicode(), c!(con::RESET)),
+                    c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
             ItemClass::Ok(Item::ShortWithData { i, c, d, ref l }) => {
-                println!("[arg {}] {}ShortWithData{}: {} {}({}){}", i, c!(col_o), c!(con::RESET),
-                    c, c!(con::BLUE_2), c.escape_unicode(), c!(con::RESET));
+                println!("[arg {}] {}ShortWithData{}: {} {}({}){}", i, c!(col_o),
+                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET));
                 match *l {
                     DataLocation::SameArg =>
-                        println!("    {}data found in SAME arg!{}", c!(con::ITALIC), c!(con::RESET)),
+                        println!("    {}data found in SAME arg!{}", c!(con::effects::ITALIC),
+                            c!(con::RESET)),
                     DataLocation::NextArg =>
-                        println!("    {}data found in NEXT arg!{}", c!(con::ITALIC), c!(con::RESET)),
+                        println!("    {}data found in NEXT arg!{}", c!(con::effects::ITALIC),
+                            c!(con::RESET)),
                 }
                 match d.is_empty() {
-                    true => println!("    {}empty-data{}", c!(con::ITALIC), c!(con::RESET)),
+                    true => println!("    {}empty-data{}", c!(con::effects::ITALIC), c!(con::RESET)),
                     false => println!("    data: {}", d),
                 }
             },
             ItemClass::Err(ItemE::ShortMissingData(i, c)) =>
-                println!("[arg {}] {}ShortMissingData{}: {} {}({}){}", i, c!(col_e), c!(con::RESET),
-                    c, c!(con::BLUE_2), c.escape_unicode(), c!(con::RESET)),
+                println!("[arg {}] {}ShortMissingData{}: {} {}({}){}", i, c!(col_e),
+                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
             ItemClass::Warn(ItemW::UnknownShort(i, c)) =>
-                println!("[arg {}] {}UnknownShort{}: {} {}({}){}", i, c!(col_w), c!(con::RESET), c,
-                    c!(con::BLUE_2), c.escape_unicode(), c!(con::RESET)),
+                println!("[arg {}] {}UnknownShort{}: {} {}({}){}", i, c!(col_w),
+                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
         }
     }
     if results.items.len() != 0 {
