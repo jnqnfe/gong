@@ -21,15 +21,15 @@
 extern crate gong;
 extern crate term_ctrl;
 
-use term_ctrl as con;
+use term_ctrl::{fmt_supported_stdout, predefined::*};
 use gong::{Options, ItemClass, Item, ItemW, ItemE, DataLocation};
 #[cfg(feature = "alt_mode")]
 use gong::OptionsMode;
 
 fn main() {
     // Color output
-    let color = con::fmt_supported_stdout();
-    let col_header = con::color1_bold::MAGENTA;
+    let color = fmt_supported_stdout();
+    let col_header = color1_bold::MAGENTA;
 
     #[cfg(not(windows))]
     macro_rules! c {
@@ -62,12 +62,12 @@ fn main() {
 
     debug_assert!(opts.is_valid());
 
-    println!("\n[ {}Mode{} ]\n", c!(col_header), c!(con::RESET));
+    println!("\n[ {}Mode{} ]\n", c!(col_header), c!(RESET));
 
     #[cfg(not(feature = "alt_mode"))]
-    println!("{}STANDARD{}\n", c!(con::color2::BLUE), c!(con::RESET));
+    println!("{}STANDARD{}\n", c!(color2::BLUE), c!(RESET));
     #[cfg(feature = "alt_mode")]
-    println!("{}ALTERNATE{}\n", c!(con::color2::BLUE), c!(con::RESET));
+    println!("{}ALTERNATE{}\n", c!(color2::BLUE), c!(RESET));
 
     #[cfg(not(feature = "keep_prog_name"))]
     println!("Skipping auto prog-name entry!\n(Compile with the `keep_prog_name` feature to not skip)\n");
@@ -79,9 +79,9 @@ fn main() {
 
     println!("Standard = {0}Short options with single dash prefix and long options with double dash \
               prefix; compile with `alt_mode` feature for `alternate` mode.{1}\nAlternate = {0}Long \
-              options with single dash prefix only.{1}\n", c!(con::effects::ITALIC), c!(con::RESET));
+              options with single dash prefix only.{1}\n", c!(effects::ITALIC), c!(RESET));
 
-    println!("[ {}Available options for test{} ]\n", c!(col_header), c!(con::RESET));
+    println!("[ {}Available options for test{} ]\n", c!(col_header), c!(RESET));
 
     for item in &opts.long {
         match item.expects_data {
@@ -105,7 +105,7 @@ fn main() {
     #[cfg(not(feature = "keep_prog_name"))]
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    println!("\n[ {}Your input arguments{} ]\n", c!(col_header), c!(con::RESET));
+    println!("\n[ {}Your input arguments{} ]\n", c!(col_header), c!(RESET));
 
     for (i, arg) in args.iter().enumerate() {
         println!("[{}]: {}", i, arg);
@@ -116,83 +116,79 @@ fn main() {
 
     let results = gong::process(&args[..], &opts);
 
-    println!("\n[ {}Analysis{} ]\n", c!(col_header), c!(con::RESET));
+    println!("\n[ {}Analysis{} ]\n", c!(col_header), c!(RESET));
 
-    let col_o = con::color1::GREEN; //okay
-    let col_e = con::color1::RED; //error
-    let col_w = con::color1::YELLOW; //warning
+    let col_o = color1::GREEN; //okay
+    let col_e = color1::RED; //error
+    let col_w = color1::YELLOW; //warning
     match results.error {
-        true => { println!("Errors: {}true{}", c!(col_e), c!(con::RESET)); },
+        true => { println!("Errors: {}true{}", c!(col_e), c!(RESET)); },
         false => {
-            println!("Errors: {}false{}", c!(con::color1::GREEN), c!(con::RESET));
+            println!("Errors: {}false{}", c!(color1::GREEN), c!(RESET));
         },
     }
     match results.warn {
-        true => { println!("Warnings: {}true{}", c!(col_w), c!(con::RESET)); },
+        true => { println!("Warnings: {}true{}", c!(col_w), c!(RESET)); },
         false => {
-            println!("Warnings: {}false{}", c!(con::color1::GREEN), c!(con::RESET));
+            println!("Warnings: {}false{}", c!(color1::GREEN), c!(RESET));
         },
     }
     println!("Items: {}\n", results.items.len());
     for result in &results.items {
         match *result {
             ItemClass::Ok(Item::NonOption(i, s)) =>
-                println!("[arg {}] {}NonOption{}: {}", i, c!(col_o), c!(con::RESET), s),
+                println!("[arg {}] {}NonOption{}: {}", i, c!(col_o), c!(RESET), s),
             ItemClass::Ok(Item::EarlyTerminator(i)) =>
-                println!("[arg {}] {}EarlyTerminator{}", i, c!(col_o), c!(con::RESET)),
+                println!("[arg {}] {}EarlyTerminator{}", i, c!(col_o), c!(RESET)),
             ItemClass::Ok(Item::Long(i, n)) =>
-                println!("[arg {}] {}Long{}: {}", i, c!(col_o), c!(con::RESET), n),
+                println!("[arg {}] {}Long{}: {}", i, c!(col_o), c!(RESET), n),
             ItemClass::Ok(Item::LongWithData { i, n, d, ref l }) => {
-                println!("[arg {}] {}LongWithData{}: {}", i, c!(col_o), c!(con::RESET), n);
+                println!("[arg {}] {}LongWithData{}: {}", i, c!(col_o), c!(RESET), n);
                 match *l {
                     DataLocation::SameArg =>
-                        println!("    {}data found in SAME arg!{}", c!(con::effects::ITALIC),
-                            c!(con::RESET)),
+                        println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
                     DataLocation::NextArg =>
-                        println!("    {}data found in NEXT arg!{}", c!(con::effects::ITALIC),
-                            c!(con::RESET)),
+                        println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
                 }
                 match d.is_empty() {
-                    true => println!("    {}empty-data{}", c!(con::effects::ITALIC), c!(con::RESET)),
+                    true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
                     false => println!("    data: {}", d),
                 }
             },
             ItemClass::Err(ItemE::LongMissingData(i, n)) =>
-                println!("[arg {}] {}LongMissingData{}: {}", i, c!(col_e), c!(con::RESET), n),
+                println!("[arg {}] {}LongMissingData{}: {}", i, c!(col_e), c!(RESET), n),
             ItemClass::Warn(ItemW::LongWithUnexpectedData { i, n, d }) =>
                 println!("[arg {}] {}LongWithUnexpectedData{}: {}\n    data: {}", i, c!(col_w),
-                    c!(con::RESET), n, d),
+                    c!(RESET), n, d),
             ItemClass::Err(ItemE::AmbiguousLong(i, n)) =>
-                println!("[arg {}] {}AmbiguousLong{}: {}", i, c!(col_e), c!(con::RESET), n),
+                println!("[arg {}] {}AmbiguousLong{}: {}", i, c!(col_e), c!(RESET), n),
             ItemClass::Warn(ItemW::LongWithNoName(i)) =>
-                println!("[arg {}] {}LongWithNoName{}", i, c!(col_w), c!(con::RESET)),
+                println!("[arg {}] {}LongWithNoName{}", i, c!(col_w), c!(RESET)),
             ItemClass::Warn(ItemW::UnknownLong(i, n)) =>
-                println!("[arg {}] {}UnknownLong{}: {}", i, c!(col_w), c!(con::RESET), n),
+                println!("[arg {}] {}UnknownLong{}: {}", i, c!(col_w), c!(RESET), n),
             ItemClass::Ok(Item::Short(i, c)) =>
-                println!("[arg {}] {}Short{}: {} {}({}){}", i, c!(col_o), c!(con::RESET), c,
-                    c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
+                println!("[arg {}] {}Short{}: {} {}({}){}", i, c!(col_o), c!(RESET), c,
+                    c!(color2::BLUE), c.escape_unicode(), c!(RESET)),
             ItemClass::Ok(Item::ShortWithData { i, c, d, ref l }) => {
                 println!("[arg {}] {}ShortWithData{}: {} {}({}){}", i, c!(col_o),
-                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET));
+                    c!(RESET), c, c!(color2::BLUE), c.escape_unicode(), c!(RESET));
                 match *l {
                     DataLocation::SameArg =>
-                        println!("    {}data found in SAME arg!{}", c!(con::effects::ITALIC),
-                            c!(con::RESET)),
+                        println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
                     DataLocation::NextArg =>
-                        println!("    {}data found in NEXT arg!{}", c!(con::effects::ITALIC),
-                            c!(con::RESET)),
+                        println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
                 }
                 match d.is_empty() {
-                    true => println!("    {}empty-data{}", c!(con::effects::ITALIC), c!(con::RESET)),
+                    true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
                     false => println!("    data: {}", d),
                 }
             },
             ItemClass::Err(ItemE::ShortMissingData(i, c)) =>
-                println!("[arg {}] {}ShortMissingData{}: {} {}({}){}", i, c!(col_e),
-                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
+                println!("[arg {}] {}ShortMissingData{}: {} {}({}){}", i, c!(col_e), c!(RESET), c,
+                    c!(color2::BLUE), c.escape_unicode(), c!(RESET)),
             ItemClass::Warn(ItemW::UnknownShort(i, c)) =>
-                println!("[arg {}] {}UnknownShort{}: {} {}({}){}", i, c!(col_w),
-                    c!(con::RESET), c, c!(con::color2::BLUE), c.escape_unicode(), c!(con::RESET)),
+                println!("[arg {}] {}UnknownShort{}: {} {}({}){}", i, c!(col_w), c!(RESET), c,
+                    c!(color2::BLUE), c.escape_unicode(), c!(RESET)),
         }
     }
     if results.items.len() != 0 {
