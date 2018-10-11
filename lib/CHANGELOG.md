@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Re-ordered copyright & module doc placement
+
 # 1.0.3 (October 17th, 2018)
 
  * **BUGFIX:** Fixed a bug with correctly analysing "in-same-argument" short option data values.

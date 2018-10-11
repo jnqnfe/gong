@@ -1,3 +1,11 @@
+// Copyright 2017 Lyndon Brown
+//
+// Licensed under the MIT license or the Apache license (Version 2.0), at your option. You may not
+// copy, modify, or distribute this file except in compliance with said license. You can find copies
+// of these licenses either in the LICENSE-APACHE and LICENSE-MIT files, or alternatively at
+// <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
+// respectively.
+
 //! Test program for the `gong` library
 //!
 //! This test program takes user supplied command args, processes them with the library against a
@@ -5,14 +13,6 @@
 //! processing library.
 //!
 //! See the `README.md` file for instructions.
-
-// Copyright (c) 2017 Lyndon Brown
-//
-// Licensed under the MIT license or the Apache license (Version 2.0), at your option. You may not
-// copy, modify, or distribute this file except in compliance with said license. You can find copies
-// of these licenses either in the LICENSE-APACHE and LICENSE-MIT files, or alternatively at
-// <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
-// respectively.
 
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]

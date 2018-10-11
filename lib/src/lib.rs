@@ -1,9 +1,6 @@
-//! A flexible, lightweight and simple-to-use library for processing command line arguments. A
-//! 'getopt' next-gen replacement.
-
-// This file is part of the `gong` command-line argument processing library.
+// Copyright 2017 Lyndon Brown
 //
-// Copyright (c) 2017 Lyndon Brown
+// This file is part of the `gong` command-line argument processing library.
 //
 // Licensed under the MIT license or the Apache license (Version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -11,6 +8,9 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
+//! A flexible, lightweight and simple-to-use library for processing command line arguments. A
+//! 'getopt' next-gen replacement.
+//!
 //! # About
 //!
 //! The 'getopt' and related 'getopt_long' functions, have, for a long time, served to assist in the
