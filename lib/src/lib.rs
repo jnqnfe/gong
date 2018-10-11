@@ -73,7 +73,7 @@
 //! either in the next argument (e.g. `--foo bar`) or in the same argument, separated from the name
 //! by an `=` (e.g. `--foo=bar`). For short options, data is provided either in the next argument
 //! (e.g. `-o arg`), or if the option character is not the last character in the argument, the
-//! remaining characters are taken to be its data arg (e.g. `-oarg`). An argument can contains
+//! remaining characters are taken to be its data arg (e.g. `-oarg`). An argument can contain
 //! multiple short options grouped together as a *set* (e.g. `-abc`), but of course users need to be
 //! careful doing so with those requiring data - for correct interpretation only one short option
 //! with data can be grouped, and it must be the last one in the set. (If in `-abc` all three
