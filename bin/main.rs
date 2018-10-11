@@ -21,14 +21,14 @@
 extern crate gong;
 extern crate term_ctrl;
 
-use term_ctrl::{fmt_supported_stdout, predefined::*};
+use term_ctrl::{use_fmt_stdout, predefined::*};
 use gong::{Options, ItemClass, Item, ItemW, ItemE, DataLocation};
 #[cfg(feature = "alt_mode")]
 use gong::OptionsMode;
 
 fn main() {
     // Color output
-    let color = fmt_supported_stdout();
+    let color = use_fmt_stdout(cfg!(feature = "color"));
     let col_header = color1_bold::MAGENTA;
 
     #[cfg(not(windows))]
