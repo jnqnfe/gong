@@ -8,25 +8,29 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! A flexible, lightweight and simple-to-use library for processing command line arguments. A
-//! 'getopt' next-gen replacement.
+//! A lightweight, flexible and simple-to-use library provided to *assist* in processing command
+//! line arguments.
 //!
 //! # About
 //!
-//! The 'getopt' and related 'getopt_long' functions, have, for a long time, served to assist in the
-//! processing of arguments supplied to a program. This library provides a "next-gen" replacement
-//! for use with Rust programs.
+//! A common requirement of a program is the need to process command line arguments supplied to it.
+//! This library was designed to *assist* Rust based programs with this.
 //!
 //! Licensed under the MIT license or the Apache license, Version 2.0, at your option.
 //!
+//! ## Motivation
+//!
+//! While other solutions already existed for Rust programs, they arguably tried to do too much;
+//! their designs were geared towards completely taking over *every* aspect of argument handling.
+//! While removing as much of the burden from the application programmer as possible is a desirable
+//! goal, these existing solutions in attempting to do this imposed significant restrictions on
+//! compatible program designs. It appeared that the Rust crate ecosystem was missing a more
+//! fundamental and broadly applicable solution.
+//!
 //! ## Design
 //!
-//! This is not the only solution available to projects built with the Rust programming language,
-//! and each one may have it's own positive and negative aspects. Unlike some of these other
-//! "next-gen"/modern solutions, this library does not try to completely take over all aspects of
-//! argument handling; doing so can rather easily impose restrictions making a solution unsuitable
-//! for some program designs. This solution, like 'getopt', is used to *assist* in argument
-//! processing, not take over, and as such is highly flexible and lightweight.
+//! In C programming the common `getopt` and related `getopt_long` functions have, for a long time,
+//! served to assist in this area. This library was designed as a similar *assistant*.
 //!
 //! The basic premise of usage is simple - provide the processing function with a set of available
 //! options and the input arguments to be processed, and it returns the results of its analysis.
@@ -35,16 +39,13 @@
 //! store data (converting values as necessary) from non-options and options with data, before
 //! proceeding with whatever your program was designed to do.
 //!
-//! Some major differences to the old 'getopt'/'getopt_long' solution include:
+//! Some major differences to the old `getopt`/`getopt_long` C solution include:
 //!
-//! 1. All processing can be done in one go, rather than with recursive function calls;
-//! 2. "Non-options" are **not** shuffled to the end of the list, unlike the default behaviour of
-//!    'getopt'. Not doing this preserves possibly invaluable information;
-//! 3. The "convenience" functionality of `-W foo` being treated as `--foo` is not supported
+//!  - All processing can be done in one go, rather than with recursive function calls;
+//!  - "Non-options" are **not** shuffled to the end of the list, unlike the default behaviour of
+//!    'getopt';
+//!  - The "convenience" functionality of `-W foo` being treated as `--foo` is not supported
 //!    (unnecessary complexity).
-//!
-//! This library could also be used as a foundation for other libraries that want to take over more
-//! of the workload of argument handling than this library does.
 //!
 //! # Functionality
 //!
@@ -118,8 +119,6 @@
 //! unmatched options through a third-party library to obtain the suggestion to display.
 //!
 //! ## Utf-8 support
-//!
-//! This library expects all provided strings to be valid Utf-8.
 //!
 //! Native Utf-8 support in Rust makes handling Utf-8 strings largely trivial. It is important to
 //! understand that in Rust a `char` is four bytes (it was only one byte in older languages like C);
@@ -604,8 +603,6 @@ impl<'a> Results<'a> {
     }
 }
 
-/// Process provided command-line arguments
-///
 /// Analyses provided program arguments, using provided information about valid available options.
 ///
 /// Returns a result set describing the result of the analysis. This may include `&str` references

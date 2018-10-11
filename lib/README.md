@@ -1,11 +1,12 @@
 gong
 ====
 
-A "next-gen" getopt replacement for Rust programs.
+A lightweight, flexible and simple-to-use library provided to assist in processing command line
+arguments.
 
 ## Usage
 
-Add this to your `Cargo.toml`:
+Add it as a dependency in your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -18,4 +19,4 @@ and this to your crate root:
 extern crate gong;
 ```
 
-See full documentation for how to then use the library to process arguments.
+See full library documentation for how to then use it to process arguments.

@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * Improved crate documentation, re-wording introduction and such
  * Re-ordered copyright & module doc placement
 
 # 1.0.3 (October 17th, 2018)
