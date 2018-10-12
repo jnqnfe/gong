@@ -28,6 +28,8 @@ pub mod docs;
 #[cfg(test)]
 mod tests;
 
+use std::convert::AsRef;
+
 /// Used to supply the set of information about available options to match against
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Options<'a> {
@@ -355,14 +357,9 @@ impl<'a> Results<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`Options::is_valid`](struct.Options.html#method.is_valid)).
-///
-/// # Params
-///
-/// * `args`: List of arguments to process. This is a slice of `String` objects, not `&str`, because
-///   Rust gives us command arguments from the environment as `String` not `&str` with
-///   `std::env::args()`.
-/// * `options`: Description of possible options to match against.
-pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
+pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Results<'a>
+    where T: AsRef<str>
+{
     use ItemClass as Class;
 
     /* NOTE: We deliberately do not perform validation of the provided `options` data within this
@@ -378,6 +375,8 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
 
     let mut arg_iter = args.iter().enumerate();
     while let Some((index, arg)) = arg_iter.next() {
+        let arg = arg.as_ref();
+
         if early_termination {
             results.add(Class::Ok(Item::NonOption(index, arg)));
             continue;
@@ -387,7 +386,7 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
         let start_len = arg.chars().take(3).count();
 
         // Early terminator
-        if start_len == 2 && arg == &"--" {
+        if start_len == 2 && arg == "--" {
             // Yes, it may be valuable info to the caller to know that one was encountered and
             // where, so let's not leave it out of the results.
             results.add(Class::Ok(Item::EarlyTerminator(index)));
@@ -475,7 +474,8 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
                     // Data included in next argument
                     else if let Some((_, next_arg)) = arg_iter.next() {
                         results.add(Class::Ok(Item::LongWithData {
-                            i: index, n: opt_name, d: next_arg, l: DataLocation::NextArg }));
+                            i: index, n: opt_name, d: next_arg.as_ref(),
+                            l: DataLocation::NextArg }));
                     }
                     // Data missing
                     else {
@@ -541,7 +541,7 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
                     // Data included in next argument
                     else if let Some((_, next_arg)) = arg_iter.next() {
                         results.add(Class::Ok(Item::ShortWithData {
-                            i: index, c: ch, d: next_arg, l: DataLocation::NextArg }));
+                            i: index, c: ch, d: next_arg.as_ref(), l: DataLocation::NextArg }));
                     }
                     // Data missing
                     else {

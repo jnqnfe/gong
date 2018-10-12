@@ -35,6 +35,7 @@ macro_rules! create_options {
     };
 }
 
+//TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
 /// Used for cleaner creation of set of test arguments
 ///
 /// Note, arguments will normally be obtained from the environment, and Rust provides these to use

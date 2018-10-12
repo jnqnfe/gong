@@ -68,9 +68,9 @@
 //!
 //! # Step #2: Gather arguments to be processed
 //!
-//! You also need to retrieve (or build) a set of arguments to be processed. This must be a set of
-//! `String` objects (as Rust provides actual program args from the environment as `String` not
-//! `&str`). You can collect program arguments as follows:
+//! You also need to retrieve (or build) a set of arguments to be processed. Slices of both `&str`
+//! and `String` are supported. (Rust provides actual program args from the environment as
+//! `String`). You can collect program arguments as follows:
 //!
 //! ```rust
 //! let args: Vec<String> = std::env::args().collect();
