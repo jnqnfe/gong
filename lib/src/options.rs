@@ -10,6 +10,8 @@
 
 //! "Available" option sets
 
+use std::convert::AsRef;
+
 /// Default abbreviation support state
 pub(crate) const ABBR_SUP_DEFAULT: bool = true;
 /// Default mode
@@ -199,6 +201,21 @@ impl<'a> Options<'a> {
             0 => None,
             _ => Some(long_dupes),
         }
+    }
+
+    /// Analyses provided program arguments.
+    ///
+    /// This is the same as calling the `process` function directly.
+    ///
+    /// Returns a result set describing the result of the analysis. This may include `&str`
+    /// references to strings provided in the `args` and `options` parameter data. Take note of this
+    /// with respect to object lifetimes.
+    ///
+    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>
+        where T: AsRef<str>
+    {
+        super::engine::process(args, self)
     }
 }
 

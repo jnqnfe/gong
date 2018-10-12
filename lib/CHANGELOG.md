@@ -1,6 +1,8 @@
 # <unreleased>
 
  * Refactored and optimised the analysis engine
+ * Added a `process` method to `Options` as a cleaner alternative to calling the `process` function
+   directly.
 
 # 1.1.2 (October 26th, 2018)
 
