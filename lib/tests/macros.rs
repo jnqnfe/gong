@@ -23,24 +23,10 @@ mod available_options {
     /// Compare macro-built with hand-built "available options" set
     #[test]
     fn cmp_hand_built() {
-        let macro_built = gong_option_set!(
-            vec![
-                gong_longopt!("help"),
-                gong_longopt!("foo"),
-                gong_longopt!("version"),
-                gong_longopt!("foobar"),
-                gong_longopt!("hah", true),
-                gong_longopt!("ábc"),        // Using a combinator char (accent)
-            ],
-            vec![
-                gong_shortopt!('h'),
-                gong_shortopt!('❤'),
-                gong_shortopt!('x'),
-                gong_shortopt!('o', true),
-                gong_shortopt!('\u{030A}'),   // A lone combinator ("ring above")
-            ]
-        );
+        // The common base set is already constructed with a macro
+        let macro_built = common::get_base();
 
+        // Re-build it by hand for comparison
         let hand_built = Options {
             long: vec![
                 LongOption { name: "help", expects_data: false },
@@ -67,26 +53,23 @@ mod available_options {
     /// Compare macro-built with method-built "available options" set
     #[test]
     fn cmp_method_built() {
-        let macro_built = gong_option_set!(
-            vec![
-                gong_longopt!("help"),
-                gong_longopt!("foo"),
-                gong_longopt!("version"),
-                gong_longopt!("foobar"),
-                gong_longopt!("hah", true),
-                gong_longopt!("ábc"),        // Using a combinator char (accent)
-            ],
-            vec![
-                gong_shortopt!('h'),
-                gong_shortopt!('❤'),
-                gong_shortopt!('x'),
-                gong_shortopt!('o', true),
-                gong_shortopt!('\u{030A}'),   // A lone combinator ("ring above")
-            ]
-        );
+        // The common base set is already constructed with a macro
+        let macro_built = common::get_base();
 
-        // The common base set is (currently) constructed with the `add_*` methods
-        let method_built = common::get_base();
+        // Re-build it with methods for comparison
+        let mut method_built = Options::new(6, 5);
+        method_built
+            .add_long("help")
+            .add_short('h')
+            .add_long("foo")
+            .add_long("version")
+            .add_long("foobar")
+            .add_long_data("hah")
+            .add_long("ábc")
+            .add_short('❤')
+            .add_short('x')
+            .add_short_data('o')
+            .add_short('\u{030A}');
 
         assert_eq!(macro_built, method_built);
     }

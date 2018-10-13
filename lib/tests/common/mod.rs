@@ -20,17 +20,26 @@ pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 
 /// Provides a base set of options for common usage in tests
 pub fn get_base<'a>() -> Options<'a> {
-    let mut opts = Options::new(6, 5);
-    opts.add_long("help")
-        .add_short('h')
-        .add_long("foo")
-        .add_long("version")
-        .add_long("foobar")
-        .add_long_data("hah")
-        .add_long("ábc")        // Using a combinator char (accent)
-        .add_short('❤')
-        .add_short('x')
-        .add_short_data('o')
-        .add_short('\u{030A}'); // A lone combinator ("ring above")
-    opts
+    // Note, the macro tests were written with the expectation that this function is constructing
+    // this base set using the macros. Thus if this were changed (though there is no conceivable
+    // reason to) to not use the macros, that needs addressing.
+    gong_option_set!(
+        vec![
+            gong_longopt!("help"),
+            gong_longopt!("foo"),
+            gong_longopt!("version"),
+            gong_longopt!("foobar"),
+            gong_longopt!("hah", true),
+            gong_longopt!("ábc"),        // Using a combinator char (accent)
+        ],
+        vec![
+            gong_shortopt!('h'),
+            gong_shortopt!('❤'),
+            gong_shortopt!('x'),
+            gong_shortopt!('o', true),
+            gong_shortopt!('\u{030A}'),   // A lone combinator ("ring above")
+        ],
+        OptionsMode::Standard,
+        true
+    )
 }
