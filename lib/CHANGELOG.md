@@ -1,5 +1,8 @@
 # <unreleased>
 
+ * Added macros as an alternative means of constructing an "available options" set. This makes
+   building an option set without the `add_*` methods easier (crafting the raw struct this way can
+   be a more efficient option).
  * Improved the flexibility of the`process` function's "available" args data param. Instead of
    explicitly taking `&[String]`, it now takes `&[T]` where `T: AsRef<str>`, thus supporting both
    `&[String]` and `&[&str]` inputs.

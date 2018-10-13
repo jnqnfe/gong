@@ -17,6 +17,7 @@
 //! (`src/main.rs` or `src/lib.rs`):
 //!
 //! ```rust
+//! //#[macro_use] # Uncomment if you want to use the macros
 //! extern crate gong;
 //! ```
 //!
@@ -25,7 +26,10 @@
 //! # Step #1: Describe the available options
 //!
 //! First, you need to create a description of the options to be made available to users of your
-//! program. For example:
+//! program. Here you actually have some choices as to how you do this. You can use the "builder"
+//! style, using `add_*` methods on an option structure, or you can use the macros.
+//!
+//! "Builder" style:
 //!
 //! ```rust
 //! let mut opts = gong::Options::new(6, 4); //Estimate counts for efficiency
@@ -41,10 +45,6 @@
 //!     .add_short_data('o'); // So does this one
 //! debug_assert!(opts.is_valid());
 //! ```
-//!
-//! **Note**: The underlying data structures used to represent options actually have publicly
-//! accessible attributes, thus leaving open less tidy, but more efficient means of declaring a data
-//! set, bypassing the function calls used here, if desired.
 //!
 //! ## Set mode
 //!

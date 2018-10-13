@@ -25,6 +25,8 @@
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]
 
 pub mod docs;
+#[macro_use]
+mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
 mod options;
 mod processor;
 mod results;
