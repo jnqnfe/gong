@@ -9,8 +9,12 @@
  * Improved crate documentation:
     - Significantly re-edited much of it
     - Split it up into `docs` sub-modules
- * Moved almost all of the tests out into the `tests` directory such that they will be run outside
-   of the crate as a "user" of the public API, and split apart into multiple files.
+ * Improved the test suite:
+    - Moved almost all of the tests out into the `tests` directory such that they will be run
+      outside of the crate as a "user" of the public API, and split apart into multiple files.
+    - Replaced the internal test macro that defined the common base set of test options with a
+      function, which should be more efficient than injecting the option construction code into each
+      test function.
  * Implemented `Default` for `Options`
  * Split lib code into multiple files (internal change only, the mods are hidden)
  * Enabled testing for more doc examples

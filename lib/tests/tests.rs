@@ -14,25 +14,24 @@ extern crate gong;
 
 use gong::*;
 
-/// A set of sample available options to use in tests
+/// Provides a base set of options for common usage in tests
 ///
 /// Note, there is a single test below that checks validity of these, thus it is not necessary to do
 /// so in every test!
-macro_rules! create_options {
-    ( $o:ident ) => {
-        let mut $o = Options::new(6, 5);
-        $o.add_long("help")
-            .add_short('h')
-            .add_long("foo")
-            .add_long("version")
-            .add_long("foobar")
-            .add_long_data("hah")
-            .add_long("ábc")        // Using a combinator char (accent)
-            .add_short('❤')
-            .add_short('x')
-            .add_short_data('o')
-            .add_short('\u{030A}'); // A lone combinator ("ring above")
-    };
+pub fn get_base<'a>() -> Options<'a> {
+    let mut opts = Options::new(6, 5);
+    opts.add_long("help")
+        .add_short('h')
+        .add_long("foo")
+        .add_long("version")
+        .add_long("foobar")
+        .add_long_data("hah")
+        .add_long("ábc")        // Using a combinator char (accent)
+        .add_short('❤')
+        .add_short('x')
+        .add_short_data('o')
+        .add_short('\u{030A}'); // A lone combinator ("ring above")
+    opts
 }
 
 //TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
@@ -56,7 +55,7 @@ mod available_options {
     /// Check the set used for most of the tests here is valid
     #[test]
     fn common() {
-        create_options!(opts);
+        let opts = get_base();
         assert!(opts.is_valid());
     }
 
@@ -64,7 +63,7 @@ mod available_options {
     #[test]
     #[should_panic]
     fn common2() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.add_long("foo"); // Duplicate - should panic here in debug mode!
         assert!(opts.is_valid());
     }
@@ -72,7 +71,7 @@ mod available_options {
     /// Check the set used for most of the tests here is valid in `alt` mode
     #[test]
     fn common_alt() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
         assert!(opts.is_valid());
     }
@@ -299,7 +298,7 @@ mod available_options {
 /// Some general, basic argument handling
 #[test]
 fn basic() {
-    create_options!(opts);
+    let opts = get_base();
     let args = arg_list!("abc", "-", "z", "--help", "--xxx", "---yy", "version", "-bxs", "ghi",
         "--", "--foo", "jkl");
     let results = gong::process(&args, &opts);
@@ -331,7 +330,7 @@ fn basic() {
 /// non-options.
 #[test]
 fn early_term() {
-    create_options!(opts);
+    let opts = get_base();
     let args = arg_list!("--foo", "--", "--help", "--", "-o");
     let results = gong::process(&args, &opts);
     assert_eq!(results,
@@ -353,7 +352,7 @@ fn early_term() {
 /// terminator, but what happens when an '=' is added?).
 #[test]
 fn long_no_name() {
-    create_options!(opts);
+    let opts = get_base();
     let args = arg_list!("--=a", "--=");
     let results = gong::process(&args, &opts);
     assert_eq!(results,
@@ -378,7 +377,7 @@ mod utf8 {
     /// Some utf8 multi-byte char handling
     #[test]
     fn test1() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("🗻∈🌏", "-🗻∈🌏", "--🗻∈🌏", "--ƒoo", "-❤");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -401,7 +400,7 @@ mod utf8 {
     /// Some utf8 multi-byte char handling - chars with combinator chars (e.g. accent)
     #[test]
     fn test2() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("y̆", "-y̆", "--y̆", "ëéy̆", "-ëéy̆", "--ëéy̆", "--ábc", "--ábc");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -432,7 +431,7 @@ mod utf8 {
     /// Here we use the "heavy black heart" char with variation selector #16 (emoji).
     #[test]
     fn test3() {
-        create_options!(opts);
+        let opts = get_base();
         // Note: the following is the 'black heart' character, followed by the variation selector
         // #16 (emoji) character.
         let args = arg_list!("❤️", "-❤️", "--❤️");
@@ -454,7 +453,7 @@ mod utf8 {
     /// Some utf8 multi-byte char width handling - lone combinator chars
     #[test]
     fn test4() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("\u{0306}", "-\u{0306}", "--\u{0306}", "-\u{030A}");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -482,7 +481,7 @@ mod abbreviations {
     /// Test handling of abbreviated long options, with ambiguity
     #[test]
     fn ambigous() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--f");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -499,7 +498,7 @@ mod abbreviations {
     /// Test handling of abbreviated long options, without ambiguity
     #[test]
     fn unambigous() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--foo", "--foob");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -517,7 +516,7 @@ mod abbreviations {
     /// Test handling when abbreviated matching is disabled
     #[test]
     fn disabled() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.set_allow_abbreviations(false);
         let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar");
         let results = gong::process(&args, &opts);
@@ -551,7 +550,7 @@ mod data {
     /// data; and recognised with empty unexpected data.
     #[test]
     fn basic() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--xx=yy", "--tt=", "-x", "--foo=bar", "--foo=", "-x");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -573,7 +572,7 @@ mod data {
     /// Test option with expected data arg, provided in next argument
     #[test]
     fn next_arg() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah", "def", "--help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -592,7 +591,7 @@ mod data {
     /// Test option with expected data arg, provided in same argument
     #[test]
     fn same_arg() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah=def", "--help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -611,7 +610,7 @@ mod data {
     /// Test option with expected data arg, declared to be in same argument, but empty
     #[test]
     fn same_arg_empty() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah=", "--help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -630,7 +629,7 @@ mod data {
     /// Test option with expected data arg, with data containing '='
     #[test]
     fn containing_equals() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -651,7 +650,7 @@ mod data {
     /// Test missing argument data
     #[test]
     fn missing() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -668,7 +667,7 @@ mod data {
     /// Test argument data for short option, provided in next argument
     #[test]
     fn short_next_arg() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("-bxso", "def");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -689,7 +688,7 @@ mod data {
     /// Test argument data for short option, provided in same argument
     #[test]
     fn short_same_arg() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("-bsojx", "def");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -710,7 +709,7 @@ mod data {
     /// Test missing argument data for short option
     #[test]
     fn short_missing() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("-bxso");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -730,7 +729,7 @@ mod data {
     /// Test argument data that looks like options
     #[test]
     fn looking_like_options() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah=--foo", "--hah", "--foo", "--hah=-n", "--hah", "-n");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -754,7 +753,7 @@ mod data {
     /// Test argument data that looks like early terminator
     #[test]
     fn looking_like_early_term() {
-        create_options!(opts);
+        let opts = get_base();
         let args = arg_list!("--hah=--", "--hah", "--");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
@@ -785,7 +784,7 @@ mod alt_mode {
     /// Check a range of inputs
     #[test]
     fn basic() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
         let args = arg_list!("abc", "-", "-help", "-hah=abc", "-hah", "cba", "-hah=", "-=", "-=abc",
             "-bxs", "--foo", "-f", "-foo", "-foob", "--", "-help");
@@ -821,7 +820,7 @@ mod alt_mode {
     /// Check unexpected and missing data
     #[test]
     fn data_basic() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
         let args = arg_list!("-foo=abc", "-foo=", "-hah");
         let results = gong::process(&args, &opts);
@@ -841,7 +840,7 @@ mod alt_mode {
     /// Test argument data that looks like early terminator
     #[test]
     fn data_looking_like_early_term() {
-        create_options!(opts);
+        let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
         let args = arg_list!("-hah=--", "-hah", "--");
         let results = gong::process(&args, &opts);
