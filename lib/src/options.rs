@@ -13,6 +13,7 @@
 /// Used to supply the set of information about available options to match against
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Options<'a> {
+    //TODO: Idiot! `Vec` cannot be created as a static! Create actual means for static option sets.
     /* NOTE: these have been left public to allow efficient static creation of options */
     pub long: Vec<LongOption<'a>>,
     pub short: Vec<ShortOption>,
