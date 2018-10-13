@@ -21,6 +21,26 @@ use gong::options::*;
 use common::{get_base, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Arg list string types
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Check arg processing accepts `&[String]` and `&[&str]`
+///
+/// All that we really need concern ourselves with is that it compiles.
+#[test]
+fn arg_list_owned_set() {
+    // Test works (compiles) using a `String` based slice (as given from `evn::args()` for real args)
+    // Note, **deliberately** not using the `arg_list` macro here!
+    let args: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
+    let _ = gong::process(&args, &get_base());
+
+    // Test works (compiles) using a `&str` based slice
+    // Note, **deliberately** not using the `arg_list` macro here!
+    let args: Vec<&str> = vec![ "--foo", "--bah" ];
+    let _ = gong::process(&args, &get_base());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Basic option handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -1,3 +1,8 @@
+# <unreleased>
+
+ * Added test to check processing function's expanded support of both `&[String]` and `&[&str]`
+   argument list types.
+
 # 1.1.1 (October 20th, 2018)
 
  * Fixed some broken links in documentation

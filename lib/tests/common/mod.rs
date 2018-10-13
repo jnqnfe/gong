@@ -26,7 +26,6 @@ pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 /// Wrapper for expected result, for comparison
 #[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
 
-//TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
 /// Used for cleaner creation of set of test arguments
 ///
 /// Note, arguments will normally be obtained from the environment, and Rust provides these to use
