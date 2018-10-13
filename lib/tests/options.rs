@@ -95,7 +95,7 @@ fn short_dash_bypass() {
     let opts = gong_option_set!(vec![], vec![ gong_shortopt!('-') ]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
 
-    check_result(&Actual(gong::process(&args, &opts)), &expected);
+    check_result(&Actual(opts.process(&args)), &expected);
 }
 
 /// Check `add_long` rejects empty string
@@ -191,7 +191,7 @@ fn long_with_equals_bypass() {
     let opts = gong_option_set!(vec![ gong_longopt!("a=b") ], vec![]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
 
-    check_result(&Actual(gong::process(&args, &opts)), &expected);
+    check_result(&Actual(opts.process(&args)), &expected);
 }
 
 /* Option sets should not contain duplicates.

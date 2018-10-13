@@ -31,8 +31,6 @@ pub mod analysis;
 mod engine;
 pub mod options;
 
-pub use engine::*;
-
 /* -- Deprecated stuff -- */
 /* Note, not possible to use a type for enum aliasing to mark deprecated, have to do without */
 
@@ -50,3 +48,18 @@ pub type Options<'a> = options::Options<'a>;
 pub type LongOption<'a> = options::LongOption<'a>;
 #[deprecated(since = "1.1.0", note = "moved to `options::ShortOption`")]
 pub type ShortOption = options::ShortOption;
+
+/// Analyses provided program arguments, using provided information about valid available options.
+///
+/// Returns a result set describing the result of the analysis. This may include `&str` references
+/// to strings provided in the `args` and `options` parameter data. Take note of this with respect
+/// to object lifetimes.
+///
+/// Expects available `options` data to have already been validated. (See
+/// [`Options::is_valid`](options/struct.Options.html#method.is_valid)).
+#[deprecated(note = "use the method on the option set object instead")]
+pub fn process<'a, T>(args: &'a [T], options: &options::Options<'a>) -> analysis::Analysis<'a>
+    where T: std::convert::AsRef<str>
+{
+    engine::process(args, options)
+}

@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Updated to use the new `process` method on the options object
+
 # 1.1.0 (October 19th, 2018)
 
  * Significantly cleaned up the code

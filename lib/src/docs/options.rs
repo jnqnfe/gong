@@ -169,12 +169,11 @@
 //! combinator/selector `char`s thus cannot be specified as an available *short option*. Such
 //! special `char`s are treated by this library as perfectly valid available *short options* in
 //! their own right. Thus, whilst `-ö` (using `U+F6`) results in a single matched/unmatched entry in
-//! the analysis returned from the [`process`] function, `-ö` (using `U+6F` followed by the `U+0308`
-//! combinator) will result in two entries, for what looks visibly to be one character. As another
-//! example, `❤` is the "black heart" character, and `❤️` is it along with the `U+FE0F` "variant #16
-//! \- emoji" selector `char`; with the selector, `--❤️` is a single matched/unmatched *long
-//! option*, while `-❤️` is a pair of matched/unmatched *short options*, one for the "black heart"
-//! `char` and one for the selector `char`.
+//! the analysis, `-ö` (using `U+6F` followed by the `U+0308` combinator) will result in two
+//! entries, for what looks visibly to be one character. As another example, `❤` is the "black
+//! heart" character, and `❤️` is it along with the `U+FE0F` "variant #16 - emoji" selector `char`;
+//! with the selector, `--❤️` is a single matched/unmatched *long option*, while `-❤️` is a pair of
+//! matched/unmatched *short options*, one for the "black heart" `char` and one for the selector
+//! `char`.
 //!
 //! [overview]: ../overview/index.html
-//! [`process`]: ../../fn.process.html

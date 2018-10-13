@@ -146,7 +146,7 @@ fn main() {
         },
     }
 
-    let results = gong::process(&args[..], &opts);
+    let results = opts.process(&args[..]);
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 

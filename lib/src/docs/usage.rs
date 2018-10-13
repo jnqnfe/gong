@@ -91,13 +91,13 @@
 //! # Step #3: Processing
 //!
 //! With input args gathered and "available" option set constructed, now you're ready for analysis.
-//! All you need to do is feed these two data sets to the [`process`] function and it will spit out
-//! an analysis that describes what it identified.
+//! All you need to do is feed these two data sets to the option set's [`process`] method and it
+//! will spit out an analysis that describes what it identified.
 //!
 //! ```rust
 //! # let opts: gong::Options = Default::default();
 //! # let args: Vec<String> = std::env::args().collect();
-//! let analysis = gong::process(&args[..], &opts);
+//! let analysis = opts.process(&args[..]);
 //! ```
 //!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
@@ -109,7 +109,7 @@
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The [`Analysis`] object returned by the [`process`] function contains `error` and `warn`
+//! The [`Analysis`] object returned by the [`process`] method contains `error` and `warn`
 //! booleans, which give a quick indication of problems. It also contains a list of items,
 //! describing in detail what was found. The items in the item list are stored in the same order as
 //! found in the input arguments.
@@ -133,12 +133,12 @@
 //! provided arguments against them. Instruction on using it are provided in the `README.md` file
 //! that accompanies it.
 //!
-//! [`process`]: ../../fn.process.html
 //! [`ItemClass`]: ../../analysis/enum.ItemClass.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`process`]: ../../options/struct.Options.html#method.process
 //! [`Options::is_valid`]: ../../options/struct.Options.html#method.is_valid
 //! [`Options::set_mode`]: ../../options/struct.Options.html#method.set_mode
 //! [`Options::set_allow_abbreviations`]: ../../options/struct.Options.html#method.set_allow_abbreviations
