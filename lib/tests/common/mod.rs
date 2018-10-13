@@ -13,6 +13,18 @@
 
 use gong::*;
 
+//TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
+/// Used for cleaner creation of set of test arguments
+///
+/// Note, arguments will normally be obtained from the environment, and Rust provides these to use
+/// as String objects, not &str, hence why we create a vector of Strings!
+#[macro_export]
+macro_rules! arg_list {
+    ( $($e:expr),+ ) => {
+        vec![$(String::from($e)),+]
+    };
+}
+
 // NB: These are not publically accessible from the crate, so we duplicate them. We do have a test
 // to ensure they are correct however!
 pub const ABBR_SUP_DEFAULT: bool = true;
