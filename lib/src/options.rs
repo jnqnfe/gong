@@ -10,6 +10,11 @@
 
 //! "Available" option sets
 
+/// Default abbreviation support state
+pub(crate) const ABBR_SUP_DEFAULT: bool = true;
+/// Default mode
+pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
+
 /// Used to supply the set of information about available options to match against
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Options<'a> {
@@ -39,7 +44,7 @@ pub enum OptionsMode {
 
 impl Default for OptionsMode {
     fn default() -> Self {
-        OptionsMode::Standard
+        MODE_DEFAULT
     }
 }
 
@@ -70,8 +75,8 @@ impl<'a> Options<'a> {
         Self {
             long: Vec::with_capacity(count_long),
             short: Vec::with_capacity(count_short),
-            mode: Default::default(),
-            allow_abbreviations: true,
+            mode: MODE_DEFAULT,
+            allow_abbreviations: ABBR_SUP_DEFAULT,
         }
     }
 
