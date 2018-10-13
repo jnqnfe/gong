@@ -222,79 +222,9 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// Checks validity of option set
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        let mut valid = true;
-
-        for candidate in self.long {
-            if candidate.name.len() == 0 {
-                eprintln!("Long option name cannot be an empty string!");
-                valid = false;
-            }
-            else if candidate.name.contains('=') {
-                eprintln!("Long option name cannot contain an '=' character!");
-                valid = false;
-            }
-        }
-
-        for candidate in self.short {
-            if candidate.ch == '-' {
-                eprintln!("A dash ('-') is not a valid short option!");
-                valid = false;
-            }
-        }
-
-        if let Some(dups) = self.find_duplicates_short() {
-            eprintln!("Duplicate short options were found!\n\
-                       Duplicated options: {:?}", dups);
-            valid = false;
-        }
-        if let Some(dups) = self.find_duplicates_long() {
-            eprintln!("Duplicate long options were found!\n\
-                       Duplicated options: {:?}", dups);
-            valid = false;
-        }
-
-        valid
-    }
-
-    fn find_duplicates_short(&self) -> Option<Vec<char>> {
-        let mut short_checked: Vec<char> = Vec::with_capacity(self.short.len());
-
-        let mut short_dupes = Vec::new();
-        for short in self.short {
-            let ch = short.ch;
-            if !short_dupes.contains(&ch) {
-                match short_checked.contains(&ch) {
-                    true => { short_dupes.push(ch); },
-                    false =>  { short_checked.push(ch); },
-                }
-            }
-        }
-
-        match short_dupes.len() {
-            0 => None,
-            _ => Some(short_dupes),
-        }
-    }
-
-    fn find_duplicates_long(&self) -> Option<Vec<&'a str>> {
-        let mut long_checked: Vec<&'a str> = Vec::with_capacity(self.long.len());
-
-        let mut long_dupes = Vec::new();
-        for long in self.long {
-            let name = long.name.clone();
-            if !long_dupes.contains(&name) {
-                match long_checked.contains(&name) {
-                    true => { long_dupes.push(name); },
-                    false =>  { long_checked.push(name); },
-                }
-            }
-        }
-
-        match long_dupes.len() {
-            0 => None,
-            _ => Some(long_dupes),
-        }
+        validation::set_is_valid(self)
     }
 
     /// Analyses provided program arguments.
@@ -318,7 +248,7 @@ impl<'a> LongOption<'a> {
     ///
     /// Panics (debug only) if the given name contains an `=` or is an empty string.
     fn new(name: &'a str, expects_data: bool) -> Self {
-        debug_assert!(!name.is_empty(), "Long option name cannot be an empty string!");
+        debug_assert!(name.len() >= 1, "Long option name cannot be an empty string!");
         debug_assert!(!name.contains('='), "Long option name cannot contain '='!");
         Self { name, expects_data, }
     }
@@ -331,6 +261,91 @@ impl ShortOption {
     fn new(ch: char, expects_data: bool) -> Self {
         debug_assert_ne!('-', ch, "Dash ('-') is not a valid short option!");
         Self { ch, expects_data, }
+    }
+}
+
+/// Option set validation
+mod validation {
+    use super::OptionSet;
+
+    /// Checks validity of option set
+    ///
+    /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    pub fn set_is_valid<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> bool {
+        let mut valid = true;
+
+        for candidate in set.long {
+            if candidate.name.len() == 0 {
+                eprintln!("Long option name cannot be an empty string!");
+                valid = false;
+            }
+            else if candidate.name.contains('=') {
+                eprintln!("Long option name cannot contain an '=' character!");
+                valid = false;
+            }
+        }
+
+        for candidate in set.short {
+            if candidate.ch == '-' {
+                eprintln!("A dash ('-') is not a valid short option!");
+                valid = false;
+            }
+        }
+
+        if let Some(dups) = find_duplicates_short(set) {
+            eprintln!("Duplicate short options were found!\n\
+                       Duplicated options: {:?}", dups);
+            valid = false;
+        }
+        if let Some(dups) = find_duplicates_long(set) {
+            eprintln!("Duplicate long options were found!\n\
+                       Duplicated options: {:?}", dups);
+            valid = false;
+        }
+
+        valid
+    }
+
+    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> Option<Vec<char>> {
+        let opts = set.short;
+        let mut short_checked: Vec<char> = Vec::with_capacity(opts.len());
+
+        let mut short_dupes = Vec::new();
+        for short in opts {
+            let ch = short.ch;
+            if !short_dupes.contains(&ch) {
+                match short_checked.contains(&ch) {
+                    true => { short_dupes.push(ch); },
+                    false =>  { short_checked.push(ch); },
+                }
+            }
+        }
+
+        match short_dupes.len() {
+            0 => None,
+            _ => Some(short_dupes),
+        }
+    }
+
+    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> Option<Vec<&'a str>> {
+        let opts = set.long;
+        let mut long_checked: Vec<&'a str> = Vec::with_capacity(opts.len());
+
+        let mut long_dupes = Vec::new();
+        for long in opts {
+            let name = long.name.clone();
+            if !long_dupes.contains(&name) {
+                match long_checked.contains(&name) {
+                    true => { long_dupes.push(name); },
+                    false =>  { long_checked.push(name); },
+                }
+            }
+        }
+
+        match long_dupes.len() {
+            0 => None,
+            _ => Some(long_dupes),
+        }
     }
 }
 

@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Improved internal organisation of the `Options` validation code
+
 # 1.2.1 (October 28th, 2018)
 
  * Updated usage docs per `OptionSetEx`/`OptionSet` pair introduction
