@@ -8,31 +8,13 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Unit tests
-
+#[macro_use]
 extern crate gong;
 
-use gong::*;
+mod common;
 
-/// Provides a base set of options for common usage in tests
-///
-/// Note, there is a single test below that checks validity of these, thus it is not necessary to do
-/// so in every test!
-pub fn get_base<'a>() -> Options<'a> {
-    let mut opts = Options::new(6, 5);
-    opts.add_long("help")
-        .add_short('h')
-        .add_long("foo")
-        .add_long("version")
-        .add_long("foobar")
-        .add_long_data("hah")
-        .add_long("ábc")        // Using a combinator char (accent)
-        .add_short('❤')
-        .add_short('x')
-        .add_short_data('o')
-        .add_short('\u{030A}'); // A lone combinator ("ring above")
-    opts
-}
+use gong::*;
+use common::*;
 
 //TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
 /// Used for cleaner creation of set of test arguments
@@ -43,6 +25,19 @@ macro_rules! arg_list {
     ( $($e:expr),+ ) => {
         vec![$(String::from($e)),+]
     };
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Mode defaults
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Checks defaults in test environment match those in crate (the constants are not part of the
+/// public API).
+#[test]
+fn check_constants() {
+    let test = gong_option_set!(vec![], vec![], common::MODE_DEFAULT, common::ABBR_SUP_DEFAULT);
+    let cmp: Options = Default::default();
+    assert_eq!(test, cmp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,16 +95,14 @@ mod available_options {
     #[test]
     #[should_panic]
     fn is_valid_short_dash() {
-        let opts = Options {
-            long: vec![],
-            short: vec![
-                ShortOption { ch: 'a', expects_data: false },
-                ShortOption { ch: '-', expects_data: false },
-                ShortOption { ch: 'b', expects_data: false },
-            ],
-            mode: Default::default(),
-            allow_abbreviations: true,
-        };
+        let opts = gong_option_set!(
+            vec![],
+            vec![
+                gong_shortopt!('a'),
+                gong_shortopt!('-'),
+                gong_shortopt!('b'),
+            ]
+        );
         assert!(opts.is_valid());
     }
 
@@ -120,14 +113,7 @@ mod available_options {
     /// short that is a dash ('-').
     #[test]
     fn short_dash_bypass() {
-        let opts = Options {
-            long: vec![],
-            short: vec![
-                ShortOption { ch: '-', expects_data: false },
-            ],
-            mode: Default::default(),
-            allow_abbreviations: true,
-        };
+        let opts = gong_option_set!(vec![], vec![ gong_shortopt!('-') ]);
         //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
         let args = arg_list!("--abc", "-a-bc", "--");
         let results = gong::process(&args, &opts);
@@ -167,16 +153,14 @@ mod available_options {
     #[test]
     #[should_panic]
     fn is_valid_long_no_name() {
-        let opts = Options {
-            long: vec![
-                LongOption { name: "foo", expects_data: false },
-                LongOption { name: "", expects_data: false },
-                LongOption { name: "bar", expects_data: false },
+        let opts = gong_option_set!(
+            vec![
+                gong_longopt!("foo"),
+                gong_longopt!(""),
+                gong_longopt!("bar"),
             ],
-            short: vec![],
-            mode: Default::default(),
-            allow_abbreviations: true,
-        };
+            vec![]
+        );
         assert!(opts.is_valid());
     }
 
@@ -204,16 +188,14 @@ mod available_options {
     #[test]
     #[should_panic]
     fn is_valid_long_with_equals() {
-        let opts = Options {
-            long: vec![
-                LongOption { name: "foo", expects_data: false },
-                LongOption { name: "a=b", expects_data: false },
-                LongOption { name: "bar", expects_data: false },
+        let opts = gong_option_set!(
+            vec![
+                gong_longopt!("foo"),
+                gong_longopt!("a=b"),
+                gong_longopt!("bar"),
             ],
-            short: vec![],
-            mode: Default::default(),
-            allow_abbreviations: true,
-        };
+            vec![]
+        );
         assert!(opts.is_valid());
     }
 
@@ -224,14 +206,7 @@ mod available_options {
     /// long with an equals ('=').
     #[test]
     fn long_with_equals_bypass() {
-        let opts = Options {
-            long: vec![
-                LongOption { name: "a=b", expects_data: false },
-            ],
-            short: vec![],
-            mode: Default::default(),
-            allow_abbreviations: true,
-        };
+        let opts = gong_option_set!(vec![ gong_longopt!("a=b") ], vec![]);
         //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
         let args = arg_list!("--a", "--a=b");
         let results = gong::process(&args, &opts);
