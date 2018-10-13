@@ -16,7 +16,7 @@
 //! file; then make sure to declare use of the crate at the root of the module hierarchy
 //! (`src/main.rs` or `src/lib.rs`):
 //!
-//! ```rust,ignore
+//! ```rust
 //! extern crate gong;
 //! ```
 //!
@@ -94,7 +94,9 @@
 //! All you need to do is feed these two data sets to the [`process`] function and it will spit out
 //! a result set that describes what it identified.
 //!
-//! ```rust,ignore
+//! ```rust
+//! # let opts: gong::Options = Default::default();
+//! # let args: Vec<String> = std::env::args().collect();
 //! let results = gong::process(&args[..], &opts);
 //! ```
 //!
