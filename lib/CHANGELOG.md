@@ -8,6 +8,7 @@
     - Split it up into `docs` sub-modules
  * Moved almost all of the tests out into the `tests` directory such that they will be run outside
    of the crate as a "user" of the public API, and split apart into multiple files.
+ * Implemented `Default` for `Options`
  * Re-ordered copyright & module doc placement
 
 # 1.0.3 (October 17th, 2018)

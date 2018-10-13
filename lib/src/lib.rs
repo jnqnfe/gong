@@ -40,6 +40,12 @@ pub struct Options<'a> {
     pub allow_abbreviations: bool,
 }
 
+impl<'a> Default for Options<'a> {
+    fn default() -> Self {
+        Options::new(0, 0)
+    }
+}
+
 /// Used to assert which option processing mode to use
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptionsMode {
