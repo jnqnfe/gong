@@ -2,6 +2,7 @@
 
  * Added test to check processing function's expanded support of both `&[String]` and `&[&str]`
    argument list types.
+ * Switched to `&str` based argument lists for most tests now for greater efficiency
 
 # 1.1.1 (October 20th, 2018)
 

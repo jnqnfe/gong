@@ -27,16 +27,17 @@ pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 #[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
 
 /// Used for cleaner creation of set of test arguments
-///
-/// Note, arguments will normally be obtained from the environment, and Rust provides these to use
-/// as String objects, not &str, hence why we create a vector of Strings!
 #[macro_export]
 macro_rules! arg_list {
+    // Note, we previously constructed a `String` from the provided `&str` here, since Rust provides
+    // arguments as `String` and thus that was what the processing function took. Now that it uses
+    // `AsRef<str>` and supports `&str`, we construct a simple `Vec<&str>` here instead, allowing
+    // greater efficiency.
     ( $($e:expr),+ ) => {
-        vec![$(String::from($e)),+]
+        vec![ $($e),+ ]
     };
     ( $($e:expr,)+ ) => {
-        vec![$(String::from($e)),+]
+        vec![ $($e),+ ]
     };
 }
 
