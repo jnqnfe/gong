@@ -9,6 +9,7 @@
  * Moved almost all of the tests out into the `tests` directory such that they will be run outside
    of the crate as a "user" of the public API, and split apart into multiple files.
  * Implemented `Default` for `Options`
+ * Split lib code into multiple files (internal change only, the mods are hidden)
  * Enabled testing for more doc examples
  * Re-ordered copyright & module doc placement
 
