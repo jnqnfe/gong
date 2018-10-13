@@ -1,6 +1,8 @@
 # <unreleased>
 
- * Improved crate documentation, re-wording introduction and such
+ * Improved crate documentation:
+    - Re-worded introduction and such
+    - Split it up into `docs` sub-modules
  * Re-ordered copyright & module doc placement
 
 # 1.0.3 (October 17th, 2018)

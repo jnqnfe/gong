@@ -1,0 +1,141 @@
+// Copyright 2017 Lyndon Brown
+//
+// This file is part of the `gong` command-line argument processing library.
+//
+// Licensed under the MIT license or the Apache license (Version 2.0), at your option. You may not
+// copy, modify, or distribute this file except in compliance with said license. You can find copies
+// of these licenses either in the LICENSE-APACHE and LICENSE-MIT files, or alternatively at
+// <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
+// respectively.
+
+//! Documentation: Usage
+//!
+//! # Step #0: Preparation
+//!
+//! To use this library, start by adding a dependency entry for it in your project's `Cargo.toml`
+//! file; then make sure to declare use of the crate at the root of the module hierarchy
+//! (`src/main.rs` or `src/lib.rs`):
+//!
+//! ```rust,ignore
+//! extern crate gong;
+//! ```
+//!
+//! Now proceed with the following steps.
+//!
+//! # Step #1: Describe the available options
+//!
+//! First, you need to compile a list of available options. For example:
+//!
+//! ```rust
+//! let mut opts = gong::Options::new(6, 4); //Estimate counts for efficiency
+//! opts.add_long("help")
+//!     .add_short('h')
+//!     .add_long("foo")
+//!     .add_long("version")
+//!     .add_long("foobar")
+//!     .add_long("ábc")      // Using a combining char (accent)
+//!     .add_long_data("hah") // This one expects a data arg
+//!     .add_short('❤')
+//!     .add_short('x')
+//!     .add_short_data('o'); // So does this one
+//! debug_assert!(opts.is_valid());
+//! ```
+//!
+//! **Note**: The underlying data structures used to represent options actually have publicly
+//! accessible attributes, thus leaving open less tidy, but more efficient means of declaring a data
+//! set, bypassing the function calls used here, if desired.
+//!
+//! ## Set mode
+//!
+//! If you want to use *alternate* option mode rather than *standard* (default), as discussed above,
+//! the [`Options::set_mode`] method is available.
+//!
+//! You can control whether or not to allow abbreviated matching with the
+//! [`Options::set_allow_abbreviations`] method.
+//!
+//! ## Validation
+//!
+//! Some validation is performed by the `add_*` methods, but for full validation (including checking
+//! for duplicates) the [`Options::is_valid`] method is provided, as used above. Details of any
+//! problems identified by this method are output to `stderr`. It is recommended that you only use
+//! it in a *debug* assert variant, as here, to allow catching mistakes in development, but
+//! otherwise avoid wasting energy for option sets in release builds that you know must be perfectly
+//! valid.
+//!
+//! **Note**: With respect to what is or is not a duplicate, only the name/`char` matters; the
+//! `expects_data` attribute makes no difference.
+//!
+//! # Step #2: Gather arguments to be processed
+//!
+//! You also need to retrieve (or build) a set of arguments to be processed. This must be a set of
+//! `String` objects (as Rust provides actual program args from the environment as `String` not
+//! `&str`). You can collect program arguments as follows:
+//!
+//! ```rust
+//! let args: Vec<String> = std::env::args().collect();
+//! ```
+//!
+//! The very first entry in the list is the program path/name, and often you will not be interested
+//! in it. You can skip it in two easy ways, either: a) when passing the arguments to the processing
+//! function in the next step, use `&args[1..]` instead of `&args[..]`; or b) use the iterator
+//! `skip` method, as here:
+//!
+//! ```rust
+//! let args: Vec<String> = std::env::args().skip(1).collect();
+//! ```
+//!
+//! **Note**: Of course you do not have to provide the real program args, you can provide any set of
+//! `String` objects, and you can even of course take the real set and modify it first if you wish.
+//!
+//! # Step #3: Processing
+//!
+//! With data gathered, you now simply need to give it to the [`process`] function. This function
+//! will perform an analysis and return a set of results that describe what it identified.
+//!
+//! ```rust,ignore
+//! let results = gong::process(&args[..], &opts);
+//! ```
+//!
+//! Of course if for any reason you do **not** want to process all arguments in one go, you always
+//! have the option of processing one argument at a time (or in groups of whatever number you
+//! choose), calling [`process`] for each. (Naturally though you must beware of complications
+//! handling *in-next-arg* data sub-arguments doing this).
+//!
+//! # Step #4: Take action
+//!
+//! It is now up to you to take appropriate action in response to what was found.
+//!
+//! The [`Results`] object returned by the [`process`] function contains `error` and `warn`
+//! booleans, which give a quick indication of problems. It also contains a list of items,
+//! describing in detail what was found. The items in the item list are stored in the same order as
+//! found in the input arguments.
+//!
+//! The entries in the item list are [`ItemClass`] variants, which wrap variants of [`Item`],
+//! [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants
+//! of each item class hold a `usize` value to be used for indicating the index of the argument in
+//! which the item was found. For simple scenarios, this may be ignored, but in some situations it
+//! is highly valuable information. Similarly, information is returned where applicable with data
+//! sub-args as to whether the data arg was located in the same argument or the next.
+//!
+//! **Note**: some item variants that may be returned in the result set hold `&str` references to
+//! strings that were provided in the argument and option data provided to [`process`]. This is done
+//! for efficiency. Beware of this with respect to lifetimes.
+//!
+//! # Have a play
+//!
+//! The source code repository includes a small test application for trying out the library's
+//! analysis capabilities. It has a small set of built-in example options of different kinds, and
+//! when run, outputs details of them along with details of analysing any provided arguments against
+//! them.
+//!
+//! To use it, see the instructions in the `README.md` file found in the `bin` sub-directory.
+//!
+//! [`process`]: ../../fn.process.html
+//! [`ItemClass`]: ../../enum.ItemClass.html
+//! [`Item`]: ../../enum.Item.html
+//! [`ItemW`]: ../../enum.ItemW.html
+//! [`ItemE`]: ../../enum.ItemE.html
+//! [`Results`]: ../../struct.Results.html
+//! [`Options::is_valid`]: ../../struct.Options.html#method.is_valid
+//! [`Options::set_mode`]: ../../struct.Options.html#method.set_mode
+//! [`Options::set_allow_abbreviations`]: ../../struct.Options.html#method.set_allow_abbreviations
