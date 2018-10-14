@@ -655,16 +655,10 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
         }
 
         let has_double_dash_prefix = || {
-            if start_len > 2 && arg.starts_with("--") {
-                return true;
-            }
-            false
+            start_len > 2 && arg.starts_with("--")
         };
         let has_single_dash_prefix = || {
-            if start_len > 1 && arg.starts_with("-") {
-                return true;
-            }
-            false
+            start_len > 1 && arg.starts_with("-")
         };
 
         // Long option
