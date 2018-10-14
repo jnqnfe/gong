@@ -24,7 +24,8 @@
 //!
 //! # Step #1: Describe the available options
 //!
-//! First, you need to compile a list of available options. For example:
+//! First, you need to create a description of the options to be made available to users of your
+//! program. For example:
 //!
 //! ```rust
 //! let mut opts = gong::Options::new(6, 4); //Estimate counts for efficiency
@@ -76,9 +77,9 @@
 //! ```
 //!
 //! The very first entry in the list is the program path/name, and often you will not be interested
-//! in it. You can skip it in two easy ways, either: a) when passing the arguments to the processing
-//! function in the next step, use `&args[1..]` instead of `&args[..]`; or b) use the iterator
-//! `skip` method, as here:
+//! in it. You can skip it in two easy ways, either: a) providing `&args[1..]` instead of
+//! `&args[..]` to the processing function in the next step, or b) using the iterator `skip` method,
+//! as here:
 //!
 //! ```rust
 //! let args: Vec<String> = std::env::args().skip(1).collect();
@@ -89,8 +90,9 @@
 //!
 //! # Step #3: Processing
 //!
-//! With data gathered, you now simply need to give it to the [`process`] function. This function
-//! will perform an analysis and return a set of results that describe what it identified.
+//! With input args gathered and "available" option set constructed, now you're ready for analysis.
+//! All you need to do is feed these two data sets to the [`process`] function and it will spit out
+//! a result set that describes what it identified.
 //!
 //! ```rust,ignore
 //! let results = gong::process(&args[..], &opts);
@@ -98,8 +100,8 @@
 //!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
 //! have the option of processing one argument at a time (or in groups of whatever number you
-//! choose), calling [`process`] for each. (Naturally though you must beware of complications
-//! handling *in-next-arg* data sub-arguments doing this).
+//! choose), calling [`process`] for each. (Naturally though you must beware the complications
+//! handling "in-next-arg" *data values* doing this).
 //!
 //! # Step #4: Take action
 //!
@@ -113,9 +115,9 @@
 //! The entries in the item list are [`ItemClass`] variants, which wrap variants of [`Item`],
 //! [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants
 //! of each item class hold a `usize` value to be used for indicating the index of the argument in
-//! which the item was found. For simple scenarios, this may be ignored, but in some situations it
-//! is highly valuable information. Similarly, information is returned where applicable with data
-//! sub-args as to whether the data arg was located in the same argument or the next.
+//! which the item was found, should you want to know that. Similarly, information is returned where
+//! applicable with *data values* as to whether the data arg was located in the same argument or the
+//! next.
 //!
 //! **Note**: some item variants that may be returned in the result set hold `&str` references to
 //! strings that were provided in the argument and option data provided to [`process`]. This is done
@@ -123,12 +125,11 @@
 //!
 //! # Have a play
 //!
-//! The source code repository includes a small test application for trying out the library's
-//! analysis capabilities. It has a small set of built-in example options of different kinds, and
-//! when run, outputs details of them along with details of analysing any provided arguments against
-//! them.
-//!
-//! To use it, see the instructions in the `README.md` file found in the `bin` sub-directory.
+//! The source code repository that houses this project includes a small test application for trying
+//! out the library's analysis capabilities. It has a small set of built-in example options of
+//! different kinds, and when run, outputs details of them along with details of analysing any
+//! provided arguments against them. Instruction on using it are provided in the `README.md` file
+//! that accompanies it.
 //!
 //! [`process`]: ../../fn.process.html
 //! [`ItemClass`]: ../../enum.ItemClass.html

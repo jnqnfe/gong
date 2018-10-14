@@ -8,90 +8,156 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation: Functionality
+//! Documentation: Option support
 //!
-//! Basic feature support is on par with legacy 'getopt_long'. See the [overview] section for an
-//! overview of design and for mention of the small differences.
+//! This crate has been designed around standard option conventions, and can process an argument
+//! list in two different common styles:
 //!
-//! # Option support
+//! - Standard: supporting traditional *long* and *short* options
+//! - Alternate: supporting *long options* only, with a single-dash prefix
 //!
-//! Two option processing modes are available, supporting two different popular styles of options.
+//! Basic feature support is on par with the C `getopt_long` function. (See the [overview] section
+//! for mention of the small differences).
 //!
-//! ## Mode 1 - Standard (default)
+//! # Standard style (default)
 //!
-//! This mode supports traditional *long* and *short* options.
+//! This mode supports traditional *long* and *short* options. The fundamental argument processing
+//! logic follows this model:
 //!
-//! An argument starting with a dash (`-`) and followed by additional characters, is treated as an
-//! *option* argument, anything else is a *non-option*. An argument of `--` followed by additional
-//! characters is a *long* option, which, after the `--` prefix, consists of an option *name*
-//! (followed optionally by a *data sub-argument*, as discussed below). An argument of a single dash
-//! (`-`) followed by additional (non-dash) characters is a *short option set*, where each character
-//! after the `-` prefix is a *short* option *character* (except with respect to *data
-//! sub-arguments*, as mentioned below). An argument of exactly `--` only is special - an *early
-//! terminator* - symbolising early termination of argument interpretation, meaning that all
-//! subsequent arguments should be assumed to be non-options (useful in some situations/designs for
-//! separating your option arguments from those to be passed on to something else).
+//!  - An argument either **not** starting with a dash (`-`) or consisting only of a single dash is
+//!    a *non-option* (a generic argument).
+//!  - An argument of exactly two dashes (`--`) only is called an *early terminator* and is
+//!    described below.
+//!  - An argument starting with two dashes (`--`) followed by additional characters is a *long
+//!    option*. The portion after the double-dash prefix is the *long option name* (or possibly the
+//!    name combined with an "in-argument" *data value*, as discussed below).
+//!  - An argument starting with a single dash (`-`) followed by additional (non-dash) characters is
+//!    a *short option set*, where each character (`char`) after the single-dash prefix represents a
+//!    *short option* (except with respect to "in-argument" *data values*, as discussed below).
+//!    (More than one *short option* can be specified in a single argument). Note that a dash (`-`)
+//!    itself is not permitted to be a valid program *short option* (it would be misinterpreted in
+//!    some cases). Note also that interpretation of what consists of a "character" may surprise you
+//!    as actually being a complicated matter, as per the dedicated "Utf-8" discussion later.
 //!
-//! Options may have a single mandatory *data sub-argument*. For long options, data is provided
-//! either in the next argument (e.g. `--foo bar`) or in the same argument, separated from the name
-//! by an `=` (e.g. `--foo=bar`). For short options, data is provided either in the next argument
-//! (e.g. `-o arg`), or if the option character is not the last character in the argument, the
-//! remaining characters are taken to be its data arg (e.g. `-oarg`). An argument can contain
-//! multiple short options grouped together as a *set* (e.g. `-abc`), but of course users need to be
-//! careful doing so with those requiring data - for correct interpretation only one short option
-//! with data can be grouped, and it must be the last one in the set. (If in `-abc` all three
-//! characters are valid options, and `b` takes data, `c` will be consumed as `b`'s data instead of
-//! being interpreted as an option).
+//! Processing of each argument may alter how one or more subsequent arguments are interpreted,
+//! deviating from the above. Specifically this applies to the *early terminator* and where an
+//! option is recognised as an "available" program option that takes a *data value*, as discussed
+//! below.
 //!
-//! If a long option is encountered where the argument contains one or more `=` characters, then the
-//! left hand portion of the first `=` character is taken to be the long option name, and the right
-//! hand portion as a data sub-argument, thus valid available option names cannot contain `=`
-//! characters. If the name does not match any available long option, a failed match is reported and
-//! the data sub-arg is completely ignored. If there is a match and it requires a data sub-arg, but
-//! the `=` was the last character in the argument, (e.g. `--foo=`), then the data sub-arg is taken
-//! to be an empty string. If there is a match with an option that does not require a data sub-arg,
-//! but one was provided and it is not an empty string, this will be noted as unexpected in the
-//! results of analysis.
+//! ## Data values
 //!
-//! Abbreviated long option name matching is supported, i.e. the feature than users can use an
-//! abbreviated form of a long option's name and get a match, so long as the abbreviation uniquely
-//! matches a single long option. As an example, if `foo` and `foobar` are available long options,
-//! then for the possible input arguments of { `--f`, `--fo`, `--foo`, `--foob`, `--fooba`, and
-//! `--foobar` }, `--foo` and `--foobar` are exact matches for `foo` and `foobar` respectively;
-//! `--f` and `--fo` are invalid as being ambiguous (and noted as such in the results); and `--foob`
-//! and `--fooba` both uniquely match `foobar` and so are valid. This feature is enabled by default,
-//! but can be disabled if desired.
+//! *Long* and *short* options can be configured as either "flag" style (used to signal a condition)
+//! or as "data taking" style, accepting an accompanying single *data value*. *Data values* for both
+//! *long* and *short* options can either be supplied within the same argument as the option itself
+//! ("in-argument"), or as the next argument in which case that will thus be consumed as the
+//! option's *data value* and otherwise ignored.
 //!
-//! ## Mode 2 - Alternate
+//!  - For *long options*, "next-arg" style looks like `--foo bar`, while "in-argument" style uses
+//!    an equals (`=`) character between the option name and value components, e.g. `--foo=bar`.
+//!    Note that "available" program *long options* are forbidden from containing an equals (`=`)
+//!    character in their name as this would otherwise introduce significant problems.
 //!
-//! This mode is very similar to mode 1, with the main difference simply being that only long
-//! options are supported, and long options use a single dash (`-`) as a prefix rather than two,
-//! i.e. `-help` rather than `--help`. Some people simply prefer this style, and support for it was
-//! very easy to add.
+//!    When processing a *long option* argument, if the argument contains one or more equals (`=`)
+//!    characters then it is considered to have an "in-argument" *data value* (since names are not
+//!    permitted to contain them), and is split into two components, thus the left hand portion
+//!    (minus the double-dash prefix) is taken as the name, and the right as the "in-argument" *data
+//!    value* (e.g. `--foo=bar` → name: "foo", value: "bar"). This naturally occurs **before**
+//!    checking for a matching "available" program option.
 //!
-//! **Note**: Short options can still be added to the option set in this mode, and it will still
+//!     - If the name component does not match any "available" *long option*, then it is reported as
+//!       unknown, with any "in-argument" *data value* component ignored.
+//!     - If a match is found which **does not** take a *data value*, then if an "in-argument" *data
+//!       value* component was supplied, its presence is reported as unexpected, otherwise all is
+//!       good.
+//!     - If a match is found that **does** take a *data value*, then if an "in-argument" *data
+//!       value* component was present, this is consumed as such, otherwise the next argument is
+//!       consumed. If an "in-argument" *data value* component was present, but the actual value is
+//!       missing (e.g. as in `--foo=`), this does not matter, the *data value* is accepted as being
+//!       an empty string (it does not consume the next argument). If no "in-argument" component was
+//!       supplied and this is the last argument, then the *data value* is reported as missing.
+//!
+//!  - For *short options*, "next-arg" style looks like `-o arg`, while "in-argument" style looks
+//!    like `-oarg`.
+//!
+//!    When a *short option set* is encountered (remember, more than one *short option* can be
+//!    grouped in the same argument), the characters are gone through in sequence, looking for
+//!    matching program *short options*.
+//!
+//!     - If no match is found then it is reported as unknown.
+//!     - If a match is found that **does not** take a *data value*, then great.
+//!     - If a match is found that **does** take a *data value*, then one needs to be found. If this
+//!       character is **not** the last in the set, then the remaining portion of the argument is
+//!       consumed as this option's *data value* (e.g. if 'o' is such an option then in `-oarg`,
+//!       `arg` is it's *data value*). If it is the last character in the set, then the next
+//!       argument is consumed (e.g. `-o arg` → `arg`). If it is the last in the set and there is no
+//!       next argument, then the *data value* is reported as missing.
+//!
+//!    Naturally when multiple *short options* are grouped together in the same argument, only the
+//!    last in that group can be one that takes a *data value*, and users must be careful when
+//!    constructing such groups.
+//!
+//! ## Early terminator
+//!
+//! An *early terminator* is used by a user of a program to request early termination of argument
+//! interpretation, meaning that all subsequent arguments in the argument list should be considered
+//! to be *non-options*. This is useful for instance if a program passes along some or all
+//! *non-options* to something else, and the user wants arguments that are formatted as options to
+//! be passed along (i.e. passing along of options); An early terminator blocks the program from
+//! interpreting anything following it as options targetted towards itself.
+//!
+//! For example, in the following command the `--release` argument is consumed by `cargo` (as is the
+//! `run` *non-option* which it treats as a "command" mode indicator), while `--foo` is treated as a
+//! *non-option*. Cargo in "run" mode passes on all *non-options* (except `run`) to the program it
+//! runs (equivalent to running `<my-prog> --foo` directly).
+//!
+//! ```text
+//! cargo run --release -- --foo
+//! ```
+//!
+//! # Alternate style
+//!
+//! This mode is very similar to *standard* style, with the main difference simply being that *short
+//! options* are **not** supported, and *long options* use a single dash (`-`) as a prefix rather
+//! than two, i.e. `-help` rather than `--help`. Some people simply prefer this style, and support
+//! for it was both trivial to add and involves very little overhead.
+//!
+//! **Note**: *Short options* can still be added to the option set in this mode, and it will still
 //! pass as valid; they will simply be ignored when performing matching.
 //!
-//! # Mismatch suggestions
+//! # Abbreviated long option name matching
 //!
-//! This library does not (currently) itself provide any suggestion mechanism for failed option
-//! matches - i.e. the ability to take an unmatched long option and pick the most likely of the
-//! available options that the user may have actually meant to use, to suggest to them when
-//! reporting the error. There is nothing however stopping users of this library from running
-//! unmatched options through a third-party library to obtain the suggestion to display.
+//! Abbreviated *long option* name matching is supported, i.e. the feature than users can use an
+//! abbreviated form of a *long option's* name and get a match, so long as the abbreviation uniquely
+//! matches a single *long option*.
 //!
-//! # Utf-8 support
+//! As an example, with the input arguments from the following command:
+//!
+//! ```text
+//! <progname> --f --fo --foo --foob --fooba --foobar
+//! ```
+//!
+//! If `foo` and `foobar` are available *long options* then:
+//!
+//!  - `--foo` and `--foobar` are exact matches for the available `foo` and `foobar` options
+//!    respectively.
+//!  - `--f` and `--fo` are invalid as being ambiguous (and noted as such in the results).
+//!  - `--foob` and `--fooba` both uniquely match `foobar` and so are valid.
+//!
+//! This is enabled by default, but can be opted out of when processing if not desired.
+//!
+//! # Utf-8 notes
 //!
 //! Native Utf-8 support in Rust makes handling Utf-8 strings largely trivial. It is important to
 //! understand that in Rust a `char` is four bytes (it was only one byte in older languages like C);
 //! but a sequence of `char`s are typically stored more efficiently than this in a string. This
-//! widened `char` type broadens the range of possible characters that can be used as short options,
-//! without us worrying about any multi-byte complexity. This allows for instance `💖` (the
-//! "sparkle heart" `char`) to be a short option, if you wanted, along with a huge set of other
-//! characters of various types to choose from. (The "sparkle heart" `char` take three bytes in a
-//! Utf-8 string, and would not have been easy to support in C with the legacy 'getopt' solution).
+//! widened `char` type broadens the range of possible characters that can be used as *short
+//! options*, without us worrying about any multi-byte complexity. This allows for instance `ð`
+//! (the "sparkle heart" `char`) to be a *short option*, if you wanted, along with a huge set of
+//! other characters of various types to choose from. (The "sparkle heart" `char` take three bytes
+//! in a Utf-8 string, and would not have been easy to support in C with the legacy `getopt`
+//! solution).
 //!
-//! With respect to long options, `--foo`, `--föö` and `--föö` are all different options (the last
+//! With respect to *long options*, `--foo`, `--föö` and `--föö` are all different options (the last
 //! two may look the same, but read on), and are all perfectly valid options to make available. The
 //! first consists of simple latin characters only. The second and third use "umlauts" (diaeresis)
 //! above the `o`'s, however the first of these uses a `char` with the umlaut built in (`U+F6`) and
@@ -99,15 +165,15 @@
 //! (`U+0308`), thus they appear the same but are actually different "under the hood". (It would not
 //! be efficient or worthwhile to try to handle the latter two as being the same option).
 //!
-//! Only single `char`s are supported for short options. A `char` paired with one or more special
-//! combinator/selector `char`s thus cannot be specified as an available short option. Such special
-//! `char`s are treated by this library as perfectly valid available short options in their own
-//! right. Thus, whilst `-ö` (using `U+F6`) results in a single matched/unmatched entry in the
-//! results returned from the [`process`] function, `-ö` (using `U+6F` followed by the `U+0308`
+//! Only single `char`s are supported for *short options*. A `char` paired with one or more special
+//! combinator/selector `char`s thus cannot be specified as an available *short option*. Such
+//! special `char`s are treated by this library as perfectly valid available *short options* in
+//! their own right. Thus, whilst `-ö` (using `U+F6`) results in a single matched/unmatched entry in
+//! the results returned from the [`process`] function, `-ö` (using `U+6F` followed by the `U+0308`
 //! combinator) will result in two entries, for what looks visibly to be one character. As another
 //! example, `❤` is the "black heart" character, and `❤️` is it along with the `U+FE0F` "variant #16
-//! \- emoji" selector `char`; with the selector, `--❤️` is a single matched/unmatched long
-//! option, while `-❤️` is a pair of matched/unmatched short options, one for the "black heart"
+//! \- emoji" selector `char`; with the selector, `--❤️` is a single matched/unmatched *long
+//! option*, while `-❤️` is a pair of matched/unmatched *short options*, one for the "black heart"
 //! `char` and one for the selector `char`.
 //!
 //! [overview]: ../overview/index.html

@@ -1,7 +1,7 @@
 # <unreleased>
 
  * Improved crate documentation:
-    - Re-worded introduction and such
+    - Significantly re-edited much of it
     - Split it up into `docs` sub-modules
  * Re-ordered copyright & module doc placement
 
