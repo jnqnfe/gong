@@ -10,7 +10,7 @@
 
 use std::convert::AsRef;
 use super::options::*;
-use super::results::*;
+use super::analysis::*;
 
 /// Analyses provided program arguments, using provided information about valid available options.
 ///
@@ -20,7 +20,7 @@ use super::results::*;
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`Options::is_valid`](struct.Options.html#method.is_valid)).
-pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Results<'a>
+pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
     where T: AsRef<str>
 {
     use ItemClass as Class;
@@ -34,7 +34,7 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Results<'a>
     let mut early_termination = false;
 
     let mode = options.mode;
-    let mut results = Results::new(args.len());
+    let mut results = Analysis::new(args.len());
 
     let mut arg_iter = args.iter().enumerate();
     while let Some((index, arg)) = arg_iter.next() {

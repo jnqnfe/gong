@@ -27,10 +27,10 @@
 pub mod docs;
 #[macro_use]
 mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
+mod analysis;
 mod options;
 mod processor;
-mod results;
 
+pub use analysis::*;
 pub use options::*;
 pub use processor::*;
-pub use results::*;

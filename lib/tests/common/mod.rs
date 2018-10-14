@@ -33,8 +33,8 @@ macro_rules! arg_list {
 pub const ABBR_SUP_DEFAULT: bool = true;
 pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 
-#[derive(Debug)] pub struct Actual<'a>(pub Results<'a>);
-#[derive(Debug)] pub struct Expected<'a>(pub Results<'a>);
+#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a>);
+#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
 
 /// Provides a base set of options for common usage in tests
 pub fn get_base<'a>() -> Options<'a> {
@@ -67,7 +67,7 @@ pub fn get_base<'a>() -> Options<'a> {
 /// Construct an `Expected`
 macro_rules! expected {
     ( error: $e:expr, warn: $w:expr, $items:expr ) => {
-        Expected(Results { error: $e, warn: $w, items: $items, })
+        Expected(Analysis { error: $e, warn: $w, items: $items, })
     };
 }
 
@@ -116,22 +116,22 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
     }
 }
 
-/// Prints a pretty description of a `Results` struct, used in debugging for easier comparison than
-/// with the raw output dumped by the test env.
+/// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
+/// than with the raw output dumped by the test env.
 ///
 /// Note, the `:#?` formatter is available as the "pretty" version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
-fn pretty_print_results(results: &Results) {
+fn pretty_print_results(analysis: &Analysis) {
     let mut items = String::new();
-    for item in &results.items {
+    for item in &analysis.items {
         items.push_str(&format!("\n        {:?},", item));
     }
     eprintln!("\
-Results {{
+Analysis {{
     items: [{}
     ],
     error: {},
     warn: {},
 }}",
-    items, results.error, results.warn);
+    items, analysis.error, analysis.warn);
 }

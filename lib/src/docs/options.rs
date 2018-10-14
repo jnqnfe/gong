@@ -140,7 +140,7 @@
 //!
 //!  - `--foo` and `--foobar` are exact matches for the available `foo` and `foobar` options
 //!    respectively.
-//!  - `--f` and `--fo` are invalid as being ambiguous (and noted as such in the results).
+//!  - `--f` and `--fo` are invalid as being ambiguous (and noted as such in the analysis).
 //!  - `--foob` and `--fooba` both uniquely match `foobar` and so are valid.
 //!
 //! This is enabled by default, but can be opted out of when processing if not desired.
@@ -169,7 +169,7 @@
 //! combinator/selector `char`s thus cannot be specified as an available *short option*. Such
 //! special `char`s are treated by this library as perfectly valid available *short options* in
 //! their own right. Thus, whilst `-ö` (using `U+F6`) results in a single matched/unmatched entry in
-//! the results returned from the [`process`] function, `-ö` (using `U+6F` followed by the `U+0308`
+//! the analysis returned from the [`process`] function, `-ö` (using `U+6F` followed by the `U+0308`
 //! combinator) will result in two entries, for what looks visibly to be one character. As another
 //! example, `❤` is the "black heart" character, and `❤️` is it along with the `U+FE0F` "variant #16
 //! \- emoji" selector `char`; with the selector, `--❤️` is a single matched/unmatched *long

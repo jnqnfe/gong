@@ -92,12 +92,12 @@
 //!
 //! With input args gathered and "available" option set constructed, now you're ready for analysis.
 //! All you need to do is feed these two data sets to the [`process`] function and it will spit out
-//! a result set that describes what it identified.
+//! an analysis that describes what it identified.
 //!
 //! ```rust
 //! # let opts: gong::Options = Default::default();
 //! # let args: Vec<String> = std::env::args().collect();
-//! let results = gong::process(&args[..], &opts);
+//! let analysis = gong::process(&args[..], &opts);
 //! ```
 //!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
@@ -109,7 +109,7 @@
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The [`Results`] object returned by the [`process`] function contains `error` and `warn`
+//! The [`Analysis`] object returned by the [`process`] function contains `error` and `warn`
 //! booleans, which give a quick indication of problems. It also contains a list of items,
 //! describing in detail what was found. The items in the item list are stored in the same order as
 //! found in the input arguments.
@@ -121,9 +121,9 @@
 //! applicable with *data values* as to whether the data arg was located in the same argument or the
 //! next.
 //!
-//! **Note**: some item variants that may be returned in the result set hold `&str` references to
-//! strings that were provided in the argument and option data provided to [`process`]. This is done
-//! for efficiency. Beware of this with respect to lifetimes.
+//! **Note**: some item variants that may be returned in the [`Analysis`] struct hold `&str`
+//! references to strings that were provided in the argument and option data provided to
+//! [`process`]. This is done for efficiency. Beware of this with respect to lifetimes.
 //!
 //! # Have a play
 //!
@@ -138,7 +138,7 @@
 //! [`Item`]: ../../enum.Item.html
 //! [`ItemW`]: ../../enum.ItemW.html
 //! [`ItemE`]: ../../enum.ItemE.html
-//! [`Results`]: ../../struct.Results.html
+//! [`Analysis`]: ../../struct.analysis.html
 //! [`Options::is_valid`]: ../../struct.Options.html#method.is_valid
 //! [`Options::set_mode`]: ../../struct.Options.html#method.set_mode
 //! [`Options::set_allow_abbreviations`]: ../../struct.Options.html#method.set_allow_abbreviations

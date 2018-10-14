@@ -8,11 +8,14 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Results components
+//! Analysis components
 
-/// Result data returned from analysing an argument list
+#[deprecated(note = "now called `Analysis`")]
+pub type Results<'a> = Analysis<'a>;
+
+/// Analysis of processing arguments against an option set
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Results<'a> {
+pub struct Analysis<'a> {
     /// Set of items describing what was found
     pub items: Vec<ItemClass<'a>>,
     /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
@@ -111,7 +114,7 @@ pub enum DataLocation {
     NextArg,
 }
 
-impl<'a> Results<'a> {
+impl<'a> Analysis<'a> {
     /// Create a new result set (mostly only useful internally)
     pub fn new(size_guess: usize) -> Self {
         Self {
@@ -121,7 +124,7 @@ impl<'a> Results<'a> {
         }
     }
 
-    /// Add a new item to the result set (mostly only useful internally)
+    /// Add a new item to the analysis (mostly only useful internally)
     pub fn add(&mut self, item: ItemClass<'a>) {
         self.items.push(item);
     }

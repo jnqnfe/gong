@@ -6,6 +6,8 @@
  * Improved the flexibility of the`process` function's "available" args data param. Instead of
    explicitly taking `&[String]`, it now takes `&[T]` where `T: AsRef<str>`, thus supporting both
    `&[String]` and `&[&str]` inputs.
+ * Renamed `Results` to `Analysis`. A type alias of `Results` is provided, marked as deprecated, for
+   compatability purposes, and to encourage updating to the new name.
  * Improved crate documentation:
     - Significantly re-edited much of it
     - Split it up into `docs` sub-modules
