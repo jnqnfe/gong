@@ -119,10 +119,10 @@ fn add_short_data_dash() {
     opts.add_short_data('-'); // Should panic here in debug mode!
 }
 
-/// Bypassing add methods, check `is_valid` rejects dash ('-') as short option
+/// Bypassing add methods, check validation rejects dash ('-') as short option
 #[test]
 #[should_panic]
-fn is_valid_short_dash() {
+fn invalid_short_dash() {
     let opts = gong_option_set_fixed!(
         [], [
             gong_shortopt!('a'),
@@ -131,6 +131,7 @@ fn is_valid_short_dash() {
         ]
     );
     assert!(opts.is_valid());
+    assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortDash ]));
 }
 
 /// Check behaviour when validity check bypassed.
@@ -187,10 +188,10 @@ fn add_long_data_no_name() {
     opts.add_long_data(""); // Should panic here in debug mode!
 }
 
-/// Bypassing add methods, check `is_valid` rejects empty name long option
+/// Bypassing add methods, check validation rejects empty name long option
 #[test]
 #[should_panic]
-fn is_valid_long_no_name() {
+fn invalid_long_no_name() {
     let opts = gong_option_set_fixed!(
         [
             gong_longopt!("foo"),
@@ -199,6 +200,7 @@ fn is_valid_long_no_name() {
         ], []
     );
     assert!(opts.is_valid());
+    assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmpty ]));
 }
 
 /* Long option names cannot contain an '=' (used for declaring a data sub-argument in the same
@@ -222,10 +224,10 @@ fn add_long_data_with_equals() {
     opts.add_long_data("a=b"); // Should panic here in debug mode!
 }
 
-/// Bypassing add methods, check `is_valid` rejects long option with equals ('=')
+/// Bypassing add methods, check validation rejects long option with equals ('=')
 #[test]
 #[should_panic]
-fn is_valid_long_with_equals() {
+fn invalid_long_with_equals() {
     let opts = gong_option_set_fixed!(
         [
             gong_longopt!("foo"),
@@ -234,6 +236,7 @@ fn is_valid_long_with_equals() {
         ], []
     );
     assert!(opts.is_valid());
+    assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongIncludesEquals("a=b") ]));
 }
 
 /// Check behaviour when validity check bypassed.
@@ -288,6 +291,11 @@ fn short_dups() {
         .add_short('e')
         .add_short('b');      // dup
     assert!(opts.is_valid());
+    assert_eq!(opts.validate(), Err(vec![
+        OptionFlaw::ShortDup('c'),
+        OptionFlaw::ShortDup('b'),
+        OptionFlaw::ShortDup('b'),
+    ]));
 }
 
 /// Long option duplicates
@@ -304,4 +312,9 @@ fn long_dups() {
         .add_long("eee")
         .add_long("bbb");     // dup
     assert!(opts.is_valid());
+    assert_eq!(opts.validate(), Err(vec![
+        OptionFlaw::LongDup("ccc"),
+        OptionFlaw::LongDup("bbb"),
+        OptionFlaw::LongDup("bbb"),
+    ]));
 }

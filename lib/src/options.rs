@@ -105,6 +105,22 @@ pub struct ShortOption {
     pub expects_data: bool,
 }
 
+/// Description of a validation issue within an option in an [`OptionSet`](struct.OptionSet.html) or
+/// [`OptionSetEx`](struct.OptionSetEx.html) set.
+#[derive(Debug, PartialEq, Eq)]
+pub enum OptionFlaw<'a> {
+    /// Long option name is empty string
+    LongEmpty,
+    /// Long option name contains equals
+    LongIncludesEquals(&'a str),
+    /// Short option char is dash (`-`)
+    ShortDash,
+    /// Duplicate short option found
+    ShortDup(char),
+    /// Duplicate long option found
+    LongDup(&'a str),
+}
+
 impl<'a> OptionSetEx<'a> {
     /// Create a new object. Takes estimations of the number of options to expect to be added (for
     /// efficient vector allocation).
@@ -174,8 +190,17 @@ impl<'a> OptionSetEx<'a> {
     /// Checks validity of option set
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    ///
+    /// See also the [`validate`](#method.validate) method.
+    #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        self.as_fixed().is_valid()
+        validation::set_is_valid(&self.as_fixed())
+    }
+
+    /// Checks validity of option set, returning details of any problems
+    #[inline(always)]
+    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'a>>> {
+        validation::validate_set(&self.as_fixed())
     }
 
     /// Analyses provided program arguments.
@@ -222,9 +247,17 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// Checks validity of option set
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    ///
+    /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
         validation::set_is_valid(self)
+    }
+
+    /// Checks validity of option set, returning details of any problems
+    #[inline(always)]
+    pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'a>>> {
+        validation::validate_set(self)
     }
 
     /// Analyses provided program arguments.
@@ -266,85 +299,127 @@ impl ShortOption {
 
 /// Option set validation
 mod validation {
-    use super::OptionSet;
+    use super::{OptionSet, OptionFlaw};
 
+//TODO: This outputs details of flaws to `stderr`. Stop doing this in future (behaviour change)
     /// Checks validity of option set
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
     pub fn set_is_valid<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> bool {
-        let mut valid = true;
+        if let Err(flaws) = validate_set(set) {
+            for flaw in &flaws {
+                match flaw {
+                    OptionFlaw::LongEmpty => {
+                        eprintln!("Long option name cannot be an empty string!");
+                    },
+                    OptionFlaw::LongIncludesEquals(_) => {
+                        eprintln!("Long option name cannot contain an '=' character!");
+                    },
+                    OptionFlaw::ShortDash => {
+                        eprintln!("A dash ('-') is not a valid short option!");
+                    },
+                    _ => {},
+                }
+            }
+            // Recreating the original output from `validate_set` data is messy :/
+            let mut short_dups = Vec::new();
+            let mut long_dups = Vec::new();
+            for flaw in &flaws {
+                match flaw {
+                    OptionFlaw::ShortDup(c) => short_dups.push(c),
+                    _ => {},
+                }
+            }
+            for flaw in &flaws {
+                match flaw {
+                    OptionFlaw::LongDup(s) => long_dups.push(s),
+                    _ => {},
+                }
+            }
+            if !short_dups.is_empty() {
+                eprintln!("Duplicate short options were found!\n\
+                           Duplicated options: {:?}", short_dups);
+            }
+            if !long_dups.is_empty() {
+                eprintln!("Duplicate long options were found!\n\
+                           Duplicated options: {:?}", long_dups);
+            }
+            false
+        }
+        else {
+            true
+        }
+    }
+
+    /// Checks validity of option set, returning details of any problems
+    pub fn validate_set<'r, 'a: 'r>(set: &OptionSet<'r, 'a>
+        ) -> Result<(), Vec<OptionFlaw<'a>>>
+    {
+        let mut flaws = Vec::new();
 
         for candidate in set.long {
             if candidate.name.len() == 0 {
-                eprintln!("Long option name cannot be an empty string!");
-                valid = false;
+                flaws.push(OptionFlaw::LongEmpty);
             }
             else if candidate.name.contains('=') {
-                eprintln!("Long option name cannot contain an '=' character!");
-                valid = false;
+                flaws.push(OptionFlaw::LongIncludesEquals(candidate.name));
             }
         }
 
         for candidate in set.short {
             if candidate.ch == '-' {
-                eprintln!("A dash ('-') is not a valid short option!");
-                valid = false;
+                flaws.push(OptionFlaw::ShortDash);
             }
         }
 
-        if let Some(dups) = find_duplicates_short(set) {
-            eprintln!("Duplicate short options were found!\n\
-                       Duplicated options: {:?}", dups);
-            valid = false;
-        }
-        if let Some(dups) = find_duplicates_long(set) {
-            eprintln!("Duplicate long options were found!\n\
-                       Duplicated options: {:?}", dups);
-            valid = false;
-        }
+        find_duplicates_short(set, &mut flaws);
+        find_duplicates_long(set, &mut flaws);
 
-        valid
+        match flaws.len() {
+            0 => Ok(()),
+            _ => Err(flaws),
+        }
     }
 
-    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> Option<Vec<char>> {
+    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>,
+        flaws: &mut Vec<OptionFlaw<'a>>)
+    {
         let opts = set.short;
-        let mut short_checked: Vec<char> = Vec::with_capacity(opts.len());
+        let mut checked: Vec<char> = Vec::with_capacity(opts.len());
 
-        let mut short_dupes = Vec::new();
+        let mut duplicates = Vec::new();
         for short in opts {
             let ch = short.ch;
-            if !short_dupes.contains(&ch) {
-                match short_checked.contains(&ch) {
-                    true => { short_dupes.push(ch); },
-                    false =>  { short_checked.push(ch); },
+            if !duplicates.contains(&OptionFlaw::ShortDup(ch)) {
+                match checked.contains(&ch) {
+                    true => { duplicates.push(OptionFlaw::ShortDup(ch)); },
+                    false =>  { checked.push(ch); },
                 }
             }
         }
-
-        match short_dupes.len() {
-            0 => None,
-            _ => Some(short_dupes),
+        if !duplicates.is_empty() {
+            flaws.append(&mut duplicates);
         }
     }
 
-    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> Option<Vec<&'a str>> {
+    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>,
+        flaws: &mut Vec<OptionFlaw<'a>>)
+    {
         let opts = set.long;
-        let mut long_checked: Vec<&'a str> = Vec::with_capacity(opts.len());
+        let mut checked: Vec<&'a str> = Vec::with_capacity(opts.len());
 
-        let mut long_dupes = Vec::new();
+        let mut duplicates = Vec::new();
         for long in opts {
             let name = long.name.clone();
-            if !long_dupes.contains(&name) {
-                match long_checked.contains(&name) {
-                    true => { long_dupes.push(name); },
-                    false =>  { long_checked.push(name); },
+            if !duplicates.contains(&OptionFlaw::LongDup(name)) {
+                match checked.contains(&name) {
+                    true => { duplicates.push(OptionFlaw::LongDup(name)); },
+                    false =>  { checked.push(name); },
                 }
             }
         }
-
-        match long_dupes.len() {
-            0 => None,
-            _ => Some(long_dupes),
+        if !duplicates.is_empty() {
+            flaws.append(&mut duplicates);
         }
     }
 }

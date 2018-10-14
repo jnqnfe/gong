@@ -41,6 +41,7 @@ mod base_set {
     fn is_valid() {
         let opts = get_base();
         assert!(opts.is_valid());
+        assert_eq!(opts.validate(), Ok(()));
     }
 
     /// Double check inserting a problem does break it
@@ -50,6 +51,7 @@ mod base_set {
         let mut opts = get_base().to_extendible();
         opts.add_long("foo"); // Duplicate - should panic here in debug mode!
         assert!(opts.is_valid());
+        assert_eq!(opts.validate(), Ok(()));
     }
 
     /// Check valid in `alt` mode
@@ -58,5 +60,6 @@ mod base_set {
         let mut opts = get_base().clone();
         opts.set_mode(OptionsMode::Alternate);
         assert!(opts.is_valid());
+        assert_eq!(opts.validate(), Ok(()));
     }
 }

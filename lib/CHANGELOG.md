@@ -1,5 +1,7 @@
 # <unreleased>
 
+ * Added `validate` method to `OptionSet` and `OptionSetEx` as an alternative to `is_valid`,
+   returning details of any flaws.
  * Improved internal organisation of the `Options` validation code
 
 # 1.2.1 (October 28th, 2018)

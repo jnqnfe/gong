@@ -99,10 +99,9 @@
 //!
 //! ## Validation
 //!
-//! Once an option set has been described, it should be validated before use. The `is_valid` method
-//! is provided for this, as used above. Details of any problems identified by this method are
-//! output to `stderr` (it is expected only to fail during development). It is recommended that you
-//! only use it in a *debug* assert variant, as here, to allow catching mistakes in development, but
+//! Once an option set has been described, it should be validated before use. The `is_valid` and
+//! `validate` methods are provided for this. It is recommended that you typically only check
+//! validity it in a *debug* assert variant, as here, to allow catching mistakes in development, but
 //! otherwise avoid wasting energy for option sets in release builds that you know must be perfectly
 //! valid.
 //!
