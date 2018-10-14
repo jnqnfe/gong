@@ -18,7 +18,7 @@
 //! Documentation has been split up into chapters:
 //!
 //! - [Overview](docs/overview/index.html)
-//! - [Functionality](docs/functionality/index.html)
+//! - [Options support](docs/options/index.html)
 //! - [Usage](docs/usage/index.html)
 
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
