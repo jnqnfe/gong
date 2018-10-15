@@ -1,5 +1,8 @@
 # <unreleased>
 
+ * Split lib code into multiple modules. Everything is still available at the top level for now for
+   compatability. It is recommended to access things from the sub-modules from now on though, as
+   this will be required in a future version.
  * Added macros as an alternative means of constructing an "available options" set. This makes
    building an option set without the `add_*` methods easier (crafting the raw struct this way can
    be a more efficient option).
@@ -23,7 +26,6 @@
       capability yet.
     - Tidied up the code significantly.
  * Implemented `Default` for `Options`
- * Split lib code into multiple files (internal change only, the mods are hidden)
  * Enabled testing for more doc examples
  * Re-ordered copyright & module doc placement
 
