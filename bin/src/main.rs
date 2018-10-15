@@ -156,7 +156,7 @@ fn main() {
             ItemClass::Err(ItemE::LongMissingData(i, n)) =>
                 println!("[arg {}] {}LongMissingData{}: {}", i, c!(col_e), c!(con::RESET), n),
             ItemClass::Warn(ItemW::LongWithUnexpectedData { i, n, d }) =>
-                println!("[index {}] {}LongWithUnexpectedData{}: {}\n    data: {}", i, c!(col_w),
+                println!("[arg {}] {}LongWithUnexpectedData{}: {}\n    data: {}", i, c!(col_w),
                     c!(con::RESET), n, d),
             ItemClass::Err(ItemE::AmbiguousLong(i, n)) =>
                 println!("[arg {}] {}AmbiguousLong{}: {}", i, c!(col_e), c!(con::RESET), n),

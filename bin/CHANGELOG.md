@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Fixed typo in output ("index" → "arg" for `LongWithUnexpectedData`)
+
 # 1.0.2 (October 9th, 2018)
 
  * Added own changelog file
