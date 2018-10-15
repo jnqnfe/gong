@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * Significantly cleaned up the code
  * Moved the `console` mod stuff out into separate crate
  * Marked as having no documentation for `cargo doc`
  * Re-ordered copyright & module doc placement
