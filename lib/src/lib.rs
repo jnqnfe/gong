@@ -42,8 +42,8 @@ pub use options::{OptionsMode};
 
 #[deprecated(since = "1.1.0", note = "now called `analysis::Analysis`")]
 pub type Results<'a> = analysis::Analysis<'a>;
-#[deprecated(since = "1.1.0", note = "moved to `options::Options`")]
-pub type Options<'a> = options::Options<'a>;
+#[deprecated(since = "1.1.0", note = "moved to `options::OptionSetEx`")]
+pub type Options<'a> = options::OptionSetEx<'a>;
 #[deprecated(since = "1.1.0", note = "moved to `options::LongOption`")]
 pub type LongOption<'a> = options::LongOption<'a>;
 #[deprecated(since = "1.1.0", note = "moved to `options::ShortOption`")]
@@ -56,10 +56,11 @@ pub type ShortOption = options::ShortOption;
 /// to object lifetimes.
 ///
 /// Expects available `options` data to have already been validated. (See
-/// [`Options::is_valid`](options/struct.Options.html#method.is_valid)).
+/// [`OptionSetEx::is_valid`](options/struct.OptionSetEx.html#method.is_valid)).
 #[deprecated(note = "use the method on the option set object instead")]
-pub fn process<'a, T>(args: &'a [T], options: &options::Options<'a>) -> analysis::Analysis<'a>
-    where T: std::convert::AsRef<str>
+pub fn process<'o, 'a, A>(args: &'a [A], options: &'o options::OptionSetEx<'a>) -> analysis::Analysis<'a>
+    where A: 'a + std::convert::AsRef<str>,
+          'a: 'o
 {
-    engine::process(args, options)
+    engine::process(args, &options.as_fixed())
 }

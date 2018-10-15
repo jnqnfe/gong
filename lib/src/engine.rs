@@ -33,9 +33,10 @@ enum ArgTypeBasic<'a> {
 /// to object lifetimes.
 ///
 /// Expects available `options` data to have already been validated. (See
-/// [`Options::is_valid`](options/struct.Options.html#method.is_valid)).
-pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
-    where T: AsRef<str>
+/// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
+pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, 'a>) -> Analysis<'a>
+    where A: 'a + AsRef<str>,
+          'r: 'o, 'a: 'r
 {
     /* NOTE: We deliberately do not perform validation of the provided `options` data within this
      * function; the burden to do so is left to the user. The choice to not do this is for reasons
@@ -97,7 +98,7 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
 
                 let mut matched: Option<&LongOption> = None;
                 let mut ambiguity = false;
-                for candidate in &options.long {
+                for candidate in options.long {
                     // Exact
                     if candidate.name == name {
                         // An exact match overrules a previously found partial match and ambiguity
@@ -170,7 +171,7 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                 for (i, (byte_pos, ch)) in optset_string.char_indices().enumerate() {
                     let mut match_found = false;
                     let mut expects_data = false;
-                    for candidate in &options.short {
+                    for candidate in options.short {
                         if candidate.ch == ch {
                             match_found = true;
                             expects_data = candidate.expects_data;

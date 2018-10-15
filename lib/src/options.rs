@@ -12,14 +12,22 @@
 
 use std::convert::AsRef;
 
+#[deprecated(note = "Use either `OptionSet` or `OptionSetEx` now, as applicable")]
+pub type Options<'a> = OptionSetEx<'a>;
+
 /// Default abbreviation support state
 pub(crate) const ABBR_SUP_DEFAULT: bool = true;
 /// Default mode
 pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 
+/// Extendible option set
+///
 /// Used to supply the set of information about available options to match against
+///
+/// This is the "extendible" variant which uses `Vec`s to hold the option lists and thus is flexible
+/// in allowing addition of options, and may re-allocate as necessary.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Options<'a> {
+pub struct OptionSetEx<'a> {
     /* NOTE: these have been left public to allow creation via macros */
     pub long: Vec<LongOption<'a>>,
     pub short: Vec<ShortOption>,
@@ -27,9 +35,37 @@ pub struct Options<'a> {
     pub allow_abbreviations: bool,
 }
 
-impl<'a> Default for Options<'a> {
+impl<'a> Default for OptionSetEx<'a> {
     fn default() -> Self {
-        Options::new(0, 0)
+        OptionSetEx::new(0, 0)
+    }
+}
+
+/// Option set
+///
+/// Used to supply the set of information about available options to match against
+///
+/// This is the non-"extendible" variant. Unlike its cousin `OptionSetEx`, this holds options lists
+/// as slice references rather than `Vec`s, and thus cannot be extended in size (hence no `add_*`
+/// methods). This is particularly useful in efficient creation of static/const option sets.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OptionSet<'r, 'a: 'r> {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    pub long: &'r [LongOption<'a>],
+    pub short: &'r [ShortOption],
+    pub mode: OptionsMode,
+    pub allow_abbreviations: bool,
+}
+
+impl<'r, 'a: 'r> PartialEq<OptionSet<'r, 'a>> for OptionSetEx<'a> {
+    fn eq(&self, rhs: &OptionSet<'r, 'a>) -> bool {
+        rhs.eq(&self.as_fixed())
+    }
+}
+
+impl<'r, 'a: 'r> PartialEq<OptionSetEx<'a>> for OptionSet<'r, 'a> {
+    fn eq(&self, rhs: &OptionSetEx<'a>) -> bool {
+        self.eq(&rhs.as_fixed())
     }
 }
 
@@ -69,7 +105,7 @@ pub struct ShortOption {
     pub expects_data: bool,
 }
 
-impl<'a> Options<'a> {
+impl<'a> OptionSetEx<'a> {
     /// Create a new object. Takes estimations of the number of options to expect to be added (for
     /// efficient vector allocation).
     pub fn new(count_long: usize, count_short: usize) -> Self {
@@ -78,6 +114,16 @@ impl<'a> Options<'a> {
             short: Vec::with_capacity(count_short),
             mode: MODE_DEFAULT,
             allow_abbreviations: ABBR_SUP_DEFAULT,
+        }
+    }
+
+    /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`'s vectors as slices.
+    pub fn as_fixed(&self) -> OptionSet<'_, 'a> {
+        OptionSet {
+            long: &self.long[..],
+            short: &self.short[..],
+            mode: self.mode,
+            allow_abbreviations: self.allow_abbreviations,
         }
     }
 
@@ -129,9 +175,57 @@ impl<'a> Options<'a> {
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
     pub fn is_valid(&self) -> bool {
+        self.as_fixed().is_valid()
+    }
+
+    /// Analyses provided program arguments.
+    ///
+    /// This is the same as calling the `process` function directly.
+    ///
+    /// Returns a result set describing the result of the analysis. This may include `&str`
+    /// references to strings provided in the `args` and `options` parameter data. Take note of this
+    /// with respect to object lifetimes.
+    ///
+    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>
+        where T: AsRef<str>
+    {
+        super::engine::process(args, &self.as_fixed())
+    }
+}
+
+impl<'r, 'a: 'r> OptionSet<'r, 'a> {
+    /// Creates an 'extendible' copy of `self`
+    ///
+    /// This duplicates the options in `self` into an [`OptionSetEx`](struct.OptionSetEx.html).
+    pub fn to_extendible(&self) -> OptionSetEx<'a> {
+        OptionSetEx {
+            long: self.long.iter().cloned().collect(),
+            short: self.short.iter().cloned().collect(),
+            mode: self.mode,
+            allow_abbreviations: self.allow_abbreviations,
+        }
+    }
+
+    /// Set mode
+    pub fn set_mode(&mut self, mode: OptionsMode) -> &mut Self {
+        self.mode = mode;
+        self
+    }
+
+    /// Enable/disable abbreviated matching
+    pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
+        self.allow_abbreviations = allow;
+        self
+    }
+
+    /// Checks validity of option set
+    ///
+    /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    pub fn is_valid(&self) -> bool {
         let mut valid = true;
 
-        for candidate in &self.long {
+        for candidate in self.long {
             if candidate.name.len() == 0 {
                 eprintln!("Long option name cannot be an empty string!");
                 valid = false;
@@ -142,7 +236,7 @@ impl<'a> Options<'a> {
             }
         }
 
-        for candidate in &self.short {
+        for candidate in self.short {
             if candidate.ch == '-' {
                 eprintln!("A dash ('-') is not a valid short option!");
                 valid = false;
@@ -167,7 +261,7 @@ impl<'a> Options<'a> {
         let mut short_checked: Vec<char> = Vec::with_capacity(self.short.len());
 
         let mut short_dupes = Vec::new();
-        for short in &self.short {
+        for short in self.short {
             let ch = short.ch;
             if !short_dupes.contains(&ch) {
                 match short_checked.contains(&ch) {
@@ -187,7 +281,7 @@ impl<'a> Options<'a> {
         let mut long_checked: Vec<&'a str> = Vec::with_capacity(self.long.len());
 
         let mut long_dupes = Vec::new();
-        for long in &self.long {
+        for long in self.long {
             let name = long.name.clone();
             if !long_dupes.contains(&name) {
                 match long_checked.contains(&name) {

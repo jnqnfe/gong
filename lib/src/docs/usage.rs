@@ -32,7 +32,7 @@
 //! "Builder" style:
 //!
 //! ```rust
-//! let mut opts = gong::Options::new(6, 4); //Estimate counts for efficiency
+//! let mut opts = gong::options::OptionSetEx::new(6, 4); //Estimate counts for efficiency
 //! opts.add_long("help")
 //!     .add_short('h')
 //!     .add_long("foo")
@@ -49,10 +49,10 @@
 //! ## Set mode
 //!
 //! If you want to use *alternate* option mode rather than *standard* (default), as discussed above,
-//! the [`Options::set_mode`] method is available.
+//! the [`OptionSetEx::set_mode`] method is available.
 //!
 //! You can control whether or not to allow abbreviated matching with the
-//! [`Options::set_allow_abbreviations`] method.
+//! [`OptionSetEx::set_allow_abbreviations`] method.
 //!
 //! ## Validation
 //!
@@ -95,7 +95,7 @@
 //! will spit out an analysis that describes what it identified.
 //!
 //! ```rust
-//! # let opts: gong::Options = Default::default();
+//! # let opts: gong::options::OptionSetEx = Default::default();
 //! # let args: Vec<String> = std::env::args().collect();
 //! let analysis = opts.process(&args[..]);
 //! ```
@@ -138,7 +138,7 @@
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
-//! [`process`]: ../../options/struct.Options.html#method.process
-//! [`Options::is_valid`]: ../../options/struct.Options.html#method.is_valid
-//! [`Options::set_mode`]: ../../options/struct.Options.html#method.set_mode
-//! [`Options::set_allow_abbreviations`]: ../../options/struct.Options.html#method.set_allow_abbreviations
+//! [`process`]: ../../options/struct.OptionSetEx.html#method.process
+//! [`OptionSetEx::is_valid`]: ../../options/struct.OptionSetEx.html#method.is_valid
+//! [`OptionSetEx::set_mode`]: ../../options/struct.OptionSetEx.html#method.set_mode
+//! [`OptionSetEx::set_allow_abbreviations`]: ../../options/struct.OptionSetEx.html#method.set_allow_abbreviations

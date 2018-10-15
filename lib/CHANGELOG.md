@@ -1,6 +1,11 @@
 # <unreleased>
 
  * Refactored and optimised the analysis engine
+ * Renamed `Options` to `OptionSetEx` and introduced companion `OptionSet`. While the `OptionSetEx`
+   type uses `Vec` to hold lists of options (the `Ex` in the new name refers to 'extendible'), the
+   new `OptionSet` holds slice references, and thus can be used for situations where dynamic
+   "builder" style construction is not necessary, and allows creation of static option sets, which
+   improves efficiency in many cases. Use of the old `Options` type name is now deprecated.
  * Added a `process` method to `Options` as a cleaner alternative to calling the `process` function
    directly. Deprecated direct use of the `process` function.
 

@@ -22,7 +22,57 @@ mod common;
 
 use gong::analysis::*;
 use gong::options::*;
-use common::{Actual, Expected, check_result};
+use common::{Actual, Expected, check_result, MODE_DEFAULT, ABBR_SUP_DEFAULT};
+
+/// Check set type (`OptionSet`/`OptionSetEx`) conversion and comparison
+#[test]
+fn set_types() {
+    let opts_fixed = OptionSet {
+        long: &[
+            gong_longopt!("foo", false),
+            gong_longopt!("bar", true),
+            gong_longopt!("foobar", false),
+        ],
+        short: &[
+            gong_shortopt!('h', false),
+            gong_shortopt!('o', true),
+            gong_shortopt!('a', false),
+        ],
+        mode: MODE_DEFAULT,
+        allow_abbreviations: ABBR_SUP_DEFAULT,
+    };
+
+    let opts_extendible = OptionSetEx {
+        long: vec![
+            gong_longopt!("foo", false),
+            gong_longopt!("bar", true),
+            gong_longopt!("foobar", false),
+        ],
+        short: vec![
+            gong_shortopt!('h', false),
+            gong_shortopt!('o', true),
+            gong_shortopt!('a', false),
+        ],
+        mode: MODE_DEFAULT,
+        allow_abbreviations: ABBR_SUP_DEFAULT,
+    };
+
+    // Check the two types can be compared
+    assert_eq!(true, opts_fixed.eq(&opts_extendible));
+    assert_eq!(true, opts_extendible.eq(&opts_fixed));
+
+    // Check conversions
+    let fixed_from_extendible: OptionSet = opts_extendible.as_fixed();
+    assert_eq!(true, opts_fixed.eq(&fixed_from_extendible));
+    assert_eq!(true, opts_extendible.eq(&fixed_from_extendible));
+    assert_eq!(true, fixed_from_extendible.eq(&opts_fixed));
+    assert_eq!(true, fixed_from_extendible.eq(&opts_extendible));
+    let extendible_from_fixed: OptionSetEx = opts_fixed.to_extendible();
+    assert_eq!(true, opts_fixed.eq(&extendible_from_fixed));
+    assert_eq!(true, opts_extendible.eq(&extendible_from_fixed));
+    assert_eq!(true, extendible_from_fixed.eq(&opts_fixed));
+    assert_eq!(true, extendible_from_fixed.eq(&opts_extendible));
+}
 
 /* Dash ('-') is an invalid short option (clashes with early terminator if it were given on its own
  * (`--`), and would be misinterpreted as a long option if given as the first in a short option set

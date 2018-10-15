@@ -23,9 +23,8 @@
 //! fundamental and broadly applicable solution.
 //!
 //! Some/all of these solutions also forced a "builder" type pattern of describing options through
-//! successive method calls, lacking a more efficient option of directly defining the data structure.
-//! This includes preventing efficient declaration of a `static`/`const` set (though that is also
-//! not (yet) possible here either due to use of `Vec`).
+//! successive method calls, lacking a more efficient option of directly defining the data
+//! structure. This includes preventing efficient declaration of a `static`/`const` set.
 //!
 //! # Design
 //!

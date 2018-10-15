@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-/// Construct an [`Options`](options/struct.Options.html)
+/// Construct an [`OptionSetEx`](options/struct.OptionSetEx.html)
 ///
 /// Takes:
 ///
@@ -34,12 +34,12 @@
 #[macro_export]
 macro_rules! gong_option_set {
     ( $long:expr, $short:expr, $mode:expr, $abbr:expr ) => {
-        $crate::options::Options {
+        $crate::options::OptionSetEx {
             long: $long, short: $short, mode: $mode, allow_abbreviations: $abbr
         }
     };
     ( $long:expr, $short:expr ) => {
-        $crate::options::Options {
+        $crate::options::OptionSetEx {
             long: $long, short: $short, mode: $crate::options::OptionsMode::Standard,
             allow_abbreviations: true
         }
