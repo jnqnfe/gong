@@ -11,12 +11,13 @@
 #[macro_use]
 extern crate gong;
 
+#[allow(unused_macros)]
 #[allow(dead_code)] //Mod shared across test crates
 #[macro_use]
 mod common;
 
 use gong::*;
-use common::get_base;
+use common::{get_base, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Basic option handling
@@ -25,84 +26,75 @@ use common::get_base;
 /// Some general, basic argument handling
 #[test]
 fn basic() {
-    let opts = get_base();
     let args = arg_list!("abc", "-", "z", "--help", "--xxx", "---yy", "version", "-bxs", "ghi",
         "--", "--foo", "jkl");
-    let results = gong::process(&args, &opts);
-    assert_eq!(results,
-        Results {
-            error: false,
-            warn: true,
-            items: vec![
-                ItemClass::Ok(Item::NonOption(0, "abc")),
-                ItemClass::Ok(Item::NonOption(1, "-")),
-                ItemClass::Ok(Item::NonOption(2, "z")),
-                ItemClass::Ok(Item::Long(3, "help")),
-                ItemClass::Warn(ItemW::UnknownLong(4, "xxx")),
-                ItemClass::Warn(ItemW::UnknownLong(5, "-yy")),
-                ItemClass::Ok(Item::NonOption(6, "version")),
-                ItemClass::Warn(ItemW::UnknownShort(7, 'b')),
-                ItemClass::Ok(Item::Short(7, 'x')),
-                ItemClass::Warn(ItemW::UnknownShort(7, 's')),
-                ItemClass::Ok(Item::NonOption(8, "ghi")),
-                ItemClass::Ok(Item::EarlyTerminator(9)),
-                ItemClass::Ok(Item::NonOption(10, "--foo")),
-                ItemClass::Ok(Item::NonOption(11, "jkl")),
-            ],
-        }
+    let expected = expected!(
+        error: false,
+        warn: true,
+        vec![
+            expected_item!(0, NonOption, "abc"),
+            expected_item!(1, NonOption, "-"),
+            expected_item!(2, NonOption, "z"),
+            expected_item!(3, Long, "help"),
+            expected_item!(4, UnknownLong, "xxx"),
+            expected_item!(5, UnknownLong, "-yy"),
+            expected_item!(6, NonOption, "version"),
+            expected_item!(7, UnknownShort, 'b'),
+            expected_item!(7, Short, 'x'),
+            expected_item!(7, UnknownShort, 's'),
+            expected_item!(8, NonOption, "ghi"),
+            expected_item!(9, EarlyTerminator),
+            expected_item!(10, NonOption, "--foo"),
+            expected_item!(11, NonOption, "jkl"),
+        ]
     );
+    check_result(&Actual(gong::process(&args, &get_base())), &expected);
 }
 
 /// Test that everything after an early terminator is taken to be a non-option, inclucing any
 /// further early terminators.
 #[test]
 fn early_term() {
-    let opts = get_base();
     let args = arg_list!("--foo", "--", "--help", "--", "-o", "--foo", "blah", "--bb", "-h",
         "--hah", "--hah=", "--", "--hah=a", "-oa", "-b");
-    let results = gong::process(&args, &opts);
-    assert_eq!(results,
-        Results {
-            error: false,
-            warn: false,
-            items: vec![
-                ItemClass::Ok(Item::Long(0, "foo")),
-                ItemClass::Ok(Item::EarlyTerminator(1)),
-                ItemClass::Ok(Item::NonOption(2, "--help")),
-                ItemClass::Ok(Item::NonOption(3, "--")),
-                ItemClass::Ok(Item::NonOption(4, "-o")),
-                ItemClass::Ok(Item::NonOption(5, "--foo")),
-                ItemClass::Ok(Item::NonOption(6, "blah")),
-                ItemClass::Ok(Item::NonOption(7, "--bb")),
-                ItemClass::Ok(Item::NonOption(8, "-h")),
-                ItemClass::Ok(Item::NonOption(9, "--hah")),
-                ItemClass::Ok(Item::NonOption(10, "--hah=")),
-                ItemClass::Ok(Item::NonOption(11, "--")),
-                ItemClass::Ok(Item::NonOption(12, "--hah=a")),
-                ItemClass::Ok(Item::NonOption(13, "-oa")),
-                ItemClass::Ok(Item::NonOption(14, "-b")),
-            ],
-        }
+    let expected = expected!(
+        error: false,
+        warn: false,
+        vec![
+            expected_item!(0, Long, "foo"),
+            expected_item!(1, EarlyTerminator),
+            expected_item!(2, NonOption, "--help"),
+            expected_item!(3, NonOption, "--"),
+            expected_item!(4, NonOption, "-o"),
+            expected_item!(5, NonOption, "--foo"),
+            expected_item!(6, NonOption, "blah"),
+            expected_item!(7, NonOption, "--bb"),
+            expected_item!(8, NonOption, "-h"),
+            expected_item!(9, NonOption, "--hah"),
+            expected_item!(10, NonOption, "--hah="),
+            expected_item!(11, NonOption, "--"),
+            expected_item!(12, NonOption, "--hah=a"),
+            expected_item!(13, NonOption, "-oa"),
+            expected_item!(14, NonOption, "-b"),
+        ]
     );
+    check_result(&Actual(gong::process(&args, &get_base())), &expected);
 }
 
 /// Test empty long option names with data param (-- on it's own is obviously picked up as early
 /// terminator, but what happens when an '=' is added?).
 #[test]
 fn long_no_name() {
-    let opts = get_base();
     let args = arg_list!("--=a", "--=");
-    let results = gong::process(&args, &opts);
-    assert_eq!(results,
-        Results {
-            error: false,
-            warn: true,
-            items: vec![
-                ItemClass::Warn(ItemW::LongWithNoName(0)),
-                ItemClass::Warn(ItemW::LongWithNoName(1)),
-            ],
-        }
+    let expected = expected!(
+        error: false,
+        warn: true,
+        vec![
+            expected_item!(0, LongWithNoName),
+            expected_item!(1, LongWithNoName),
+        ]
     );
+    check_result(&Actual(gong::process(&args, &get_base())), &expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,53 +107,47 @@ mod utf8 {
     /// Some utf8 multi-byte char handling
     #[test]
     fn test1() {
-        let opts = get_base();
         let args = arg_list!("🗻∈🌏", "-🗻∈🌏", "--🗻∈🌏", "--ƒoo", "-❤");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::NonOption(0, "🗻∈🌏")),
-                    ItemClass::Warn(ItemW::UnknownShort(1, '🗻')),
-                    ItemClass::Warn(ItemW::UnknownShort(1, '∈')),
-                    ItemClass::Warn(ItemW::UnknownShort(1, '🌏')),
-                    ItemClass::Warn(ItemW::UnknownLong(2, "🗻∈🌏")),
-                    ItemClass::Warn(ItemW::UnknownLong(3, "ƒoo")),
-                    ItemClass::Ok(Item::Short(4, '❤')), // '\u{2764}' black heart
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, NonOption, "🗻∈🌏"),
+                expected_item!(1, UnknownShort, '🗻'),
+                expected_item!(1, UnknownShort, '∈'),
+                expected_item!(1, UnknownShort, '🌏'),
+                expected_item!(2, UnknownLong, "🗻∈🌏"),
+                expected_item!(3, UnknownLong, "ƒoo"),
+                expected_item!(4, Short, '❤'), // '\u{2764}' black heart
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Some utf8 multi-byte char handling - chars with combinator chars (e.g. accent)
     #[test]
     fn test2() {
-        let opts = get_base();
         let args = arg_list!("y̆", "-y̆", "--y̆", "ëéy̆", "-ëéy̆", "--ëéy̆", "--ábc", "--ábc");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::NonOption(0, "y̆")),
-                    ItemClass::Warn(ItemW::UnknownShort(1, 'y')),        // 'y'
-                    ItemClass::Warn(ItemW::UnknownShort(1, '\u{0306}')), // breve
-                    ItemClass::Warn(ItemW::UnknownLong(2, "y̆")),
-                    ItemClass::Ok(Item::NonOption(3, "ëéy̆")),
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'ë')),        // e+diaeresis
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'e')),        // 'e'
-                    ItemClass::Warn(ItemW::UnknownShort(4, '\u{0301}')), // accute accent
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'y')),        // 'y'
-                    ItemClass::Warn(ItemW::UnknownShort(4, '\u{0306}')), // breve
-                    ItemClass::Warn(ItemW::UnknownLong(5, "ëéy̆")),
-                    ItemClass::Warn(ItemW::UnknownLong(6, "ábc")),       // without combinator
-                    ItemClass::Ok(Item::Long(7, "ábc")),                 // with combinator
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, NonOption, "y̆"),
+                expected_item!(1, UnknownShort, 'y'),        // 'y'
+                expected_item!(1, UnknownShort, '\u{0306}'), // breve
+                expected_item!(2, UnknownLong, "y̆"),
+                expected_item!(3, NonOption, "ëéy̆"),
+                expected_item!(4, UnknownShort, 'ë'),        // e+diaeresis
+                expected_item!(4, UnknownShort, 'e'),        // 'e'
+                expected_item!(4, UnknownShort, '\u{0301}'), // accute accent
+                expected_item!(4, UnknownShort, 'y'),        // 'y'
+                expected_item!(4, UnknownShort, '\u{0306}'), // breve
+                expected_item!(5, UnknownLong, "ëéy̆"),
+                expected_item!(6, UnknownLong, "ábc"),       // without combinator
+                expected_item!(7, Long, "ábc"),              // with combinator
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Some utf8 multi-byte char width handling - chars with variation selector
@@ -169,43 +155,37 @@ mod utf8 {
     /// Here we use the "heavy black heart" char with variation selector #16 (emoji).
     #[test]
     fn test3() {
-        let opts = get_base();
         // Note: the following is the 'black heart' character, followed by the variation selector
         // #16 (emoji) character.
         let args = arg_list!("❤️", "-❤️", "--❤️");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::NonOption(0, "❤️")),
-                    ItemClass::Ok(Item::Short(1, '\u{2764}')),           // black-heart
-                    ItemClass::Warn(ItemW::UnknownShort(1, '\u{fe0f}')), // emoji selector
-                    ItemClass::Warn(ItemW::UnknownLong(2, "❤️")),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, NonOption, "❤️"),
+                expected_item!(1, Short, '\u{2764}'),        // black-heart
+                expected_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
+                expected_item!(2, UnknownLong, "❤️"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Some utf8 multi-byte char width handling - lone combinator chars
     #[test]
     fn test4() {
-        let opts = get_base();
-        let args = arg_list!("\u{0306}", "-\u{0306}", "--\u{0306}", "-\u{030A}");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::NonOption(0, "\u{0306}")),
-                    ItemClass::Warn(ItemW::UnknownShort(1, '\u{0306}')),
-                    ItemClass::Warn(ItemW::UnknownLong(2, "\u{0306}")),
-                    ItemClass::Ok(Item::Short(3, '\u{030A}')),
-                ],
-            }
+        let args = arg_list!("\u{0306}", "-\u{0306}", "--\u{0306}", "-\u{030a}");
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, NonOption, "\u{0306}"),
+                expected_item!(1, UnknownShort, '\u{0306}'),
+                expected_item!(2, UnknownLong, "\u{0306}"),
+                expected_item!(3, Short, '\u{030a}'),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 }
 
@@ -219,59 +199,51 @@ mod abbreviations {
     /// Test handling of abbreviated long options, with ambiguity
     #[test]
     fn ambigous() {
-        let opts = get_base();
         let args = arg_list!("--f");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: false,
-                items: vec![
-                    ItemClass::Err(ItemE::AmbiguousLong(0, "f")),
-                ],
-            }
+        let expected = expected!(
+            error: true,
+            warn: false,
+            vec![
+                expected_item!(0, AmbiguousLong, "f"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test handling of abbreviated long options, without ambiguity
     #[test]
     fn unambigous() {
-        let opts = get_base();
         let args = arg_list!("--foo", "--foob");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::Long(0, "foo")),
-                    ItemClass::Ok(Item::Long(1, "foobar")),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Long, "foobar"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test handling when abbreviated matching is disabled
     #[test]
     fn disabled() {
+        let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar");
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, UnknownLong, "f"),
+                expected_item!(1, UnknownLong, "fo"),
+                expected_item!(2, Long, "foo"),
+                expected_item!(3, UnknownLong, "foob"),
+                expected_item!(4, UnknownLong, "fooba"),
+                expected_item!(5, Long, "foobar"),
+            ]
+        );
         let mut opts = get_base();
         opts.set_allow_abbreviations(false);
-        let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Warn(ItemW::UnknownLong(0, "f")),
-                    ItemClass::Warn(ItemW::UnknownLong(1, "fo")),
-                    ItemClass::Ok(Item::Long(2, "foo")),
-                    ItemClass::Warn(ItemW::UnknownLong(3, "foob")),
-                    ItemClass::Warn(ItemW::UnknownLong(4, "fooba")),
-                    ItemClass::Ok(Item::Long(5, "foobar")),
-                ],
-            }
-        );
+        check_result(&Actual(gong::process(&args, &opts)), &expected);
     }
 }
 
@@ -285,23 +257,18 @@ mod data {
     /// Test option with expected data arg for long options
     #[test]
     fn arg_placement_long() {
-        let opts = get_base();
         let args = arg_list!("--hah", "def", "--help", "--hah=def", "--help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "def", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::Long(2, "help")),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 3, n: "hah", d: "def", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(4, "help")),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
+                expected_item!(2, Long, "help"),
+                expected_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
+                expected_item!(4, Long, "help"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test calculation of whether or not short-opt taking data is the last character in the short
@@ -310,132 +277,102 @@ mod data {
     /// position tracking issues like that fixed in version 1.0.3.
     #[test]
     fn arg_placement_short_calc() {
-        let opts = get_base();
         let args = arg_list!("-oa", "g");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 0, c: 'o', d: "a", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::NonOption(1, "g")),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+                expected_item!(1, NonOption, "g"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test option with expected data arg, provided in next argument for short options
     #[test]
     fn arg_placement_short_next() {
-        let opts = get_base();
         let args = arg_list!("-o", "def", "-bo", "def", "-bxo", "def", "-xao", "def");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 0, c: 'o', d: "def", l: DataLocation::NextArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(2, 'b')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 2, c: 'o', d: "def", l: DataLocation::NextArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'b')),
-                    ItemClass::Ok(Item::Short(4, 'x')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 4, c: 'o', d: "def", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::Short(6, 'x')),
-                    ItemClass::Warn(ItemW::UnknownShort(6, 'a')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 6, c: 'o', d: "def", l: DataLocation::NextArg }),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
+                expected_item!(2, UnknownShort, 'b'),
+                expected_item!(2, ShortWithData, 'o', "def", DataLocation::NextArg),
+                expected_item!(4, UnknownShort, 'b'),
+                expected_item!(4, Short, 'x'),
+                expected_item!(4, ShortWithData, 'o', "def", DataLocation::NextArg),
+                expected_item!(6, Short, 'x'),
+                expected_item!(6, UnknownShort, 'a'),
+                expected_item!(6, ShortWithData, 'o', "def", DataLocation::NextArg),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test option with expected data arg, provided in same argument for short options
     #[test]
     fn arg_placement_short_same() {
-        let opts = get_base();
         let args = arg_list!("-oa", "-oabc", "-aob", "-aobcd", "-abcod", "-abcodef", "-xoabc",
             "-oaxc", "-oxbc", "-oabx");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 0, c: 'o', d: "a", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 1, c: 'o', d: "abc", l: DataLocation::SameArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(2, 'a')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 2, c: 'o', d: "b", l: DataLocation::SameArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(3, 'a')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 3, c: 'o', d: "bcd", l: DataLocation::SameArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'a')),
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'b')),
-                    ItemClass::Warn(ItemW::UnknownShort(4, 'c')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 4, c: 'o', d: "d", l: DataLocation::SameArg }),
-                    ItemClass::Warn(ItemW::UnknownShort(5, 'a')),
-                    ItemClass::Warn(ItemW::UnknownShort(5, 'b')),
-                    ItemClass::Warn(ItemW::UnknownShort(5, 'c')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 5, c: 'o', d: "def", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Short(6, 'x')),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 6, c: 'o', d: "abc", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 7, c: 'o', d: "axc", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 8, c: 'o', d: "xbc", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 9, c: 'o', d: "abx", l: DataLocation::SameArg }),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+                expected_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
+                expected_item!(2, UnknownShort, 'a'),
+                expected_item!(2, ShortWithData, 'o', "b", DataLocation::SameArg),
+                expected_item!(3, UnknownShort, 'a'),
+                expected_item!(3, ShortWithData, 'o', "bcd", DataLocation::SameArg),
+                expected_item!(4, UnknownShort, 'a'),
+                expected_item!(4, UnknownShort, 'b'),
+                expected_item!(4, UnknownShort, 'c'),
+                expected_item!(4, ShortWithData, 'o', "d", DataLocation::SameArg),
+                expected_item!(5, UnknownShort, 'a'),
+                expected_item!(5, UnknownShort, 'b'),
+                expected_item!(5, UnknownShort, 'c'),
+                expected_item!(5, ShortWithData, 'o', "def", DataLocation::SameArg),
+                expected_item!(6, Short, 'x'),
+                expected_item!(6, ShortWithData, 'o', "abc", DataLocation::SameArg),
+                expected_item!(7, ShortWithData, 'o', "axc", DataLocation::SameArg),
+                expected_item!(8, ShortWithData, 'o', "xbc", DataLocation::SameArg),
+                expected_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test missing argument data for long option
     #[test]
     fn missing_long() {
-        let opts = get_base();
         let args = arg_list!("--hah");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: false,
-                items: vec![
-                    ItemClass::Err(ItemE::LongMissingData(0, "hah")),
-                ],
-            }
+        let expected = expected!(
+            error: true,
+            warn: false,
+            vec![
+                expected_item!(0, LongMissingData, "hah"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test missing argument data for short option
     #[test]
     fn missing_short() {
-        let opts = get_base();
         let args = arg_list!("-bxso");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: true,
-                items: vec![
-                    ItemClass::Warn(ItemW::UnknownShort(0, 'b')),
-                    ItemClass::Ok(Item::Short(0, 'x')),
-                    ItemClass::Warn(ItemW::UnknownShort(0, 's')),
-                    ItemClass::Err(ItemE::ShortMissingData(0, 'o')),
-                ],
-            }
+        let expected = expected!(
+            error: true,
+            warn: true,
+            vec![
+                expected_item!(0, UnknownShort, 'b'),
+                expected_item!(0, Short, 'x'),
+                expected_item!(0, UnknownShort, 's'),
+                expected_item!(0, ShortMissingData, 'o'),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test some misc. data handling.
@@ -444,152 +381,108 @@ mod data {
     /// data; and recognised with empty unexpected data.
     #[test]
     fn misc() {
-        let opts = get_base();
         let args = arg_list!("--xx=yy", "--tt=", "-x", "--foo=bar", "--foo=", "-x");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Warn(ItemW::UnknownLong(0, "xx")),
-                    ItemClass::Warn(ItemW::UnknownLong(1, "tt")),
-                    ItemClass::Ok(Item::Short(2, 'x')),
-                    ItemClass::Warn(ItemW::LongWithUnexpectedData { i: 3, n: "foo", d: "bar" }),
-                    ItemClass::Ok(Item::Long(4, "foo")),
-                    ItemClass::Ok(Item::Short(5, 'x')),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, UnknownLong, "xx"),
+                expected_item!(1, UnknownLong, "tt"),
+                expected_item!(2, Short, 'x'),
+                expected_item!(3, LongWithUnexpectedData, "foo", "bar"),
+                expected_item!(4, Long, "foo"),
+                expected_item!(5, Short, 'x'),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test option with expected data arg, declared to be in same argument, but empty
     #[test]
     fn same_arg_empty() {
-        let opts = get_base();
         let args = arg_list!("--hah=", "--help", "--hah=", "help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(1, "help")),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 2, n: "hah", d: "", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::NonOption(3, "help")),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
+                expected_item!(1, Long, "help"),
+                expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
+                expected_item!(3, NonOption, "help"),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test option with expected data arg, with data containing '='
     #[test]
     fn containing_equals() {
-        let opts = get_base();
         let args = arg_list!("--hah", "d=ef", "--hah", "=", "--hah=d=ef", "--hah==ef", "--help",
             "--blah=ggg", "-oa=b", "-o=", "-o===o");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "d=ef", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 2, n: "hah", d: "=", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 4, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 5, n: "hah", d: "=ef", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(6, "help")),
-                    ItemClass::Warn(ItemW::UnknownLong(7, "blah")),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 8, c: 'o', d: "a=b", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 9, c: 'o', d: "=", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 10, c: 'o', d: "===o", l: DataLocation::SameArg }),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
+                expected_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
+                expected_item!(4, LongWithData, "hah", "d=ef", DataLocation::SameArg),
+                expected_item!(5, LongWithData, "hah", "=ef", DataLocation::SameArg),
+                expected_item!(6, Long, "help"),
+                expected_item!(7, UnknownLong, "blah"),
+                expected_item!(8, ShortWithData, 'o', "a=b", DataLocation::SameArg),
+                expected_item!(9, ShortWithData, 'o', "=", DataLocation::SameArg),
+                expected_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test argument data that looks like options
     #[test]
     fn looking_like_options() {
-        let opts = get_base();
         let args = arg_list!("--hah=--foo", "--hah", "--foo", "--hah=--blah", "--hah", "--blah",
             "--hah=-h", "--hah", "-h", "--hah=-n", "--hah", "-n", "-o-h", "-o", "-h", "-o-n", "-o",
             "-n", "-o--foo", "-o", "--hah", "-o--blah", "-o", "--blah");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "--foo", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 1, n: "hah", d: "--foo", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 3, n: "hah", d: "--blah", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 4, n: "hah", d: "--blah", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 6, n: "hah", d: "-h", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 7, n: "hah", d: "-h", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 9, n: "hah", d: "-n", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 10, n: "hah", d: "-n", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 12, c: 'o', d: "-h", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 13, c: 'o', d: "-h", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 15, c: 'o', d: "-n", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 16, c: 'o', d: "-n", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 18, c: 'o', d: "--foo", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 19, c: 'o', d: "--hah", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 21, c: 'o', d: "--blah", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 22, c: 'o', d: "--blah", l: DataLocation::NextArg }),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
+                expected_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
+                expected_item!(3, LongWithData, "hah", "--blah", DataLocation::SameArg),
+                expected_item!(4, LongWithData, "hah", "--blah", DataLocation::NextArg),
+                expected_item!(6, LongWithData, "hah", "-h", DataLocation::SameArg),
+                expected_item!(7, LongWithData, "hah", "-h", DataLocation::NextArg),
+                expected_item!(9, LongWithData, "hah", "-n", DataLocation::SameArg),
+                expected_item!(10, LongWithData, "hah", "-n", DataLocation::NextArg),
+                expected_item!(12, ShortWithData, 'o', "-h", DataLocation::SameArg),
+                expected_item!(13, ShortWithData, 'o', "-h", DataLocation::NextArg),
+                expected_item!(15, ShortWithData, 'o', "-n", DataLocation::SameArg),
+                expected_item!(16, ShortWithData, 'o', "-n", DataLocation::NextArg),
+                expected_item!(18, ShortWithData, 'o', "--foo", DataLocation::SameArg),
+                expected_item!(19, ShortWithData, 'o', "--hah", DataLocation::NextArg),
+                expected_item!(21, ShortWithData, 'o', "--blah", DataLocation::SameArg),
+                expected_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
     /// Test argument data that looks like early terminator
     #[test]
     fn looking_like_early_term() {
-        let opts = get_base();
         let args = arg_list!("--hah=--", "--hah", "--", "-o", "--", "-o--");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "--", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 1, n: "hah", d: "--", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 3, c: 'o', d: "--", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::ShortWithData {
-                        i: 5, c: 'o', d: "--", l: DataLocation::SameArg }),
-                ],
-            }
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
+                expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
+                expected_item!(3, ShortWithData, 'o', "--", DataLocation::NextArg),
+                expected_item!(5, ShortWithData, 'o', "--", DataLocation::SameArg),
+            ]
         );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 }
 
@@ -606,77 +499,66 @@ mod alt_mode {
     /// Check a range of inputs
     #[test]
     fn basic() {
-        let mut opts = get_base();
-        opts.set_mode(OptionsMode::Alternate);
         let args = arg_list!("abc", "-", "-help", "-hah=abc", "-hah", "cba", "-hah=", "-=", "-=abc",
             "-bxs", "--foo", "-f", "-foo", "-foob", "--", "-help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: true,
-                items: vec![
-                    ItemClass::Ok(Item::NonOption(0, "abc")),
-                    ItemClass::Ok(Item::NonOption(1, "-")),
-                    ItemClass::Ok(Item::Long(2, "help")),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 3, n: "hah", d: "abc", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 4, n: "hah", d: "cba", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 6, n: "hah", d: "", l: DataLocation::SameArg }),
-                    ItemClass::Warn(ItemW::LongWithNoName(7)),
-                    ItemClass::Warn(ItemW::LongWithNoName(8)),
-                    ItemClass::Warn(ItemW::UnknownLong(9, "bxs")),
-                    ItemClass::Warn(ItemW::UnknownLong(10, "-foo")),
-                    ItemClass::Err(ItemE::AmbiguousLong(11, "f")),
-                    ItemClass::Ok(Item::Long(12, "foo")),
-                    ItemClass::Ok(Item::Long(13, "foobar")),
-                    ItemClass::Ok(Item::EarlyTerminator(14)),
-                    ItemClass::Ok(Item::NonOption(15, "-help")),
-                ],
-            }
+        let expected = expected!(
+            error: true,
+            warn: true,
+            vec![
+                expected_item!(0, NonOption, "abc"),
+                expected_item!(1, NonOption, "-"),
+                expected_item!(2, Long, "help"),
+                expected_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
+                expected_item!(4, LongWithData, "hah", "cba", DataLocation::NextArg),
+                expected_item!(6, LongWithData, "hah", "", DataLocation::SameArg),
+                expected_item!(7, LongWithNoName),
+                expected_item!(8, LongWithNoName),
+                expected_item!(9, UnknownLong, "bxs"),
+                expected_item!(10, UnknownLong, "-foo"),
+                expected_item!(11, AmbiguousLong, "f"),
+                expected_item!(12, Long, "foo"),
+                expected_item!(13, Long, "foobar"),
+                expected_item!(14, EarlyTerminator),
+                expected_item!(15, NonOption, "-help"),
+            ]
         );
+        let mut opts = get_base();
+        opts.set_mode(OptionsMode::Alternate);
+        check_result(&Actual(gong::process(&args, &opts)), &expected);
     }
 
     /// Check unexpected and missing data
     #[test]
     fn data_basic() {
+        let args = arg_list!("-foo=abc", "-foo=", "-hah");
+        let expected = expected!(
+            error: true,
+            warn: true,
+            vec![
+                expected_item!(0, LongWithUnexpectedData, "foo", "abc"),
+                expected_item!(1, Long, "foo"),
+                expected_item!(2, LongMissingData, "hah"),
+            ]
+        );
         let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
-        let args = arg_list!("-foo=abc", "-foo=", "-hah");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: true,
-                items: vec![
-                    ItemClass::Warn(ItemW::LongWithUnexpectedData { i: 0, n: "foo", d: "abc" }),
-                    ItemClass::Ok(Item::Long(1, "foo")),
-                    ItemClass::Err(ItemE::LongMissingData(2, "hah")),
-                ],
-            }
-        );
+        check_result(&Actual(gong::process(&args, &opts)), &expected);
     }
 
     /// Test argument data that looks like early terminator
     #[test]
     fn data_looking_like_early_term() {
+        let args = arg_list!("-hah=--", "-hah", "--");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
+                expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
+            ]
+        );
         let mut opts = get_base();
         opts.set_mode(OptionsMode::Alternate);
-        let args = arg_list!("-hah=--", "-hah", "--");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "--", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 1, n: "hah", d: "--", l: DataLocation::NextArg }),
-                ],
-            }
-        );
+        check_result(&Actual(gong::process(&args, &opts)), &expected);
     }
 }

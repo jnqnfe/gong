@@ -15,11 +15,13 @@
 #[macro_use]
 extern crate gong;
 
+#[allow(unused_macros)]
 #[allow(dead_code)] //Mod shared across test crates
 #[macro_use]
 mod common;
 
 use gong::*;
+use common::{Actual, Expected, check_result};
 
 /* Dash ('-') is an invalid short option (clashes with early terminator if it were given on its own
  * (`--`), and would be misinterpreted as a long option if given as the first in a short option set
@@ -64,24 +66,22 @@ fn is_valid_short_dash() {
 /// is a dash ('-').
 #[test]
 fn short_dash_bypass() {
+    let args = arg_list!("--abc", "-a-bc", "--");
+    let expected = expected!(
+        error: false,
+        warn: true,
+        vec![
+            expected_item!(0, UnknownLong, "abc"),
+            expected_item!(1, UnknownShort, 'a'),
+            expected_item!(1, Short, '-'),
+            expected_item!(1, UnknownShort, 'b'),
+            expected_item!(1, UnknownShort, 'c'),
+            expected_item!(2, EarlyTerminator),
+        ]
+    );
     let opts = gong_option_set!(vec![], vec![ gong_shortopt!('-') ]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
-    let args = arg_list!("--abc", "-a-bc", "--");
-    let results = gong::process(&args, &opts);
-    assert_eq!(results,
-        Results {
-            error: false,
-            warn: true,
-            items: vec![
-                ItemClass::Warn(ItemW::UnknownLong(0, "abc")),
-                ItemClass::Warn(ItemW::UnknownShort(1, 'a')),
-                ItemClass::Ok(Item::Short(1, '-')),
-                ItemClass::Warn(ItemW::UnknownShort(1, 'b')),
-                ItemClass::Warn(ItemW::UnknownShort(1, 'c')),
-                ItemClass::Ok(Item::EarlyTerminator(2)),
-            ],
-        }
-    );
+    check_result(&Actual(gong::process(&args, &opts)), &expected);
 }
 
 /// Check `add_long` rejects empty string
@@ -158,23 +158,21 @@ fn is_valid_long_with_equals() {
 /// equals ('=').
 #[test]
 fn long_with_equals_bypass() {
+    let args = arg_list!("--a", "--a=b");
+    let expected = expected!(
+        error: false,
+        warn: true,
+        vec![
+            // If option "a=b" was accepted as a valid option, "--a" would match as an
+            // abbreviation. "--a=b" would be split into "a" being the name and "b" as the data,
+            // and "a" matches as an abbreviation.
+            expected_item!(0, Long, "a=b"),
+            expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
+        ]
+    );
     let opts = gong_option_set!(vec![ gong_longopt!("a=b") ], vec![]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
-    let args = arg_list!("--a", "--a=b");
-    let results = gong::process(&args, &opts);
-    assert_eq!(results,
-        Results {
-            error: false,
-            warn: true,
-            items: vec![
-                // If option "a=b" was accepted as a valid option, "--a" would match as an
-                // abbreviation. "--a=b" would be split into "a" being the name and "b" as the data,
-                // and "a" matches as an abbreviation.
-                ItemClass::Ok(Item::Long(0, "a=b")),
-                ItemClass::Warn(ItemW::LongWithUnexpectedData { i: 1, n: "a=b", d: "b" }),
-            ],
-        }
-    );
+    check_result(&Actual(gong::process(&args, &opts)), &expected);
 }
 
 /* Option sets should not contain duplicates.

@@ -13,6 +13,7 @@
 #[macro_use]
 extern crate gong;
 
+#[allow(unused_macros)]
 #[allow(dead_code)] //Mod shared across test crates
 #[macro_use]
 mod common;
