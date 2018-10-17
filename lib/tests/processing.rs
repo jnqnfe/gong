@@ -282,31 +282,6 @@ mod abbreviations {
 mod data {
     use super::*;
 
-    /// Test some misc. data handling.
-    ///
-    /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
-    /// data; and recognised with empty unexpected data.
-    #[test]
-    fn basic() {
-        let opts = get_base();
-        let args = arg_list!("--xx=yy", "--tt=", "-x", "--foo=bar", "--foo=", "-x");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: true,
-                items: vec![
-                    ItemClass::Warn(ItemW::UnknownLong(0, "xx")),
-                    ItemClass::Warn(ItemW::UnknownLong(1, "tt")),
-                    ItemClass::Ok(Item::Short(2, 'x')),
-                    ItemClass::Warn(ItemW::LongWithUnexpectedData { i: 3, n: "foo", d: "bar" }),
-                    ItemClass::Ok(Item::Long(4, "foo")),
-                    ItemClass::Ok(Item::Short(5, 'x')),
-                ],
-            }
-        );
-    }
-
     /// Test option with expected data arg for long options
     #[test]
     fn arg_placement_long() {
@@ -403,6 +378,31 @@ mod data {
                     ItemClass::Ok(Item::Short(0, 'x')),
                     ItemClass::Warn(ItemW::UnknownShort(0, 's')),
                     ItemClass::Err(ItemE::ShortMissingData(0, 'o')),
+                ],
+            }
+        );
+    }
+
+    /// Test some misc. data handling.
+    ///
+    /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
+    /// data; and recognised with empty unexpected data.
+    #[test]
+    fn misc() {
+        let opts = get_base();
+        let args = arg_list!("--xx=yy", "--tt=", "-x", "--foo=bar", "--foo=", "-x");
+        let results = gong::process(&args, &opts);
+        assert_eq!(results,
+            Results {
+                error: false,
+                warn: true,
+                items: vec![
+                    ItemClass::Warn(ItemW::UnknownLong(0, "xx")),
+                    ItemClass::Warn(ItemW::UnknownLong(1, "tt")),
+                    ItemClass::Ok(Item::Short(2, 'x')),
+                    ItemClass::Warn(ItemW::LongWithUnexpectedData { i: 3, n: "foo", d: "bar" }),
+                    ItemClass::Ok(Item::Long(4, "foo")),
+                    ItemClass::Ok(Item::Short(5, 'x')),
                 ],
             }
         );
