@@ -53,12 +53,13 @@ fn basic() {
     );
 }
 
-/// Test that only the first early terminator is recognised as such, additional ones are interpreted
-/// as non-options.
+/// Test that everything after an early terminator is taken to be a non-option, inclucing any
+/// further early terminators.
 #[test]
 fn early_term() {
     let opts = get_base();
-    let args = arg_list!("--foo", "--", "--help", "--", "-o");
+    let args = arg_list!("--foo", "--", "--help", "--", "-o", "--foo", "blah", "--bb", "-h",
+        "--hah", "--hah=", "--", "--hah=a", "-oa", "-b");
     let results = gong::process(&args, &opts);
     assert_eq!(results,
         Results {
@@ -70,6 +71,16 @@ fn early_term() {
                 ItemClass::Ok(Item::NonOption(2, "--help")),
                 ItemClass::Ok(Item::NonOption(3, "--")),
                 ItemClass::Ok(Item::NonOption(4, "-o")),
+                ItemClass::Ok(Item::NonOption(5, "--foo")),
+                ItemClass::Ok(Item::NonOption(6, "blah")),
+                ItemClass::Ok(Item::NonOption(7, "--bb")),
+                ItemClass::Ok(Item::NonOption(8, "-h")),
+                ItemClass::Ok(Item::NonOption(9, "--hah")),
+                ItemClass::Ok(Item::NonOption(10, "--hah=")),
+                ItemClass::Ok(Item::NonOption(11, "--")),
+                ItemClass::Ok(Item::NonOption(12, "--hah=a")),
+                ItemClass::Ok(Item::NonOption(13, "-oa")),
+                ItemClass::Ok(Item::NonOption(14, "-b")),
             ],
         }
     );
