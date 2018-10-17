@@ -23,6 +23,9 @@ macro_rules! arg_list {
     ( $($e:expr),+ ) => {
         vec![$(String::from($e)),+]
     };
+    ( $($e:expr,)+ ) => {
+        vec![$(String::from($e)),+]
+    };
 }
 
 // NB: These are not publically accessible from the crate, so we duplicate them. We do have a test
