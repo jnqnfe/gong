@@ -304,22 +304,52 @@ mod data {
         );
     }
 
+    /// Test calculation of whether or not short-opt taking data is the last character in the short
+    /// option set argument. This is done explicitly as its own test, even though happening to also
+    /// be covered by the general arg-placement tests, for the purpose of catching off-by-one
+    /// position tracking issues like that fixed in version 1.0.3.
+    #[test]
+    fn arg_placement_short_calc() {
+        let opts = get_base();
+        let args = arg_list!("-oa", "g");
+        let results = gong::process(&args, &opts);
+        assert_eq!(results,
+            Results {
+                error: false,
+                warn: false,
+                items: vec![
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 0, c: 'o', d: "a", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::NonOption(1, "g")),
+                ],
+            }
+        );
+    }
+
     /// Test option with expected data arg, provided in next argument for short options
     #[test]
     fn arg_placement_short_next() {
         let opts = get_base();
-        let args = arg_list!("-bxso", "def");
+        let args = arg_list!("-o", "def", "-bo", "def", "-bxo", "def", "-xao", "def");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
                 error: false,
                 warn: true,
                 items: vec![
-                    ItemClass::Warn(ItemW::UnknownShort(0, 'b')),
-                    ItemClass::Ok(Item::Short(0, 'x')),
-                    ItemClass::Warn(ItemW::UnknownShort(0, 's')),
                     ItemClass::Ok(Item::ShortWithData {
                         i: 0, c: 'o', d: "def", l: DataLocation::NextArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(2, 'b')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 2, c: 'o', d: "def", l: DataLocation::NextArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(4, 'b')),
+                    ItemClass::Ok(Item::Short(4, 'x')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 4, c: 'o', d: "def", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::Short(6, 'x')),
+                    ItemClass::Warn(ItemW::UnknownShort(6, 'a')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 6, c: 'o', d: "def", l: DataLocation::NextArg }),
                 ],
             }
         );
@@ -329,18 +359,43 @@ mod data {
     #[test]
     fn arg_placement_short_same() {
         let opts = get_base();
-        let args = arg_list!("-bsojx", "def");
+        let args = arg_list!("-oa", "-oabc", "-aob", "-aobcd", "-abcod", "-abcodef", "-xoabc",
+            "-oaxc", "-oxbc", "-oabx");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
                 error: false,
                 warn: true,
                 items: vec![
-                    ItemClass::Warn(ItemW::UnknownShort(0, 'b')),
-                    ItemClass::Warn(ItemW::UnknownShort(0, 's')),
                     ItemClass::Ok(Item::ShortWithData {
-                        i: 0, c: 'o', d: "jx", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::NonOption(1, "def")),
+                        i: 0, c: 'o', d: "a", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 1, c: 'o', d: "abc", l: DataLocation::SameArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(2, 'a')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 2, c: 'o', d: "b", l: DataLocation::SameArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(3, 'a')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 3, c: 'o', d: "bcd", l: DataLocation::SameArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(4, 'a')),
+                    ItemClass::Warn(ItemW::UnknownShort(4, 'b')),
+                    ItemClass::Warn(ItemW::UnknownShort(4, 'c')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 4, c: 'o', d: "d", l: DataLocation::SameArg }),
+                    ItemClass::Warn(ItemW::UnknownShort(5, 'a')),
+                    ItemClass::Warn(ItemW::UnknownShort(5, 'b')),
+                    ItemClass::Warn(ItemW::UnknownShort(5, 'c')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 5, c: 'o', d: "def", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::Short(6, 'x')),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 6, c: 'o', d: "abc", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 7, c: 'o', d: "axc", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 8, c: 'o', d: "xbc", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 9, c: 'o', d: "abx", l: DataLocation::SameArg }),
                 ],
             }
         );
@@ -434,7 +489,8 @@ mod data {
     #[test]
     fn containing_equals() {
         let opts = get_base();
-        let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help", "--blah=ggg", "-oa=b");
+        let args = arg_list!("--hah", "d=ef", "--hah", "=", "--hah=d=ef", "--hah==ef", "--help",
+            "--blah=ggg", "-oa=b", "-o=", "-o===o");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
@@ -444,11 +500,19 @@ mod data {
                     ItemClass::Ok(Item::LongWithData {
                         i: 0, n: "hah", d: "d=ef", l: DataLocation::NextArg }),
                     ItemClass::Ok(Item::LongWithData {
-                        i: 2, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(3, "help")),
-                    ItemClass::Warn(ItemW::UnknownLong(4, "blah")),
+                        i: 2, n: "hah", d: "=", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 4, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 5, n: "hah", d: "=ef", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::Long(6, "help")),
+                    ItemClass::Warn(ItemW::UnknownLong(7, "blah")),
                     ItemClass::Ok(Item::ShortWithData {
-                        i: 5, c: 'o', d: "a=b", l: DataLocation::SameArg }),
+                        i: 8, c: 'o', d: "a=b", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 9, c: 'o', d: "=", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 10, c: 'o', d: "===o", l: DataLocation::SameArg }),
                 ],
             }
         );
