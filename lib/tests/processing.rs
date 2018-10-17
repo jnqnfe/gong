@@ -412,7 +412,7 @@ mod data {
     #[test]
     fn same_arg_empty() {
         let opts = get_base();
-        let args = arg_list!("--hah=", "--help");
+        let args = arg_list!("--hah=", "--help", "--hah=", "help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
@@ -422,6 +422,9 @@ mod data {
                     ItemClass::Ok(Item::LongWithData {
                         i: 0, n: "hah", d: "", l: DataLocation::SameArg }),
                     ItemClass::Ok(Item::Long(1, "help")),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 2, n: "hah", d: "", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::NonOption(3, "help")),
                 ],
             }
         );
@@ -431,18 +434,21 @@ mod data {
     #[test]
     fn containing_equals() {
         let opts = get_base();
-        let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help");
+        let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help", "--blah=ggg", "-oa=b");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
                 error: false,
-                warn: false,
+                warn: true,
                 items: vec![
                     ItemClass::Ok(Item::LongWithData {
                         i: 0, n: "hah", d: "d=ef", l: DataLocation::NextArg }),
                     ItemClass::Ok(Item::LongWithData {
                         i: 2, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
                     ItemClass::Ok(Item::Long(3, "help")),
+                    ItemClass::Warn(ItemW::UnknownLong(4, "blah")),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 5, c: 'o', d: "a=b", l: DataLocation::SameArg }),
                 ],
             }
         );
@@ -452,7 +458,9 @@ mod data {
     #[test]
     fn looking_like_options() {
         let opts = get_base();
-        let args = arg_list!("--hah=--foo", "--hah", "--foo", "--hah=-n", "--hah", "-n");
+        let args = arg_list!("--hah=--foo", "--hah", "--foo", "--hah=--blah", "--hah", "--blah",
+            "--hah=-h", "--hah", "-h", "--hah=-n", "--hah", "-n", "-o-h", "-o", "-h", "-o-n", "-o",
+            "-n", "-o--foo", "-o", "--hah", "-o--blah", "-o", "--blah");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
@@ -464,9 +472,33 @@ mod data {
                     ItemClass::Ok(Item::LongWithData {
                         i: 1, n: "hah", d: "--foo", l: DataLocation::NextArg }),
                     ItemClass::Ok(Item::LongWithData {
-                        i: 3, n: "hah", d: "-n", l: DataLocation::SameArg }),
+                        i: 3, n: "hah", d: "--blah", l: DataLocation::SameArg }),
                     ItemClass::Ok(Item::LongWithData {
-                        i: 4, n: "hah", d: "-n", l: DataLocation::NextArg }),
+                        i: 4, n: "hah", d: "--blah", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 6, n: "hah", d: "-h", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 7, n: "hah", d: "-h", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 9, n: "hah", d: "-n", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 10, n: "hah", d: "-n", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 12, c: 'o', d: "-h", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 13, c: 'o', d: "-h", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 15, c: 'o', d: "-n", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 16, c: 'o', d: "-n", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 18, c: 'o', d: "--foo", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 19, c: 'o', d: "--hah", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 21, c: 'o', d: "--blah", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 22, c: 'o', d: "--blah", l: DataLocation::NextArg }),
                 ],
             }
         );
@@ -476,7 +508,7 @@ mod data {
     #[test]
     fn looking_like_early_term() {
         let opts = get_base();
-        let args = arg_list!("--hah=--", "--hah", "--");
+        let args = arg_list!("--hah=--", "--hah", "--", "-o", "--", "-o--");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
@@ -487,6 +519,10 @@ mod data {
                         i: 0, n: "hah", d: "--", l: DataLocation::SameArg }),
                     ItemClass::Ok(Item::LongWithData {
                         i: 1, n: "hah", d: "--", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 3, c: 'o', d: "--", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::ShortWithData {
+                        i: 5, c: 'o', d: "--", l: DataLocation::SameArg }),
                 ],
             }
         );
