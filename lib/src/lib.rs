@@ -775,12 +775,10 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
         // Short option(s)
         // Note, lone `-` argument is considered a non-option!
         if mode == OptionsMode::Standard && has_single_dash_prefix() {
-            let char_count = arg.chars().skip(1).count();
-            let mut bytes_processed = 1; //"-".len()
-            for (i, ch) in arg.char_indices().skip(1) {
+            let last_char_index = arg.chars().skip(1).count() - 1;
+            for (i, (byte_pos, ch)) in arg.char_indices().skip(1).enumerate() {
                 let mut match_found = false;
                 let mut expects_data = false;
-                bytes_processed += ch.len_utf8();
                 for candidate in &options.short {
                     if candidate.ch == ch {
                         match_found = true;
@@ -798,8 +796,9 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
                 }
                 else {
                     // If not last char, remaining chars are our data
-                    if (i + 1) < char_count {
-                        let data = arg.split_at(bytes_processed).1;
+                    if i < last_char_index {
+                        let next_char_byte_pos = byte_pos + ch.len_utf8();
+                        let data = arg.split_at(next_char_byte_pos).1;
                         results.add(Class::Ok(Item::ShortWithData {
                             i: index, c: ch, d: data, l: DataLocation::SameArg }));
                         break;

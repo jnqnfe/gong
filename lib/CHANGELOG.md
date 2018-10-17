@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * **BUGFIX:** Fixed a bug with correctly analysing "in-same-argument" short option data values.
  * Fixed a doc typo
 
 # 1.0.2 (October 9th, 2018)
