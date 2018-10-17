@@ -329,63 +329,6 @@ mod data {
         );
     }
 
-    /// Test option with expected data arg, declared to be in same argument, but empty
-    #[test]
-    fn same_arg_empty() {
-        let opts = get_base();
-        let args = arg_list!("--hah=", "--help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(1, "help")),
-                ],
-            }
-        );
-    }
-
-    /// Test option with expected data arg, with data containing '='
-    #[test]
-    fn containing_equals() {
-        let opts = get_base();
-        let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "d=ef", l: DataLocation::NextArg }),
-                    ItemClass::Ok(Item::LongWithData {
-                        i: 2, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(3, "help")),
-                ],
-            }
-        );
-    }
-
-    /// Test missing argument data for long option
-    #[test]
-    fn missing_long() {
-        let opts = get_base();
-        let args = arg_list!("--hah");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: true,
-                warn: false,
-                items: vec![
-                    ItemClass::Err(ItemE::LongMissingData(0, "hah")),
-                ],
-            }
-        );
-    }
-
     /// Test option with expected data arg, provided in next argument for short options
     #[test]
     fn arg_placement_short_next() {
@@ -428,6 +371,23 @@ mod data {
         );
     }
 
+    /// Test missing argument data for long option
+    #[test]
+    fn missing_long() {
+        let opts = get_base();
+        let args = arg_list!("--hah");
+        let results = gong::process(&args, &opts);
+        assert_eq!(results,
+            Results {
+                error: true,
+                warn: false,
+                items: vec![
+                    ItemClass::Err(ItemE::LongMissingData(0, "hah")),
+                ],
+            }
+        );
+    }
+
     /// Test missing argument data for short option
     #[test]
     fn missing_short() {
@@ -443,6 +403,46 @@ mod data {
                     ItemClass::Ok(Item::Short(0, 'x')),
                     ItemClass::Warn(ItemW::UnknownShort(0, 's')),
                     ItemClass::Err(ItemE::ShortMissingData(0, 'o')),
+                ],
+            }
+        );
+    }
+
+    /// Test option with expected data arg, declared to be in same argument, but empty
+    #[test]
+    fn same_arg_empty() {
+        let opts = get_base();
+        let args = arg_list!("--hah=", "--help");
+        let results = gong::process(&args, &opts);
+        assert_eq!(results,
+            Results {
+                error: false,
+                warn: false,
+                items: vec![
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 0, n: "hah", d: "", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::Long(1, "help")),
+                ],
+            }
+        );
+    }
+
+    /// Test option with expected data arg, with data containing '='
+    #[test]
+    fn containing_equals() {
+        let opts = get_base();
+        let args = arg_list!("--hah", "d=ef", "--hah=d=ef", "--help");
+        let results = gong::process(&args, &opts);
+        assert_eq!(results,
+            Results {
+                error: false,
+                warn: false,
+                items: vec![
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 0, n: "hah", d: "d=ef", l: DataLocation::NextArg }),
+                    ItemClass::Ok(Item::LongWithData {
+                        i: 2, n: "hah", d: "d=ef", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::Long(3, "help")),
                 ],
             }
         );
