@@ -626,6 +626,51 @@ mod data {
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
+
+    /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
+    /// position calculation whilst processing a short option set. Safe to assume it won't, but
+    /// may as well throw down a few samples.
+    #[test]
+    fn multibyte_utf8combi_short() {
+        let args = arg_list!(
+            "-❤\u{fe0f}oa",
+            "-❤o\u{030a}a",
+            "-❤oa\u{030a}",
+            "-❤\u{fe0f}o\u{030a}a",
+            "-\u{030a}❤oa",
+            "-x❤\u{fe0f}Ɛ\u{030a}b❤",
+            "-x\u{030a}❤\u{fe0f}Ɛ\u{030a}b❤\u{fe0f}",
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            vec![
+                expected_item!(0, Short, '❤'),
+                expected_item!(0, UnknownShort, '\u{fe0f}'),
+                expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+                expected_item!(1, Short, '❤'),
+                expected_item!(1, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
+                expected_item!(2, Short, '❤'),
+                expected_item!(2, ShortWithData, 'o', "a\u{030a}", DataLocation::SameArg),
+                expected_item!(3, Short, '❤'),
+                expected_item!(3, UnknownShort, '\u{fe0f}'),
+                expected_item!(3, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
+                expected_item!(4, Short, '\u{030a}'),
+                expected_item!(4, Short, '❤'),
+                expected_item!(4, ShortWithData, 'o', "a", DataLocation::SameArg),
+                expected_item!(5, Short, 'x'),
+                expected_item!(5, Short, '❤'),
+                expected_item!(5, UnknownShort, '\u{fe0f}'),
+                expected_item!(5, ShortWithData, 'Ɛ', "\u{030a}b❤", DataLocation::SameArg),
+                expected_item!(6, Short, 'x'),
+                expected_item!(6, Short, '\u{030a}'),
+                expected_item!(6, Short, '❤'),
+                expected_item!(6, UnknownShort, '\u{fe0f}'),
+                expected_item!(6, ShortWithData, 'Ɛ', "\u{030a}b❤\u{fe0f}", DataLocation::SameArg),
+            ]
+        );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
