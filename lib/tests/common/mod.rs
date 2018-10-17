@@ -48,14 +48,16 @@ pub fn get_base<'a>() -> Options<'a> {
             gong_longopt!("version"),
             gong_longopt!("foobar"),
             gong_longopt!("hah", true),
-            gong_longopt!("ábc"),        // Using a combinator char (accent)
+            gong_longopt!("ábc"),       // Using a combinator char (accent)
+            gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
         ],
         vec![
             gong_shortopt!('h'),
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
             gong_shortopt!('o', true),
-            gong_shortopt!('\u{030A}'),   // A lone combinator ("ring above")
+            gong_shortopt!('\u{030a}'), // A lone combinator ("ring above")
+            gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
         ],
         OptionsMode::Standard,
         true

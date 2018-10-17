@@ -302,6 +302,8 @@ mod data {
     /// option set argument. This is done explicitly as its own test, even though happening to also
     /// be covered by the general arg-placement tests, for the purpose of catching off-by-one
     /// position tracking issues like that fixed in version 1.0.3.
+    ///
+    /// Note: calculation checks involving multi-byte chars is done separately below.
     #[test]
     fn arg_placement_short_calc() {
         let args = arg_list!("-oa", "g");
@@ -559,6 +561,67 @@ mod data {
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
                 expected_item!(3, ShortWithData, 'o', "--", DataLocation::NextArg),
                 expected_item!(5, ShortWithData, 'o', "--", DataLocation::SameArg),
+            ]
+        );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
+    }
+
+    /// Test long option involving multi-byte chars, to ensure "in-arg" component splitting for
+    /// instance.
+    #[test]
+    fn multibyte_long() {
+        let args = arg_list!("--ƒƒ", "abc", "--ƒƒ=", "--ƒƒ=abc", "--ƒƒ=❤️", "--ƒƒ");
+        let expected = expected!(
+            error: true,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
+                expected_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
+                expected_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
+                expected_item!(4, LongWithData, "ƒƒ", "❤️", DataLocation::SameArg),
+                expected_item!(5, LongMissingData, "ƒƒ"),
+            ]
+        );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
+    }
+
+    /// Test short options involving multi-byte chars to check offset calculations in iterating
+    /// through a short option set and extracting "in-arg" data.
+    #[test]
+    fn multibyte_short() {
+        let args = arg_list!(
+            "-o", "❤",                // Single-byte option, multi-byte data char, next-arg
+            "-Ɛ", "❤",                // Multi-byte short options, otherwise same
+            "-o❤",                    // Single-byte option, multi-byte data char, same-arg
+            "-❤oa", "-❤o❤", "-❤o❤Ɛ",  // Variations of multi-byte chars around single-byte option
+            "-Ɛa", "-Ɛ❤",             // Multi-byte option, data same-arg
+            // Misc. additional combinations
+            "-❤Ɛa", "-❤Ɛ❤", "-❤Ɛa❤", "-x❤Ɛb❤",
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
+                expected_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
+                expected_item!(4, ShortWithData, 'o', "❤", DataLocation::SameArg),
+                expected_item!(5, Short, '❤'),
+                expected_item!(5, ShortWithData, 'o', "a", DataLocation::SameArg),
+                expected_item!(6, Short, '❤'),
+                expected_item!(6, ShortWithData, 'o', "❤", DataLocation::SameArg),
+                expected_item!(7, Short, '❤'),
+                expected_item!(7, ShortWithData, 'o', "❤Ɛ", DataLocation::SameArg),
+                expected_item!(8, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+                expected_item!(9, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+                expected_item!(10, Short, '❤'),
+                expected_item!(10, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+                expected_item!(11, Short, '❤'),
+                expected_item!(11, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+                expected_item!(12, Short, '❤'),
+                expected_item!(12, ShortWithData, 'Ɛ', "a❤", DataLocation::SameArg),
+                expected_item!(13, Short, 'x'),
+                expected_item!(13, Short, '❤'),
+                expected_item!(13, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
             ]
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);

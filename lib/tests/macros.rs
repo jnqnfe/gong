@@ -37,6 +37,7 @@ mod available_options {
                 LongOption { name: "foobar", expects_data: false },
                 LongOption { name: "hah", expects_data: true },
                 LongOption { name: "ábc", expects_data: false },
+                LongOption { name: "ƒƒ", expects_data: true },
             ],
             short: vec![
                 ShortOption { ch: 'h', expects_data: false },
@@ -44,6 +45,7 @@ mod available_options {
                 ShortOption { ch: 'x', expects_data: false },
                 ShortOption { ch: 'o', expects_data: true },
                 ShortOption { ch: '\u{030A}', expects_data: false },
+                ShortOption { ch: 'Ɛ', expects_data: true },
             ],
             mode: MODE_DEFAULT,
             allow_abbreviations: ABBR_SUP_DEFAULT,
@@ -71,7 +73,9 @@ mod available_options {
             .add_short('❤')
             .add_short('x')
             .add_short_data('o')
-            .add_short('\u{030A}');
+            .add_short('\u{030A}')
+            .add_long_data("ƒƒ")
+            .add_short_data('Ɛ');
 
         assert_eq!(macro_built, method_built);
     }
