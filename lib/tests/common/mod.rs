@@ -62,12 +62,18 @@ pub fn get_base<'a>() -> Options<'a> {
     )
 }
 
+/// Construct an `Expected`
 macro_rules! expected {
     ( error: $e:expr, warn: $w:expr, $items:expr ) => {
         Expected(Results { error: $e, warn: $w, items: $items, })
     };
 }
 
+/// Construct an `ItemClass` result item, for an `Expected`.
+///
+/// There is one matcher for each item type. The first param for each is the index to expect it to
+/// be found at in the analysis. The second param is the label of the unique type. The final params
+/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]]
 macro_rules! expected_item {
     ( $i:expr, NonOption, $s:expr ) => { ItemClass::Ok(Item::NonOption($i, $s)) };
     ( $i:expr, EarlyTerminator ) => { ItemClass::Ok(Item::EarlyTerminator($i)) };

@@ -64,9 +64,19 @@ fn is_valid_short_dash() {
 /// This situation is an invalid use case, the user should always validate their option set; this
 /// test verifies that things behave though as we expect if the set is invalid due to a short that
 /// is a dash ('-').
+///
+/// The expected behaviour is this: If the first char in an argument is a dash, then as long as the
+/// second char is not also a dash, then it will succeed in matching as a short option. If an
+/// attempt is made to use a dash in a short-opt set as the first one in the set, thus the argument
+/// starts with two dashes, it will then be taken to be either a long option or early terminator, as
+/// approriate, giving no consideration to the possibility of it being a short option.
 #[test]
 fn short_dash_bypass() {
-    let args = arg_list!("--abc", "-a-bc", "--");
+    let args = arg_list!(
+        "--abc",    // Can't use as a shortopt like this, will be interpretted as long opt
+        "-a-bc",    // Can use like this
+        "--",       // Can't use as a shortopt like this, will be interpretted as early terminator
+    );
     let expected = expected!(
         error: false,
         warn: true,
@@ -79,8 +89,11 @@ fn short_dash_bypass() {
             expected_item!(2, EarlyTerminator),
         ]
     );
+
+    // Using a custom **invalid** option set (short is '-')
     let opts = gong_option_set!(vec![], vec![ gong_shortopt!('-') ]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
+
     check_result(&Actual(gong::process(&args, &opts)), &expected);
 }
 
@@ -158,20 +171,25 @@ fn is_valid_long_with_equals() {
 /// equals ('=').
 #[test]
 fn long_with_equals_bypass() {
-    let args = arg_list!("--a", "--a=b");
+    let args = arg_list!(
+        "--a",      // This should match against the "a=b" invalid option as an abbreviation
+        "--a=b",    // Here, this is a long option with "in-arg" data, thus the name is "a", which
+                    // again therefore matched the invalid "a=b" option, as an abbreviation, but
+                    // carrying "b" as data.
+    );
     let expected = expected!(
         error: false,
         warn: true,
         vec![
-            // If option "a=b" was accepted as a valid option, "--a" would match as an
-            // abbreviation. "--a=b" would be split into "a" being the name and "b" as the data,
-            // and "a" matches as an abbreviation.
             expected_item!(0, Long, "a=b"),
             expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
         ]
     );
+
+    // Using a custom **invalid** option set (long name contains '=')
     let opts = gong_option_set!(vec![ gong_longopt!("a=b") ], vec![]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
+
     check_result(&Actual(gong::process(&args, &opts)), &expected);
 }
 

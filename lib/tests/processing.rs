@@ -26,8 +26,18 @@ use common::{get_base, Actual, Expected, check_result};
 /// Some general, basic argument handling
 #[test]
 fn basic() {
-    let args = arg_list!("abc", "-", "z", "--help", "--xxx", "---yy", "version", "-bxs", "ghi",
-        "--", "--foo", "jkl");
+    let args = arg_list!(
+        "abc", "-", "z",    // Non-options
+        "--help",           // Real long option
+        "--xxx",            // Non-real long option
+        "---yy",            // Extra dash should be taken as part of long option name
+        "version",          // Real long option, but no prefix, thus non-option
+        "-bxs",             // Short option set, two non-real, one real ('x')
+        "ghi",              // Non-option, containing real short option ('h')
+        "--",               // Early terminator
+        "--foo",            // Real option, taken as non-option due to early terminator
+        "jkl",              // Non-option either way
+    );
     let expected = expected!(
         error: false,
         warn: true,
@@ -55,8 +65,15 @@ fn basic() {
 /// further early terminators.
 #[test]
 fn early_term() {
-    let args = arg_list!("--foo", "--", "--help", "--", "-o", "--foo", "blah", "--bb", "-h",
-        "--hah", "--hah=", "--", "--hah=a", "-oa", "-b");
+    let args = arg_list!(
+        "--foo",    // Before the early terminator, should work as option
+        "--",       // Our early terminator
+        "--help",   // Should be affected, thus non-option
+        "--",       // Should be a non-option, **not** another early terminator
+        // A mix of various other items, some of which might be interpretted differently if it were
+        // not for the early terminator.
+        "-o", "--foo", "blah", "--bb", "-h", "--hah", "--hah=", "--", "--hah=a", "-oa", "-b",
+    );
     let expected = expected!(
         error: false,
         warn: false,
@@ -199,7 +216,7 @@ mod abbreviations {
     /// Test handling of abbreviated long options, with ambiguity
     #[test]
     fn ambigous() {
-        let args = arg_list!("--f");
+        let args = arg_list!("--f"); // Should match ambigously against both `foo` and `foobar`
         let expected = expected!(
             error: true,
             warn: false,
@@ -213,7 +230,12 @@ mod abbreviations {
     /// Test handling of abbreviated long options, without ambiguity
     #[test]
     fn unambigous() {
-        let args = arg_list!("--foo", "--foob");
+        let args = arg_list!(
+            "--foo",  // Of two suitable matches, `foo` and `foobar`, one is exact, thus is chosen.
+            "--foob", // Works as abbreviation of `foobar`. The fact that an option `foo` matches
+                      // the beginning of it makes no difference in anyway (no fautly inverted
+                      // logic).
+        );
         let expected = expected!(
             error: false,
             warn: false,
@@ -257,7 +279,12 @@ mod data {
     /// Test option with expected data arg for long options
     #[test]
     fn arg_placement_long() {
-        let args = arg_list!("--hah", "def", "--help", "--hah=def", "--help");
+        let args = arg_list!(
+            "--hah", "def", // In-next-arg
+            "--help",       // Random
+            "--hah=def",    // In-same-arg
+            "--help",       // Random
+        );
         let expected = expected!(
             error: false,
             warn: false,
@@ -292,7 +319,13 @@ mod data {
     /// Test option with expected data arg, provided in next argument for short options
     #[test]
     fn arg_placement_short_next() {
-        let args = arg_list!("-o", "def", "-bo", "def", "-bxo", "def", "-xao", "def");
+        let args = arg_list!(
+            // Here 'o' is valid and takes data, 'x' is valid and does not take data.
+            "-o", "def",    // Simple in-next-arg
+            "-bo", "def",   // Char(s) before 'o' should be correctly captured
+            "-bxo", "def",  // Even chars that are valid short opts
+            "-xao", "def",  // Different variation
+        );
         let expected = expected!(
             error: false,
             warn: true,
@@ -314,8 +347,18 @@ mod data {
     /// Test option with expected data arg, provided in same argument for short options
     #[test]
     fn arg_placement_short_same() {
-        let args = arg_list!("-oa", "-oabc", "-aob", "-aobcd", "-abcod", "-abcodef", "-xoabc",
-            "-oaxc", "-oxbc", "-oabx");
+        let args = arg_list!(
+            "-oa",         // 'o' here takes data; trying here various combinations of
+            "-oabc",       // different length, either side, with known and unknown other
+            "-aob",        // (non-data-taking) short options.
+            "-aobcd",
+            "-abcod",
+            "-abcodef",
+            "-xoabc",
+            "-oaxc",
+            "-oxbc",
+            "-oabx",
+        );
         let expected = expected!(
             error: false,
             warn: true,
@@ -381,7 +424,14 @@ mod data {
     /// data; and recognised with empty unexpected data.
     #[test]
     fn misc() {
-        let args = arg_list!("--xx=yy", "--tt=", "-x", "--foo=bar", "--foo=", "-x");
+        let args = arg_list!(
+            "--xx=yy",   // Unrecognised long option, with data, name component is "xx"
+            "--tt=",     // Unrecognised long option, with data, but data is empty string
+            "-x",        // Random
+            "--foo=bar", // Real long option, but does **not** take data, thus unexpected
+            "--foo=",    // Same, but empty string, so data component should be ignored
+            "-x",        // Random, ensures next-arg not taken as data for last one
+        );
         let expected = expected!(
             error: false,
             warn: true,
@@ -400,7 +450,12 @@ mod data {
     /// Test option with expected data arg, declared to be in same argument, but empty
     #[test]
     fn same_arg_empty() {
-        let args = arg_list!("--hah=", "--help", "--hah=", "help");
+        let args = arg_list!(
+            "--hah=",   // Real option, takes data, not given, should be empty string
+            "--help",   // Random real option, should not be take as data for previous
+            "--hah=",   // Same again...
+            "help",     // Non-option this time, also should not be taken as data
+        );
         let expected = expected!(
             error: false,
             warn: false,
@@ -414,11 +469,22 @@ mod data {
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
     }
 
-    /// Test option with expected data arg, with data containing '='
+    /// Test option with expected data arg, with data containing '='. An '=' in a long option arg
+    /// denotes an "in-arg" data value and thus it is broken up into name and data components. Here
+    /// we check that an '=' does not result in unwanted behaviour in order positions.
     #[test]
     fn containing_equals() {
-        let args = arg_list!("--hah", "d=ef", "--hah", "=", "--hah=d=ef", "--hah==ef", "--help",
-            "--blah=ggg", "-oa=b", "-o=", "-o===o");
+        let args = arg_list!(
+            "--hah", "d=ef",    // Should just be treated as part of the data
+            "--hah", "=",       // Should just be treated as data
+            "--hah=d=ef",       // First '=' separates name and data, other is just part of the data
+            "--hah==ef",        // Same here
+            "--help",           // Random
+            "--blah=ggg",       // Long option, but not a matching one, data should be ignored
+            "-oa=b",            // Short option, should be part of 'o' option's data
+            "-o=",              // Same
+            "-o===o",           // Same
+        );
         let expected = expected!(
             error: false,
             warn: true,
@@ -440,9 +506,17 @@ mod data {
     /// Test argument data that looks like options
     #[test]
     fn looking_like_options() {
-        let args = arg_list!("--hah=--foo", "--hah", "--foo", "--hah=--blah", "--hah", "--blah",
-            "--hah=-h", "--hah", "-h", "--hah=-n", "--hah", "-n", "-o-h", "-o", "-h", "-o-n", "-o",
-            "-n", "-o--foo", "-o", "--hah", "-o--blah", "-o", "--blah");
+        let args = arg_list!(
+            "--hah=--foo", "--hah", "--foo",   // With real long option, in-arg/next-arg
+            "--hah=--blah", "--hah", "--blah", // Not real
+            "--hah=-h", "--hah", "-h",         // With real short option
+            "--hah=-n", "--hah", "-n",         // Not real
+            "-o-h", "-o", "-h",                // Using short-opt, with real short opt
+            "-o-n", "-o", "-n",                // Same, but not real
+            "-o--foo",                         // Short using real long lookalike
+            "-o", "--hah",                     // Same, but long that take data
+            "-o--blah", "-o", "--blah",        // With not real
+        );
         let expected = expected!(
             error: false,
             warn: false,
@@ -471,7 +545,12 @@ mod data {
     /// Test argument data that looks like early terminator
     #[test]
     fn looking_like_early_term() {
-        let args = arg_list!("--hah=--", "--hah", "--", "-o", "--", "-o--");
+        let args = arg_list!(
+            "--hah=--",     // In long option's data, in-arg
+            "--hah", "--",  // Same, next-arg
+            "-o", "--",     // In short option's data, in-arg
+            "-o--",         // Same, next-arg
+        );
         let expected = expected!(
             error: false,
             warn: false,
@@ -499,8 +578,24 @@ mod alt_mode {
     /// Check a range of inputs
     #[test]
     fn basic() {
-        let args = arg_list!("abc", "-", "-help", "-hah=abc", "-hah", "cba", "-hah=", "-=", "-=abc",
-            "-bxs", "--foo", "-f", "-foo", "-foob", "--", "-help");
+        let args = arg_list!(
+            "abc",          // Non-opt
+            "-",            // Should be non-opt
+            "-help",        // Real option, via alt-mode single dash
+            "-hah=abc",     // Data-taking variant, in-arg
+            "-hah", "cba",  // Same, next-arg
+            "-hah=",        // Same, in-arg, data is empty string
+            "-=",           // Option with data arg, which is empty, also empty name
+            "-=abc",        // Similar, empty name, data provided though, which should be ignored
+            "-bxs",         // 'x' is a real short opt, but they should be ignored
+            "--foo",        // Real option, 'standard' mode syntax, the second dash should be taken
+                            // as being a part of the name.
+            "-f",           // Ambigous long option, matches both `foo` and `foobar`
+            "-foo",         // Matches both `foo` and `foobar`, but matches `foo` exactly
+            "-foob",        // Unique abbreviation to `foobar`
+            "--",           // Early term
+            "-help",        // Real option, should be non-opt though due to early terminator
+        );
         let expected = expected!(
             error: true,
             warn: true,
@@ -530,7 +625,11 @@ mod alt_mode {
     /// Check unexpected and missing data
     #[test]
     fn data_basic() {
-        let args = arg_list!("-foo=abc", "-foo=", "-hah");
+        let args = arg_list!(
+            "-foo=abc", // Real option, takes no data
+            "-foo=",    // Same, data is empty though so should just be ignored
+            "-hah",     // Real option, takes data, none provided
+        );
         let expected = expected!(
             error: true,
             warn: true,
@@ -548,7 +647,10 @@ mod alt_mode {
     /// Test argument data that looks like early terminator
     #[test]
     fn data_looking_like_early_term() {
-        let args = arg_list!("-hah=--", "-hah", "--");
+        let args = arg_list!(
+            "-hah=--",      // Real option, takes data, in-arg
+            "-hah", "--",   // Same, next-arg
+        );
         let expected = expected!(
             error: false,
             warn: false,
