@@ -34,6 +34,11 @@ fn basic() {
         "version",          // Real long option, but no prefix, thus non-option
         "-bxs",             // Short option set, two non-real, one real ('x')
         "ghi",              // Non-option, containing real short option ('h')
+        "-a-",              // Dash in short opt set should come out as unknown short opt (can not
+                            // be a real one as not allowed), so long as not the first in set, as
+                            // would then arg would then be interpretted as long option or early
+                            // terminator.
+        "-h-",              // Same, but with real short opt in set, which should not matter.
         "--",               // Early terminator
         "--foo",            // Real option, taken as non-option due to early terminator
         "jkl",              // Non-option either way
@@ -53,9 +58,13 @@ fn basic() {
             expected_item!(7, Short, 'x'),
             expected_item!(7, UnknownShort, 's'),
             expected_item!(8, NonOption, "ghi"),
-            expected_item!(9, EarlyTerminator),
-            expected_item!(10, NonOption, "--foo"),
-            expected_item!(11, NonOption, "jkl"),
+            expected_item!(9, UnknownShort, 'a'),
+            expected_item!(9, UnknownShort, '-'),
+            expected_item!(10, Short, 'h'),
+            expected_item!(10, UnknownShort, '-'),
+            expected_item!(11, EarlyTerminator),
+            expected_item!(12, NonOption, "--foo"),
+            expected_item!(13, NonOption, "jkl"),
         ]
     );
     check_result(&Actual(gong::process(&args, &get_base())), &expected);
@@ -423,7 +432,8 @@ mod data {
     /// Test some misc. data handling.
     ///
     /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
-    /// data; and recognised with empty unexpected data.
+    /// data; recognised with empty unexpected data; and that long option "component" splitting
+    /// based on the first equals character (`=`) has no effect on short option set processing.
     #[test]
     fn misc() {
         let args = arg_list!(
@@ -433,6 +443,10 @@ mod data {
             "--foo=bar", // Real long option, but does **not** take data, thus unexpected
             "--foo=",    // Same, but empty string, so data component should be ignored
             "-x",        // Random, ensures next-arg not taken as data for last one
+            "-=",        // Equals char valid in short opt set, long opt name/value component
+                         // splitting functionality should have no effect.
+            "-a=b",      // Try with other chars
+            "-o=b",      // Try with short option that takes data, which should consume it
         );
         let expected = expected!(
             error: false,
@@ -444,6 +458,11 @@ mod data {
                 expected_item!(3, LongWithUnexpectedData, "foo", "bar"),
                 expected_item!(4, Long, "foo"),
                 expected_item!(5, Short, 'x'),
+                expected_item!(6, UnknownShort, '='),
+                expected_item!(7, UnknownShort, 'a'),
+                expected_item!(7, UnknownShort, '='),
+                expected_item!(7, UnknownShort, 'b'),
+                expected_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
             ]
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
@@ -701,6 +720,7 @@ mod alt_mode {
             "-f",           // Ambigous long option, matches both `foo` and `foobar`
             "-foo",         // Matches both `foo` and `foobar`, but matches `foo` exactly
             "-foob",        // Unique abbreviation to `foobar`
+            "-❤",           // Check real short opt not taken as such
             "--",           // Early term
             "-help",        // Real option, should be non-opt though due to early terminator
         );
@@ -721,8 +741,9 @@ mod alt_mode {
                 expected_item!(11, AmbiguousLong, "f"),
                 expected_item!(12, Long, "foo"),
                 expected_item!(13, Long, "foobar"),
-                expected_item!(14, EarlyTerminator),
-                expected_item!(15, NonOption, "-help"),
+                expected_item!(14, UnknownLong, "❤"),
+                expected_item!(15, EarlyTerminator),
+                expected_item!(16, NonOption, "-help"),
             ]
         );
         let mut opts = get_base();
