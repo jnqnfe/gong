@@ -307,11 +307,11 @@ mod data {
         );
     }
 
-    /// Test option with expected data arg, provided in next argument
+    /// Test option with expected data arg for long options
     #[test]
-    fn next_arg() {
+    fn arg_placement_long() {
         let opts = get_base();
-        let args = arg_list!("--hah", "def", "--help");
+        let args = arg_list!("--hah", "def", "--help", "--hah=def", "--help");
         let results = gong::process(&args, &opts);
         assert_eq!(results,
             Results {
@@ -321,25 +321,9 @@ mod data {
                     ItemClass::Ok(Item::LongWithData {
                         i: 0, n: "hah", d: "def", l: DataLocation::NextArg }),
                     ItemClass::Ok(Item::Long(2, "help")),
-                ],
-            }
-        );
-    }
-
-    /// Test option with expected data arg, provided in same argument
-    #[test]
-    fn same_arg() {
-        let opts = get_base();
-        let args = arg_list!("--hah=def", "--help");
-        let results = gong::process(&args, &opts);
-        assert_eq!(results,
-            Results {
-                error: false,
-                warn: false,
-                items: vec![
                     ItemClass::Ok(Item::LongWithData {
-                        i: 0, n: "hah", d: "def", l: DataLocation::SameArg }),
-                    ItemClass::Ok(Item::Long(1, "help")),
+                        i: 3, n: "hah", d: "def", l: DataLocation::SameArg }),
+                    ItemClass::Ok(Item::Long(4, "help")),
                 ],
             }
         );
@@ -385,9 +369,9 @@ mod data {
         );
     }
 
-    /// Test missing argument data
+    /// Test missing argument data for long option
     #[test]
-    fn missing() {
+    fn missing_long() {
         let opts = get_base();
         let args = arg_list!("--hah");
         let results = gong::process(&args, &opts);
@@ -402,9 +386,9 @@ mod data {
         );
     }
 
-    /// Test argument data for short option, provided in next argument
+    /// Test option with expected data arg, provided in next argument for short options
     #[test]
-    fn short_next_arg() {
+    fn arg_placement_short_next() {
         let opts = get_base();
         let args = arg_list!("-bxso", "def");
         let results = gong::process(&args, &opts);
@@ -423,9 +407,9 @@ mod data {
         );
     }
 
-    /// Test argument data for short option, provided in same argument
+    /// Test option with expected data arg, provided in same argument for short options
     #[test]
-    fn short_same_arg() {
+    fn arg_placement_short_same() {
         let opts = get_base();
         let args = arg_list!("-bsojx", "def");
         let results = gong::process(&args, &opts);
@@ -446,7 +430,7 @@ mod data {
 
     /// Test missing argument data for short option
     #[test]
-    fn short_missing() {
+    fn missing_short() {
         let opts = get_base();
         let args = arg_list!("-bxso");
         let results = gong::process(&args, &opts);
