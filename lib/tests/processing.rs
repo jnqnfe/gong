@@ -123,6 +123,30 @@ fn long_no_name() {
     check_result(&Actual(gong::process(&args, &get_base())), &expected);
 }
 
+/// Test repetition - each instance should exist in the results in its own right. Note, data arg
+/// tests are done later in the data arg section.
+#[test]
+fn repetition() {
+    let args = arg_list!("--foo", "-h", "--version", "-h", "-x", "--blah", "--version", "-hhh");
+    let expected = expected!(
+        error: false,
+        warn: true,
+        vec![
+            expected_item!(0, Long, "foo"),
+            expected_item!(1, Short, 'h'),
+            expected_item!(2, Long, "version"),
+            expected_item!(3, Short, 'h'),
+            expected_item!(4, Short, 'x'),
+            expected_item!(5, UnknownLong, "blah"),
+            expected_item!(6, Long, "version"),
+            expected_item!(7, Short, 'h'),
+            expected_item!(7, Short, 'h'),
+            expected_item!(7, Short, 'h'),
+        ]
+    );
+    check_result(&Actual(gong::process(&args, &get_base())), &expected);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Utf-8 character handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -463,6 +487,24 @@ mod data {
                 expected_item!(7, UnknownShort, '='),
                 expected_item!(7, UnknownShort, 'b'),
                 expected_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
+            ]
+        );
+        check_result(&Actual(gong::process(&args, &get_base())), &expected);
+    }
+
+    /// Test repetition - each instance should exist in the results in its own right. Note, basic
+    /// non-data-arg related tests done separately already.
+    #[test]
+    fn repetition() {
+        let args = arg_list!("--hah=a", "-o", "s", "--hah=b", "-obc");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
+                expected_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
+                expected_item!(3, LongWithData, "hah", "b", DataLocation::SameArg),
+                expected_item!(4, ShortWithData, 'o', "bc", DataLocation::SameArg),
             ]
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
