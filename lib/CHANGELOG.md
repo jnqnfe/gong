@@ -10,6 +10,7 @@
     - Significantly re-edited much of it
     - Split it up into `docs` sub-modules
  * Improved the test suite:
+    - Expanded the suite with an even broader set of tests.
     - Moved almost all of the tests out into the `tests` directory such that they will be run
       outside of the crate as a "user" of the public API, and split apart into multiple files.
     - Replaced the internal test macro that defined the common base set of test options used by most
@@ -18,6 +19,7 @@
       rather than the `add_*` methods, which avoids the validation they perform, though we still
       (currently) have inefficiency of pushing items onto the `Vec`, as we have no static option set
       capability yet.
+    - Tidied up the code significantly.
  * Implemented `Default` for `Options`
  * Split lib code into multiple files (internal change only, the mods are hidden)
  * Enabled testing for more doc examples
