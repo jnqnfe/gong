@@ -31,6 +31,22 @@ pub mod analysis;
 pub mod options;
 mod processor;
 
-pub use analysis::*;
-pub use options::*;
 pub use processor::*;
+
+/* -- Deprecated stuff -- */
+/* Note, not possible to use a type for enum aliasing to mark deprecated, have to do without */
+
+// Does marking the `pub use` for re-exporting enums to old location with deprecated work?
+#[deprecated(note = "access from the `analysis` mod")]
+pub use analysis::{ItemClass, Item, ItemE, ItemW, DataLocation};
+#[deprecated(note = "access from the `options` mod")]
+pub use options::{OptionsMode};
+
+#[deprecated(note = "now called `analysis::Analysis`")]
+pub type Results<'a> = analysis::Analysis<'a>;
+#[deprecated(note = "moved to `options::Options`")]
+pub type Options<'a> = options::Options<'a>;
+#[deprecated(note = "moved to `options::LongOption`")]
+pub type LongOption<'a> = options::LongOption<'a>;
+#[deprecated(note = "moved to `options::ShortOption`")]
+pub type ShortOption = options::ShortOption;

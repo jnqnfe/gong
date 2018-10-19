@@ -10,9 +10,6 @@
 
 //! Analysis components
 
-#[deprecated(note = "now called `Analysis`")]
-pub type Results<'a> = Analysis<'a>;
-
 /// Analysis of processing arguments against an option set
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Analysis<'a> {
