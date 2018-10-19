@@ -134,11 +134,11 @@
 //! that accompanies it.
 //!
 //! [`process`]: ../../fn.process.html
-//! [`ItemClass`]: ../../enum.ItemClass.html
-//! [`Item`]: ../../enum.Item.html
-//! [`ItemW`]: ../../enum.ItemW.html
-//! [`ItemE`]: ../../enum.ItemE.html
-//! [`Analysis`]: ../../struct.analysis.html
-//! [`Options::is_valid`]: ../../struct.Options.html#method.is_valid
-//! [`Options::set_mode`]: ../../struct.Options.html#method.set_mode
-//! [`Options::set_allow_abbreviations`]: ../../struct.Options.html#method.set_allow_abbreviations
+//! [`ItemClass`]: ../../analysis/enum.ItemClass.html
+//! [`Item`]: ../../analysis/enum.Item.html
+//! [`ItemW`]: ../../analysis/enum.ItemW.html
+//! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`Options::is_valid`]: ../../options/struct.Options.html#method.is_valid
+//! [`Options::set_mode`]: ../../options/struct.Options.html#method.set_mode
+//! [`Options::set_allow_abbreviations`]: ../../options/struct.Options.html#method.set_allow_abbreviations

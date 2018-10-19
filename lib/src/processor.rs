@@ -19,7 +19,7 @@ use super::analysis::*;
 /// to object lifetimes.
 ///
 /// Expects available `options` data to have already been validated. (See
-/// [`Options::is_valid`](struct.Options.html#method.is_valid)).
+/// [`Options::is_valid`](options/struct.Options.html#method.is_valid)).
 pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
     where T: AsRef<str>
 {
