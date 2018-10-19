@@ -15,7 +15,7 @@ extern crate gong;
 #[allow(dead_code)] //Mod shared across test crates
 mod common;
 
-use gong::*;
+use gong::options::*;
 use common::*;
 
 /// Tests of "available options set" construction macros

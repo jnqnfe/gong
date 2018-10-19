@@ -18,7 +18,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::*;
+use gong::options::*;
 use common::get_base;
 
 /// Checks defaults in test environment match those within lib (the constants are not part of the

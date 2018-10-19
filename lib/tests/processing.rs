@@ -16,7 +16,8 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::*;
+use gong::analysis::*;
+use gong::options::*;
 use common::{get_base, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

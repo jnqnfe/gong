@@ -11,7 +11,8 @@
 //! This file holds no tests itself, it is used as a submodule for other test files, providing a
 //! common base set of options to work with.
 
-use gong::*;
+use gong::analysis::Analysis;
+use gong::options::*;
 
 //TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
 /// Used for cleaner creation of set of test arguments

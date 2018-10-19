@@ -20,7 +20,8 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::*;
+use gong::analysis::*;
+use gong::options::*;
 use common::{Actual, Expected, check_result};
 
 /* Dash ('-') is an invalid short option (clashes with early terminator if it were given on its own
