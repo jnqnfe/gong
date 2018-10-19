@@ -10,9 +10,13 @@ prints analysis of given command line arguments.
 """
 publish = false
 
+[[bin]]
+name = "gong-playground"
+path = "./main.rs"
+
 [dependencies]
 gong = { path = "../lib" }
-libc = "0.2"
+term-ctrl = { git = "https://github.com/jnqnfe/term-ctrl-rust", tag = "v0.1" }
 
 [features]
 default = []

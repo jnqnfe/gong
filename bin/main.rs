@@ -19,11 +19,9 @@
 #![doc(html_no_source)]
 
 extern crate gong;
-extern crate libc;
+extern crate term_ctrl;
 
-mod console;
-
-use console as con;
+use term_ctrl as con;
 use gong::{Options, ItemClass, Item, ItemW, ItemE, DataLocation};
 #[cfg(feature = "alt_mode")]
 use gong::OptionsMode;
