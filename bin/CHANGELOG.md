@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.0 (October 19th, 2018)
 
  * Significantly cleaned up the code
  * Moved the `console` mod stuff out into separate crate

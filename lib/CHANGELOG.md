@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.0 (October 19th, 2018)
 
  * Split lib code into multiple modules. Everything is still available at the top level for now for
    compatability. It is recommended to access things from the sub-modules from now on though, as
