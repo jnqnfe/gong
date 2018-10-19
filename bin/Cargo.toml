@@ -13,6 +13,7 @@ publish = false
 [[bin]]
 name = "gong-playground"
 path = "./main.rs"
+doc = false
 
 [dependencies]
 gong = { path = "../lib" }
