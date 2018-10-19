@@ -25,7 +25,8 @@ extern crate gong;
 extern crate term_ctrl;
 
 use term_ctrl::predefined::*;
-use gong::{ItemClass, Item, ItemW, ItemE, DataLocation, OptionsMode};
+use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
+use gong::options::OptionsMode;
 
 const COL_HEADER: &str = color1_bold::MAGENTA;
 const COL_O: &str = color1::GREEN;  //okay
