@@ -10,6 +10,9 @@
 
 //! Shared stuff
 
+pub mod base;
+pub use self::base::get_base;
+
 use gong::analysis::Analysis;
 use gong::options::*;
 
@@ -36,34 +39,6 @@ macro_rules! arg_list {
     ( $($e:expr,)+ ) => {
         vec![$(String::from($e)),+]
     };
-}
-
-/// Provides a base set of options for common usage in tests
-pub fn get_base<'a>() -> Options<'a> {
-    // Note, the macro tests were written with the expectation that this function is constructing
-    // this base set using the macros. Thus if this were changed (though there is no conceivable
-    // reason to) to not use the macros, that needs addressing.
-    gong_option_set!(
-        vec![
-            gong_longopt!("help"),
-            gong_longopt!("foo"),
-            gong_longopt!("version"),
-            gong_longopt!("foobar"),
-            gong_longopt!("hah", true),
-            gong_longopt!("ábc"),       // Using a combinator char (accent)
-            gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
-        ],
-        vec![
-            gong_shortopt!('h'),
-            gong_shortopt!('❤'),
-            gong_shortopt!('x'),
-            gong_shortopt!('o', true),
-            gong_shortopt!('\u{030a}'), // A lone combinator ("ring above")
-            gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
-        ],
-        OptionsMode::Standard,
-        true
-    )
 }
 
 /// Construct an `Expected`
