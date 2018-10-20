@@ -1,3 +1,8 @@
+# 1.1.1 (October 20th, 2018)
+
+ * Fixed some broken links in documentation
+ * Minor tweaks not worth documenting
+
 # 1.1.0 (October 19th, 2018)
 
  * Split lib code into multiple modules. Everything is still available at the top level for now for
