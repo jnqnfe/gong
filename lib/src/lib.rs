@@ -28,10 +28,10 @@ pub mod docs;
 #[macro_use]
 mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
 pub mod analysis;
+mod engine;
 pub mod options;
-mod processor;
 
-pub use processor::*;
+pub use engine::*;
 
 /* -- Deprecated stuff -- */
 /* Note, not possible to use a type for enum aliasing to mark deprecated, have to do without */
