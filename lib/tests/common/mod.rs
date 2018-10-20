@@ -8,11 +8,20 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! This file holds no tests itself, it is used as a submodule for other test files, providing a
-//! common base set of options to work with.
+//! Shared stuff
 
 use gong::analysis::Analysis;
 use gong::options::*;
+
+// NB: These are not publically accessible from the crate, so we duplicate them. We do have a test
+// to ensure they are correct however!
+pub const ABBR_SUP_DEFAULT: bool = true;
+pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
+
+/// Wrapper for actual analysis result
+#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a>);
+/// Wrapper for expected result, for comparison
+#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
 
 //TODO: now that processing accepts both `String` and `&str` type "available option" sets, cover both somehow
 /// Used for cleaner creation of set of test arguments
@@ -28,14 +37,6 @@ macro_rules! arg_list {
         vec![$(String::from($e)),+]
     };
 }
-
-// NB: These are not publically accessible from the crate, so we duplicate them. We do have a test
-// to ensure they are correct however!
-pub const ABBR_SUP_DEFAULT: bool = true;
-pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
-
-#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a>);
-#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
 
 /// Provides a base set of options for common usage in tests
 pub fn get_base<'a>() -> Options<'a> {
@@ -99,7 +100,7 @@ macro_rules! expected_item {
     ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ItemE::AmbiguousLong($i, $n)) };
 }
 
-/// Common central function for comparing actual results with expected.
+/// Common central function for comparing actual analysis result with expected.
 ///
 /// Benefits:
 ///
@@ -113,7 +114,7 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
         eprintln!("Expected:");
         pretty_print_results(&expected.0);
 
-        assert!(false, "actual results do not match expected!");
+        assert!(false, "analysis does not match what was expected!");
     }
 }
 
