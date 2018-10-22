@@ -93,9 +93,13 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                  * ambiguity. (See documentation). */
 
                 // Extract name, splitting from optional "in-same-arg" data value
-                let mut parts_iter = opt_string.splitn(2, '=');
-                let name = parts_iter.next().unwrap(); /* Must exist */
-                let data_included = parts_iter.next();
+                let (name, data_included) = match opt_string.find('=') {
+                    None => (opt_string, None),
+                    Some(i) => {
+                        let split = opt_string.split_at(i);
+                        (split.0, Some(&split.1[1..]))
+                    },
+                };
 
                 let name_char_count = name.chars().count();
 
