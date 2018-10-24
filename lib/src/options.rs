@@ -213,7 +213,7 @@ impl<'a> LongOption<'a> {
     }
 }
 
-impl<'a> ShortOption {
+impl ShortOption {
     /// Create a new short option descriptor
     ///
     /// Panics (debug only) if the given char is `-`.
