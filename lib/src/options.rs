@@ -207,7 +207,7 @@ impl<'a> LongOption<'a> {
     ///
     /// Panics (debug only) if the given name contains an `=` or is an empty string.
     fn new(name: &'a str, expects_data: bool) -> Self {
-        debug_assert!(name.len() >= 1, "Long option name cannot be an empty string!");
+        debug_assert!(!name.is_empty(), "Long option name cannot be an empty string!");
         debug_assert!(!name.contains('='), "Long option name cannot contain '='!");
         Self { name, expects_data, }
     }
