@@ -6,6 +6,8 @@
    new `OptionSet` holds slice references, and thus can be used for situations where dynamic
    "builder" style construction is not necessary, and allows creation of static option sets, which
    improves efficiency in many cases. Use of the old `Options` type name is now deprecated.
+ * Added the `gong_option_set_fixed` macro. While the existing `gong_option_set` macro produces
+   an `OptionSetEx`, this new macro produces an `OptionSet`.
  * Added a `process` method to `Options` as a cleaner alternative to calling the `process` function
    directly. Deprecated direct use of the `process` function.
 
