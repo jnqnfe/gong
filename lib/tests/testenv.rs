@@ -26,7 +26,7 @@ use common::get_base;
 #[test]
 fn check_constants() {
     let test = gong_option_set!(vec![], vec![], common::MODE_DEFAULT, common::ABBR_SUP_DEFAULT);
-    let cmp: Options = Default::default();
+    let cmp: OptionSetEx = Default::default();
     assert_eq!(test, cmp);
 }
 

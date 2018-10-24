@@ -10,10 +10,10 @@
 
 //! Base "available" option set used by most tests
 
-use gong::options::{Options, OptionsMode};
+use gong::options::{OptionSetEx, OptionsMode};
 
 /// Provides a base set of options for common usage in tests
-pub fn get_base<'a>() -> Options<'a> {
+pub fn get_base<'a>() -> OptionSetEx<'a> {
     // Note, the macro tests were written with the expectation that this function is constructing
     // this base set using the macros. Thus if this were changed (though there is no conceivable
     // reason to) to not use the macros, that needs addressing.

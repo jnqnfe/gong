@@ -29,7 +29,7 @@ mod available_options {
         let macro_built = common::get_base();
 
         // Re-build it by hand for comparison
-        let hand_built = Options {
+        let hand_built = OptionSetEx {
             long: vec![
                 LongOption { name: "help", expects_data: false },
                 LongOption { name: "foo", expects_data: false },
@@ -61,7 +61,7 @@ mod available_options {
         let macro_built = common::get_base();
 
         // Re-build it with methods for comparison
-        let mut method_built = Options::new(6, 5);
+        let mut method_built = OptionSetEx::new(6, 5);
         method_built
             .add_long("help")
             .add_short('h')
@@ -85,7 +85,7 @@ mod available_options {
     fn modes() {
         // With modes
         let opts = gong_option_set!(vec![], vec![], OptionsMode::Alternate, false);
-        let cmp = Options {
+        let cmp = OptionSetEx {
             long: vec![],
             short: vec![],
             mode: OptionsMode::Alternate,
@@ -95,7 +95,7 @@ mod available_options {
 
         // Without modes
         let opts = gong_option_set!(vec![], vec![]);
-        let cmp = Options {
+        let cmp = OptionSetEx {
             long: vec![],
             short: vec![],
             mode: MODE_DEFAULT,

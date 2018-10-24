@@ -83,7 +83,7 @@ fn set_types() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_short_dash() {
-    let mut opts = Options::new(0, 1);
+    let mut opts = OptionSetEx::new(0, 1);
     opts.add_short('-'); // Should panic here in debug mode!
 }
 
@@ -91,7 +91,7 @@ fn add_short_dash() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_short_data_dash() {
-    let mut opts = Options::new(0, 1);
+    let mut opts = OptionSetEx::new(0, 1);
     opts.add_short_data('-'); // Should panic here in debug mode!
 }
 
@@ -152,7 +152,7 @@ fn short_dash_bypass() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_long_no_name() {
-    let mut opts = Options::new(1, 0);
+    let mut opts = OptionSetEx::new(1, 0);
     opts.add_long(""); // Should panic here in debug mode!
 }
 
@@ -160,7 +160,7 @@ fn add_long_no_name() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_long_data_no_name() {
-    let mut opts = Options::new(1, 0);
+    let mut opts = OptionSetEx::new(1, 0);
     opts.add_long_data(""); // Should panic here in debug mode!
 }
 
@@ -188,7 +188,7 @@ fn is_valid_long_no_name() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_long_with_equals() {
-    let mut opts = Options::new(1, 0);
+    let mut opts = OptionSetEx::new(1, 0);
     opts.add_long("a=b"); // Should panic here in debug mode!
 }
 
@@ -196,7 +196,7 @@ fn add_long_with_equals() {
 #[test]
 #[cfg_attr(debug_assertions, should_panic)]
 fn add_long_data_with_equals() {
-    let mut opts = Options::new(1, 0);
+    let mut opts = OptionSetEx::new(1, 0);
     opts.add_long_data("a=b"); // Should panic here in debug mode!
 }
 
@@ -257,7 +257,7 @@ fn long_with_equals_bypass() {
 #[test]
 #[should_panic]
 fn short_dups() {
-    let mut opts = Options::new(0, 8);
+    let mut opts = OptionSetEx::new(0, 8);
     opts.add_short('a')
         .add_short('b')
         .add_short('c')
@@ -273,7 +273,7 @@ fn short_dups() {
 #[test]
 #[should_panic]
 fn long_dups() {
-    let mut opts = Options::new(8, 0);
+    let mut opts = OptionSetEx::new(8, 0);
     opts.add_long("aaa")
         .add_long("bbb")
         .add_long("ccc")
