@@ -99,9 +99,8 @@ fn add_short_data_dash() {
 #[test]
 #[should_panic]
 fn is_valid_short_dash() {
-    let opts = gong_option_set!(
-        vec![],
-        vec![
+    let opts = gong_option_set_fixed!(
+        [], [
             gong_shortopt!('a'),
             gong_shortopt!('-'),
             gong_shortopt!('b'),
@@ -142,7 +141,7 @@ fn short_dash_bypass() {
     );
 
     // Using a custom **invalid** option set (short is '-')
-    let opts = gong_option_set!(vec![], vec![ gong_shortopt!('-') ]);
+    let opts = gong_option_set_fixed!([], [ gong_shortopt!('-') ]);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
 
     check_result(&Actual(opts.process(&args)), &expected);
@@ -168,13 +167,12 @@ fn add_long_data_no_name() {
 #[test]
 #[should_panic]
 fn is_valid_long_no_name() {
-    let opts = gong_option_set!(
-        vec![
+    let opts = gong_option_set_fixed!(
+        [
             gong_longopt!("foo"),
             gong_longopt!(""),
             gong_longopt!("bar"),
-        ],
-        vec![]
+        ], []
     );
     assert!(opts.is_valid());
 }
@@ -204,13 +202,12 @@ fn add_long_data_with_equals() {
 #[test]
 #[should_panic]
 fn is_valid_long_with_equals() {
-    let opts = gong_option_set!(
-        vec![
+    let opts = gong_option_set_fixed!(
+        [
             gong_longopt!("foo"),
             gong_longopt!("a=b"),
             gong_longopt!("bar"),
-        ],
-        vec![]
+        ], []
     );
     assert!(opts.is_valid());
 }
@@ -238,7 +235,7 @@ fn long_with_equals_bypass() {
     );
 
     // Using a custom **invalid** option set (long name contains '=')
-    let opts = gong_option_set!(vec![ gong_longopt!("a=b") ], vec![]);
+    let opts = gong_option_set_fixed!([ gong_longopt!("a=b") ], []);
     //assert!(opts.is_valid()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
 
     check_result(&Actual(opts.process(&args)), &expected);

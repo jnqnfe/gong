@@ -47,7 +47,7 @@ mod base_set {
     #[test]
     #[should_panic]
     fn can_break() {
-        let mut opts = get_base();
+        let mut opts = get_base().to_extendible();
         opts.add_long("foo"); // Duplicate - should panic here in debug mode!
         assert!(opts.is_valid());
     }
@@ -55,7 +55,7 @@ mod base_set {
     /// Check valid in `alt` mode
     #[test]
     fn is_valid_altmode() {
-        let mut opts = get_base();
+        let mut opts = get_base().clone();
         opts.set_mode(OptionsMode::Alternate);
         assert!(opts.is_valid());
     }

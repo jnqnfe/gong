@@ -10,6 +10,7 @@
    an `OptionSetEx`, this new macro produces an `OptionSet`.
  * Added a `process` method to `Options` as a cleaner alternative to calling the `process` function
    directly. Deprecated direct use of the `process` function.
+ * Updated the test suite to use a static `OptionSet` for the base test set, for greater efficiency
 
 # 1.1.2 (October 26th, 2018)
 

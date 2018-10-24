@@ -844,7 +844,7 @@ mod alt_mode {
                 expected_item!(16, NonOption, "-help"),
             ]
         );
-        let mut opts = get_base();
+        let mut opts = get_base().clone();
         opts.set_mode(OptionsMode::Alternate);
         check_result(&Actual(opts.process(&args)), &expected);
     }
@@ -866,7 +866,7 @@ mod alt_mode {
                 expected_item!(2, LongMissingData, "hah"),
             ]
         );
-        let mut opts = get_base();
+        let mut opts = get_base().clone();
         opts.set_mode(OptionsMode::Alternate);
         check_result(&Actual(opts.process(&args)), &expected);
     }
@@ -886,7 +886,7 @@ mod alt_mode {
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
             ]
         );
-        let mut opts = get_base();
+        let mut opts = get_base().clone();
         opts.set_mode(OptionsMode::Alternate);
         check_result(&Actual(opts.process(&args)), &expected);
     }

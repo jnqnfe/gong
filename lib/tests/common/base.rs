@@ -10,32 +10,37 @@
 
 //! Base "available" option set used by most tests
 
-use gong::options::{OptionSetEx, OptionsMode};
+use gong::options::{OptionSet, OptionsMode};
+
+//TODO: sort out macro tests (both static and mutable)
+     // Note, the macro tests were written with the expectation that this function is constructing
+     // this base set using the macros. Thus if this were changed (though there is no conceivable
+     // reason to) to not use the macros, that needs addressing.
+
+/// A base set of options for common usage in tests
+static BASE_OPTS: OptionSet = gong_option_set_fixed!(
+    [
+        gong_longopt!("help"),
+        gong_longopt!("foo"),
+        gong_longopt!("version"),
+        gong_longopt!("foobar"),
+        gong_longopt!("hah", true),
+        gong_longopt!("ábc"),       // Using a combinator char (accent)
+        gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
+    ],
+    [
+        gong_shortopt!('h'),
+        gong_shortopt!('❤'),
+        gong_shortopt!('x'),
+        gong_shortopt!('o', true),
+        gong_shortopt!('\u{030a}'), // A lone combinator ("ring above")
+        gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
+    ],
+    OptionsMode::Standard,
+    true
+);
 
 /// Provides a base set of options for common usage in tests
-pub fn get_base<'a>() -> OptionSetEx<'a> {
-    // Note, the macro tests were written with the expectation that this function is constructing
-    // this base set using the macros. Thus if this were changed (though there is no conceivable
-    // reason to) to not use the macros, that needs addressing.
-    gong_option_set!(
-        vec![
-            gong_longopt!("help"),
-            gong_longopt!("foo"),
-            gong_longopt!("version"),
-            gong_longopt!("foobar"),
-            gong_longopt!("hah", true),
-            gong_longopt!("ábc"),       // Using a combinator char (accent)
-            gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
-        ],
-        vec![
-            gong_shortopt!('h'),
-            gong_shortopt!('❤'),
-            gong_shortopt!('x'),
-            gong_shortopt!('o', true),
-            gong_shortopt!('\u{030a}'), // A lone combinator ("ring above")
-            gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
-        ],
-        OptionsMode::Standard,
-        true
-    )
+pub fn get_base() -> &'static OptionSet<'static, 'static> {
+    &BASE_OPTS
 }

@@ -51,7 +51,7 @@ mod available_options {
             allow_abbreviations: ABBR_SUP_DEFAULT,
         };
 
-        assert_eq!(macro_built, hand_built);
+        assert_eq!(*macro_built, hand_built);
     }
 
     /// Compare macro-built with method-built "available options" set
@@ -77,7 +77,7 @@ mod available_options {
             .add_long_data("ƒƒ")
             .add_short_data('Ɛ');
 
-        assert_eq!(macro_built, method_built);
+        assert_eq!(*macro_built, method_built);
     }
 
     /// Check capability to specify with and without modes
