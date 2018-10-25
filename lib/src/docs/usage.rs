@@ -131,9 +131,6 @@
 //! let args: Vec<String> = std::env::args().skip(1).collect();
 //! ```
 //!
-//! **Note:** Of course you do not have to provide the real program args, you can provide any set of
-//! `String` objects, and you can even of course take the real set and modify it first if you wish.
-//!
 //! # Step #3: Processing
 //!
 //! With input args gathered and “available” option set constructed, now you’re ready for analysis.
