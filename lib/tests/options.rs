@@ -24,6 +24,36 @@ use gong::analysis::*;
 use gong::options::*;
 use common::{Actual, Expected, check_result, MODE_DEFAULT, ABBR_SUP_DEFAULT};
 
+/// Check basic valid construction methods
+#[test]
+fn basic() {
+    let mut opts = OptionSetEx::new(3, 3);
+    opts.add_short('h')
+        .add_short_data('o')
+        .add_existing_short(gong_shortopt!('a', false))
+        .add_long("foo")
+        .add_long_data("bar")
+        .add_existing_long(gong_longopt!("foobar", false));
+
+    let expected = OptionSetEx {
+        long: vec![
+            gong_longopt!("foo", false),
+            gong_longopt!("bar", true),
+            gong_longopt!("foobar", false),
+        ],
+        short: vec![
+            gong_shortopt!('h', false),
+            gong_shortopt!('o', true),
+            gong_shortopt!('a', false),
+        ],
+        mode: MODE_DEFAULT,
+        allow_abbreviations: ABBR_SUP_DEFAULT,
+    };
+
+    assert_eq!(opts, expected);
+    assert!(opts.validate().is_ok());
+}
+
 /// Check set type (`OptionSet`/`OptionSetEx`) conversion and comparison
 #[test]
 fn set_types() {
@@ -118,6 +148,12 @@ mod short_dash {
         opts.add_short_data('-'); // Should panic here in debug mode!
     }
 
+    #[test]
+    fn add_short_existing() {
+        let mut opts = OptionSetEx::new(0, 1);
+        opts.add_existing_short(gong_shortopt!('-', false)); // Should work, no validation done
+    }
+
     /// Bypassing add methods, check validation fails
     #[test]
     #[should_panic]
@@ -191,6 +227,12 @@ mod long_no_name {
         opts.add_long_data(""); // Should panic here in debug mode!
     }
 
+    #[test]
+    fn add_long_existing() {
+        let mut opts = OptionSetEx::new(1, 0);
+        opts.add_existing_long(gong_longopt!("", false)); // Should work, no validation done
+    }
+
     /// Bypassing add methods, check validation fails
     #[test]
     #[should_panic]
@@ -225,6 +267,12 @@ mod long_equals {
     fn add_long_data() {
         let mut opts = OptionSetEx::new(1, 0);
         opts.add_long_data("a=b"); // Should panic here in debug mode!
+    }
+
+    #[test]
+    fn add_long_existing() {
+        let mut opts = OptionSetEx::new(1, 0);
+        opts.add_existing_long(gong_longopt!("=", false)); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
