@@ -27,7 +27,7 @@ use common::{Actual, Expected, check_result, MODE_DEFAULT, ABBR_SUP_DEFAULT};
 /// Check basic valid construction methods
 #[test]
 fn basic() {
-    let mut opts = OptionSetEx::new(3, 3);
+    let mut opts = OptionSetEx::new();
     opts.add_short('h')
         .add_short_data('o')
         .add_existing_short(gong_shortopt!('a', false))
@@ -163,20 +163,20 @@ mod short_dash {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short() {
-        let mut opts = OptionSetEx::new(0, 1);
+        let mut opts = OptionSetEx::new();
         opts.add_short('-'); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short_data() {
-        let mut opts = OptionSetEx::new(0, 1);
+        let mut opts = OptionSetEx::new();
         opts.add_short_data('-'); // Should panic here in debug mode!
     }
 
     #[test]
     fn add_short_existing() {
-        let mut opts = OptionSetEx::new(0, 1);
+        let mut opts = OptionSetEx::new();
         opts.add_existing_short(gong_shortopt!('-', false)); // Should work, no validation done
     }
 
@@ -241,20 +241,20 @@ mod long_no_name {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_long(""); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long_data() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_long_data(""); // Should panic here in debug mode!
     }
 
     #[test]
     fn add_long_existing() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_existing_long(gong_longopt!("", false)); // Should work, no validation done
     }
 
@@ -282,20 +282,20 @@ mod long_equals {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_long("a=b"); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long_data() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_long_data("a=b"); // Should panic here in debug mode!
     }
 
     #[test]
     fn add_long_existing() {
-        let mut opts = OptionSetEx::new(1, 0);
+        let mut opts = OptionSetEx::new();
         opts.add_existing_long(gong_longopt!("=", false)); // Should work, no validation done
     }
 
@@ -353,7 +353,7 @@ mod duplicates {
 
     #[test]
     fn short() {
-        let mut opts = OptionSetEx::new(0, 8);
+        let mut opts = OptionSetEx::with_capacity(0, 8);
         opts.add_short('a')
             .add_short('b')
             .add_short('c')
@@ -371,7 +371,7 @@ mod duplicates {
 
     #[test]
     fn long() {
-        let mut opts = OptionSetEx::new(8, 0);
+        let mut opts = OptionSetEx::with_capacity(8, 0);
         opts.add_long("aaa")
             .add_long("bbb")
             .add_long("ccc")

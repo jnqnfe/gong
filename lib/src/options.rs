@@ -34,7 +34,7 @@ pub struct OptionSetEx<'a> {
 
 impl<'a> Default for OptionSetEx<'a> {
     fn default() -> Self {
-        OptionSetEx::new(0, 0)
+        OptionSetEx::new()
     }
 }
 
@@ -119,12 +119,22 @@ pub enum OptionFlaw<'a> {
 }
 
 impl<'a> OptionSetEx<'a> {
-    /// Create a new object. Takes estimations of the number of options to expect to be added (for
-    /// efficient vector allocation).
-    pub fn new(count_long: usize, count_short: usize) -> Self {
+    /// Create a new object
+    ///
+    /// You can alternatively use [`with_capacity`](#method.with_capacity) for more efficient `Vec`
+    /// creation.
+    pub fn new() -> Self {
+        Self::with_capacity(0, 0)
+    }
+
+    /// Create a new object, with size estimation
+    ///
+    /// Takes estimations of the number of options to expect to be added (for efficient vector
+    /// allocation).
+    pub fn with_capacity(long_count_est: usize, short_count_est: usize) -> Self {
         Self {
-            long: Vec::with_capacity(count_long),
-            short: Vec::with_capacity(count_short),
+            long: Vec::with_capacity(long_count_est),
+            short: Vec::with_capacity(short_count_est),
             mode: MODE_DEFAULT,
             allow_abbreviations: ABBR_SUP_DEFAULT,
         }

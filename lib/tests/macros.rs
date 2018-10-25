@@ -92,7 +92,7 @@ mod available_options {
         let macro_built = common::get_base();
 
         // Re-build it with methods for comparison
-        let mut method_built = OptionSetEx::new(6, 5);
+        let mut method_built = OptionSetEx::with_capacity(6, 5);
         method_built
             .add_long("help")
             .add_short('h')

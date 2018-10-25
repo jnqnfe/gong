@@ -40,7 +40,7 @@
 //! “Builder” style:
 //!
 //! ```rust
-//! let mut opts = gong::options::OptionSetEx::new(6, 4); //Estimate counts for efficiency
+//! let mut opts = gong::options::OptionSetEx::with_capacity(6, 4); // Optional estimation
 //! opts.add_long("help")
 //!     .add_short('h')
 //!     .add_long("foo")

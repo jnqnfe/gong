@@ -1,5 +1,7 @@
 # [unreleased]
 
+ * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
+   that takes the estimations instead.
  * Purged old deprecated stuff
 
 # 1.4.2 (December 15th, 2020)
