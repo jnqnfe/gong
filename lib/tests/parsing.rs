@@ -91,7 +91,7 @@ fn basic() {
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
-/// Enforce that option matching is case sensitive
+/// Verify that option matching is case sensitive
 #[test]
 fn case_sensitivity() {
     let args = arg_list!("--Foo", "-O");

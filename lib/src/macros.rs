@@ -8,20 +8,20 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-/// Construct an [`OptionSetEx`](options/struct.OptionSetEx.html)
+/// Constructs an [`OptionSetEx`](options/struct.OptionSetEx.html)
 ///
 /// Takes:
 ///
 /// 1. A `Vec` of long options
 /// 2. A `Vec` of short options
 ///
-/// Example:
+/// # Example
 ///
 /// ```rust
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_option_set!(vec![], vec![]);
+/// let _ = gong_option_set!(vec![ gong_longopt!("foo") ], vec![ gong_shortopt!('a') ]);
 /// # }
 /// ```
 #[macro_export]
@@ -32,20 +32,20 @@ macro_rules! gong_option_set {
     () => { gong_option_set!(vec![], vec![]) };
 }
 
-/// Construct an [`OptionSet`](options/struct.OptionSet.html)
+/// Constructs an [`OptionSet`](options/struct.OptionSet.html)
 ///
 /// Takes:
 ///
 /// 1. An array of long options
 /// 2. An array of short options
 ///
-/// Example:
+/// # Example
 ///
 /// ```rust
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_option_set_fixed!([], []);
+/// let _ = gong_option_set_fixed!([ gong_longopt!("foo") ], [ gong_shortopt!('a') ]);
 /// # }
 /// ```
 #[macro_export]
@@ -56,17 +56,17 @@ macro_rules! gong_option_set_fixed {
     () => { gong_option_set_fixed!([], []) };
 }
 
-/// Construct a [`CommandSet`](commands/struct.CommandSet.html)
+/// Constructs a [`CommandSet`](commands/struct.CommandSet.html)
 ///
 /// Takes an array of commands
 ///
-/// Example:
+/// # Example
 ///
 /// ```rust
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_command_set_fixed!([]);
+/// let _ = gong_command_set_fixed!([ gong_command!("foo") ]);
 /// # }
 /// ```
 #[macro_export]
@@ -77,12 +77,23 @@ macro_rules! gong_command_set_fixed {
     () => { gong_command_set_fixed!([]) };
 }
 
-/// Construct a [`LongOption`](options/struct.LongOption.html)
+/// Constructs a [`LongOption`](options/struct.LongOption.html)
 ///
 /// Takes:
 ///
 /// 1. Option name
 /// 2. Boolean indicating whether or not it takes a data arg (optional, defaults to false)
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let _ = gong_longopt!("foo");       // A simple option
+/// let _ = gong_longopt!("bar", true); // One that takes data
+/// # }
+/// ```
 #[macro_export]
 macro_rules! gong_longopt {
     ( $name:expr, $data:expr ) => {
@@ -91,21 +102,32 @@ macro_rules! gong_longopt {
     ( $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
 }
 
-/// Construct a [`ShortOption`](options/struct.ShortOption.html)
+/// Constructs a [`ShortOption`](options/struct.ShortOption.html)
 ///
 /// Takes:
 ///
 /// 1. Option char
 /// 2. Boolean indicating whether or not it takes a data arg (optional, defaults to false)
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let _ = gong_shortopt!('a');       // A simple option
+/// let _ = gong_shortopt!('b', true); // One that takes data
+/// # }
+/// ```
 #[macro_export]
 macro_rules! gong_shortopt {
     ( $ch:expr, $data:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: $data } };
     ( $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
 }
 
-/// Construct a [`Command`](commands/struct.Command.html)
+/// Constructs a [`Command`](commands/struct.Command.html)
 ///
-/// Examples:
+/// # Examples
 ///
 /// ```rust
 /// # #[macro_use]

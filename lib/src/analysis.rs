@@ -27,7 +27,7 @@ pub struct Analysis<'s, S: 's + ?Sized> {
 /// [`Item`], [`ItemW`] or [`ItemE`] variant which more specifically represents what was found.
 ///
 /// We use a class wrapper rather than grouping items into separate vectors because a single vector
-/// preserves order more simply. We break up item variants into groups for the advantages in
+/// preserves order more simply. We wrap items with this class indicator for the advantages in
 /// matching.
 ///
 /// All sub-variants hold a `usize` value to be used for indicating the index of the argument at
@@ -131,7 +131,7 @@ impl<'a, S: 'a + ?Sized> Clone for ItemW<'a, S> {
     }
 }
 
-/// Used to describe where data was located, for options that require data.
+/// Used to describe where data was located, for options that require data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DataLocation {
     /// Found in the same argument (after an `=` for long options, or the remaining characters for a

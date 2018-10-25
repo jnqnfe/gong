@@ -42,8 +42,7 @@
 //!    style construction, where a set is to be built dynamically at runtime.
 //!  - [`OptionSet`] is designed for describing a “fixed” set of options, using a slice reference
 //!    instead of `Vec`. It is primarily intended for achieving greater efficiency in designs not
-//!    requiring dynamic construction, where a set can be declared as a `static` (though is not
-//!    limited to use in `static`s).
+//!    requiring dynamic construction.
 //!
 //! An example of *option set* construction, “builder” style:
 //!
@@ -68,7 +67,8 @@
 //! ```rust
 //! # #[macro_use]
 //! # extern crate gong;
-//! static OPTS: gong::options::OptionSet = gong_option_set_fixed!(
+//! use gong::options::OptionSet;
+//! static OPTS: OptionSet = gong_option_set_fixed!(
 //!     [
 //!         gong_longopt!("help"),
 //!         gong_longopt!("foo"),
@@ -88,14 +88,18 @@
 //! # }
 //! ```
 //!
+//! You are encouraged to care about efficiency and thus use the latter model wherever possible. In
+//! some cases where a small amount of dynamic addition is needed, you might choose to start with an
+//! [`OptionSet`], and use [`OptionSet::to_extendible`].
+//!
 //! Notes:
 //!
-//!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
-//!    [`to_extendible`][`OptionSet::to_extendible`].
-//!  - An [`OptionSet`] can similarly be created from an [`OptionSetEx`] with
+//!  - An [`OptionSet`] can be created from an [`OptionSetEx`] with
 //!    [`as_fixed`][`OptionSetEx::as_fixed`]. It will hold slice references to the [`OptionSetEx`]’s
 //!    `Vec` lists, with the lifetime tied to it (thus the set cannot be modified whilst the
 //!    [`OptionSet`] exists).
+//!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
+//!    [`to_extendible`][`OptionSet::to_extendible`].
 //!  - Macros are provided for constructing both as a convenience.
 //!
 //! ## Describe the available command arguments
@@ -160,27 +164,24 @@
 //! You also need to retrieve (or build) a set of arguments to be parsed. A simple example:
 //!
 //! ```rust
-//! let args: Vec<String> = std::env::args().collect();
+//! let args: Vec<String> = std::env::args()
+//!                             .skip(1)        // Skip the program-name/path argument
+//!                             .collect();
 //! ```
 //!
-//! The very first entry in the list is the program path/name, and often you will not be interested
-//! in it. You can skip it in two easy ways, either: a) providing `&args[1..]` instead of
-//! `&args[..]` to the parsing function in the next step, or b) using the iterator `skip` method, as
-//! here:
+//! Notes:
 //!
-//! ```rust
-//! let args: Vec<String> = std::env::args().skip(1).collect();
-//! ```
+//! 1. The very first entry in an argument list is the program path/name, and often you will not be
+//!    interested in it. It is usually best to just skip it. You can do so in two easy ways, with
+//!    the `skip()` method when collecting, as above, or alternatively with the slice range used
+//!    when parsing (i.e. `&args[1..]` instead of `&args[..]`).
+//! 2. Rust’s `std` library provides two functions for obtaining arguments, `std::end::args()` and
+//!    `std::env::args_os()`; see the [Unicode discussion chapter][unicode_doc] of the documentation
+//!    module for information on which you should chose.
+//! 3. The parser methods also accept argument lists in string reference form (`&str` and `&OsStr`
+//!    respectively).
 //!
-//! Note that the `std::env::args()` function returns arguments in `String` form. OS strings are
-//! not always valid Unicode, and this function will panic if it encounters such a string. This is
-//! fine if none of the inputs taken by your program should legitimately expect to possibly contain
-//! invalid Unicode. Those that are used for specifying filenames/paths are an example of ones that
-//! may. If any of your inputs fall into this category you should use the alternative
-//! `std::env::args_os()` function, which returns strings in `OsString` form, for which an alternate
-//! parsing function is available.
-//!
-//! # Step #3: Parsing
+//! # Step #3: Parse
 //!
 //! With input args gathered and “available” *options* and *commands* described, now you’re ready
 //! for parsing. All you need to do is feed the argument list to the parser’s
@@ -198,11 +199,6 @@
 //! If you are taking arguments in `OsString` form, as discussed above, you should use the alternate
 //! `parse_os` method here instead.
 //!
-//! Of course if for any reason you do **not** want to parse all arguments in one go, you always
-//! have the option of parsing one argument at a time (or in groups of whatever number you choose),
-//! calling `parse` for each. (Naturally though you must beware the complications handling
-//! “in-next-arg” *data values* doing this).
-//!
 //! # Step #4: Take action
 //!
 //! It is now up to you to take appropriate action in response to what was found.
@@ -219,10 +215,10 @@
 //! applicable with *data values* as to whether the data arg was located in the same argument or the
 //! next.
 //!
-//! **Note:** some item variants that may be returned in the [`Analysis`] struct hold `&str`
-//! references to strings that were provided in the argument data provided to `parse`, and or to the
-//! option data held by the parser. This is done for efficiency. Beware of this with respect to
-//! lifetimes.
+//! > **Note:** some item variants that may be returned in the [`Analysis`] struct hold string
+//! > references to strings that were provided in the argument and option data provided to
+//! > [`parse`][`Parser::parse`]. This is done for efficiency. Beware of this with respect to
+//! > lifetimes.
 //!
 //! # Have a play
 //!
@@ -234,6 +230,7 @@
 //!
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
+//! [`Parser::parse_os`]: ../../parser/struct.Parser.html#method.parse_os
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
 //! [`Settings`]: ../../parser/struct.Settings.html
@@ -251,3 +248,4 @@
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
 //! [commands_doc]: ../commands/index.html
 //! [options_doc]: ../options/index.html
+//! [unicode_doc]: ../unicode/index.html

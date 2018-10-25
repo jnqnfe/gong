@@ -15,7 +15,11 @@
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Purged old deprecated stuff
- * Documentation: Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter
+ * Documentation:
+    - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, and
+      re-written it.
+    - Some significant re-writing done in other places also, along with updating per above changes
+    - Added a FAQ and feature list
 
 # 1.4.2 (December 15th, 2020)
 

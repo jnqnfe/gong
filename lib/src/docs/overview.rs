@@ -19,12 +19,14 @@
 //! their designs were geared towards completely taking over *every* aspect of argument handling.
 //! While removing as much of the burden from the application programmer as possible is a desirable
 //! goal, these existing solutions in attempting to do this imposed significant restrictions on
-//! compatible program designs. It appeared that the Rust crate ecosystem was missing a more
-//! fundamental and broadly applicable solution.
+//! compatible program designs.
 //!
 //! Some/all of these solutions also forced a “builder” type pattern of describing options through
 //! successive method calls, lacking a more efficient option of directly defining the data
 //! structure. This includes preventing efficient declaration of a `static`/`const` set.
+//!
+//! It appeared that the Rust crate ecosystem was missing a more fundamental and broadly applicable
+//! solution, and one which favoured efficiency.
 //!
 //! # Design
 //!
@@ -34,14 +36,18 @@
 //!
 //! The basic premise of usage is simple:
 //!
-//!  1. Provide the parsing function with a description of available options (and optionally
-//!     command arguments) along with the input arguments to be parsed, and it returns the results
-//!     of its analysis.
-//!  2. You can then work through this analysis to respond as applicable: Output error information
-//!     if the user made a mistake; output help/usage information if requested; store state
-//!     information from recognised flag type options; and store data (converting values as
-//!     necessary) from non-options and recognised “with data arg” options.
-//!  3. Proceed on with whatever your program was designed to do.
+//!  1. Describe the *options* (and optionally *command arguments*) to be “available” in your
+//!     program.
+//!  2. Provide the input argument(s) to be parsed to the `parse` method, which will parse them
+//!     against the *option* (and *command arg*) descriptions, returning an *analysis*.
+//!  3. You can then use this analysis to respond as applicable.
+//!
+//! What it does not attempt to do includes: Automating help/usage/version request response (though
+//! it may in future provide assistance for text generation); Data/state conversion/storage, value
+//! range limiting; required/single-use option enforcement; option relationships (i.e. use of one
+//! option means that use of another is invalid); and automatic response to conditions such as
+//! unrecognised options. It avoids these sorts of things to avoid bloat; unnecessary complexity;
+//! taking over control; inefficiency; etc. See the [FAQ](../faq/index.html) for more info.
 //!
 //! Differences to the old `getopt`/`getopt_long` C solution include:
 //!

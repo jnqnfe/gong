@@ -70,7 +70,7 @@ impl<'r, 's: 'r> Default for Parser<'r, 's> {
 pub struct Settings {
     /// Option parsing mode to use
     pub mode: OptionsMode,
-    /// Whether or not to allow abbreviated longoption name matching
+    /// Whether or not to allow abbreviated long option name matching
     pub allow_abbreviations: bool,
 }
 
@@ -86,10 +86,10 @@ impl Default for Settings {
 /// Used to specify which option parsing mode to use
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptionsMode {
-    /// Standard (default): Short (`-o`) and long (`--foo`) options, with single and double dash
-    /// prefixes respectively.
+    /// Standard (default): Short (e.g. `-o`) and long (e.g. `--foo`) options, with single and
+    /// double dash prefixes respectively.
     Standard,
-    /// Alternate: Long options only, with single dash prefix.
+    /// Alternate: Long options only, with single dash prefix (e.g. `-foo`).
     Alternate,
 }
 
@@ -107,7 +107,7 @@ impl Settings {
         self
     }
 
-    /// Enable/disable long option name abbreviated matching
+    /// Control matching of abbreviated long option names (set to `true` to allow)
     #[inline(always)]
     pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
         self.allow_abbreviations = allow;

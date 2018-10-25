@@ -8,7 +8,16 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! “Available” options
+//! “Available” option description components
+//!
+//! This module contains components to do with describing the *options* “available” within a given
+//! program, i.e. those that an argument list will be parsed against. There are components for
+//! describing both individual *options* and sets of *options*.
+//!
+//! See the separate [*options* support discussion][options] for details on the types of *options*
+//! supported by this parsing library.
+//!
+//! [options]: ../docs/options/index.html
 
 #[cfg(feature = "suggestions")]
 use strsim;
@@ -114,7 +123,7 @@ impl<'s> OptionSetEx<'s> {
         }
     }
 
-    /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices.
+    /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices
     #[inline]
     pub fn as_fixed<'r>(&'r self) -> OptionSet<'r, 's> where 's: 'r {
         OptionSet {
@@ -300,7 +309,7 @@ impl ShortOption {
 pub(crate) mod validation {
     use super::{OptionSet, OptionFlaw};
 
-    /// Checks validity of option set, returning details of any problems
+    /// Checks validity of option set, optionally returning details of any problems
     ///
     /// If no problems are found, it returns `Ok(())`, otherwise `Err(_)`.
     ///

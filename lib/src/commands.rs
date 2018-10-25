@@ -8,7 +8,16 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! “Available” command arguments
+//! “Available” command argument description components
+//!
+//! This module contains components to do with describing the *command arguments* “available” within
+//! a given program, i.e. those that an argument list will be parsed against. There are components
+//! for describing both individual *commands* and sets of *commands*.
+//!
+//! See the separate [*commands* support discussion][commands] for details on what *command
+//! arguments* are, and the details on how parsing works with respect to them.
+//!
+//! [commands]: ../docs/commands/index.html
 
 #[cfg(feature = "suggestions")]
 use strsim;
@@ -248,7 +257,7 @@ impl<'r, 's: 'r> Command<'r, 's> {
 mod validation {
     use super::{options, CommandSet, CommandFlaw};
 
-    /// Checks validity of command set, returning details of any problems
+    /// Checks validity of command set, optionally returning details of any problems
     ///
     /// If no problems are found, it returns `Ok(())`, otherwise `Err(_)`.
     ///

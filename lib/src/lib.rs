@@ -8,19 +8,16 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! A lightweight, flexible and simple-to-use library provided to *assist* in parsing command line
+//! A lightweight, flexible and simple-to-use library provided to assist in parsing command line
 //! arguments.
 //!
 //! Licensed under the MIT license or the Apache license, Version 2.0, at your option.
 //!
 //! # Documentation
 //!
-//! Documentation has been split up into chapters:
-//!
-//! - [Overview](docs/overview/index.html)
-//! - [Options support](docs/options/index.html)
-//! - [Command argument support](docs/commands/index.html)
-//! - [Usage](docs/usage/index.html)
+//! Unlike some crates which place most or all of their documentation up front at the root of their
+//! crate, most of this crate’s documentation is found within its submodules, including a dedicated
+//! [documentation (`docs`) mod](docs/index.html).
 
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]
