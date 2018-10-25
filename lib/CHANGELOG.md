@@ -4,6 +4,7 @@
    returning details of any flaws.
  * Added methods to `OptionSetEx` that add ready-made `LongOption`s/`ShortOption`s
  * Improved internal organisation of the `Options` validation code
+ * Improved organisation of the test suite's `options` file
 
 # 1.2.1 (October 28th, 2018)
 
