@@ -2,6 +2,7 @@
 
  * Added `validate` method to `OptionSet` and `OptionSetEx` as an alternative to `is_valid`,
    returning details of any flaws.
+ * Added methods to `OptionSetEx` that add ready-made `LongOption`s/`ShortOption`s
  * Improved internal organisation of the `Options` validation code
 
 # 1.2.1 (October 28th, 2018)

@@ -187,6 +187,18 @@ impl<'a> OptionSetEx<'a> {
         self
     }
 
+    /// Add an existing (ready-made) long option
+    pub fn add_existing_long(&mut self, long: LongOption<'a>) -> &mut Self {
+        self.long.push(long);
+        self
+    }
+
+    /// Add an existing (ready-made) short option
+    pub fn add_existing_short(&mut self, short: ShortOption) -> &mut Self {
+        self.short.push(short);
+        self
+    }
+
     /// Checks validity of option set
     ///
     /// Returns `true` if valid. Outputs details of problems found to `stderr`.
