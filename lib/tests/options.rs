@@ -223,7 +223,7 @@ fn short_dups() {
 #[test]
 #[should_panic]
 fn long_dups() {
-    let mut opts = Options::new(3, 0);
+    let mut opts = Options::new(8, 0);
     opts.add_long("aaa")
         .add_long("bbb")
         .add_long("ccc")
