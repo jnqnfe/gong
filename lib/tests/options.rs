@@ -72,6 +72,30 @@ fn set_types() {
     assert_eq!(true, opts_extendible.eq(&extendible_from_fixed));
     assert_eq!(true, extendible_from_fixed.eq(&opts_fixed));
     assert_eq!(true, extendible_from_fixed.eq(&opts_extendible));
+
+    let opts_fixed_2 = OptionSet {
+        long: &[
+            gong_longopt!("blah", false),
+        ],
+        short: &[],
+        mode: MODE_DEFAULT,
+        allow_abbreviations: ABBR_SUP_DEFAULT,
+    };
+
+    let opts_extendible_2 = OptionSetEx {
+        long: vec![
+            gong_longopt!("blah", false),
+        ],
+        short: vec![],
+        mode: MODE_DEFAULT,
+        allow_abbreviations: ABBR_SUP_DEFAULT,
+    };
+
+    // Verify not equal
+    assert!(opts_fixed != opts_fixed_2);
+    assert!(opts_fixed != opts_extendible_2);
+    assert!(opts_extendible != opts_fixed_2);
+    assert!(opts_extendible != opts_extendible_2);
 }
 
 /* Dash ('-') is an invalid short option (clashes with early terminator if it were given on its own

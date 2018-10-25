@@ -2,6 +2,7 @@
 
  * Updated usage docs per `OptionSetEx`/`OptionSet` pair introduction
  * Improved macro set construction testing
+ * Extended the option set type equality testing to try a not-equal example
  * Cleaned up bits of the 'preparation' usage documentation
  * Updated crate description in toml file, overlooked in v1.1
 
