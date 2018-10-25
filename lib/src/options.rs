@@ -12,9 +12,6 @@
 
 use std::convert::AsRef;
 
-#[deprecated(since = "1.2.0", note = "Use either `OptionSet` or `OptionSetEx` now, as applicable")]
-pub type Options<'a> = OptionSetEx<'a>;
-
 /// Default abbreviation support state
 pub(crate) const ABBR_SUP_DEFAULT: bool = true;
 /// Default mode
