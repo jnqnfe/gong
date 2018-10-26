@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.2 (October 26th, 2018)
 
  * **BUGFIX:** Fixed a bug with abbreviated match ambiguity
  * Added test to check processing function's expanded support of both `&[String]` and `&[&str]`
