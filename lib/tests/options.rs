@@ -70,13 +70,13 @@ fn is_valid_short_dash() {
 /// second char is not also a dash, then it will succeed in matching as a short option. If an
 /// attempt is made to use a dash in a short-opt set as the first one in the set, thus the argument
 /// starts with two dashes, it will then be taken to be either a long option or early terminator, as
-/// approriate, giving no consideration to the possibility of it being a short option.
+/// appropriate, giving no consideration to the possibility of it being a short option.
 #[test]
 fn short_dash_bypass() {
     let args = arg_list!(
-        "--abc",    // Can't use as a shortopt like this, will be interpretted as long opt
+        "--abc",    // Can't use as a shortopt like this, will be interpreted as long opt
         "-a-bc",    // Can use like this
-        "--",       // Can't use as a shortopt like this, will be interpretted as early terminator
+        "--",       // Can't use as a shortopt like this, will be interpreted as early terminator
     );
     let expected = expected!(
         error: false,

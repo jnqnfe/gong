@@ -16,8 +16,8 @@ pub use self::base::get_base;
 use gong::analysis::Analysis;
 use gong::options::*;
 
-// NB: These are not publically accessible from the crate, so we duplicate them. We do have a test
-// to ensure they are correct however!
+// NB: These are not publicly accessible from the crate, so we duplicate them. We do have a test to
+// ensure they are correct however!
 pub const ABBR_SUP_DEFAULT: bool = true;
 pub const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 

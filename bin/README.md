@@ -31,7 +31,7 @@ An example: `cargo run -- --foo --bar abc -- def --ghi`
 
 In this example, the test program will be run with: `--foo --bar abc -- def --ghi`
 
-(Only the first *early terminator* is comsumed by Cargo, subsequent ones are themselves treated as
+(Only the first *early terminator* is consumed by Cargo, subsequent ones are themselves treated as
 non-options and thus are passed on).
 
 ## Features

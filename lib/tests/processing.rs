@@ -57,7 +57,7 @@ fn basic() {
         "ghi",              // Non-option, containing real short option ('h')
         "-a-",              // Dash in short opt set should come out as unknown short opt (can not
                             // be a real one as not allowed), so long as not the first in set, as
-                            // would then arg would then be interpretted as long option or early
+                            // would then arg would then be interpreted as long option or early
                             // terminator.
         "-h-",              // Same, but with real short opt in set, which should not matter.
         "--",               // Early terminator
@@ -91,7 +91,7 @@ fn basic() {
     check_result(&Actual(gong::process(&args, &get_base())), &expected);
 }
 
-/// Test that everything after an early terminator is taken to be a non-option, inclucing any
+/// Test that everything after an early terminator is taken to be a non-option, including any
 /// further early terminators.
 #[test]
 fn early_term() {
@@ -100,7 +100,7 @@ fn early_term() {
         "--",       // Our early terminator
         "--help",   // Should be affected, thus non-option
         "--",       // Should be a non-option, **not** another early terminator
-        // A mix of various other items, some of which might be interpretted differently if it were
+        // A mix of various other items, some of which might be interpreted differently if it were
         // not for the early terminator.
         "-o", "--foo", "blah", "--bb", "-h", "--hah", "--hah=", "--", "--hah=a", "-oa", "-b",
     );
@@ -210,7 +210,7 @@ mod utf8 {
                 expected_item!(3, NonOption, "ëéy̆"),
                 expected_item!(4, UnknownShort, 'ë'),        // e+diaeresis
                 expected_item!(4, UnknownShort, 'e'),        // 'e'
-                expected_item!(4, UnknownShort, '\u{0301}'), // accute accent
+                expected_item!(4, UnknownShort, '\u{0301}'), // acute accent
                 expected_item!(4, UnknownShort, 'y'),        // 'y'
                 expected_item!(4, UnknownShort, '\u{0306}'), // breve
                 expected_item!(5, UnknownLong, "ëéy̆"),
@@ -269,7 +269,7 @@ mod abbreviations {
 
     /// Test handling of abbreviated long options, with ambiguity
     #[test]
-    fn ambigous() {
+    fn ambiguous() {
         let args = arg_list!(
             "--f",  // Abbreviation of both `foo` and `foobar`
             "--fo", // Same
@@ -287,7 +287,7 @@ mod abbreviations {
 
     /// Test handling of abbreviated long options, without ambiguity
     #[test]
-    fn unambigous() {
+    fn unambiguous() {
         let args = arg_list!(
             "--foo",    // Exact match for `foo`
             "--foob",   // Abbreviation of `foobar` only
@@ -332,7 +332,7 @@ mod abbreviations {
     ///
     /// I.e. if it finds multiple abbreviated matches before the exact match (which can depends upon
     /// the order options are inserted into the set), that it keeps going to eventually find the
-    /// exact match, rather than ending early as ambigous.
+    /// exact match, rather than ending early as ambiguous.
     #[test]
     fn exact_override() {
         let args = arg_list!("--foo");
@@ -815,7 +815,7 @@ mod alt_mode {
             "-bxs",         // 'x' is a real short opt, but they should be ignored
             "--foo",        // Real option, 'standard' mode syntax, the second dash should be taken
                             // as being a part of the name.
-            "-f",           // Ambigous long option, matches both `foo` and `foobar`
+            "-f",           // Ambiguous long option, matches both `foo` and `foobar`
             "-foo",         // Matches both `foo` and `foobar`, but matches `foo` exactly
             "-foob",        // Unique abbreviation to `foobar`
             "-❤",           // Check real short opt not taken as such

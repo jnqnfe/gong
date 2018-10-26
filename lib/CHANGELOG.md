@@ -13,7 +13,7 @@
 # 1.1.0 (October 19th, 2018)
 
  * Split lib code into multiple modules. Everything is still available at the top level for now for
-   compatability. It is recommended to access things from the sub-modules from now on though, as
+   compatibility. It is recommended to access things from the sub-modules from now on though, as
    this will be required in a future version.
  * Added macros as an alternative means of constructing an "available options" set. This makes
    building an option set without the `add_*` methods easier (crafting the raw struct this way can
@@ -22,7 +22,7 @@
    explicitly taking `&[String]`, it now takes `&[T]` where `T: AsRef<str>`, thus supporting both
    `&[String]` and `&[&str]` inputs.
  * Renamed `Results` to `Analysis`. A type alias of `Results` is provided, marked as deprecated, for
-   compatability purposes, and to encourage updating to the new name.
+   compatibility purposes, and to encourage updating to the new name.
  * Improved crate documentation:
     - Significantly re-edited much of it
     - Split it up into `docs` sub-modules
