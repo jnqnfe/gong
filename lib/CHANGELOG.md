@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * **BUGFIX:** Fixed a bug with abbreviated match ambiguity
  * Added test to check processing function's expanded support of both `&[String]` and `&[&str]`
    argument list types.
  * Switched to `&str` based argument lists for most tests now for greater efficiency

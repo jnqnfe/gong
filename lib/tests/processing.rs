@@ -270,12 +270,16 @@ mod abbreviations {
     /// Test handling of abbreviated long options, with ambiguity
     #[test]
     fn ambigous() {
-        let args = arg_list!("--f"); // Should match ambigously against both `foo` and `foobar`
+        let args = arg_list!(
+            "--f",  // Abbreviation of both `foo` and `foobar`
+            "--fo", // Same
+        );
         let expected = expected!(
             error: true,
             warn: false,
             vec![
                 expected_item!(0, AmbiguousLong, "f"),
+                expected_item!(1, AmbiguousLong, "fo"),
             ]
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
@@ -285,10 +289,10 @@ mod abbreviations {
     #[test]
     fn unambigous() {
         let args = arg_list!(
-            "--foo",  // Of two suitable matches, `foo` and `foobar`, one is exact, thus is chosen.
-            "--foob", // Works as abbreviation of `foobar`. The fact that an option `foo` matches
-                      // the beginning of it makes no difference in anyway (no fautly inverted
-                      // logic).
+            "--foo",    // Exact match for `foo`
+            "--foob",   // Abbreviation of `foobar` only
+            "--fooba",  // Abbreviation of `foobar` only
+            "--foobar", // Exact match for `foobar`
         );
         let expected = expected!(
             error: false,
@@ -296,6 +300,8 @@ mod abbreviations {
             vec![
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Long, "foobar"),
+                expected_item!(2, Long, "foobar"),
+                expected_item!(3, Long, "foobar"),
             ]
         );
         check_result(&Actual(gong::process(&args, &get_base())), &expected);
@@ -319,6 +325,35 @@ mod abbreviations {
         );
         let mut opts = get_base();
         opts.set_allow_abbreviations(false);
+        check_result(&Actual(gong::process(&args, &opts)), &expected);
+    }
+
+    /// Test that an exact match overrides ambiguity
+    ///
+    /// I.e. if it finds multiple abbreviated matches before the exact match (which can depends upon
+    /// the order options are inserted into the set), that it keeps going to eventually find the
+    /// exact match, rather than ending early as ambigous.
+    #[test]
+    fn exact_override() {
+        let args = arg_list!("--foo");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            vec![
+                expected_item!(0, Long, "foo"),
+            ]
+        );
+        let opts = gong_option_set!(
+            vec![
+                // Multiple options that 'foo' will match as an abbreviation for before getting to
+                // the exact match.
+                gong_longopt!("fooo"),
+                gong_longopt!("foooo"),
+                gong_longopt!("fooooo"),
+                gong_longopt!("foo"),    // Exact match for input `--foo`
+            ],
+            vec![]
+        );
         check_result(&Actual(gong::process(&args, &opts)), &expected);
     }
 }
