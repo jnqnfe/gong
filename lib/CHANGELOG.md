@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.0.4 (October 26th, 2018)
 
  * **BUGFIX:** Fixed a bug with abbreviated match ambiguity.
 
