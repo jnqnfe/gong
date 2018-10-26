@@ -698,22 +698,20 @@ pub fn process<'a>(args: &'a [String], options: &Options<'a>) -> Results<'a> {
                 {
                     // An exact match overrules a previously found partial match and ambiguity found
                     // with multiple partial matches.
-                    matched = Some(&*candidate);
+                    matched = Some(candidate);
                     ambiguity = false;
                     break;
                 }
                 // Abbreviated
                 else if options.allow_abbreviations &&
+                    !ambiguity &&
                     cand_char_count > name_char_count &&
                     candidate.name.starts_with(name)
                 {
-                    if matched.is_none() {
-                        matched = Some(&*candidate);
-                    }
-                    else {
-                        ambiguity = true;
-                        break;
-                    }
+                    match matched {
+                        Some(_) => { ambiguity = true; },
+                        None => { matched = Some(candidate); },
+                     }
                 }
             }
 
