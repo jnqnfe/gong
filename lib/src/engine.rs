@@ -15,22 +15,6 @@ use super::analysis::*;
 const SINGLE_DASH_PREFIX: &str = "-";
 const DOUBLE_DASH_PREFIX: &str = "--";
 const EARLY_TERMINATOR: &str = "--";
-const SINGLE_DASH_PREFIX_LEN: usize = 1;
-const DOUBLE_DASH_PREFIX_LEN: usize = 2;
-const EARLY_TERMINATOR_LEN: usize = 2;
-/// Minimum num chars of string start needed for assessing option prefixing (widest prefix + 1)
-const PREFIX_ASSESS_CHARS: usize = 3;
-
-#[cfg(test)]
-#[test]
-fn constants() {
-    assert_eq!(SINGLE_DASH_PREFIX_LEN, SINGLE_DASH_PREFIX.len());
-    assert_eq!(DOUBLE_DASH_PREFIX_LEN, DOUBLE_DASH_PREFIX.len());
-    assert_eq!(EARLY_TERMINATOR_LEN, EARLY_TERMINATOR.len());
-    assert!(PREFIX_ASSESS_CHARS > SINGLE_DASH_PREFIX_LEN);
-    assert!(PREFIX_ASSESS_CHARS > DOUBLE_DASH_PREFIX_LEN);
-    assert!(PREFIX_ASSESS_CHARS > EARLY_TERMINATOR_LEN);
-}
 
 /// Basic argument type
 ///
@@ -41,11 +25,6 @@ enum ArgTypeBasic<'a> {
     LongOption(&'a str),
     ShortOptionSet(&'a str),
 }
-
-//TODO: This implementation was originally designed with some degree of caution against the
-// possibility of argument strings not necessarily being valid utf-8, although this was not
-// thoroughly evaluated, nor such situations tested for, with such situations being unlikely. This
-// could do with being reassessed.
 
 /// Analyses provided program arguments, using provided information about valid available options.
 ///
@@ -106,10 +85,8 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                     },
                 };
 
-                let name_char_count = name.chars().count();
-
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
-                if name_char_count == 0 {
+                if name.is_empty() {
                     results.add(ItemClass::Warn(ItemW::LongWithNoName(arg_index)));
                     results.warn = true;
                     continue;
@@ -118,11 +95,8 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                 let mut matched: Option<&LongOption> = None;
                 let mut ambiguity = false;
                 for candidate in &options.long {
-                    let cand_char_count = candidate.name.chars().count();
                     // Exact
-                    if cand_char_count == name_char_count &&
-                        candidate.name == name
-                    {
+                    if candidate.name == name {
                         // An exact match overrules a previously found partial match and ambiguity
                         // found with multiple partial matches.
                         matched = Some(candidate);
@@ -130,10 +104,8 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                         break;
                     }
                     // Abbreviated
-                    else if options.allow_abbreviations &&
-                        !ambiguity &&
-                        cand_char_count > name_char_count &&
-                        candidate.name.starts_with(name)
+                    else if options.allow_abbreviations && !ambiguity
+                        && candidate.name.starts_with(name)
                     {
                         match matched {
                             Some(_) => { ambiguity = true; },
@@ -170,18 +142,17 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                         }
                     }
                     else {
-                        let mut added_entry = false;
-                        if let Some(data) = data_included {
+                        match data_included {
+                            None |
                             // Ignore unexpected data if empty string
-                            if data.len() > 0 {
+                            Some("") => {
+                                results.add(ItemClass::Ok(Item::Long(arg_index, opt_name)));
+                            },
+                            Some(data) => {
                                 results.add(ItemClass::Warn(ItemW::LongWithUnexpectedData {
                                     i: arg_index, n: opt_name, d: data }));
                                 results.warn = true;
-                                added_entry = true;
-                            }
-                        }
-                        if !added_entry {
-                            results.add(ItemClass::Ok(Item::Long(arg_index, opt_name)));
+                            },
                         }
                     }
                 }
@@ -239,50 +210,38 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
     results
 }
 
-macro_rules! has_prefix_double_dash {
-    ( $arg:expr, $start_len:expr ) => {
-        has_prefix!($arg, DOUBLE_DASH_PREFIX, DOUBLE_DASH_PREFIX_LEN, $start_len)
-    }
-}
-macro_rules! has_prefix_single_dash {
-    ( $arg:expr, $start_len:expr ) => {
-        has_prefix!($arg, SINGLE_DASH_PREFIX, SINGLE_DASH_PREFIX_LEN, $start_len)
-    }
-}
 macro_rules! has_prefix {
-    ( $arg:expr, $prefix:expr, $prefix_len:expr, $start_len:expr ) => {
+    ( $arg:expr, $prefix:expr ) => {
         // The length must be longer than the prefix
-        ($start_len > $prefix_len && $arg.starts_with($prefix))
+        $arg.len() > $prefix.len() && $arg.starts_with($prefix)
     }
 }
 
 /// Assess argument type, returning options without their prefix, for 'standard' mode
 fn get_basic_arg_type_standard<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
-    // Get length of initial portion
-    let start_len = arg.chars().take(PREFIX_ASSESS_CHARS).count();
-
-    match start_len {
-        EARLY_TERMINATOR_LEN if arg == EARLY_TERMINATOR => ArgTypeBasic::EarlyTerminator,
-        i if has_prefix_double_dash!(arg, i) => {
-            ArgTypeBasic::LongOption(&arg[DOUBLE_DASH_PREFIX_LEN..])
-        },
-        i if has_prefix_single_dash!(arg, i) => {
-            ArgTypeBasic::ShortOptionSet(&arg[SINGLE_DASH_PREFIX_LEN..])
-        },
-        _ => ArgTypeBasic::NonOption,
+    if arg == EARLY_TERMINATOR {
+        ArgTypeBasic::EarlyTerminator
+    }
+    else if has_prefix!(arg, DOUBLE_DASH_PREFIX) {
+        ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(DOUBLE_DASH_PREFIX.len()..) })
+    }
+    else if has_prefix!(arg, SINGLE_DASH_PREFIX) {
+        ArgTypeBasic::ShortOptionSet(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
+    }
+    else {
+        ArgTypeBasic::NonOption
     }
 }
 
 /// Assess argument type, returning options without their prefix, for 'alternate' mode
 fn get_basic_arg_type_alternate<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
-    // Get length of initial portion
-    let start_len = arg.chars().take(PREFIX_ASSESS_CHARS).count();
-
-    match start_len {
-        EARLY_TERMINATOR_LEN if arg == EARLY_TERMINATOR => ArgTypeBasic::EarlyTerminator,
-        i if has_prefix_single_dash!(arg, i) => {
-            ArgTypeBasic::LongOption(&arg[SINGLE_DASH_PREFIX_LEN..])
-        },
-        _ => ArgTypeBasic::NonOption,
+    if arg == EARLY_TERMINATOR {
+        ArgTypeBasic::EarlyTerminator
+    }
+    else if has_prefix!(arg, SINGLE_DASH_PREFIX) {
+        ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
+    }
+    else {
+        ArgTypeBasic::NonOption
     }
 }
