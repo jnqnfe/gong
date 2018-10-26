@@ -63,6 +63,11 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
      * of efficiency - to not waste energy on known good sets, and to avoid waste of energy if this
      * function is called multiple times with the same set. */
 
+    let get_basic_arg_type_fn = match options.mode {
+        OptionsMode::Standard => get_basic_arg_type_standard,
+        OptionsMode::Alternate => get_basic_arg_type_alternate,
+    };
+
     let mut results = Analysis::new(args.len());
     let mut early_terminator_encountered = false;
 
@@ -73,7 +78,7 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
 
         let arg_type = match early_terminator_encountered {
             true => ArgTypeBasic::NonOption,
-            false => get_basic_arg_type(arg_ref, options.mode),
+            false => get_basic_arg_type_fn(arg_ref),
         };
 
         match arg_type {
@@ -234,45 +239,49 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
     results
 }
 
-/// Assess argument type, returning options without their prefix
-#[inline(always)]
-fn get_basic_arg_type<'a>(arg: &'a str, mode: OptionsMode) -> ArgTypeBasic<'a> {
+macro_rules! has_prefix_double_dash {
+    ( $arg:expr, $start_len:expr ) => {
+        has_prefix!($arg, DOUBLE_DASH_PREFIX, DOUBLE_DASH_PREFIX_LEN, $start_len)
+    }
+}
+macro_rules! has_prefix_single_dash {
+    ( $arg:expr, $start_len:expr ) => {
+        has_prefix!($arg, SINGLE_DASH_PREFIX, SINGLE_DASH_PREFIX_LEN, $start_len)
+    }
+}
+macro_rules! has_prefix {
+    ( $arg:expr, $prefix:expr, $prefix_len:expr, $start_len:expr ) => {
+        // The length must be longer than the prefix
+        ($start_len > $prefix_len && $arg.starts_with($prefix))
+    }
+}
+
+/// Assess argument type, returning options without their prefix, for 'standard' mode
+fn get_basic_arg_type_standard<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     // Get length of initial portion
     let start_len = arg.chars().take(PREFIX_ASSESS_CHARS).count();
 
-    let check_double = match mode {
-        OptionsMode::Standard => true,
-        OptionsMode::Alternate => false,
-    };
-
-    macro_rules! has_prefix_double_dash {
-        ( $arg:expr, $start_len:expr ) => {
-            has_prefix!($arg, DOUBLE_DASH_PREFIX, DOUBLE_DASH_PREFIX_LEN, $start_len)
-        }
-    }
-    macro_rules! has_prefix_single_dash {
-        ( $arg:expr, $start_len:expr ) => {
-            has_prefix!($arg, SINGLE_DASH_PREFIX, SINGLE_DASH_PREFIX_LEN, $start_len)
-        }
-    }
-    macro_rules! has_prefix {
-        ( $arg:expr, $prefix:expr, $prefix_len:expr, $start_len:expr ) => {
-            // The length must be longer than the prefix
-            ($start_len > $prefix_len && $arg.starts_with($prefix))
-        }
-    }
-
     match start_len {
         EARLY_TERMINATOR_LEN if arg == EARLY_TERMINATOR => ArgTypeBasic::EarlyTerminator,
-        i if check_double && has_prefix_double_dash!(arg, i) => {
+        i if has_prefix_double_dash!(arg, i) => {
             ArgTypeBasic::LongOption(&arg[DOUBLE_DASH_PREFIX_LEN..])
         },
         i if has_prefix_single_dash!(arg, i) => {
-            let prefix_stripped = &arg[SINGLE_DASH_PREFIX_LEN..];
-            match mode {
-                OptionsMode::Standard => ArgTypeBasic::ShortOptionSet(prefix_stripped),
-                OptionsMode::Alternate => ArgTypeBasic::LongOption(prefix_stripped),
-            }
+            ArgTypeBasic::ShortOptionSet(&arg[SINGLE_DASH_PREFIX_LEN..])
+        },
+        _ => ArgTypeBasic::NonOption,
+    }
+}
+
+/// Assess argument type, returning options without their prefix, for 'alternate' mode
+fn get_basic_arg_type_alternate<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
+    // Get length of initial portion
+    let start_len = arg.chars().take(PREFIX_ASSESS_CHARS).count();
+
+    match start_len {
+        EARLY_TERMINATOR_LEN if arg == EARLY_TERMINATOR => ArgTypeBasic::EarlyTerminator,
+        i if has_prefix_single_dash!(arg, i) => {
+            ArgTypeBasic::LongOption(&arg[SINGLE_DASH_PREFIX_LEN..])
         },
         _ => ArgTypeBasic::NonOption,
     }
