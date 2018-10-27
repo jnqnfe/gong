@@ -57,7 +57,7 @@ pub type ShortOption = options::ShortOption;
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSetEx::is_valid`](options/struct.OptionSetEx.html#method.is_valid)).
-#[deprecated(note = "use the method on the option set object instead")]
+#[deprecated(since = "1.2.0", note = "use the method on the option set object instead")]
 pub fn process<'o, 'a, A>(args: &'a [A], options: &'o options::OptionSetEx<'a>) -> analysis::Analysis<'a>
     where A: 'a + std::convert::AsRef<str>,
           'a: 'o

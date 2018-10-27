@@ -12,7 +12,7 @@
 
 use std::convert::AsRef;
 
-#[deprecated(note = "Use either `OptionSet` or `OptionSetEx` now, as applicable")]
+#[deprecated(since = "1.2.0", note = "Use either `OptionSet` or `OptionSetEx` now, as applicable")]
 pub type Options<'a> = OptionSetEx<'a>;
 
 /// Default abbreviation support state

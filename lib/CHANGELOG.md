@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.2.0 (October 27th, 2018)
 
  * Refactored and optimised the analysis engine
  * Renamed `Options` to `OptionSetEx` and introduced companion `OptionSet`. While the `OptionSetEx`

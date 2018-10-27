@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.1 (October 27th, 2018)
 
  * Updated to use the new `process` method on the options object
  * Updated `term_ctrl` dependency (v0.4 → 0.4.1)
