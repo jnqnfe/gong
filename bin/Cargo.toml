@@ -17,7 +17,7 @@ doc = false
 
 [dependencies]
 gong = { path = "../lib" }
-term-ctrl = { git = "https://github.com/jnqnfe/term-ctrl-rust", tag = "v0.4" }
+term-ctrl = { git = "https://github.com/jnqnfe/term-ctrl-rust", tag = "v0.4.1" }
 
 [features]
 default = ["color"]
