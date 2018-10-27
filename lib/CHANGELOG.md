@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Refactored and optimised the analysis engine
+
 # 1.1.2 (October 26th, 2018)
 
  * **BUGFIX:** Fixed a bug with abbreviated match ambiguity
