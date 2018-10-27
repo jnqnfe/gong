@@ -12,8 +12,9 @@
    improves efficiency in many cases. Use of the old `Options` type name is now deprecated.
  * Added the `gong_option_set_fixed` macro. While the existing `gong_option_set` macro produces
    an `OptionSetEx`, this new macro produces an `OptionSet`.
- * Added a `process` method to `Options` as a cleaner alternative to calling the `process` function
-   directly. Deprecated direct use of the `process` function.
+ * Added a `process` method to `Options` (now `OptionSetEx`) as a cleaner alternative to calling the
+   `process` function directly (also available on `OptionSet`), and deprecated direct use of the
+   `process` function.
  * Updated the test suite to use a static `OptionSet` for the base test set, for greater efficiency
 
 # 1.1.2 (October 26th, 2018)
@@ -47,7 +48,8 @@
  * Improved the test suite:
     - Expanded the suite with an even broader set of tests.
     - Moved almost all of the tests out into the `tests` directory such that they will be run
-      outside of the crate as a "user" of the public API, and split apart into multiple files.
+      outside of the crate as a "user" of the public API, and split up the single file containing
+      tests into multiple files.
     - Replaced the internal test macro that defined the common base set of test options used by most
       tests with a function, which should be more efficient than injecting the option construction
       code into each test function. This function also now uses the new macro construction model
@@ -61,7 +63,7 @@
 
 # 1.0.3 (October 17th, 2018)
 
- * **BUGFIX:** Fixed a bug with correctly analysing "in-same-argument" short option data values.
+ * **BUGFIX:** Fixed a bug with correctly analysing "in-same-argument" short option data values
  * Minor code simplification
  * Fixed a doc typo
 
