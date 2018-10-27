@@ -81,7 +81,10 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
                     None => (opt_string, None),
                     Some(i) => {
                         let split = opt_string.split_at(i);
-                        (split.0, Some(&split.1[1..]))
+                        // We know that the '=' is encoded as just one byte and that it is
+                        // definately there, so we can safely skip it unchecked.
+                        let data_included = unsafe { split.1.get_unchecked(1..) };
+                        (split.0, Some(data_included))
                     },
                 };
 
