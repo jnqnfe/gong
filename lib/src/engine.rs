@@ -210,11 +210,17 @@ pub fn process<'a, T>(args: &'a [T], options: &Options<'a>) -> Analysis<'a>
     results
 }
 
-macro_rules! has_prefix {
-    ( $arg:expr, $prefix:expr ) => {
-        // The length must be longer than the prefix
-        $arg.len() > $prefix.len() && $arg.starts_with($prefix)
-    }
+// Check if `arg` has the given prefix.
+//
+// This is similar to a `starts_with` check, but the length must be longer than the prefix, equal
+// length is no good.
+#[inline(always)]
+fn has_prefix(arg: &str, prefix: &str) -> bool {
+    // Note, it is safe to index into `arg` in here; we don't care about char boundaries for the
+    // simple byte-slice comparison. Doing this is optimally efficient, avoiding `start_with`'s
+    // `>=` length comparison check, as well as utf-8 char boundary checks, etc.
+    let prefix_len = prefix.len();
+    arg.len() > prefix_len && &prefix.as_bytes()[..] == &arg.as_bytes()[..prefix_len]
 }
 
 /// Assess argument type, returning options without their prefix, for 'standard' mode
@@ -222,10 +228,10 @@ fn get_basic_arg_type_standard<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     if arg == EARLY_TERMINATOR {
         ArgTypeBasic::EarlyTerminator
     }
-    else if has_prefix!(arg, DOUBLE_DASH_PREFIX) {
+    else if has_prefix(arg, DOUBLE_DASH_PREFIX) {
         ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(DOUBLE_DASH_PREFIX.len()..) })
     }
-    else if has_prefix!(arg, SINGLE_DASH_PREFIX) {
+    else if has_prefix(arg, SINGLE_DASH_PREFIX) {
         ArgTypeBasic::ShortOptionSet(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
     }
     else {
@@ -238,7 +244,7 @@ fn get_basic_arg_type_alternate<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     if arg == EARLY_TERMINATOR {
         ArgTypeBasic::EarlyTerminator
     }
-    else if has_prefix!(arg, SINGLE_DASH_PREFIX) {
+    else if has_prefix(arg, SINGLE_DASH_PREFIX) {
         ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
     }
     else {
