@@ -7,7 +7,7 @@ readme = "README.md"
 homepage = "https://github.com/jnqnfe/gong"
 repository = "https://github.com/jnqnfe/gong"
 description = """
-A next-gen getopt replacement for command line argument processing
+A lightweight, flexible and simple-to-use command line argument processor.
 """
 keywords = ["gong", "getopt", "terminal", "command-line"]
 
