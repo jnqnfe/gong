@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * Improved macro set construction testing
  * Updated crate description in toml file, overlooked in v1.1
 
 # 1.2.0 (October 27th, 2018)

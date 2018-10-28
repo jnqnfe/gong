@@ -12,11 +12,6 @@
 
 use gong::options::{OptionSet, OptionsMode};
 
-//TODO: sort out macro tests (both static and mutable)
-     // Note, the macro tests were written with the expectation that this function is constructing
-     // this base set using the macros. Thus if this were changed (though there is no conceivable
-     // reason to) to not use the macros, that needs addressing.
-
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = gong_option_set_fixed!(
     [

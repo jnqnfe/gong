@@ -22,6 +22,37 @@ use common::*;
 mod available_options {
     use super::*;
 
+    /// Compare the two option set building macros
+    #[test]
+    fn cmp_non_fixed() {
+        // The common base set is already constructed with the 'fixed' (`OptionSet` based) macro
+        let fixed: &OptionSet = common::get_base();
+
+        // Re-build with 'non-fixed' (`OptionSetEx` based) macro
+        let non_fixed: OptionSetEx = gong_option_set!(
+            vec![
+                gong_longopt!("help"),
+                gong_longopt!("foo"),
+                gong_longopt!("version"),
+                gong_longopt!("foobar"),
+                gong_longopt!("hah", true),
+                gong_longopt!("ábc"),
+                gong_longopt!("ƒƒ", true),
+            ],
+            vec![
+                gong_shortopt!('h'),
+                gong_shortopt!('❤'),
+                gong_shortopt!('x'),
+                gong_shortopt!('o', true),
+                gong_shortopt!('\u{030a}'),
+                gong_shortopt!('Ɛ', true),
+            ],
+            OptionsMode::Standard,
+            true
+        );
+        assert_eq!(*fixed, non_fixed);
+    }
+
     /// Compare macro-built with hand-built "available options" set
     #[test]
     fn cmp_hand_built() {
@@ -29,8 +60,8 @@ mod available_options {
         let macro_built = common::get_base();
 
         // Re-build it by hand for comparison
-        let hand_built = OptionSetEx {
-            long: vec![
+        let hand_built = OptionSet {
+            long: &[
                 LongOption { name: "help", expects_data: false },
                 LongOption { name: "foo", expects_data: false },
                 LongOption { name: "version", expects_data: false },
@@ -39,7 +70,7 @@ mod available_options {
                 LongOption { name: "ábc", expects_data: false },
                 LongOption { name: "ƒƒ", expects_data: true },
             ],
-            short: vec![
+            short: &[
                 ShortOption { ch: 'h', expects_data: false },
                 ShortOption { ch: '❤', expects_data: false },
                 ShortOption { ch: 'x', expects_data: false },
@@ -84,23 +115,27 @@ mod available_options {
     #[test]
     fn modes() {
         // With modes
-        let opts = gong_option_set!(vec![], vec![], OptionsMode::Alternate, false);
-        let cmp = OptionSetEx {
-            long: vec![],
-            short: vec![],
+        let opts = gong_option_set_fixed!([], [], OptionsMode::Alternate, false);
+        let opts_ex = gong_option_set!(vec![], vec![], OptionsMode::Alternate, false);
+        let cmp = OptionSet {
+            long: &[],
+            short: &[],
             mode: OptionsMode::Alternate,
             allow_abbreviations: false,
         };
         assert_eq!(opts, cmp);
+        assert_eq!(opts_ex, cmp);
 
         // Without modes
-        let opts = gong_option_set!(vec![], vec![]);
-        let cmp = OptionSetEx {
-            long: vec![],
-            short: vec![],
+        let opts = gong_option_set_fixed!([], []);
+        let opts_ex = gong_option_set!(vec![], vec![]);
+        let cmp = OptionSet {
+            long: &[],
+            short: &[],
             mode: MODE_DEFAULT,
             allow_abbreviations: ABBR_SUP_DEFAULT,
         };
         assert_eq!(opts, cmp);
+        assert_eq!(opts_ex, cmp);
     }
 }

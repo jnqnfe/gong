@@ -343,8 +343,8 @@ mod abbreviations {
                 expected_item!(0, Long, "foo"),
             ]
         );
-        let opts = gong_option_set!(
-            vec![
+        let opts = gong_option_set_fixed!(
+            [
                 // Multiple options that 'foo' will match as an abbreviation for before getting to
                 // the exact match.
                 gong_longopt!("fooo"),
@@ -352,7 +352,7 @@ mod abbreviations {
                 gong_longopt!("fooooo"),
                 gong_longopt!("foo"),    // Exact match for input `--foo`
             ],
-            vec![]
+            []
         );
         check_result(&Actual(opts.process(&args)), &expected);
     }
