@@ -26,8 +26,15 @@
 //! # Step #1: Describe the available options
 //!
 //! First, you need to create a description of the options to be made available to users of your
-//! program. Here you actually have some choices as to how you do this. You can use the "builder"
-//! style, using `add_*` methods on an option structure, or you can use the macros.
+//! program.
+//!
+//!  - [`OptionSetEx`] is the "extendible" type, which uses `Vec` for holding the described options,
+//!    and can thus be extended with additional ones at any time. It is thus suitable for "builder"
+//!    style construction, where a set is to be built dynamically at runtime.
+//!  - [`OptionSet`] is designed for describing a "fixed" set of options, using a slice reference
+//!    instead of `Vec`. It is primarily intended for achieving greater efficiency in designs not
+//!    requiring dynamic construction, where a set can be declared as a `static` (though is not
+//!    limited to use in `static`s).
 //!
 //! "Builder" style:
 //!
@@ -46,22 +53,60 @@
 //! debug_assert!(opts.is_valid());
 //! ```
 //!
+//! "Fixed" style:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate gong;
+//! static OPTS: gong::options::OptionSet = gong_option_set_fixed!(
+//!     [
+//!         gong_longopt!("help"),
+//!         gong_longopt!("foo"),
+//!         gong_longopt!("version"),
+//!         gong_longopt!("foobar"),
+//!         gong_longopt!("ábc"),       // Using a combinator char (accent)
+//!         gong_longopt!("hah", true), // This one expects a data arg
+//!     ], [
+//!         gong_shortopt!('h'),
+//!         gong_shortopt!('❤'),
+//!         gong_shortopt!('x'),
+//!         gong_shortopt!('o', true),  // So does this one
+//!     ]
+//! );
+//! # fn main() {
+//! debug_assert!(OPTS.is_valid());
+//! # }
+//! ```
+//!
+//! Notes:
+//!
+//!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
+//!    [`to_extendible`][`OptionSet::to_extendible`], which creates owned copies of the strings.
+//!  - An [`OptionSet`] can similarly be created from an [`OptionSetEx`] with
+//!    [`as_fixed`][`OptionSetEx::as_fixed`]. It will hold slice references to the [`OptionSetEx`]'s
+//!    `Vec` lists, with the lifetime tied to it (thus the set cannot be modified whilst the
+//!    [`OptionSet`] exists).
+//!  - Macros are provided for constructing both as a convenience.
+//!
 //! ## Set mode
 //!
 //! If you want to use *alternate* option mode rather than *standard* (default), as discussed above,
-//! the [`OptionSetEx::set_mode`] method is available.
+//! a `set_mode` method is available.
 //!
-//! You can control whether or not to allow abbreviated matching with the
-//! [`OptionSetEx::set_allow_abbreviations`] method.
+//! You can control whether or not to allow abbreviated matching with the `set_allow_abbreviations`
+//! method.
 //!
 //! ## Validation
 //!
-//! Some validation is performed by the `add_*` methods, but for full validation (including checking
-//! for duplicates) the [`Options::is_valid`] method is provided, as used above. Details of any
-//! problems identified by this method are output to `stderr`. It is recommended that you only use
-//! it in a *debug* assert variant, as here, to allow catching mistakes in development, but
+//! Once an option set has been described, it should be validated before use. The `is_valid` method
+//! is provided for this, as used above. Details of any problems identified by this method are
+//! output to `stderr` (it is expected only to fail during development). It is recommended that you
+//! only use it in a *debug* assert variant, as here, to allow catching mistakes in development, but
 //! otherwise avoid wasting energy for option sets in release builds that you know must be perfectly
 //! valid.
+//!
+//! Some basic validation is also performed directly by the `add_*` methods on [`OptionSetEx`], but
+//! this does not cover checking for duplicates.
 //!
 //! **Note**: With respect to what is or is not a duplicate, only the name/`char` matters; the
 //! `expects_data` attribute makes no difference.
@@ -91,8 +136,8 @@
 //! # Step #3: Processing
 //!
 //! With input args gathered and "available" option set constructed, now you're ready for analysis.
-//! All you need to do is feed these two data sets to the option set's [`process`] method and it
-//! will spit out an analysis that describes what it identified.
+//! All you need to do is feed these two data sets to the option set's `process` method and it will
+//! spit out an analysis that describes what it identified.
 //!
 //! ```rust
 //! # let opts: gong::options::OptionSetEx = Default::default();
@@ -102,17 +147,17 @@
 //!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
 //! have the option of processing one argument at a time (or in groups of whatever number you
-//! choose), calling [`process`] for each. (Naturally though you must beware the complications
+//! choose), calling `process` for each. (Naturally though you must beware the complications
 //! handling "in-next-arg" *data values* doing this).
 //!
 //! # Step #4: Take action
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The [`Analysis`] object returned by the [`process`] method contains `error` and `warn`
-//! booleans, which give a quick indication of problems. It also contains a list of items,
-//! describing in detail what was found. The items in the item list are stored in the same order as
-//! found in the input arguments.
+//! The [`Analysis`] object returned by the `process` method contains `error` and `warn` booleans,
+//! which give a quick indication of problems. It also contains a list of items, describing in
+//! detail what was found. The items in the item list are stored in the same order as found in the
+//! input arguments.
 //!
 //! The entries in the item list are [`ItemClass`] variants, which wrap variants of [`Item`],
 //! [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants
@@ -122,8 +167,8 @@
 //! next.
 //!
 //! **Note**: some item variants that may be returned in the [`Analysis`] struct hold `&str`
-//! references to strings that were provided in the argument and option data provided to
-//! [`process`]. This is done for efficiency. Beware of this with respect to lifetimes.
+//! references to strings that were provided in the argument and option data provided to `process`.
+//! This is done for efficiency. Beware of this with respect to lifetimes.
 //!
 //! # Have a play
 //!
@@ -138,7 +183,7 @@
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
-//! [`process`]: ../../options/struct.OptionSetEx.html#method.process
-//! [`OptionSetEx::is_valid`]: ../../options/struct.OptionSetEx.html#method.is_valid
-//! [`OptionSetEx::set_mode`]: ../../options/struct.OptionSetEx.html#method.set_mode
-//! [`OptionSetEx::set_allow_abbreviations`]: ../../options/struct.OptionSetEx.html#method.set_allow_abbreviations
+//! [`OptionSet`]: ../../options/struct.OptionSet.html
+//! [`OptionSetEx`]: ../../options/struct.OptionSetEx.html
+//! [`OptionSet::to_extendible`]: ../../options/struct.OptionSet.html#method.to_extendible
+//! [`OptionSetEx::as_fixed`]: ../../options/struct.OptionSetEx.html#method.as_fixed
