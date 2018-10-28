@@ -67,8 +67,8 @@ fn main() {
 
     // Set up valid option descriptions
     #[allow(unused_mut)] //Needed when no special features set
-    let mut opts = gong_option_set!(
-        vec![
+    let mut opts = gong_option_set_fixed!(
+        [
             gong_longopt!("help"),
             gong_longopt!("foo"),
             gong_longopt!("version"),
@@ -76,7 +76,7 @@ fn main() {
             gong_longopt!("hah", true),
             gong_longopt!("ábc"),        // Using a combinator char (accent)
         ],
-        vec![
+        [
             gong_shortopt!('h'),
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
@@ -115,13 +115,13 @@ fn main() {
 
     println!("[ {}Available options for test{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    for item in &opts.long {
+    for item in opts.long {
         match item.expects_data {
             true => println!("LONG {} {}[expects data!]{}", item.name, c!(COL_DATA), c!(RESET)),
             false => println!("LONG {}", item.name),
         }
     }
-    for item in &opts.short {
+    for item in opts.short {
         match item.expects_data {
             true => println!("SHORT {} {}[expects data!]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
             false => println!("SHORT {}", desc_char(item.ch)),

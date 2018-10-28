@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Now using `OptionSet` instead of `OptionSetEx`
+
 # 1.1.1 (October 27th, 2018)
 
  * Updated to use the new `process` method on the options object
