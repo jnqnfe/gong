@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.2 (October 28th, 2018)
 
  * Now using `OptionSet` instead of `OptionSetEx`
 
