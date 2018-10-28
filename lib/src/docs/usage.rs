@@ -14,11 +14,12 @@
 //!
 //! To use this library, start by adding a dependency entry for it in your project's `Cargo.toml`
 //! file; then make sure to declare use of the crate at the root of the module hierarchy
-//! (`src/main.rs` or `src/lib.rs`):
+//! (`src/main.rs` or `src/lib.rs`), including importing the macros if you want to use them:
 //!
 //! ```rust
-//! //#[macro_use] # Uncomment if you want to use the macros
+//! #[macro_use]
 //! extern crate gong;
+//! # fn main() {}
 //! ```
 //!
 //! Now proceed with the following steps.
