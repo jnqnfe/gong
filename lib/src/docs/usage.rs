@@ -10,7 +10,7 @@
 
 //! Documentation: Usage
 //!
-//! # Step #0: Preparation
+//! # Preparation
 //!
 //! To use this library, start by adding a dependency entry for it in your project's `Cargo.toml`
 //! file; then make sure to declare use of the crate at the root of the module hierarchy
