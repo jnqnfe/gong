@@ -201,12 +201,12 @@ impl<'a> OptionSetEx<'a> {
 
     /// Checks validity of option set
     ///
-    /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    /// Returns `true` if valid.
     ///
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        validation::set_is_valid(&self.as_fixed())
+        validation::validate_set(&self.as_fixed()).is_ok()
     }
 
     /// Checks validity of option set, returning details of any problems
@@ -258,12 +258,12 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
 
     /// Checks validity of option set
     ///
-    /// Returns `true` if valid. Outputs details of problems found to `stderr`.
+    /// Returns `true` if valid.
     ///
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        validation::set_is_valid(self)
+        validation::validate_set(self).is_ok()
     }
 
     /// Checks validity of option set, returning details of any problems
@@ -312,56 +312,6 @@ impl ShortOption {
 /// Option set validation
 mod validation {
     use super::{OptionSet, OptionFlaw};
-
-//TODO: This outputs details of flaws to `stderr`. Stop doing this in future (behaviour change)
-    /// Checks validity of option set
-    ///
-    /// Returns `true` if valid. Outputs details of problems found to `stderr`.
-    pub fn set_is_valid<'r, 'a: 'r>(set: &OptionSet<'r, 'a>) -> bool {
-        if let Err(flaws) = validate_set(set) {
-            for flaw in &flaws {
-                match flaw {
-                    OptionFlaw::LongEmpty => {
-                        eprintln!("Long option name cannot be an empty string!");
-                    },
-                    OptionFlaw::LongIncludesEquals(_) => {
-                        eprintln!("Long option name cannot contain an '=' character!");
-                    },
-                    OptionFlaw::ShortDash => {
-                        eprintln!("A dash ('-') is not a valid short option!");
-                    },
-                    _ => {},
-                }
-            }
-            // Recreating the original output from `validate_set` data is messy :/
-            let mut short_dups = Vec::new();
-            let mut long_dups = Vec::new();
-            for flaw in &flaws {
-                match flaw {
-                    OptionFlaw::ShortDup(c) => short_dups.push(c),
-                    _ => {},
-                }
-            }
-            for flaw in &flaws {
-                match flaw {
-                    OptionFlaw::LongDup(s) => long_dups.push(s),
-                    _ => {},
-                }
-            }
-            if !short_dups.is_empty() {
-                eprintln!("Duplicate short options were found!\n\
-                           Duplicated options: {:?}", short_dups);
-            }
-            if !long_dups.is_empty() {
-                eprintln!("Duplicate long options were found!\n\
-                           Duplicated options: {:?}", long_dups);
-            }
-            false
-        }
-        else {
-            true
-        }
-    }
 
     /// Checks validity of option set, returning details of any problems
     pub fn validate_set<'r, 'a: 'r>(set: &OptionSet<'r, 'a>

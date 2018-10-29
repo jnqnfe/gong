@@ -1,7 +1,15 @@
 # <unreleased>
 
+**Behaviour change:** This release contains an insignificant behaviour change with respect to
+option set validation issues - details are no longer output on `stderr`.
+
  * Added `validate` method to `OptionSet` and `OptionSetEx` as an alternative to `is_valid`,
    returning details of any flaws.
+ * Changed the `is_valid` method on `OptionSet` and `OptionSetEx` to no longer output details of
+   problems to `stderr`, preferring details to now be obtained via the new `validate` method. The
+   `is_valid` method was originally designed with the idea that it should realistically only ever
+   return `false` in a debug build during development, and as such, unusually it was allowed to
+   output descriptions of problems encountered to `stderr`. That decision has now been revised.
  * Added methods to `OptionSetEx` that add ready-made `LongOption`s/`ShortOption`s
  * Improved internal organisation of the `Options` validation code
  * Improved organisation of the test suite's `options` file
