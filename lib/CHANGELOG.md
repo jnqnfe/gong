@@ -11,7 +11,7 @@ option set validation issues - details are no longer output on `stderr`.
    return `false` in a debug build during development, and as such, unusually it was allowed to
    output descriptions of problems encountered to `stderr`. That decision has now been revised.
  * Added methods to `OptionSetEx` that add ready-made `LongOption`s/`ShortOption`s
- * Improved internal organisation of the `Options` validation code
+ * Improved internal organisation of the `OptionSet`/`OptionSetEx` validation code
  * Improved organisation of the test suite's `options` file
 
 # 1.2.1 (October 28th, 2018)
