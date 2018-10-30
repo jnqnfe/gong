@@ -206,13 +206,13 @@ impl<'a> OptionSetEx<'a> {
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        validation::validate_set(&self.as_fixed()).is_ok()
+        validation::validate_set(&self.as_fixed(), false).is_ok()
     }
 
     /// Checks validity of option set, returning details of any problems
     #[inline(always)]
     pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'a>>> {
-        validation::validate_set(&self.as_fixed())
+        validation::validate_set(&self.as_fixed(), true)
     }
 
     /// Analyses provided program arguments.
@@ -263,13 +263,13 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
-        validation::validate_set(self).is_ok()
+        validation::validate_set(self, false).is_ok()
     }
 
     /// Checks validity of option set, returning details of any problems
     #[inline(always)]
     pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'a>>> {
-        validation::validate_set(self)
+        validation::validate_set(self, true)
     }
 
     /// Analyses provided program arguments.
@@ -314,28 +314,47 @@ mod validation {
     use super::{OptionSet, OptionFlaw};
 
     /// Checks validity of option set, returning details of any problems
-    pub fn validate_set<'r, 'a: 'r>(set: &OptionSet<'r, 'a>
+    ///
+    /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
+    /// useful for quick `is_valid` checks. Otherwise builds up a complete list of flaws.
+    pub fn validate_set<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, detail: bool
         ) -> Result<(), Vec<OptionFlaw<'a>>>
     {
         let mut flaws = Vec::new();
 
         for candidate in set.long {
             if candidate.name.len() == 0 {
-                flaws.push(OptionFlaw::LongEmpty);
+                match detail {
+                    true => { flaws.push(OptionFlaw::LongEmpty); },
+                    false => { return Err(flaws); },
+                }
             }
             else if candidate.name.contains('=') {
-                flaws.push(OptionFlaw::LongIncludesEquals(candidate.name));
+                match detail {
+                    true => { flaws.push(OptionFlaw::LongIncludesEquals(candidate.name)); },
+                    false => { return Err(flaws); },
+                }
             }
         }
 
         for candidate in set.short {
             if candidate.ch == '-' {
-                flaws.push(OptionFlaw::ShortDash);
+                match detail {
+                    true => { flaws.push(OptionFlaw::ShortDash); },
+                    false => { return Err(flaws); },
+                }
             }
         }
 
-        find_duplicates_short(set, &mut flaws);
-        find_duplicates_long(set, &mut flaws);
+        let mut dupes: bool = false;
+        find_duplicates_short(set, &mut flaws, detail, &mut dupes);
+        if !detail && dupes {
+            return Err(flaws);
+        }
+        find_duplicates_long(set, &mut flaws, detail, &mut dupes);
+        if !detail && dupes {
+            return Err(flaws);
+        }
 
         match flaws.len() {
             0 => Ok(()),
@@ -343,8 +362,8 @@ mod validation {
         }
     }
 
-    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>,
-        flaws: &mut Vec<OptionFlaw<'a>>)
+    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, flaws: &mut Vec<OptionFlaw<'a>>,
+        detail: bool, found: &mut bool)
     {
         let opts = set.short;
         let mut checked: Vec<char> = Vec::with_capacity(opts.len());
@@ -354,8 +373,13 @@ mod validation {
             let ch = short.ch;
             if !duplicates.contains(&OptionFlaw::ShortDup(ch)) {
                 match checked.contains(&ch) {
-                    true => { duplicates.push(OptionFlaw::ShortDup(ch)); },
-                    false =>  { checked.push(ch); },
+                    true => {
+                        match detail {
+                            true => { duplicates.push(OptionFlaw::ShortDup(ch)); },
+                            false => { *found = true; return; },
+                        }
+                    },
+                    false => { checked.push(ch); },
                 }
             }
         }
@@ -364,8 +388,8 @@ mod validation {
         }
     }
 
-    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>,
-        flaws: &mut Vec<OptionFlaw<'a>>)
+    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, flaws: &mut Vec<OptionFlaw<'a>>,
+        detail: bool, found: &mut bool)
     {
         let opts = set.long;
         let mut checked: Vec<&'a str> = Vec::with_capacity(opts.len());
@@ -375,8 +399,13 @@ mod validation {
             let name = long.name.clone();
             if !duplicates.contains(&OptionFlaw::LongDup(name)) {
                 match checked.contains(&name) {
-                    true => { duplicates.push(OptionFlaw::LongDup(name)); },
-                    false =>  { checked.push(name); },
+                    true => {
+                        match detail {
+                            true => { duplicates.push(OptionFlaw::LongDup(name)); },
+                            false => { *found = true; return; },
+                        }
+                    },
+                    false => { checked.push(name); },
                 }
             }
         }
