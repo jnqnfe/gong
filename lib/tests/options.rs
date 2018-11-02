@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Testing "available" option set construction/modification
+//! Testing “available” option set construction/modification
 //!
 //! Note, construction with macros is tested separately
 
@@ -128,7 +128,7 @@ fn set_types() {
     assert!(opts_extendible != opts_extendible_2);
 }
 
-/// Dash ('-') is an invalid short option (clashes with early terminator if it were given on its own
+/// Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its own
 /// (`--`), and would be misinterpreted as a long option if given as the first in a short option set
 /// (`--abc`)).
 mod short_dash {
@@ -173,7 +173,7 @@ mod short_dash {
     ///
     /// This situation is an invalid use case, the user should always validate their option set;
     /// this test verifies that things behave though as we expect if the set is invalid due to a
-    /// short that is a dash ('-').
+    /// short that is a dash (`-`).
     ///
     /// The expected behaviour is this: If the first char in an argument is a dash, then as long as
     /// the second char is not also a dash, then it will succeed in matching as a short option. If
@@ -184,9 +184,9 @@ mod short_dash {
     #[test]
     fn bypassed_processing() {
         let args = arg_list!(
-            "--abc",    // Can't use as a shortopt like this, will be interpreted as long opt
+            "--abc",    // Can’t use as a shortopt like this, will be interpreted as long opt
             "-a-bc",    // Can use like this
-            "--",       // Can't use as a shortopt like this, will be interpreted as early terminator
+            "--",       // Can’t use as a shortopt like this, will be interpreted as early terminator
         );
         let expected = expected!(
             error: false,
@@ -203,7 +203,7 @@ mod short_dash {
 
         // Using a custom **invalid** option set (short is '-')
         let opts = gong_option_set_fixed!([], [ gong_shortopt!('-') ]);
-        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
+        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         check_result(&Actual(opts.process(&args)), &expected);
     }
@@ -249,8 +249,8 @@ mod long_no_name {
     }
 }
 
-/// Long option names cannot contain an '=' (used for declaring a data sub-argument in the same
-/// argument; if names could contain an '=', as data can, we would not know where to do the split,
+/// Long option names cannot contain an `=` (used for declaring a data sub-argument in the same
+/// argument; if names could contain an `=`, as data can, we would not know where to do the split,
 /// complicating matching.
 mod long_equals {
     use super::*;
@@ -294,14 +294,14 @@ mod long_equals {
     ///
     /// This situation is an invalid use case, the user should always validate their option set;
     /// this test verifies that things behave though as we expect if the set is invalid due to a
-    /// long with an equals ('=').
+    /// long with an equals (`=`).
     #[test]
     fn bypassed_processing() {
         let args = arg_list!(
-            "--a",      // This should match against the "a=b" invalid option as an abbreviation
-            "--a=b",    // Here, this is a long option with "in-arg" data, thus the name is "a",
-                        // which again therefore matched the invalid "a=b" option, as an
-                        // abbreviation, but carrying "b" as data.
+            "--a",      // This should match against the “a=b” invalid option as an abbreviation
+            "--a=b",    // Here, this is a long option with “in-arg” data, thus the name is “a”,
+                        // which again therefore matched the invalid “a=b” option, as an
+                        // abbreviation, but carrying “b” as data.
         );
         let expected = expected!(
             error: false,
@@ -312,9 +312,9 @@ mod long_equals {
             ]
         );
 
-        // Using a custom **invalid** option set (long name contains '=')
+        // Using a custom **invalid** option set (long name contains `=`)
         let opts = gong_option_set_fixed!([ gong_longopt!("a=b") ], []);
-        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET'S SEE...
+        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         check_result(&Actual(opts.process(&args)), &expected);
     }

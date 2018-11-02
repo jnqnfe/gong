@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! "Available" option sets
+//! “Available” option sets
 
 use std::convert::AsRef;
 
@@ -45,7 +45,7 @@ impl<'a> Default for OptionSetEx<'a> {
 ///
 /// Used to supply the set of information about available options to match against
 ///
-/// This is the non-"extendible" variant. Unlike its cousin `OptionSetEx`, this holds options lists
+/// This is the non-“extendible” variant. Unlike its cousin `OptionSetEx`, this holds options lists
 /// as slice references rather than `Vec`s, and thus cannot be extended in size (hence no `add_*`
 /// methods). This is particularly useful in efficient creation of static/const option sets.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,7 +133,7 @@ impl<'a> OptionSetEx<'a> {
         }
     }
 
-    /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`'s vectors as slices.
+    /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices.
     pub fn as_fixed(&self) -> OptionSet<'_, 'a> {
         OptionSet {
             long: &self.long[..],
@@ -232,7 +232,7 @@ impl<'a> OptionSetEx<'a> {
 }
 
 impl<'r, 'a: 'r> OptionSet<'r, 'a> {
-    /// Creates an 'extendible' copy of `self`
+    /// Creates an “extendible” copy of `self`
     ///
     /// This duplicates the options in `self` into an [`OptionSetEx`](struct.OptionSetEx.html).
     pub fn to_extendible(&self) -> OptionSetEx<'a> {
@@ -294,7 +294,7 @@ impl<'a> LongOption<'a> {
     /// Panics (debug only) if the given name contains an `=` or is an empty string.
     fn new(name: &'a str, expects_data: bool) -> Self {
         debug_assert!(name.len() >= 1, "Long option name cannot be an empty string!");
-        debug_assert!(!name.contains('='), "Long option name cannot contain '='!");
+        debug_assert!(!name.contains('='), "Long option name cannot contain ‘=’!");
         Self { name, expects_data, }
     }
 }
@@ -304,7 +304,7 @@ impl ShortOption {
     ///
     /// Panics (debug only) if the given char is `-`.
     fn new(ch: char, expects_data: bool) -> Self {
-        debug_assert_ne!('-', ch, "Dash ('-') is not a valid short option!");
+        debug_assert_ne!('-', ch, "Dash (‘-’) is not a valid short option!");
         Self { ch, expects_data, }
     }
 }
@@ -419,11 +419,11 @@ mod validation {
 mod tests {
     use super::*;
 
-    /* Dash ('-') is an invalid short option (clashes with early terminator if it were given on its
+    /* Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its
      * own (`--`), and would be misinterpreted as a long option if given as the first in a short
      * option set (`--abc`)). */
 
-    /// Check `ShortOption::new` rejects '-'
+    /// Check `ShortOption::new` rejects ‘-’
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_short_dash() {
@@ -437,11 +437,11 @@ mod tests {
         let _opt = LongOption::new("", false); // Should panic here in debug mode!
     }
 
-    /* Long option names cannot contain an '=' (used for declaring a data sub-argument in the same
-     * argument; if names could contain an '=', as data can, we would not know where to do the
+    /* Long option names cannot contain an `=` (used for declaring a data sub-argument in the same
+     * argument; if names could contain an `=`, as data can, we would not know where to do the
      * split, complicating matching. */
 
-    /// Check `LongOption::new` rejects equals ('=') char
+    /// Check `LongOption::new` rejects equals (`=`) char
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_long_with_equals() {

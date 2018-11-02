@@ -53,8 +53,8 @@ fn basic() {
         "--xxx",            // Non-real long option
         "---yy",            // Extra dash should be taken as part of long option name
         "version",          // Real long option, but no prefix, thus non-option
-        "-bxs",             // Short option set, two non-real, one real ('x')
-        "ghi",              // Non-option, containing real short option ('h')
+        "-bxs",             // Short option set, two non-real, one real (`x`)
+        "ghi",              // Non-option, containing real short option (`h`)
         "-a-",              // Dash in short opt set should come out as unknown short opt (can not
                             // be a real one as not allowed), so long as not the first in set, as
                             // would then arg would then be interpreted as long option or early
@@ -128,8 +128,8 @@ fn early_term() {
     check_result(&Actual(get_base().process(&args)), &expected);
 }
 
-/// Test empty long option names with data param (-- on it's own is obviously picked up as early
-/// terminator, but what happens when an '=' is added?).
+/// Test empty long option names with data param (-- on it’s own is obviously picked up as early
+/// terminator, but what happens when an `=` is added?).
 #[test]
 fn long_no_name() {
     let args = arg_list!("--=a", "--=");
@@ -204,14 +204,14 @@ mod utf8 {
             warn: true,
             vec![
                 expected_item!(0, NonOption, "y̆"),
-                expected_item!(1, UnknownShort, 'y'),        // 'y'
+                expected_item!(1, UnknownShort, 'y'),        // `y`
                 expected_item!(1, UnknownShort, '\u{0306}'), // breve
                 expected_item!(2, UnknownLong, "y̆"),
                 expected_item!(3, NonOption, "ëéy̆"),
                 expected_item!(4, UnknownShort, 'ë'),        // e+diaeresis
-                expected_item!(4, UnknownShort, 'e'),        // 'e'
+                expected_item!(4, UnknownShort, 'e'),        // `e`
                 expected_item!(4, UnknownShort, '\u{0301}'), // acute accent
-                expected_item!(4, UnknownShort, 'y'),        // 'y'
+                expected_item!(4, UnknownShort, 'y'),        // `y`
                 expected_item!(4, UnknownShort, '\u{0306}'), // breve
                 expected_item!(5, UnknownLong, "ëéy̆"),
                 expected_item!(6, UnknownLong, "ábc"),       // without combinator
@@ -226,7 +226,7 @@ mod utf8 {
     /// Here we use the "heavy black heart" char with variation selector #16 (emoji).
     #[test]
     fn test3() {
-        // Note: the following is the 'black heart' character, followed by the variation selector
+        // Note: the following is the “black heart” character, followed by the variation selector
         // #16 (emoji) character.
         let args = arg_list!("❤️", "-❤️", "--❤️");
         let expected = expected!(
@@ -345,7 +345,7 @@ mod abbreviations {
         );
         let opts = gong_option_set_fixed!(
             [
-                // Multiple options that 'foo' will match as an abbreviation for before getting to
+                // Multiple options that “foo” will match as an abbreviation for before getting to
                 // the exact match.
                 gong_longopt!("fooo"),
                 gong_longopt!("foooo"),
@@ -411,9 +411,9 @@ mod data {
     #[test]
     fn arg_placement_short_next() {
         let args = arg_list!(
-            // Here 'o' is valid and takes data, 'x' is valid and does not take data.
+            // Here 'o' is valid and takes data, `x` is valid and does not take data.
             "-o", "def",    // Simple in-next-arg
-            "-bo", "def",   // Char(s) before 'o' should be correctly captured
+            "-bo", "def",   // Char(s) before `o` should be correctly captured
             "-bxo", "def",  // Even chars that are valid short opts
             "-xao", "def",  // Different variation
         );
@@ -439,7 +439,7 @@ mod data {
     #[test]
     fn arg_placement_short_same() {
         let args = arg_list!(
-            "-oa",         // 'o' here takes data; trying here various combinations of
+            "-oa",         // `o` here takes data; trying here various combinations of
             "-oabc",       // different length, either side, with known and unknown other
             "-aob",        // (non-data-taking) short options.
             "-aobcd",
@@ -588,19 +588,19 @@ mod data {
         check_result(&Actual(get_base().process(&args)), &expected);
     }
 
-    /// Test option with expected data arg, with data containing '='. An '=' in a long option arg
+    /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
     /// denotes an "in-arg" data value and thus it is broken up into name and data components. Here
-    /// we check that an '=' does not result in unwanted behaviour in order positions.
+    /// we check that an `=` does not result in unwanted behaviour in order positions.
     #[test]
     fn containing_equals() {
         let args = arg_list!(
             "--hah", "d=ef",    // Should just be treated as part of the data
             "--hah", "=",       // Should just be treated as data
-            "--hah=d=ef",       // First '=' separates name and data, other is just part of the data
+            "--hah=d=ef",       // First `=` separates name and data, other is just part of the data
             "--hah==ef",        // Same here
             "--help",           // Random
             "--blah=ggg",       // Long option, but not a matching one, data should be ignored
-            "-oa=b",            // Short option, should be part of 'o' option's data
+            "-oa=b",            // Short option, should be part of `o` option’s data
             "-o=",              // Same
             "-o===o",           // Same
         );
@@ -665,9 +665,9 @@ mod data {
     #[test]
     fn looking_like_early_term() {
         let args = arg_list!(
-            "--hah=--",     // In long option's data, in-arg
+            "--hah=--",     // In long option’s data, in-arg
             "--hah", "--",  // Same, next-arg
-            "-o", "--",     // In short option's data, in-arg
+            "-o", "--",     // In short option’s data, in-arg
             "-o--",         // Same, next-arg
         );
         let expected = expected!(
@@ -745,7 +745,7 @@ mod data {
     }
 
     /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
-    /// position calculation whilst processing a short option set. Safe to assume it won't, but
+    /// position calculation whilst processing a short option set. Safe to assume it won’t, but
     /// may as well throw down a few samples.
     #[test]
     fn multibyte_utf8combi_short() {
@@ -812,8 +812,8 @@ mod alt_mode {
             "-hah=",        // Same, in-arg, data is empty string
             "-=",           // Option with data arg, which is empty, also empty name
             "-=abc",        // Similar, empty name, data provided though, which should be ignored
-            "-bxs",         // 'x' is a real short opt, but they should be ignored
-            "--foo",        // Real option, 'standard' mode syntax, the second dash should be taken
+            "-bxs",         // `x` is a real short opt, but they should be ignored
+            "--foo",        // Real option, “standard” mode syntax, the second dash should be taken
                             // as being a part of the name.
             "-f",           // Ambiguous long option, matches both `foo` and `foobar`
             "-foo",         // Matches both `foo` and `foobar`, but matches `foo` exactly

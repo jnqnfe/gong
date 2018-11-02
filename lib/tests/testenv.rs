@@ -30,7 +30,7 @@ fn check_constants() {
     assert_eq!(test, cmp);
 }
 
-/// Check common base "available options" set validity
+/// Check common base “available options” set validity
 ///
 /// Doing it once here allows avoiding inefficiently doing so in every test using it (without
 /// modification).

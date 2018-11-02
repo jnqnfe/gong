@@ -26,4 +26,4 @@ Source Code Contents
 ====================
 
  - lib/          - The library itself
- - bin/          - An interactive "playground" program for testing out the library's functionality
+ - bin/          - An interactive “playground” program for testing out the library’s functionality

@@ -96,7 +96,7 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
 /// than with the raw output dumped by the test env.
 ///
-/// Note, the `:#?` formatter is available as the "pretty" version of `:?`, but this is too sparse
+/// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
 fn pretty_print_results(analysis: &Analysis) {
     let mut items = String::new();

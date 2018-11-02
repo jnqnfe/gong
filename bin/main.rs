@@ -57,7 +57,7 @@ pub mod config {
     }
 }
 
-// Color? Filter the provided 'formatted-stdout-ctrl-seq' string
+// Color? Filter the provided “formatted-stdout-ctrl-seq” string
 macro_rules! c {
     ( $code:expr ) => { if config::formatted_stdout() { $code } else { "" } };
 }
@@ -81,7 +81,7 @@ fn main() {
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
             gong_shortopt!('o', true),
-            gong_shortopt!('\u{030A}'),   // A lone combinator ("ring above")
+            gong_shortopt!('\u{030A}'),   // A lone combinator (“ring above”)
         ],
         OptionsMode::Standard,
         true

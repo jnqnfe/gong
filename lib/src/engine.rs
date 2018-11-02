@@ -18,7 +18,7 @@ const EARLY_TERMINATOR: &str = "--";
 
 /// Basic argument type
 ///
-/// Option variants should: include argument without prefix; include "in-same-arg" data values.
+/// Option variants should: include argument without prefix; include “in-same-arg” data values.
 enum ArgTypeBasic<'a> {
     NonOption,
     EarlyTerminator,
@@ -68,7 +68,7 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
             ArgTypeBasic::EarlyTerminator => {
                 early_terminator_encountered = true;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
-                // where, so let's not leave it out of the results.
+                // where, so let’s not leave it out of the results.
                 results.add(ItemClass::Ok(Item::EarlyTerminator(arg_index)));
             },
             ArgTypeBasic::LongOption(opt_string) => {
@@ -77,12 +77,12 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                  * form of an available option, so long as it is unique, which requires checking for
                  * ambiguity. (See documentation). */
 
-                // Extract name, splitting from optional "in-same-arg" data value
+                // Extract name, splitting from optional “in-same-arg” data value
                 let (name, data_included) = match opt_string.find('=') {
                     None => (opt_string, None),
                     Some(i) => {
                         let split = opt_string.split_at(i);
-                        // We know that the '=' is encoded as just one byte and that it is
+                        // We know that the `=` is encoded as just one byte and that it is
                         // definately there, so we can safely skip it unchecked.
                         let data_included = unsafe { split.1.get_unchecked(1..) };
                         (split.0, Some(data_included))
@@ -123,12 +123,12 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                     results.error = true;
                 }
                 else if let Some(matched) = matched {
-                    // Use option's full name, not the possibly abbreviated user provided one
+                    // Use option’s full name, not the possibly abbreviated user provided one
                     let opt_name = &matched.name;
 
                     if matched.expects_data {
                         // Data included in same argument
-                        // We accept it even if it's an empty string
+                        // We accept it even if it’s an empty string
                         if let Some(data) = data_included {
                             results.add(ItemClass::Ok(Item::LongWithData {
                                 i: arg_index, n: opt_name, d: data, l: DataLocation::SameArg }));
@@ -220,14 +220,14 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
 // length is no good.
 #[inline(always)]
 fn has_prefix(arg: &str, prefix: &str) -> bool {
-    // Note, it is safe to index into `arg` in here; we don't care about char boundaries for the
-    // simple byte-slice comparison. Doing this is optimally efficient, avoiding `start_with`'s
+    // Note, it is safe to index into `arg` in here; we don’t care about char boundaries for the
+    // simple byte-slice comparison. Doing this is optimally efficient, avoiding `start_with`’s
     // `>=` length comparison check, as well as utf-8 char boundary checks, etc.
     let prefix_len = prefix.len();
     arg.len() > prefix_len && &prefix.as_bytes()[..] == &arg.as_bytes()[..prefix_len]
 }
 
-/// Assess argument type, returning options without their prefix, for 'standard' mode
+/// Assess argument type, returning options without their prefix, for “standard” mode
 fn get_basic_arg_type_standard<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     if arg == EARLY_TERMINATOR {
         ArgTypeBasic::EarlyTerminator
@@ -243,7 +243,7 @@ fn get_basic_arg_type_standard<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     }
 }
 
-/// Assess argument type, returning options without their prefix, for 'alternate' mode
+/// Assess argument type, returning options without their prefix, for “alternate” mode
 fn get_basic_arg_type_alternate<'a>(arg: &'a str) -> ArgTypeBasic<'a> {
     if arg == EARLY_TERMINATOR {
         ArgTypeBasic::EarlyTerminator

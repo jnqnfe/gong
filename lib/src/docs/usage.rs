@@ -12,7 +12,7 @@
 //!
 //! # Preparation
 //!
-//! To use this library, start by adding a dependency entry for it in your project's `Cargo.toml`
+//! To use this library, start by adding a dependency entry for it in your project’s `Cargo.toml`
 //! file; then make sure to declare use of the crate at the root of the module hierarchy
 //! (`src/main.rs` or `src/lib.rs`), including importing the macros if you want to use them:
 //!
@@ -29,15 +29,15 @@
 //! First, you need to create a description of the options to be made available to users of your
 //! program.
 //!
-//!  - [`OptionSetEx`] is the "extendible" type, which uses `Vec` for holding the described options,
-//!    and can thus be extended with additional ones at any time. It is thus suitable for "builder"
+//!  - [`OptionSetEx`] is the “extendible” type, which uses `Vec` for holding the described options,
+//!    and can thus be extended with additional ones at any time. It is thus suitable for “builder”
 //!    style construction, where a set is to be built dynamically at runtime.
-//!  - [`OptionSet`] is designed for describing a "fixed" set of options, using a slice reference
+//!  - [`OptionSet`] is designed for describing a “fixed” set of options, using a slice reference
 //!    instead of `Vec`. It is primarily intended for achieving greater efficiency in designs not
 //!    requiring dynamic construction, where a set can be declared as a `static` (though is not
 //!    limited to use in `static`s).
 //!
-//! "Builder" style:
+//! “Builder” style:
 //!
 //! ```rust
 //! let mut opts = gong::options::OptionSetEx::new(6, 4); //Estimate counts for efficiency
@@ -54,7 +54,7 @@
 //! debug_assert!(opts.is_valid());
 //! ```
 //!
-//! "Fixed" style:
+//! “Fixed” style:
 //!
 //! ```rust
 //! # #[macro_use]
@@ -84,7 +84,7 @@
 //!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
 //!    [`to_extendible`][`OptionSet::to_extendible`], which creates owned copies of the strings.
 //!  - An [`OptionSet`] can similarly be created from an [`OptionSetEx`] with
-//!    [`as_fixed`][`OptionSetEx::as_fixed`]. It will hold slice references to the [`OptionSetEx`]'s
+//!    [`as_fixed`][`OptionSetEx::as_fixed`]. It will hold slice references to the [`OptionSetEx`]’s
 //!    `Vec` lists, with the lifetime tied to it (thus the set cannot be modified whilst the
 //!    [`OptionSet`] exists).
 //!  - Macros are provided for constructing both as a convenience.
@@ -135,8 +135,8 @@
 //!
 //! # Step #3: Processing
 //!
-//! With input args gathered and "available" option set constructed, now you're ready for analysis.
-//! All you need to do is feed these two data sets to the option set's `process` method and it will
+//! With input args gathered and “available” option set constructed, now you’re ready for analysis.
+//! All you need to do is feed these two data sets to the option set’s `process` method and it will
 //! spit out an analysis that describes what it identified.
 //!
 //! ```rust
@@ -148,7 +148,7 @@
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
 //! have the option of processing one argument at a time (or in groups of whatever number you
 //! choose), calling `process` for each. (Naturally though you must beware the complications
-//! handling "in-next-arg" *data values* doing this).
+//! handling “in-next-arg” *data values* doing this).
 //!
 //! # Step #4: Take action
 //!
@@ -173,7 +173,7 @@
 //! # Have a play
 //!
 //! The source code repository that houses this project includes a small test application for trying
-//! out the library's analysis capabilities. It has a small set of built-in example options of
+//! out the library’s analysis capabilities. It has a small set of built-in example options of
 //! different kinds, and when run, outputs details of them along with details of analysing any
 //! provided arguments against them. Instruction on using it are provided in the `README.md` file
 //! that accompanies it.

@@ -1,10 +1,10 @@
 gong-playground
 ===============
 
-A test program for the `gong` "next-gen" getopt replacement for Rust programs.
+A test program for the `gong` “next-gen” getopt replacement for Rust programs.
 
 The point of this test program is simply to provide a means of having an interactive play with the
-underlying library's analysis capabilities.
+underlying library’s analysis capabilities.
 
 ## Usage
 
@@ -38,20 +38,20 @@ non-options and thus are passed on).
 
 The test program has the following features that can be enabled/disabled when compiling:
 
- - `alt_mode` enables use of `gong`'s "alt mode".
- - `no_abbreviations` disables `gong`'s abbreviated matching feature.
- - `keep_prog_name` avoids skipping over the first ("program name") argument when outputting
+ - `alt_mode` enables use of `gong`’s “alt mode”.
+ - `no_abbreviations` disables `gong`’s abbreviated matching feature.
+ - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.
  - `color` enables formatted (color/bold/etc) analysis output
 
-To use these features, use Cargo's `features` option. You can enable a single feature, such as
+To use these features, use Cargo’s `features` option. You can enable a single feature, such as
 `alt_mode` as `--features alt_mode` or `--features=alt_mode`. You can enable multiple features by
 enclosing them in quotes, such as `--features "alt_mode no_abbreviations"` or
 `--features="alt_mode no_abbreviations"`. You can enable all features simply with `--all-features`.
 You can disable default-enabled features with `--no-default-features`.
 
 Remember, you must supply this Cargo option before supplying the *early terminator* which separates
-Cargo's options from those to supply to the to-be-run program.
+Cargo’s options from those to supply to the to-be-run program.
 
 An example: `cargo run --features alt_mode -- -foo`
 

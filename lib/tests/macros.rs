@@ -18,17 +18,17 @@ mod common;
 use gong::options::*;
 use common::*;
 
-/// Tests of "available options set" construction macros
+/// Tests of “available options set” construction macros
 mod available_options {
     use super::*;
 
     /// Compare the two option set building macros
     #[test]
     fn cmp_non_fixed() {
-        // The common base set is already constructed with the 'fixed' (`OptionSet` based) macro
+        // The common base set is already constructed with the “fixed” (`OptionSet` based) macro
         let fixed: &OptionSet = common::get_base();
 
-        // Re-build with 'non-fixed' (`OptionSetEx` based) macro
+        // Re-build with “non-fixed” (`OptionSetEx` based) macro
         let non_fixed: OptionSetEx = gong_option_set!(
             vec![
                 gong_longopt!("help"),
@@ -53,7 +53,7 @@ mod available_options {
         assert_eq!(*fixed, non_fixed);
     }
 
-    /// Compare macro-built with hand-built "available options" set
+    /// Compare macro-built with hand-built “available options” set
     #[test]
     fn cmp_hand_built() {
         // The common base set is already constructed with a macro
@@ -85,7 +85,7 @@ mod available_options {
         assert_eq!(*macro_built, hand_built);
     }
 
-    /// Compare macro-built with method-built "available options" set
+    /// Compare macro-built with method-built “available options” set
     #[test]
     fn cmp_method_built() {
         // The common base set is already constructed with a macro

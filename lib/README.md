@@ -6,7 +6,7 @@ arguments.
 
 ## Usage
 
-Add it as a dependency in your project's `Cargo.toml`:
+Add it as a dependency in your project’s `Cargo.toml`:
 
 ```toml
 [dependencies]

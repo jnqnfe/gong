@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Base "available" option set used by most tests
+//! Base “available” option set used by most tests
 
 use gong::options::{OptionSet, OptionsMode};
 
@@ -28,7 +28,7 @@ static BASE_OPTS: OptionSet = gong_option_set_fixed!(
         gong_shortopt!('❤'),
         gong_shortopt!('x'),
         gong_shortopt!('o', true),
-        gong_shortopt!('\u{030a}'), // A lone combinator ("ring above")
+        gong_shortopt!('\u{030a}'), // A lone combinator (“ring above”)
         gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
     ],
     OptionsMode::Standard,

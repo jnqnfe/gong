@@ -22,7 +22,7 @@
 //! compatible program designs. It appeared that the Rust crate ecosystem was missing a more
 //! fundamental and broadly applicable solution.
 //!
-//! Some/all of these solutions also forced a "builder" type pattern of describing options through
+//! Some/all of these solutions also forced a “builder” type pattern of describing options through
 //! successive method calls, lacking a more efficient option of directly defining the data
 //! structure. This includes preventing efficient declaration of a `static`/`const` set.
 //!
@@ -39,16 +39,16 @@
 //!  2. You can then work through this analysis to respond as applicable: Output error information
 //!     if the user made a mistake; output help/usage information if requested; store state
 //!     information from recognised flag type options; and store data (converting values as
-//!     necessary) from non-options and recognised "with data arg" options.
+//!     necessary) from non-options and recognised “with data arg” options.
 //!  3. Proceed on with whatever your program was designed to do.
 //!
 //! Differences to the old `getopt`/`getopt_long` C solution include:
 //!
 //!  * All processing can be done in one go, rather than with recursive function calls.
-//!  * Use of static global variables for "position" tracking is avoided.
+//!  * Use of static global variables for “position” tracking is avoided.
 //!  * *Non-options* are **not** shuffled to the end of the list, unlike the default behaviour of
 //!    `getopt`.
-//!  * The "convenience" functionality of `-W foo` being treated as `--foo` is not supported
+//!  * The “convenience” functionality of `-W foo` being treated as `--foo` is not supported
 //!    (unnecessary complexity).
 //!
 //! ## Mismatch suggestions
@@ -62,7 +62,7 @@
 //! # Crate name origins
 //!
 //! The `gong` crate name was chosen in homage to the venerable C `getopt`, and can be considered a
-//! "next-gen" solution for people moving to the Rust programming language.
+//! “next-gen” solution for people moving to the Rust programming language.
 //!
 //! > **G**et-**O**pt **N**ext-**G**en → `gong`
 //!
