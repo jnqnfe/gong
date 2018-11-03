@@ -1,6 +1,7 @@
 # <unreleased>
 
  * Improved efficiency of `is_valid` for option sets
+ * Fixed incorrect order of license filenames mentioned in header blocks
 
 # 1.3.0 (October 29th, 2018)
 
