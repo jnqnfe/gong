@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Fixed incorrect order of license filenames mentioned in header blocks
+
 # 1.3.0 (October 29th, 2018)
 
 **Behaviour change:** This release contains an insignificant behaviour change with respect to
