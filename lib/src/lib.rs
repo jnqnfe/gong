@@ -24,6 +24,9 @@
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]
 
+#[cfg(feature = "suggestions")]
+extern crate strsim;
+
 pub mod docs;
 #[macro_use]
 mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!

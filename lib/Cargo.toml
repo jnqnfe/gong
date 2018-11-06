@@ -12,3 +12,9 @@ A lightweight, flexible and simple-to-use command line argument processor.
 keywords = ["gong", "getopt", "terminal", "command-line"]
 
 [dependencies]
+strsim = { version = "0.8", optional = true }
+
+[features]
+default = ["suggestions"]
+# Enables the suggestion feature for use with unrecognised longoption situations
+suggestions = ["strsim"]

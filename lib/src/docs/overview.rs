@@ -53,11 +53,16 @@
 //!
 //! ## Mismatch suggestions
 //!
-//! This library does not (currently) itself provide any suggestion mechanism for failed option
-//! matches - i.e. the ability to take an unmatched *long option* and pick the most likely of the
-//! available options that the user may have actually meant to use, to suggest to them when
-//! reporting the error. There is nothing however stopping users of this library from running
-//! unmatched options through a third-party library to obtain the suggestion to display.
+//! This library provides a suggestion mechanism for failed option matches - i.e. the ability to
+//! take an unmatched *long option* and pick the most likely of the available options that the user
+//! may have actually meant to use, to suggest to them when reporting the error. This is built upon
+//! the `strsim` crate’s `jaro_winkler` algorithm. To use it, ensure that the `suggestions` feature
+//! is enabled. E.g. like this (substituting a version number as required):
+//!
+//! ```toml
+//! [dependencies]
+//! gong = { version = "*", features = ["suggestions"] }
+//! ```
 //!
 //! # Crate name origins
 //!

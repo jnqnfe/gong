@@ -10,6 +10,8 @@
 
 //! “Available” option sets
 
+#[cfg(feature = "suggestions")]
+use strsim;
 use std::convert::AsRef;
 use super::analysis::Settings;
 
@@ -195,6 +197,22 @@ impl<'a> OptionSetEx<'a> {
     {
         super::engine::process(args, &self.as_fixed(), settings)
     }
+
+    /// Find the best matching long option for the given string
+    ///
+    /// This is intended to be used when an unknown long option is encountered in an analysis, to
+    /// give users a hint when displaying the error to them. I.e.:
+    ///
+    /// > “Error: Unknown option ‘x’, did you mean ‘y’”
+    ///
+    /// Specifically, this uses the `jaro_winkler` algorithm from the `strsim` crate; It filters
+    /// out any options with a metric calculated as less than `0.8`, and returns the first option
+    /// with the highest metric.
+    #[cfg(feature = "suggestions")]
+    #[inline]
+    pub fn suggest(&self, unknown: &str) -> Option<&'a str> {
+        self.as_fixed().suggest(unknown)
+    }
 }
 
 impl<'r, 'a: 'r> OptionSet<'r, 'a> {
@@ -241,6 +259,31 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
         where T: AsRef<str>
     {
         super::engine::process(args, self, settings)
+    }
+
+    /// Find the best matching long option for the given string
+    ///
+    /// This is intended to be used when an unknown long option is encountered in an analysis, to
+    /// give users a hint when displaying the error to them. I.e.:
+    ///
+    /// > “Error: Unknown option ‘*x*’, did you mean ‘*y*’?”
+    ///
+    /// Specifically, this uses the `jaro_winkler` algorithm from the `strsim` crate; It filters
+    /// out any options with a metric calculated as less than `0.8`, and returns the first option
+    /// with the highest metric.
+    #[cfg(feature = "suggestions")]
+    pub fn suggest(&self, unknown: &str) -> Option<&'a str> {
+        let filter = 0.8;
+        let mut best_metric: f64 = filter;
+        let mut best: Option<&str> = None;
+        for opt in self.long {
+            let metric = strsim::jaro_winkler(unknown, opt.name);
+            if metric > best_metric || (best.is_none() && metric >= filter) {
+                best = Some(opt.name);
+                best_metric = metric;
+            }
+        }
+        best
     }
 }
 
