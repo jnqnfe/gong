@@ -183,8 +183,8 @@ impl<'a> OptionSetEx<'a> {
     /// This is the same as calling the `process` function directly.
     ///
     /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided in the `args` and `options` parameter data. Take note of this
-    /// with respect to object lifetimes.
+    /// references to strings provided in the `args` parameter and in `self`. Take note of this with
+    /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
     pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>
@@ -302,8 +302,8 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// This is the same as calling the `process` function directly.
     ///
     /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided in the `args` and `options` parameter data. Take note of this
-    /// with respect to object lifetimes.
+    /// references to strings provided in the `args` parameter and in `self`. Take note of this with
+    /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
     pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>

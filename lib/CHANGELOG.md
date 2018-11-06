@@ -1,3 +1,8 @@
+# <unreleased>
+
+ * Documentation: Fixed a minor oversight in usage documentation, where it was not updated
+   correctly.
+
 # 1.2.1 (October 28th, 2018)
 
  * Updated usage docs per `OptionSetEx`/`OptionSet` pair introduction
