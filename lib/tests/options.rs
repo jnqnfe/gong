@@ -191,7 +191,7 @@ mod short_dash {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, UnknownLong, "abc"),
                 expected_item!(1, UnknownShort, 'a'),
                 expected_item!(1, Short, '-'),
@@ -306,7 +306,7 @@ mod long_equals {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, Long, "a=b"),
                 expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
             ]

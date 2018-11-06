@@ -43,9 +43,11 @@ macro_rules! arg_list {
 
 /// Construct an `Expected`
 macro_rules! expected {
-    ( error: $e:expr, warn: $w:expr, $items:expr ) => {
-        Expected(Analysis { error: $e, warn: $w, items: $items, })
-    };
+    ( error: $e:expr, warn: $w:expr, $items:expr ) => {{
+        let mut temp_vec = Vec::new();
+        temp_vec.extend_from_slice(&$items);
+        Expected(Analysis { error: $e, warn: $w, items: temp_vec, })
+    }};
 }
 
 /// Construct an `ItemClass` result item, for an `Expected`.

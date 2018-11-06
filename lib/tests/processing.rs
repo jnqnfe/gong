@@ -67,7 +67,7 @@ fn basic() {
     let expected = expected!(
         error: false,
         warn: true,
-        vec![
+        [
             expected_item!(0, NonOption, "abc"),
             expected_item!(1, NonOption, "-"),
             expected_item!(2, NonOption, "z"),
@@ -107,7 +107,7 @@ fn early_term() {
     let expected = expected!(
         error: false,
         warn: false,
-        vec![
+        [
             expected_item!(0, Long, "foo"),
             expected_item!(1, EarlyTerminator),
             expected_item!(2, NonOption, "--help"),
@@ -136,7 +136,7 @@ fn long_no_name() {
     let expected = expected!(
         error: false,
         warn: true,
-        vec![
+        [
             expected_item!(0, LongWithNoName),
             expected_item!(1, LongWithNoName),
         ]
@@ -152,7 +152,7 @@ fn repetition() {
     let expected = expected!(
         error: false,
         warn: true,
-        vec![
+        [
             expected_item!(0, Long, "foo"),
             expected_item!(1, Short, 'h'),
             expected_item!(2, Long, "version"),
@@ -182,7 +182,7 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, NonOption, "🗻∈🌏"),
                 expected_item!(1, UnknownShort, '🗻'),
                 expected_item!(1, UnknownShort, '∈'),
@@ -202,7 +202,7 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, NonOption, "y̆"),
                 expected_item!(1, UnknownShort, 'y'),        // `y`
                 expected_item!(1, UnknownShort, '\u{0306}'), // breve
@@ -232,7 +232,7 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, NonOption, "❤️"),
                 expected_item!(1, Short, '\u{2764}'),        // black-heart
                 expected_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
@@ -249,7 +249,7 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, NonOption, "\u{0306}"),
                 expected_item!(1, UnknownShort, '\u{0306}'),
                 expected_item!(2, UnknownLong, "\u{0306}"),
@@ -277,7 +277,7 @@ mod abbreviations {
         let expected = expected!(
             error: true,
             warn: false,
-            vec![
+            [
                 expected_item!(0, AmbiguousLong, "f"),
                 expected_item!(1, AmbiguousLong, "fo"),
             ]
@@ -297,7 +297,7 @@ mod abbreviations {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Long, "foobar"),
                 expected_item!(2, Long, "foobar"),
@@ -314,7 +314,7 @@ mod abbreviations {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, UnknownLong, "f"),
                 expected_item!(1, UnknownLong, "fo"),
                 expected_item!(2, Long, "foo"),
@@ -339,7 +339,7 @@ mod abbreviations {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, Long, "foo"),
             ]
         );
@@ -377,7 +377,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
@@ -399,7 +399,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, NonOption, "g"),
             ]
@@ -420,7 +420,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
                 expected_item!(2, UnknownShort, 'b'),
                 expected_item!(2, ShortWithData, 'o', "def", DataLocation::NextArg),
@@ -453,7 +453,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
                 expected_item!(2, UnknownShort, 'a'),
@@ -485,7 +485,7 @@ mod data {
         let expected = expected!(
             error: true,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongMissingData, "hah"),
             ]
         );
@@ -499,7 +499,7 @@ mod data {
         let expected = expected!(
             error: true,
             warn: true,
-            vec![
+            [
                 expected_item!(0, UnknownShort, 'b'),
                 expected_item!(0, Short, 'x'),
                 expected_item!(0, UnknownShort, 's'),
@@ -531,7 +531,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, UnknownLong, "xx"),
                 expected_item!(1, UnknownLong, "tt"),
                 expected_item!(2, Short, 'x'),
@@ -556,7 +556,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
                 expected_item!(3, LongWithData, "hah", "b", DataLocation::SameArg),
@@ -578,7 +578,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
@@ -607,7 +607,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
                 expected_item!(4, LongWithData, "hah", "d=ef", DataLocation::SameArg),
@@ -639,7 +639,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
                 expected_item!(3, LongWithData, "hah", "--blah", DataLocation::SameArg),
@@ -673,7 +673,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
                 expected_item!(3, ShortWithData, 'o', "--", DataLocation::NextArg),
@@ -691,7 +691,7 @@ mod data {
         let expected = expected!(
             error: true,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
                 expected_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
@@ -718,7 +718,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
                 expected_item!(4, ShortWithData, 'o', "❤", DataLocation::SameArg),
@@ -761,7 +761,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
-            vec![
+            [
                 expected_item!(0, Short, '❤'),
                 expected_item!(0, UnknownShort, '\u{fe0f}'),
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
@@ -825,7 +825,7 @@ mod alt_mode {
         let expected = expected!(
             error: true,
             warn: true,
-            vec![
+            [
                 expected_item!(0, NonOption, "abc"),
                 expected_item!(1, NonOption, "-"),
                 expected_item!(2, Long, "help"),
@@ -860,7 +860,7 @@ mod alt_mode {
         let expected = expected!(
             error: true,
             warn: true,
-            vec![
+            [
                 expected_item!(0, LongWithUnexpectedData, "foo", "abc"),
                 expected_item!(1, Long, "foo"),
                 expected_item!(2, LongMissingData, "hah"),
@@ -881,7 +881,7 @@ mod alt_mode {
         let expected = expected!(
             error: false,
             warn: false,
-            vec![
+            [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
             ]
