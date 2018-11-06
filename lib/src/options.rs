@@ -11,11 +11,7 @@
 //! “Available” option sets
 
 use std::convert::AsRef;
-
-/// Default abbreviation support state
-pub(crate) const ABBR_SUP_DEFAULT: bool = true;
-/// Default mode
-pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
+use super::analysis::Settings;
 
 /// Extendible option set
 ///
@@ -28,8 +24,6 @@ pub struct OptionSetEx<'a> {
     /* NOTE: these have been left public to allow creation via macros */
     pub long: Vec<LongOption<'a>>,
     pub short: Vec<ShortOption>,
-    pub mode: OptionsMode,
-    pub allow_abbreviations: bool,
 }
 
 impl<'a> Default for OptionSetEx<'a> {
@@ -50,8 +44,6 @@ pub struct OptionSet<'r, 'a: 'r> {
     /* NOTE: these have been left public to allow efficient static creation of options */
     pub long: &'r [LongOption<'a>],
     pub short: &'r [ShortOption],
-    pub mode: OptionsMode,
-    pub allow_abbreviations: bool,
 }
 
 impl<'r, 'a: 'r> PartialEq<OptionSet<'r, 'a>> for OptionSetEx<'a> {
@@ -63,22 +55,6 @@ impl<'r, 'a: 'r> PartialEq<OptionSet<'r, 'a>> for OptionSetEx<'a> {
 impl<'r, 'a: 'r> PartialEq<OptionSetEx<'a>> for OptionSet<'r, 'a> {
     fn eq(&self, rhs: &OptionSetEx<'a>) -> bool {
         self.eq(&rhs.as_fixed())
-    }
-}
-
-/// Used to assert which option processing mode to use
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OptionsMode {
-    /// Standard (default): Short (`-o`) and long (`--foo`) options, with single and double dash
-    /// prefixes respectively.
-    Standard,
-    /// Alternate: Long options only, with single dash prefix.
-    Alternate,
-}
-
-impl Default for OptionsMode {
-    fn default() -> Self {
-        MODE_DEFAULT
     }
 }
 
@@ -135,8 +111,6 @@ impl<'a> OptionSetEx<'a> {
         Self {
             long: Vec::with_capacity(long_count_est),
             short: Vec::with_capacity(short_count_est),
-            mode: MODE_DEFAULT,
-            allow_abbreviations: ABBR_SUP_DEFAULT,
         }
     }
 
@@ -145,21 +119,7 @@ impl<'a> OptionSetEx<'a> {
         OptionSet {
             long: &self.long[..],
             short: &self.short[..],
-            mode: self.mode,
-            allow_abbreviations: self.allow_abbreviations,
         }
-    }
-
-    /// Set mode
-    pub fn set_mode(&mut self, mode: OptionsMode) -> &mut Self {
-        self.mode = mode;
-        self
-    }
-
-    /// Enable/disable abbreviated matching
-    pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
-        self.allow_abbreviations = allow;
-        self
     }
 
     /// Checks if empty
@@ -234,10 +194,11 @@ impl<'a> OptionSetEx<'a> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>
+    pub fn process<T>(&self, args: &'a [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'a>
         where T: AsRef<str>
     {
-        super::engine::process(args, &self.as_fixed())
+        super::engine::process(args, &self.as_fixed(), settings)
     }
 }
 
@@ -249,21 +210,7 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
         OptionSetEx {
             long: self.long.iter().cloned().collect(),
             short: self.short.iter().cloned().collect(),
-            mode: self.mode,
-            allow_abbreviations: self.allow_abbreviations,
         }
-    }
-
-    /// Set mode
-    pub fn set_mode(&mut self, mode: OptionsMode) -> &mut Self {
-        self.mode = mode;
-        self
-    }
-
-    /// Enable/disable abbreviated matching
-    pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
-        self.allow_abbreviations = allow;
-        self
     }
 
     /// Checks if empty
@@ -294,10 +241,11 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    pub fn process<T>(&self, args: &'a [T]) -> super::analysis::Analysis<'a>
+    pub fn process<T>(&self, args: &'a [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'a>
         where T: AsRef<str>
     {
-        super::engine::process(args, self)
+        super::engine::process(args, self, settings)
     }
 }
 

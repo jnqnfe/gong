@@ -90,14 +90,6 @@
 //!    [`OptionSet`] exists).
 //!  - Macros are provided for constructing both as a convenience.
 //!
-//! ## Set mode
-//!
-//! If you want to use *alternate* option mode rather than *standard* (default), as discussed above,
-//! a `set_mode` method is available.
-//!
-//! You can control whether or not to allow abbreviated matching with the `set_allow_abbreviations`
-//! method.
-//!
 //! ## Validation
 //!
 //! Once an option set has been described, it should be validated before use. The `is_valid` and
@@ -140,8 +132,13 @@
 //! ```rust
 //! # let opts: gong::options::OptionSetEx = Default::default();
 //! # let args: Vec<String> = std::env::args().collect();
-//! let analysis = opts.process(&args[..]);
+//! let analysis = opts.process(&args[..], None);
 //! ```
+//!
+//! Note that the `process` method takes an optional [`Settings`] parameter for controlling the
+//! analysis engine. It is used for choosing between *standard* (default) and *alternate* option
+//! style, and whether or not to allow abbreviated long option name matching. (See the
+//! [`options`][options_doc_chapter] documentation chapter to learn more about this).
 //!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
 //! have the option of processing one argument at a time (or in groups of whatever number you
@@ -180,8 +177,10 @@
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [`Settings`]: ../../analysis/struct.Settings.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
 //! [`OptionSet`]: ../../options/struct.OptionSet.html
 //! [`OptionSetEx`]: ../../options/struct.OptionSetEx.html
 //! [`OptionSet::to_extendible`]: ../../options/struct.OptionSet.html#method.to_extendible
 //! [`OptionSetEx::as_fixed`]: ../../options/struct.OptionSetEx.html#method.as_fixed
+//! [options_doc_chapter]: ../options/index.html

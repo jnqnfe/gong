@@ -16,7 +16,6 @@ extern crate gong;
 mod common;
 
 use gong::options::*;
-use common::*;
 
 /// Tests of “available options set” construction macros
 mod available_options {
@@ -46,9 +45,7 @@ mod available_options {
                 gong_shortopt!('o', true),
                 gong_shortopt!('\u{030a}'),
                 gong_shortopt!('Ɛ', true),
-            ],
-            OptionsMode::Standard,
-            true
+            ]
         );
         assert_eq!(*fixed, non_fixed);
     }
@@ -78,8 +75,6 @@ mod available_options {
                 ShortOption { ch: '\u{030A}', expects_data: false },
                 ShortOption { ch: 'Ɛ', expects_data: true },
             ],
-            mode: MODE_DEFAULT,
-            allow_abbreviations: ABBR_SUP_DEFAULT,
         };
 
         assert_eq!(*macro_built, hand_built);
@@ -109,33 +104,5 @@ mod available_options {
             .add_short_data('Ɛ');
 
         assert_eq!(*macro_built, method_built);
-    }
-
-    /// Check capability to specify with and without modes
-    #[test]
-    fn modes() {
-        // With modes
-        let opts = gong_option_set_fixed!([], [], OptionsMode::Alternate, false);
-        let opts_ex = gong_option_set!(vec![], vec![], OptionsMode::Alternate, false);
-        let cmp = OptionSet {
-            long: &[],
-            short: &[],
-            mode: OptionsMode::Alternate,
-            allow_abbreviations: false,
-        };
-        assert_eq!(opts, cmp);
-        assert_eq!(opts_ex, cmp);
-
-        // Without modes
-        let opts = gong_option_set_fixed!([], []);
-        let opts_ex = gong_option_set!(vec![], vec![]);
-        let cmp = OptionSet {
-            long: &[],
-            short: &[],
-            mode: MODE_DEFAULT,
-            allow_abbreviations: ABBR_SUP_DEFAULT,
-        };
-        assert_eq!(opts, cmp);
-        assert_eq!(opts_ex, cmp);
     }
 }

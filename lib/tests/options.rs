@@ -22,7 +22,7 @@ mod common;
 
 use gong::analysis::*;
 use gong::options::*;
-use common::{Actual, Expected, check_result, MODE_DEFAULT, ABBR_SUP_DEFAULT};
+use common::{Actual, Expected, check_result};
 
 /// Check basic valid construction methods
 #[test]
@@ -46,8 +46,6 @@ fn basic() {
             gong_shortopt!('o', true),
             gong_shortopt!('a', false),
         ],
-        mode: MODE_DEFAULT,
-        allow_abbreviations: ABBR_SUP_DEFAULT,
     };
 
     assert_eq!(opts, expected);
@@ -94,8 +92,6 @@ fn set_types() {
             gong_shortopt!('o', true),
             gong_shortopt!('a', false),
         ],
-        mode: MODE_DEFAULT,
-        allow_abbreviations: ABBR_SUP_DEFAULT,
     };
 
     let opts_extendible = OptionSetEx {
@@ -109,8 +105,6 @@ fn set_types() {
             gong_shortopt!('o', true),
             gong_shortopt!('a', false),
         ],
-        mode: MODE_DEFAULT,
-        allow_abbreviations: ABBR_SUP_DEFAULT,
     };
 
     // Check the two types can be compared
@@ -134,8 +128,6 @@ fn set_types() {
             gong_longopt!("blah", false),
         ],
         short: &[],
-        mode: MODE_DEFAULT,
-        allow_abbreviations: ABBR_SUP_DEFAULT,
     };
 
     let opts_extendible_2 = OptionSetEx {
@@ -143,8 +135,6 @@ fn set_types() {
             gong_longopt!("blah", false),
         ],
         short: vec![],
-        mode: MODE_DEFAULT,
-        allow_abbreviations: ABBR_SUP_DEFAULT,
     };
 
     // Verify not equal
@@ -230,7 +220,7 @@ mod short_dash {
         let opts = gong_option_set_fixed!([], [ gong_shortopt!('-') ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
-        check_result(&Actual(opts.process(&args)), &expected);
+        check_result(&Actual(opts.process(&args, None)), &expected);
     }
 }
 
@@ -339,7 +329,7 @@ mod long_equals {
         let opts = gong_option_set_fixed!([ gong_longopt!("a=b") ], []);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
-        check_result(&Actual(opts.process(&args)), &expected);
+        check_result(&Actual(opts.process(&args, None)), &expected);
     }
 }
 

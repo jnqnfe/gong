@@ -10,7 +10,7 @@
 
 //! Base “available” option set used by most tests
 
-use gong::options::{OptionSet, OptionsMode};
+use gong::options::OptionSet;
 
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = gong_option_set_fixed!(
@@ -30,9 +30,7 @@ static BASE_OPTS: OptionSet = gong_option_set_fixed!(
         gong_shortopt!('o', true),
         gong_shortopt!('\u{030a}'), // A lone combinator (“ring above”)
         gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
-    ],
-    OptionsMode::Standard,
-    true
+    ]
 );
 
 /// Provides a base set of options for common usage in tests

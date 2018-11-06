@@ -25,8 +25,7 @@ extern crate gong;
 extern crate term_ctrl;
 
 use term_ctrl::predefined::*;
-use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
-use gong::options::OptionsMode;
+use gong::analysis::{Settings, OptionsMode, ItemClass, Item, ItemW, ItemE, DataLocation};
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
 const COL_O: &str = colours::fg::GREEN;  //okay
@@ -66,8 +65,7 @@ fn main() {
     config::init();
 
     // Set up valid option descriptions
-    #[allow(unused_mut)] //Needed when no special features set
-    let mut opts = gong_option_set_fixed!(
+    let opts = gong_option_set_fixed!(
         [
             gong_longopt!("help"),
             gong_longopt!("foo"),
@@ -81,17 +79,20 @@ fn main() {
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
             gong_shortopt!('o', true),
-        ],
-        OptionsMode::Standard,
-        true
+        ]
     );
 
-    #[cfg(feature = "alt_mode")]
-    opts.set_mode(OptionsMode::Alternate);
-    #[cfg(feature = "no_abbreviations")]
-    opts.set_allow_abbreviations(false);
-
     debug_assert!(opts.is_valid());
+
+    let mut settings = Settings::default();
+    match cfg!(feature = "alt_mode") {
+        true => { settings.set_mode(OptionsMode::Alternate); },
+        false => { settings.set_mode(OptionsMode::Standard); },
+    }
+    match cfg!(feature = "no_abbreviations") {
+        true => { settings.set_allow_abbreviations(false); },
+        false => { settings.set_allow_abbreviations(true); },
+    }
 
     println!("\n[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
 
@@ -145,7 +146,7 @@ fn main() {
         },
     }
 
-    let results = opts.process(&args[..]);
+    let results = opts.process(&args[..], Some(&settings));
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 

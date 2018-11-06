@@ -1,3 +1,7 @@
+# [unreleased]
+
+ * Updated per move of settings out of option sets to own structure
+
 # 1.2.1 (November 25th, 2020)
 
  * Updated `term-ctrl` dependency (v0.4.1 → 0.7) and to copy now published on crates.io

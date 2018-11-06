@@ -18,16 +18,16 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::options::*;
+use gong::analysis::{Settings, OptionsMode};
 use common::get_base;
 
-/// Checks defaults in test environment match those within lib (the constants are not part of the
-/// public API).
+/// Checks default settings match those expected. If they change, we need to update the test suite.
 #[test]
-fn check_constants() {
-    let test = gong_option_set!(vec![], vec![], common::MODE_DEFAULT, common::ABBR_SUP_DEFAULT);
-    let cmp: OptionSetEx = Default::default();
-    assert_eq!(test, cmp);
+fn check_default_settings() {
+    let mut expected = Settings::default();
+    expected.set_mode(OptionsMode::Standard);
+    expected.set_allow_abbreviations(true);
+    assert_eq!(expected, Default::default());
 }
 
 /// Check common base “available options” set validity
@@ -50,15 +50,6 @@ mod base_set {
     fn can_break() {
         let mut opts = get_base().to_extendible();
         opts.add_long("foo"); // Duplicate - should panic here in debug mode!
-        assert!(opts.is_valid());
-        assert_eq!(opts.validate(), Ok(()));
-    }
-
-    /// Check valid in `alt` mode
-    #[test]
-    fn is_valid_altmode() {
-        let mut opts = get_base().clone();
-        opts.set_mode(OptionsMode::Alternate);
         assert!(opts.is_valid());
         assert_eq!(opts.validate(), Ok(()));
     }

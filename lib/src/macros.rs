@@ -14,10 +14,6 @@
 ///
 /// 1. A `Vec` of long options
 /// 2. A `Vec` of short options
-/// 3. Mode
-/// 4. Abbreviation support state
-///
-/// The last two can be left off if both defaults.
 ///
 /// Example:
 ///
@@ -25,24 +21,13 @@
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// // Without modes, empty option lists
 /// let _ = gong_option_set!(vec![], vec![]);
-/// // With modes, empty option lists
-/// let _ = gong_option_set!(vec![], vec![], gong::options::OptionsMode::Standard, true);
 /// # }
 /// ```
 #[macro_export]
 macro_rules! gong_option_set {
-    ( $long:expr, $short:expr, $mode:expr, $abbr:expr ) => {
-        $crate::options::OptionSetEx {
-            long: $long, short: $short, mode: $mode, allow_abbreviations: $abbr
-        }
-    };
     ( $long:expr, $short:expr ) => {
-        $crate::options::OptionSetEx {
-            long: $long, short: $short, mode: $crate::options::OptionsMode::Standard,
-            allow_abbreviations: true
-        }
+        $crate::options::OptionSetEx { long: $long, short: $short }
     };
     () => { gong_option_set!(vec![], vec![]) };
 }
@@ -53,10 +38,6 @@ macro_rules! gong_option_set {
 ///
 /// 1. An array of long options
 /// 2. An array of short options
-/// 3. Mode
-/// 4. Abbreviation support state
-///
-/// The last two can be left off if both defaults.
 ///
 /// Example:
 ///
@@ -64,24 +45,13 @@ macro_rules! gong_option_set {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// // Without modes, empty option lists
 /// let _ = gong_option_set_fixed!([], []);
-/// // With modes, empty option lists
-/// let _ = gong_option_set_fixed!([], [], gong::options::OptionsMode::Standard, true);
 /// # }
 /// ```
 #[macro_export]
 macro_rules! gong_option_set_fixed {
-    ( $long:tt, $short:tt, $mode:expr, $abbr:expr ) => {
-        $crate::options::OptionSet {
-            long: &$long, short: &$short, mode: $mode, allow_abbreviations: $abbr
-        }
-    };
     ( $long:tt, $short:tt ) => {
-        $crate::options::OptionSet {
-            long: &$long, short: &$short, mode: $crate::options::OptionsMode::Standard,
-            allow_abbreviations: true
-        }
+        $crate::options::OptionSet { long: &$long, short: &$short }
     };
     () => { gong_option_set_fixed!([], []) };
 }

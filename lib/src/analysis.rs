@@ -10,6 +10,45 @@
 
 //! Analysis components
 
+/// Default abbreviation support state
+pub(crate) const ABBR_SUP_DEFAULT: bool = true;
+/// Default mode
+pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
+
+/// Settings for analysis
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Settings {
+    /// Option processing mode to use
+    pub mode: OptionsMode,
+    /// Whether or not to allow abbreviated longoption name matching
+    pub allow_abbreviations: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            mode: MODE_DEFAULT,
+            allow_abbreviations: ABBR_SUP_DEFAULT,
+        }
+    }
+}
+
+/// Used to assert which option processing mode to use
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptionsMode {
+    /// Standard (default): Short (`-o`) and long (`--foo`) options, with single and double dash
+    /// prefixes respectively.
+    Standard,
+    /// Alternate: Long options only, with single dash prefix.
+    Alternate,
+}
+
+impl Default for OptionsMode {
+    fn default() -> Self {
+        MODE_DEFAULT
+    }
+}
+
 /// Analysis of processing arguments against an option set
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Analysis<'a> {
@@ -111,6 +150,22 @@ pub enum DataLocation {
     NextArg,
 }
 
+impl Settings {
+    /// Set mode
+    #[inline(always)]
+    pub fn set_mode(&mut self, mode: OptionsMode) -> &mut Self {
+        self.mode = mode;
+        self
+    }
+
+    /// Enable/disable abbreviated matching
+    #[inline(always)]
+    pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
+        self.allow_abbreviations = allow;
+        self
+    }
+}
+
 impl<'a> Analysis<'a> {
     /// Create a new result set (mostly only useful internally)
     pub fn new(size_guess: usize) -> Self {
@@ -122,6 +177,7 @@ impl<'a> Analysis<'a> {
     }
 
     /// Add a new item to the analysis (mostly only useful internally)
+    #[inline]
     pub fn add(&mut self, item: ItemClass<'a>) {
         self.items.push(item);
     }

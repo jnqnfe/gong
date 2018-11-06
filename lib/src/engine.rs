@@ -34,7 +34,8 @@ enum ArgTypeBasic<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
-pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, 'a>) -> Analysis<'a>
+pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, 'a>,
+    settings: Option<&Settings>) -> Analysis<'a>
     where A: 'a + AsRef<str>,
           'r: 'o, 'a: 'r
 {
@@ -43,7 +44,9 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
      * of efficiency - to not waste energy on known good sets, and to avoid waste of energy if this
      * function is called multiple times with the same set. */
 
-    let get_basic_arg_type_fn = match options.mode {
+    let settings = settings.map_or(Default::default(), |s| *s);
+
+    let get_basic_arg_type_fn = match settings.mode {
         OptionsMode::Standard => get_basic_arg_type_standard,
         OptionsMode::Alternate => get_basic_arg_type_alternate,
     };
@@ -108,7 +111,7 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                         break;
                     }
                     // Abbreviated
-                    else if options.allow_abbreviations && !ambiguity
+                    else if settings.allow_abbreviations && !ambiguity
                         && name.len() < candidate.name.len()
                         && candidate.name.starts_with(name)
                     {

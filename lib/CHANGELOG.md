@@ -2,6 +2,9 @@
 
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
+ * Moved analysis settings out of `OptionSet` and `OptionSetEx` into a separate `Settings` struct,
+   found in the `analysis` mod. An instance of this is now optionally to be passed to the `process`
+   method.
  * Purged old deprecated stuff
 
 # 1.4.2 (December 15th, 2020)
