@@ -136,7 +136,7 @@
 //! # Step #3: Processing
 //!
 //! With input args gathered and “available” option set constructed, now you’re ready for analysis.
-//! All you need to do is feed these two data sets to the option set’s `process` method and it will
+//! All you need to do is feed the argument list to the option set’s `process` method and it will
 //! spit out an analysis that describes what it identified.
 //!
 //! ```rust
