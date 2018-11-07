@@ -180,8 +180,6 @@ impl<'a> OptionSetEx<'a> {
 
     /// Analyses provided program arguments.
     ///
-    /// This is the same as calling the `process` function directly.
-    ///
     /// Returns a result set describing the result of the analysis. This may include `&str`
     /// references to strings provided in the `args` parameter and in `self`. Take note of this with
     /// respect to object lifetimes.
@@ -298,8 +296,6 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     }
 
     /// Analyses provided program arguments.
-    ///
-    /// This is the same as calling the `process` function directly.
     ///
     /// Returns a result set describing the result of the analysis. This may include `&str`
     /// references to strings provided in the `args` parameter and in `self`. Take note of this with
