@@ -51,6 +51,37 @@
 //!  * The “convenience” functionality of `-W foo` being treated as `--foo` is not supported
 //!    (unnecessary complexity).
 //!
+//! # Features
+//!
+//! <table>
+//!     <thead>
+//!         <tr><th>Feature</th><th>Supported/provided?</th></tr>
+//!     </thead>
+//!     <tbody>
+//!         <tr><td>Traditional style options (‘long’ and ‘short’)</td><td>Yes</td></tr>
+//!         <tr><td>Alternate style options (‘long’ only, with single dash)</td><td>Yes</td></tr>
+//!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
+//!         <tr><td>‘Positional’ (‘non-option’) arguments</td><td>Yes</td></tr>
+//!         <tr><td>‘Early terminator’</td><td>Yes</td></tr>
+//!         <tr><td>‘Command’ options</td><td>Compatible, though a proper understanding of them is not built in</td></tr>
+//!         <tr><td>Abbreviated long option name matching</td><td>Yes (optional)</td></tr>
+//!         <tr><td>Mismatch suggestions</td><td>Yes*</td></tr>
+//!         <tr><td>Dynamic ‘builder’ style option set construction</td><td>Yes</td></tr>
+//!         <tr><td>Efficient ‘static’ option sets</td><td>Yes</td></tr>
+//!         <tr><td>Help/usage output generation</td><td>Not currently</td></tr>
+//!         <tr><td>Multi-use options</td><td>Yes, naturally, see more below!</td></tr>
+//!         <tr><td>Single-use enforcement</td><td>Not done for you, see more below!</td></tr>
+//!         <tr><td>Option relationships (e.g. conflicts, required, and such)</td><td>Not handed for you, not worth the complexity</td></tr>
+//!         <tr><td>Data value range/set checking</td><td>Not done for you</td></tr>
+//!         <tr><td>Data value type conversion</td><td>Not done for you</td></tr>
+//!         <tr><td>`&str`/`String` based argument parsing</td><td>Yes, naturally</td></tr>
+//!         <tr><td>`&OsStr`/`OsString` based argument parsing</td><td>No</td></tr>
+//!         <tr><td>Tab completion</td><td>No, not currently</td></tr>
+//!     </tbody>
+//! </table>
+//!
+//! *Optional feature, controlled via the `Cargo` feature `suggestions`
+//!
 //! ## Mismatch suggestions
 //!
 //! This library provides a suggestion mechanism for failed option matches - i.e. the ability to
