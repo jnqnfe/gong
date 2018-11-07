@@ -82,19 +82,6 @@
 //!
 //! *Optional feature, controlled via the `Cargo` feature `suggestions`
 //!
-//! ## Mismatch suggestions
-//!
-//! This library provides a suggestion mechanism for failed option matches - i.e. the ability to
-//! take an unmatched *long option* and pick the most likely of the available options that the user
-//! may have actually meant to use, to suggest to them when reporting the error. This is built upon
-//! the `strsim` crate’s `jaro_winkler` algorithm. To use it, ensure that the `suggestions` feature
-//! is enabled. E.g. like this (substituting a version number as required):
-//!
-//! ```toml
-//! [dependencies]
-//! gong = { version = "*", features = ["suggestions"] }
-//! ```
-//!
 //! # Crate name origins
 //!
 //! The `gong` crate name was chosen in homage to the venerable C `getopt`, and can be considered a
