@@ -56,7 +56,7 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
 
     let mut arg_iter = args.iter().enumerate();
 
-    while let Some((arg_index, arg_non_ref)) = arg_iter.next() {
+    'arguments: while let Some((arg_index, arg_non_ref)) = arg_iter.next() {
         let arg_ref = arg_non_ref.as_ref();
 
         let arg_type = match early_terminator_encountered {
@@ -96,19 +96,19 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                 if name.is_empty() {
                     results.add(ItemClass::Warn(ItemW::LongWithNoName(arg_index)));
                     results.warn = true;
-                    continue;
+                    continue 'arguments;
                 }
 
                 let mut matched: Option<&LongOption> = None;
                 let mut ambiguity = false;
-                for candidate in options.long {
+                'l_candidates: for candidate in options.long {
                     // Exact
                     if candidate.name == name {
                         // An exact match overrules a previously found partial match and ambiguity
                         // found with multiple partial matches.
                         matched = Some(candidate);
                         ambiguity = false;
-                        break;
+                        break 'l_candidates;
                     }
                     // Abbreviated
                     else if settings.allow_abbreviations && !ambiguity
@@ -172,14 +172,14 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
             },
             ArgTypeBasic::ShortOptionSet(optset_string) => {
                 let last_char_index = optset_string.chars().count() - 1;
-                for (i, (byte_pos, ch)) in optset_string.char_indices().enumerate() {
+                'shorts: for (i, (byte_pos, ch)) in optset_string.char_indices().enumerate() {
                     let mut match_found = false;
                     let mut expects_data = false;
-                    for candidate in options.short {
+                    's_candidates: for candidate in options.short {
                         if candidate.ch == ch {
                             match_found = true;
                             expects_data = candidate.expects_data;
-                            break;
+                            break 's_candidates;
                         }
                     }
 
@@ -197,7 +197,7 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                             let data = optset_string.split_at(next_char_byte_pos).1;
                             results.add(ItemClass::Ok(Item::ShortWithData {
                                 i: arg_index, c: ch, d: data, l: DataLocation::SameArg }));
-                            break;
+                            break 'shorts;
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = arg_iter.next() {
