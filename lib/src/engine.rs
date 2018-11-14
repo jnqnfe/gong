@@ -109,6 +109,7 @@ pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, '
                     }
                     // Abbreviated
                     else if options.allow_abbreviations && !ambiguity
+                        && name.len() < candidate.name.len()
                         && candidate.name.starts_with(name)
                     {
                         match matched {
