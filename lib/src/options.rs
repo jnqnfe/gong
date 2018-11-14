@@ -13,6 +13,7 @@
 #[cfg(feature = "suggestions")]
 use strsim;
 use std::convert::AsRef;
+use std::ffi::OsStr;
 use super::analysis::Settings;
 
 /// Extendible option set
@@ -195,11 +196,27 @@ impl<'s> OptionSetEx<'s> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    #[inline(always)]
     pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s>
+        -> super::analysis::Analysis<'s, str>
         where T: AsRef<str>
     {
         super::engine::process(args, &self.as_fixed(), settings)
+    }
+
+    /// Analyses provided program arguments, given as `OsStr`.
+    ///
+    /// Returns a result set describing the result of the analysis. This may include `&str`
+    /// references to strings provided `self` and `OsStr` to those provided in the `args` parameter.
+    /// Take note of this with respect to object lifetimes.
+    ///
+    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    #[inline(always)]
+    pub fn process_os<T>(&self, args: &'s [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'s, OsStr>
+        where T: AsRef<OsStr>
+    {
+        super::engine_os::process(args, &self.as_fixed(), settings)
     }
 
     /// Find the best matching long option for the given string
@@ -258,11 +275,27 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    #[inline(always)]
     pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s>
+        -> super::analysis::Analysis<'s, str>
         where T: AsRef<str>
     {
         super::engine::process(args, self, settings)
+    }
+
+    /// Analyses provided program arguments, given as `OsStr`.
+    ///
+    /// Returns a result set describing the result of the analysis. This may include `&str`
+    /// references to strings provided in `self` and `OsStr` to those provided in the `args`
+    /// parameter. Take note of this with respect to object lifetimes.
+    ///
+    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    #[inline(always)]
+    pub fn process_os<T>(&self, args: &'s [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'s, OsStr>
+        where T: AsRef<OsStr>
+    {
+        super::engine_os::process(args, self, settings)
     }
 
     /// Find the best matching long option for the given string

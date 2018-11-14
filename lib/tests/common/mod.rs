@@ -13,12 +13,18 @@
 pub mod base;
 pub use self::base::get_base;
 
+use std::ffi::OsStr;
 use gong::analysis::Analysis;
 
 /// Wrapper for actual analysis result
-#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a>);
+#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a, str>);
 /// Wrapper for expected result, for comparison
-#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
+#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a, str>);
+
+/// Wrapper for actual analysis result
+#[derive(Debug)] pub struct ActualOs<'a>(pub Analysis<'a, OsStr>);
+/// Wrapper for expected result, for comparison
+#[derive(Debug)] pub struct ExpectedOs<'a>(pub Analysis<'a, OsStr>);
 
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
@@ -27,12 +33,28 @@ macro_rules! arg_list {
     ( $($e:expr,)+ ) => { [ $($e),+ ] };
 }
 
+/// Used for cleaner creation of set of test arguments
+#[macro_export]
+macro_rules! arg_list_os {
+    ( $($e:expr),+ ) => { [ $(OsStr::new($e)),+ ] };
+    ( $($e:expr,)+ ) => { [ $(OsStr::new($e)),+ ] };
+}
+
 /// Construct an `Expected`
 macro_rules! expected {
     ( error: $e:expr, warn: $w:expr, $items:expr ) => {{
         let mut temp_vec = Vec::new();
         temp_vec.extend_from_slice(&$items);
         Expected(Analysis { error: $e, warn: $w, items: temp_vec, })
+    }};
+}
+
+/// Construct an `ExpectedOs`
+macro_rules! expected_os {
+    ( error: $e:expr, warn: $w:expr, $items:expr ) => {{
+        let mut temp_vec = Vec::new();
+        temp_vec.extend_from_slice(&$items);
+        ExpectedOs(Analysis { error: $e, warn: $w, items: temp_vec, })
     }};
 }
 
@@ -81,12 +103,50 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
     }
 }
 
+/// Common central function for comparing actual analysis result with expected.
+///
+/// Benefits:
+///
+/// - Fewer uses of `assert_eq`, less likely to make a typo, putting `assert_ne` by mistake
+/// - `Actual` and `Expected` wrappers help ensure correct comparison
+/// - Central place where `pretty_print_results` can be enabled and called when desired in debugging
+pub fn check_result_os(actual: &ActualOs, expected: &ExpectedOs) {
+    if actual.0 != expected.0 {
+        eprintln!("Actual:");
+        pretty_print_results_os(&actual.0);
+        eprintln!("Expected:");
+        pretty_print_results_os(&expected.0);
+
+        assert!(false, "analysis does not match what was expected!");
+    }
+}
+
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
 /// than with the raw output dumped by the test env.
 ///
 /// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
-fn pretty_print_results(analysis: &Analysis) {
+fn pretty_print_results(analysis: &Analysis<str>) {
+    let mut items = String::new();
+    for item in &analysis.items {
+        items.push_str(&format!("\n        {:?},", item));
+    }
+    eprintln!("\
+Analysis {{
+    items: [{}
+    ],
+    error: {},
+    warn: {},
+}}",
+    items, analysis.error, analysis.warn);
+}
+
+/// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
+/// than with the raw output dumped by the test env.
+///
+/// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
+/// an output, so we custom build a more compact version here.
+fn pretty_print_results_os(analysis: &Analysis<OsStr>) {
     let mut items = String::new();
     for item in &analysis.items {
         items.push_str(&format!("\n        {:?},", item));

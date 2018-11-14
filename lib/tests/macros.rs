@@ -37,6 +37,7 @@ mod available_options {
                 gong_longopt!("hah", true),
                 gong_longopt!("ábc"),
                 gong_longopt!("ƒƒ", true),
+                gong_longopt!("ƒo"),
             ],
             vec![
                 gong_shortopt!('h'),
@@ -66,6 +67,7 @@ mod available_options {
                 LongOption { name: "hah", expects_data: true },
                 LongOption { name: "ábc", expects_data: false },
                 LongOption { name: "ƒƒ", expects_data: true },
+                LongOption { name: "ƒo", expects_data: false },
             ],
             short: &[
                 ShortOption { ch: 'h', expects_data: false },
@@ -101,6 +103,7 @@ mod available_options {
             .add_short_data('o')
             .add_short('\u{030A}')
             .add_long_data("ƒƒ")
+            .add_long("ƒo")
             .add_short_data('Ɛ');
 
         assert_eq!(*macro_built, method_built);

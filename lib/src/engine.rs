@@ -12,8 +12,8 @@ use std::convert::AsRef;
 use super::options::*;
 use super::analysis::*;
 
-const SINGLE_DASH_PREFIX: &str = "-";
-const DOUBLE_DASH_PREFIX: &str = "--";
+pub(crate) const SINGLE_DASH_PREFIX: &str = "-";
+pub(crate) const DOUBLE_DASH_PREFIX: &str = "--";
 const EARLY_TERMINATOR: &str = "--";
 
 /// Basic argument type
@@ -35,14 +35,15 @@ enum ArgTypeBasic<'a> {
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
 pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, 's>,
-    settings: Option<&Settings>) -> Analysis<'s>
+    settings: Option<&Settings>) -> Analysis<'s, str>
     where A: 's + AsRef<str>,
           'r: 'o, 's: 'r
 {
-    /* NOTE: We deliberately do not perform validation of the provided `options` data within this
+    /* NOTE: We deliberately do not perform validation of the provided parser data within this
      * function; the burden to do so is left to the user. The choice to not do this is for reasons
      * of efficiency - to not waste energy on known good sets, and to avoid waste of energy if this
-     * function is called multiple times with the same set. */
+     * function is called multiple times with the same set.
+     */
 
     let settings = settings.map_or(Default::default(), |s| *s);
 

@@ -1,5 +1,6 @@
 # [unreleased]
 
+ * Added support for processing `AsRef<OsStr>` based argument lists
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Moved analysis settings out of `OptionSet` and `OptionSetEx` into a separate `Settings` struct,

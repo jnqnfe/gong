@@ -75,7 +75,7 @@
 //!         <tr><td>Data value range/set checking</td><td>Not done for you</td></tr>
 //!         <tr><td>Data value type conversion</td><td>Not done for you</td></tr>
 //!         <tr><td>`&str`/`String` based argument parsing</td><td>Yes, naturally</td></tr>
-//!         <tr><td>`&OsStr`/`OsString` based argument parsing</td><td>No</td></tr>
+//!         <tr><td>`&OsStr`/`OsString` based argument parsing</td><td>Yes, with no platform restrictions, though only Unix (Linux &amp; Mac OS X) and Windows confirmed</td></tr>
 //!         <tr><td>Tab completion</td><td>No, not currently</td></tr>
 //!     </tbody>
 //! </table>

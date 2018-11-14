@@ -32,4 +32,5 @@ pub mod docs;
 mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
 pub mod analysis;
 mod engine;
+mod engine_os;
 pub mod options;

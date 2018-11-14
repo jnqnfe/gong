@@ -51,9 +51,9 @@ impl Default for OptionsMode {
 
 /// Analysis of processing arguments against an option set
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Analysis<'s> {
+pub struct Analysis<'s, S: 's + ?Sized> {
     /// Set of items describing what was found
-    pub items: Vec<ItemClass<'s>>,
+    pub items: Vec<ItemClass<'s, S>>,
     /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
     pub error: bool,
     /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
@@ -83,50 +83,71 @@ pub struct Analysis<'s> {
 /// [`ItemE`]: enum.ItemE.html
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`NonOption`]: enum.Item.html#variant.NonOption
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ItemClass<'s> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum ItemClass<'s, S: 's + ?Sized> {
     /// Non-problematic item
-    Ok(Item<'s>),
+    Ok(Item<'s, S>),
     /// Warn-level item
-    Warn(ItemW<'s>),
+    Warn(ItemW<'s, S>),
     /// Error-level item
-    Err(ItemE<'s>),
+    Err(ItemE<'s, S>),
+}
+
+impl<'a, S: 'a + ?Sized> Copy for ItemClass<'a, S> {}
+impl<'a, S: 'a + ?Sized> Clone for ItemClass<'a, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Item<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum Item<'a, S: 'a + ?Sized> {
     /// Argument not considered an option.
-    NonOption(usize, &'a str),
+    NonOption(usize, &'a S),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
     /// Long option match.
     Long(usize, &'a str),
     /// Long option match, with expected data argument.
-    LongWithData{ i: usize, n: &'a str, d: &'a str, l: DataLocation },
+    LongWithData{ i: usize, n: &'a str, d: &'a S, l: DataLocation },
     /// Short option match.
     Short(usize, char),
     /// Short option match, with expected data argument.
-    ShortWithData{ i: usize, c: char, d: &'a str, l: DataLocation },
+    ShortWithData{ i: usize, c: char, d: &'a S, l: DataLocation },
+}
+
+impl<'a, S: 'a + ?Sized> Copy for Item<'a, S> {}
+impl<'a, S: 'a + ?Sized> Clone for Item<'a, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 /// Error-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ItemE<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum ItemE<'a, S: 'a + ?Sized> {
     /// Long option match, but data argument missing [ERROR]
     LongMissingData(usize, &'a str),
     /// Short option match, but data argument missing [ERROR]
     ShortMissingData(usize, char),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found. [ERROR]
-    AmbiguousLong(usize, &'a str),
+    AmbiguousLong(usize, &'a S),
+}
+
+impl<'a, S: 'a + ?Sized> Copy for ItemE<'a, S> {}
+impl<'a, S: 'a + ?Sized> Clone for ItemE<'a, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 /// Warn-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ItemW<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum ItemW<'a, S: 'a + ?Sized> {
     /// Looked like a long option, but no match [WARN]
-    UnknownLong(usize, &'a str),
+    UnknownLong(usize, &'a S),
     /// Unknown short option `char` [WARN]
     UnknownShort(usize, char),
     /// Looked like a long option, but a name was not actually specified. This only occurs for
@@ -137,7 +158,14 @@ pub enum ItemW<'a> {
     LongWithNoName(usize),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. [WARN]
-    LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a str },
+    LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a S },
+}
+
+impl<'a, S: 'a + ?Sized> Copy for ItemW<'a, S> {}
+impl<'a, S: 'a + ?Sized> Clone for ItemW<'a, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 /// Used to describe where data was located, for options that require data.
@@ -166,7 +194,7 @@ impl Settings {
     }
 }
 
-impl<'s> Analysis<'s> {
+impl<'s, S: 's + ?Sized> Analysis<'s, S> {
     /// Create a new result set (mostly only useful internally)
     pub fn new(size_guess: usize) -> Self {
         Self {
@@ -178,7 +206,7 @@ impl<'s> Analysis<'s> {
 
     /// Add a new item to the analysis (mostly only useful internally)
     #[inline]
-    pub fn add(&mut self, item: ItemClass<'s>) {
+    pub fn add(&mut self, item: ItemClass<'s, S>) {
         self.items.push(item);
     }
 }

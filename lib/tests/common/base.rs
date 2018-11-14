@@ -22,6 +22,7 @@ static BASE_OPTS: OptionSet = gong_option_set_fixed!(
         gong_longopt!("hah", true),
         gong_longopt!("ábc"),       // Using a combinator char (accent)
         gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
+        gong_longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
     ],
     [
         gong_shortopt!('h'),

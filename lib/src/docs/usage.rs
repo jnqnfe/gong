@@ -106,9 +106,7 @@
 //!
 //! # Step #2: Gather arguments to be processed
 //!
-//! You also need to retrieve (or build) a set of arguments to be processed. Slices of both `&str`
-//! and `String` are supported. (Rust provides actual program args from the environment as
-//! `String`). You can collect program arguments as follows:
+//! You also need to retrieve (or build) a set of arguments to be processed. A simple example:
 //!
 //! ```rust
 //! let args: Vec<String> = std::env::args().collect();
@@ -123,6 +121,14 @@
 //! let args: Vec<String> = std::env::args().skip(1).collect();
 //! ```
 //!
+//! Note that the `std::env::args()` function returns arguments in `String` form. OS strings are
+//! not always valid Unicode, and this function will panic if it encounters such a string. This is
+//! fine if none of the inputs taken by your program should legitimately expect to possibly contain
+//! invalid Unicode. Those that are used for specifying filenames/paths are an example of ones that
+//! may. If any of your inputs fall into this category you should use the alternative
+//! `std::env::args_os()` function, which returns strings in `OsString` form, for which an alternate
+//! processing function is available.
+//!
 //! # Step #3: Processing
 //!
 //! With input args gathered and “available” option set constructed, now you’re ready for analysis.
@@ -134,6 +140,9 @@
 //! # let args: Vec<String> = std::env::args().collect();
 //! let analysis = opts.process(&args[..], None);
 //! ```
+//!
+//! If you are taking arguments in `OsString` form, as discussed above, you should use the alternate
+//! `process_os` method here instead.
 //!
 //! Note that the `process` method takes an optional [`Settings`] parameter for controlling the
 //! analysis engine. It is used for choosing between *standard* (default) and *alternate* option
