@@ -300,7 +300,7 @@ mod long_equals {
         let args = arg_list!(
             "--a",      // This should match against the “a=b” invalid option as an abbreviation
             "--a=b",    // Here, this is a long option with “in-arg” data, thus the name is “a”,
-                        // which again therefore matched the invalid “a=b” option, as an
+                        // which again therefore matches the invalid “a=b” option, as an
                         // abbreviation, but carrying “b” as data.
         );
         let expected = expected!(
