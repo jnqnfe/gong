@@ -44,7 +44,7 @@ mod options {
             ], []
         );
         assert!(opts.is_valid());
-        let parser = Parser::new(&opts);
+        let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -92,7 +92,7 @@ mod options {
             ], []
         );
         assert!(opts.is_valid());
-        let parser = Parser::new(&opts);
+        let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -108,6 +108,165 @@ mod options {
         assert_eq!(suggestions, vec!(
             ("hellp", Some("help")),
             ("bard", Some("bar")),
+            ("fooa", Some("foob")),
+        ));
+    }
+}
+
+#[cfg(feature = "suggestions")]
+mod commands {
+    use gong::analysis::*;
+    use gong::parser::Parser;
+    use common::{Actual, Expected, check_result};
+
+    #[test]
+    fn basic() {
+        let args = arg_list!("but_i_digest");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, NonOption, "but_i_digest"),
+            ]
+        );
+        let opts = gong_option_set_fixed!();
+        let cmds = gong_command_set_fixed!(
+            [
+                gong_command!("b"),
+                gong_command!("bar"),
+                gong_command!("but_i_digress"),
+                gong_command!("help"),
+            ]
+        );
+        assert!(cmds.is_valid());
+        let parser = Parser::new(&opts, Some(&cmds));
+        let actual_results = Actual(parser.parse(&args));
+        check_result(&actual_results, &expected);
+
+        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
+        for item in &actual_results.0.items {
+            match item {
+                ItemClass::Ok(Item::NonOption(_, s)) => {
+                    suggestions.push((*s, cmds.suggest(s)));
+                },
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!(suggestions, vec!(
+            ("but_i_digest", Some("but_i_digress")),
+        ));
+    }
+
+    /// Check searching respects best match, i.e. keeping track works in algorithm
+    #[test]
+    fn best_first() {
+        let args = arg_list!("bard");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, NonOption, "bard"),
+            ]
+        );
+        let opts = gong_option_set_fixed!();
+        let cmds = gong_command_set_fixed!(
+            [
+                // Putting best match for `bard` first
+                gong_command!("bar"),   //bart gets metric of 0.9416666666666667
+                gong_command!("bart"),  //bart gets metric of 0.8833333333333333
+            ]
+        );
+        assert!(cmds.is_valid());
+        let parser = Parser::new(&opts, Some(&cmds));
+        let actual_results = Actual(parser.parse(&args));
+        check_result(&actual_results, &expected);
+
+        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
+        for item in &actual_results.0.items {
+            match item {
+                ItemClass::Ok(Item::NonOption(_, s)) => {
+                    suggestions.push((*s, cmds.suggest(s)));
+                },
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!(suggestions, vec!(
+            ("bard", Some("bar")),
+        ));
+    }
+
+    /// Check searching respects best match, i.e. keeping track works in algorithm
+    #[test]
+    fn best_last() {
+        let args = arg_list!("hellp");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, NonOption, "hellp"),
+            ]
+        );
+        let opts = gong_option_set_fixed!();
+        let cmds = gong_command_set_fixed!(
+            [
+                // Putting best match for `hellp` last
+                gong_command!("hello"), //hellp gets metric of 0.92
+                gong_command!("help"),  //hellp gets metric of 0.9533333333333333
+            ]
+        );
+        assert!(cmds.is_valid());
+        let parser = Parser::new(&opts, Some(&cmds));
+        let actual_results = Actual(parser.parse(&args));
+        check_result(&actual_results, &expected);
+
+        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
+        for item in &actual_results.0.items {
+            match item {
+                ItemClass::Ok(Item::NonOption(_, s)) => {
+                    suggestions.push((*s, cmds.suggest(s)));
+                },
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!(suggestions, vec!(
+            ("hellp", Some("help")),
+        ));
+    }
+
+    /// Check searching respects best match, i.e. keeping track works in algorithm
+    #[test]
+    fn best_equal() {
+        let args = arg_list!("fooa");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, NonOption, "fooa"),
+            ]
+        );
+        let opts = gong_option_set_fixed!();
+        let cmds = gong_command_set_fixed!(
+            [
+                // Equal matches for `fooa`
+                gong_command!("foob"), //fooa gets metric of 0.8833333333333333
+                gong_command!("fooc"), //fooa gets metric of 0.8833333333333333
+            ]
+        );
+        assert!(cmds.is_valid());
+        let parser = Parser::new(&opts, Some(&cmds));
+        let actual_results = Actual(parser.parse(&args));
+        check_result(&actual_results, &expected);
+
+        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
+        for item in &actual_results.0.items {
+            match item {
+                ItemClass::Ok(Item::NonOption(_, s)) => {
+                    suggestions.push((*s, cmds.suggest(s)));
+                },
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!(suggestions, vec!(
             ("fooa", Some("foob")),
         ));
     }

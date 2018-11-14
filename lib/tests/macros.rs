@@ -25,7 +25,7 @@ mod available_options {
     #[test]
     fn cmp_non_fixed() {
         // The common base set is already constructed with the “fixed” (`OptionSet` based) macro
-        let fixed: &OptionSet = common::get_base();
+        let fixed: &OptionSet = common::get_base_opts();
 
         // Re-build with “non-fixed” (`OptionSetEx` based) macro
         let non_fixed: OptionSetEx = gong_option_set!(
@@ -55,7 +55,7 @@ mod available_options {
     #[test]
     fn cmp_hand_built() {
         // The common base set is already constructed with a macro
-        let macro_built = common::get_base();
+        let macro_built = common::get_base_opts();
 
         // Re-build it by hand for comparison
         let hand_built = OptionSet {
@@ -76,7 +76,7 @@ mod available_options {
                 ShortOption { ch: 'o', expects_data: true },
                 ShortOption { ch: '\u{030A}', expects_data: false },
                 ShortOption { ch: 'Ɛ', expects_data: true },
-            ],
+            ]
         };
 
         assert_eq!(*macro_built, hand_built);
@@ -86,7 +86,7 @@ mod available_options {
     #[test]
     fn cmp_method_built() {
         // The common base set is already constructed with a macro
-        let macro_built = common::get_base();
+        let macro_built = common::get_base_opts();
 
         // Re-build it with methods for comparison
         let mut method_built = OptionSetEx::with_capacity(6, 5);

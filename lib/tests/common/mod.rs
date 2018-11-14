@@ -11,7 +11,7 @@
 //! Shared stuff
 
 pub mod base;
-pub use self::base::get_base;
+pub use self::base::{get_base_opts, get_base_cmds};
 
 use std::ffi::OsStr;
 use gong::analysis::Analysis;
@@ -75,6 +75,7 @@ macro_rules! expected_item {
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr ) => {
         ItemClass::Ok(Item::ShortWithData { i: $i, c: $c, d: $d, l: $l })
     };
+    ( $i:expr, Command, $n:expr ) => { ItemClass::Ok(Item::Command($i, $n)) };
     ( $i:expr, UnknownLong, $n:expr ) => { ItemClass::Warn(ItemW::UnknownLong($i, $n)) };
     ( $i:expr, UnknownShort, $c:expr ) => { ItemClass::Warn(ItemW::UnknownShort($i, $c)) };
     ( $i:expr, LongWithNoName ) => { ItemClass::Warn(ItemW::LongWithNoName($i)) };
@@ -88,7 +89,7 @@ macro_rules! expected_item {
 
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser() -> Parser<'static, 'static> {
-    Parser::new(base::get_base())
+    Parser::new(base::get_base_opts(), Some(base::get_base_cmds()))
 }
 
 /// Common central function for comparing actual analysis result with expected.

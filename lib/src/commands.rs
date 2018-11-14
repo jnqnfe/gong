@@ -1,0 +1,357 @@
+// Copyright 2018 Lyndon Brown
+//
+// This file is part of the `gong` command-line argument processing library.
+//
+// Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
+// copy, modify, or distribute this file except in compliance with said license. You can find copies
+// of these licenses either in the LICENSE-MIT and LICENSE-APACHE files, or alternatively at
+// <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
+// respectively.
+
+//! “Available” command arguments
+
+#[cfg(feature = "suggestions")]
+use strsim;
+use super::options::{self, OptionSet, OptionFlaw};
+
+/// Extendible command set
+///
+/// Used to supply the set of information about available commands to match against
+///
+/// This is the "extendible" variant which uses `Vec`s to hold the command lists and thus is
+/// flexible in allowing addition of commands, and may re-allocate as necessary.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CommandSetEx<'r, 's: 'r> {
+    /* NOTE: these have been left public to allow creation via macros */
+    pub commands: Vec<Command<'r, 's>>,
+}
+
+impl<'r, 's: 'r> Default for CommandSetEx<'r, 's> {
+    fn default() -> Self {
+        CommandSetEx::new()
+    }
+}
+
+/// Command set
+///
+/// Used to supply the set of information about available commands to match against
+///
+/// This is the non-“extendible” variant. Unlike its cousin `CommandSetEx`, this holds the command
+/// list as a slice reference rather than a `Vec`, and thus cannot be extended in size (hence no
+/// `add_*` methods). This is particularly useful in efficient creation of static/const command
+/// sets.
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct CommandSet<'r, 's: 'r> {
+    /* NOTE: these have been left public to allow efficient static creation of commands */
+    pub commands: &'r [Command<'r, 's>],
+}
+
+impl<'r, 's: 'r> PartialEq<CommandSet<'r, 's>> for CommandSetEx<'r, 's> {
+    fn eq(&self, rhs: &CommandSet<'r, 's>) -> bool {
+        rhs.eq(&self.as_fixed())
+    }
+}
+
+impl<'r, 's: 'r> PartialEq<CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
+    fn eq(&self, rhs: &CommandSetEx<'r, 's>) -> bool {
+        self.eq(&rhs.as_fixed())
+    }
+}
+
+/// Description of an available command
+///
+/// The `options` and `sub_commands` attributes are used to specify the sets to be used for parsing
+/// arguments that follow use of a specific command in an argument list.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Command<'r, 's: 'r> {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    /// Command name
+    pub name: &'s str,
+    /// Options
+    pub options: &'r OptionSet<'r, 's>,
+    /// Sub-commands
+    pub sub_commands: CommandSet<'r, 's>,
+}
+
+/// Description of a validation issue within a command in a [`CommandSet`](struct.CommandSet.html)
+/// or [`CommandSetEx`](struct.CommandSetEx.html) set.
+#[derive(Debug, PartialEq, Eq)]
+pub enum CommandFlaw<'a> {
+    /// Command name is an empty string
+    EmptyName,
+    /// Command name contains unicode replacement char (`U+FFFD`)
+    NameIncludesRepChar(&'a str),
+    /// Duplicate command found
+    Dup(&'a str),
+    /// Flaws for the option set belonging to a command
+    NestedOptSetFlaws(&'a str, Vec<OptionFlaw<'a>>),
+    /// Flaws for the sub-command set belonging to a command
+    NestedSubCmdFlaws(&'a str, Vec<CommandFlaw<'a>>),
+}
+
+impl<'r, 's: 'r> CommandSetEx<'r, 's> {
+    /// Create a new object
+    ///
+    /// You can alternatively use [`with_capacity`](#method.with_capacity) for more efficient `Vec`
+    /// creation.
+    #[inline]
+    pub fn new() -> Self {
+        Self { commands: Vec::new(), }
+    }
+
+    /// Create a new object, with size estimation
+    ///
+    /// Takes estimations of the number of commands to expect to be added (for efficient vector
+    /// allocation).
+    #[inline]
+    pub fn with_capacity(count_est: usize) -> Self {
+        Self { commands: Vec::with_capacity(count_est), }
+    }
+
+    /// Create a [`CommandSet`](struct.CommandSet.html) referencing `self`’s vectors as slices
+    #[inline]
+    pub fn as_fixed(&self) -> CommandSet<'_, 's> {
+        CommandSet { commands: &self.commands[..], }
+    }
+
+    /// Checks if empty
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        self.commands.is_empty()
+    }
+
+    /// Add a command
+    ///
+    /// Panics (debug only) on invalid name.
+    #[inline]
+    pub fn add_command(&mut self, name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
+        sub_commands: CommandSet<'r, 's>) -> &mut Self
+    {
+        self.commands.push(Command::new(name, options, sub_commands));
+        self
+    }
+
+    /// Add an existing (ready-made) command
+    #[inline]
+    pub fn add_existing_command(&mut self, command: Command<'r, 's>) -> &mut Self {
+        self.commands.push(command);
+        self
+    }
+
+    /// Checks validity of command set
+    ///
+    /// Returns `true` if valid.
+    ///
+    /// See also the [`validate`](#method.validate) method.
+    #[inline]
+    pub fn is_valid(&self) -> bool {
+        validation::validate_set(&self.as_fixed(), false).is_ok()
+    }
+
+    /// Checks validity of command set, returning details of any problems
+    #[inline]
+    pub fn validate(&self) -> Result<(), Vec<CommandFlaw<'s>>> {
+        validation::validate_set(&self.as_fixed(), true)
+    }
+
+    /// Find the best matching command for the given string
+    ///
+    /// This is intended to be used when a command argument was expected, and an *non-option*
+    /// argument was given, but it was not matched against any available command, and you want to
+    /// report an “unrecognised command” error, indicating the most likely option the user may have
+    /// meant, if a suitable suggestion can be found. E.g.
+    ///
+    /// > “Error: Unknown command ‘x’, did you mean ‘y’”
+    ///
+    /// Specifically, this uses the `jaro_winkler` algorithm from the `strsim` crate; It filters
+    /// out any commands with a metric calculated as less than `0.8`, and returns the first command
+    /// with the highest metric.
+    #[cfg(feature = "suggestions")]
+    #[inline]
+    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
+        self.as_fixed().suggest(unknown)
+    }
+}
+
+impl<'r, 's: 'r> CommandSet<'r, 's> {
+    /// Creates an “extendible” copy of `self`
+    ///
+    /// This duplicates the options in `self` into a [`CommandSetEx`](struct.CommandSetEx.html).
+    pub fn to_extendible(&self) -> CommandSetEx<'r, 's> {
+        CommandSetEx { commands: self.commands.iter().cloned().collect() }
+    }
+
+    /// Checks if empty
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        self.commands.is_empty()
+    }
+
+    /// Checks validity of command set
+    ///
+    /// Returns `true` if valid.
+    ///
+    /// See also the [`validate`](#method.validate) method.
+    #[inline(always)]
+    pub fn is_valid(&self) -> bool {
+        validation::validate_set(self, false).is_ok()
+    }
+
+    /// Checks validity of command set, returning details of any problems
+    #[inline(always)]
+    pub fn validate(&self) -> Result<(), Vec<CommandFlaw<'s>>> {
+        validation::validate_set(self, true)
+    }
+
+    /// Find the best matching command for the given string
+    ///
+    /// This is intended to be used when a command argument was expected, and an *non-option*
+    /// argument was given, but it was not matched against any available command, and you want to
+    /// report an “unrecognised command” error, indicating the most likely option the user may have
+    /// meant, if a suitable suggestion can be found. E.g.
+    ///
+    /// > “Error: Unknown command ‘x’, did you mean ‘y’”
+    ///
+    /// Specifically, this uses the `jaro_winkler` algorithm from the `strsim` crate; It filters
+    /// out any commands with a metric calculated as less than `0.8`, and returns the first command
+    /// with the highest metric.
+    #[cfg(feature = "suggestions")]
+    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
+        let filter = 0.8;
+        let mut best_metric: f64 = filter;
+        let mut best: Option<&str> = None;
+        for cmd in self.commands {
+            let metric = strsim::jaro_winkler(unknown, cmd.name);
+            if metric > best_metric || (best.is_none() && metric >= filter) {
+                best = Some(cmd.name);
+                best_metric = metric;
+            }
+        }
+        best
+    }
+}
+
+impl<'r, 's: 'r> Command<'r, 's> {
+    /// Create a new command descriptor
+    ///
+    /// Panics (debug only) if the given name is an empty string or contains a unicode replacement
+    /// character ('\u{FFFD}').
+    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>, sub_commands: CommandSet<'r, 's>) -> Self {
+        debug_assert!(!name.is_empty(), "Command name cannot be an empty string!");
+        debug_assert!(!name.contains('\u{FFFD}'), "Command name cannot contain ‘\\u{FFFD}’!");
+        let opts_actual = options.unwrap_or(&gong_option_set_fixed!());
+        Self { name, options: opts_actual, sub_commands }
+    }
+}
+
+/// Command set validation
+mod validation {
+    use super::{options, CommandSet, CommandFlaw};
+
+    /// Checks validity of command set, returning details of any problems
+    ///
+    /// If no problems are found, it returns `Ok(())`, otherwise `Err(_)`.
+    ///
+    /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
+    /// useful for quick `is_valid` checks. Otherwise it builds up and provides a complete list of
+    /// flaws.
+    pub fn validate_set<'r, 's: 'r>(set: &CommandSet<'r, 's>, detail: bool)
+        -> Result<(), Vec<CommandFlaw<'s>>>
+    {
+        let mut flaws: Vec<CommandFlaw<'s>> = Vec::new();
+
+        // Validate command names
+        for command in set.commands {
+            if command.name.is_empty() {
+                match detail {
+                    true => { flaws.push(CommandFlaw::EmptyName); },
+                    false => { return Err(flaws); },
+                }
+            }
+            else if command.name.contains('\u{FFFD}') {
+                match detail {
+                    true => { flaws.push(CommandFlaw::NameIncludesRepChar(command.name)); },
+                    false => { return Err(flaws); },
+                }
+            }
+        }
+
+        // Check for name duplicates
+        let mut dupes: bool = false;
+        find_duplicates(set, &mut flaws, detail, &mut dupes);
+        if !detail && dupes {
+            return Err(flaws);
+        }
+
+        // Check the sub_commands and option sets of commands
+        for command in set.commands {
+            if let Err(f) = options::validation::validate_set(command.options, detail) {
+                match detail {
+                    true => { flaws.push(CommandFlaw::NestedOptSetFlaws(command.name, f)); },
+                    false => { return Err(flaws); },
+                }
+            }
+            if let Err(f) = validate_set(&command.sub_commands, detail) {
+                match detail {
+                    true => { flaws.push(CommandFlaw::NestedSubCmdFlaws(command.name, f)); },
+                    false => { return Err(flaws); },
+                }
+            }
+        }
+
+        match flaws.is_empty() {
+            true => Ok(()),
+            false => Err(flaws),
+        }
+    }
+
+    fn find_duplicates<'r, 's: 'r>(set: &CommandSet<'r, 's>,
+        flaws: &mut Vec<CommandFlaw<'s>>, detail: bool, found: &mut bool)
+    {
+        let cmds = set.commands;
+        let mut checked: Vec<&'s str> = Vec::with_capacity(cmds.len());
+
+        let mut duplicates: Vec<CommandFlaw<'s>> = Vec::new();
+        for cmd in cmds {
+            let name = cmd.name.clone();
+            if !duplicates.contains(&CommandFlaw::Dup(name)) {
+                match checked.contains(&name) {
+                    true => {
+                        match detail {
+                            true => { duplicates.push(CommandFlaw::Dup(name)); },
+                            false => { *found = true; return; },
+                        }
+                    },
+                    false => { checked.push(name); },
+                }
+            }
+        }
+        if !duplicates.is_empty() {
+            flaws.append(&mut duplicates);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Check `Command::new` rejects empty string
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn create_cmd_no_name() {
+        let _cmd = Command::new("", None, gong_command_set_fixed!()); // Should panic here in debug mode!
+    }
+
+    /* Command names cannot contain the unicode replacement char (`\u{FFFD}`). Support for handling
+     * `OsStr` based argument sets involves a temporary lossy conversion to `str`, and if the
+     * replacement char was allowed, this could result in incorrect matches.
+     */
+
+    /// Check `Command::new` rejects unicode replacement char (`\u{FFFD}`)
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn create_cmd_with_rep_char() {
+        let _cmd = Command::new("a\u{FFFD}b", None, gong_command_set_fixed!()); // Should panic here in debug mode!
+    }
+}

@@ -34,8 +34,9 @@
 //!
 //! The basic premise of usage is simple:
 //!
-//!  1. Provide the processing function with a description of available options along with the input
-//!     arguments to be processed, and it returns the results of its analysis.
+//!  1. Provide the processing function with a description of available options (and optionally
+//!     command arguments) along with the input arguments to be processed, and it returns the
+//!     results of its analysis.
 //!  2. You can then work through this analysis to respond as applicable: Output error information
 //!     if the user made a mistake; output help/usage information if requested; store state
 //!     information from recognised flag type options; and store data (converting values as
@@ -63,9 +64,9 @@
 //!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
 //!         <tr><td>‘Positional’ (‘non-option’) arguments</td><td>Yes</td></tr>
 //!         <tr><td>‘Early terminator’</td><td>Yes</td></tr>
-//!         <tr><td>‘Command’ options</td><td>Compatible, though a proper understanding of them is not built in</td></tr>
+//!         <tr><td>‘Command’ options</td><td>Yes, including nested</td></tr>
 //!         <tr><td>Abbreviated long option name matching</td><td>Yes (optional)</td></tr>
-//!         <tr><td>Mismatch suggestions</td><td>Yes*</td></tr>
+//!         <tr><td>Mismatch suggestions</td><td>Yes*, for both (long) options and commands</td></tr>
 //!         <tr><td>Dynamic ‘builder’ style option set construction</td><td>Yes</td></tr>
 //!         <tr><td>Efficient ‘static’ option sets</td><td>Yes</td></tr>
 //!         <tr><td>Help/usage output generation</td><td>Not currently</td></tr>

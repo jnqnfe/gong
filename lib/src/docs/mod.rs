@@ -8,8 +8,9 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation (overview; options-support; usage; faq)
+//! Documentation (overview; options-support; command-args support; usage; faq)
 
+pub mod commands;
 pub mod overview;
 pub mod options;
 pub mod usage;

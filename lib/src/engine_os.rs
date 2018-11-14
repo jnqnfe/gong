@@ -119,6 +119,7 @@ pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
 
             ItemClass::Ok(Item::EarlyTerminator(i)) =>       ItemClass::Ok(Item::EarlyTerminator(*i)),
             ItemClass::Ok(Item::Long(i, n)) =>               ItemClass::Ok(Item::Long(*i, *n)),
+            ItemClass::Ok(Item::Command(i, n)) =>            ItemClass::Ok(Item::Command(*i, *n)),
             ItemClass::Err(ItemE::LongMissingData(i, n)) =>  ItemClass::Err(ItemE::LongMissingData(*i, *n)),
             ItemClass::Err(ItemE::ShortMissingData(i, c)) => ItemClass::Err(ItemE::ShortMissingData(*i, *c)),
             ItemClass::Warn(ItemW::LongWithNoName(i)) =>     ItemClass::Warn(ItemW::LongWithNoName(*i)),

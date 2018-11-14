@@ -61,7 +61,8 @@ fn arg_list_owned_set() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// This tests most of the variations that need to be converted from an `str` based `Analysis` to an
-/// `OsStr` based one. The things missing are long and short options with missing data.
+/// `OsStr` based one. The things missing are long and short options with missing data, and a
+/// command example.
 #[test]
 fn basic() {
     let args = arg_list_os!(
@@ -139,6 +140,22 @@ fn short_missing_data() {
     check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
 }
 
+/// This tests a command based example
+#[test]
+fn command() {
+    let args = arg_list_os!(
+        "commit", // Known command
+    );
+    let expected = expected_os!(
+        error: false,
+        warn: false,
+        [
+            expected_item!(0, Command, "commit"),
+        ]
+    );
+    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
+}
+
 /// This tests some example items using multi-byte characters, where slicing of the input arguments
 /// is involved.
 #[test]
@@ -186,7 +203,7 @@ fn multi_byte() {
 /// will be changed to unicode replacement characters in the inner `str` based parsing engine, and
 /// we need to correctly map those to the original bytes for correct `OsStr` based parsing results.
 ///
-/// Note, we assume that available option names are always valid UTF-8, as we require.
+/// Note, we assume that available option/command names are always valid UTF-8, as we require.
 mod invalid_byte_sequences {
     use super::*;
 

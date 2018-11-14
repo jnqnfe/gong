@@ -99,7 +99,7 @@ mod short_dash {
         let opts = gong_option_set_fixed!([], [ gong_shortopt!('-') ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
-        let parser = Parser::new(&opts);
+        let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }
@@ -250,7 +250,7 @@ mod long_equals {
         let opts = gong_option_set_fixed!([ gong_longopt!("a=b") ], []);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
-        let parser = Parser::new(&opts);
+        let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }

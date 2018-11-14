@@ -56,6 +56,27 @@ macro_rules! gong_option_set_fixed {
     () => { gong_option_set_fixed!([], []) };
 }
 
+/// Construct a [`CommandSet`](commands/struct.CommandSet.html)
+///
+/// Takes an array of commands
+///
+/// Example:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let _ = gong_command_set_fixed!([]);
+/// # }
+/// ```
+#[macro_export]
+macro_rules! gong_command_set_fixed {
+    ( $cmds:tt ) => {
+        $crate::commands::CommandSet { commands: &$cmds }
+    };
+    () => { gong_command_set_fixed!([]) };
+}
+
 /// Construct a [`LongOption`](options/struct.LongOption.html)
 ///
 /// Takes:
@@ -80,4 +101,41 @@ macro_rules! gong_longopt {
 macro_rules! gong_shortopt {
     ( $ch:expr, $data:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: $data } };
     ( $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
+}
+
+/// Construct a [`Command`](commands/struct.Command.html)
+///
+/// Examples:
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let opts = gong_option_set_fixed!();     // An example (empty) option set
+/// let subcmds = gong_command_set_fixed!(); // An example (empty) command set
+///
+/// let _ = gong_command!("foo");
+/// let _ = gong_command!("foo", @opts &opts);           // With option set
+/// let _ = gong_command!("foo", @cmds subcmds.clone()); // With sub-command set
+/// let _ = gong_command!("foo", @opts &opts, @cmds subcmds.clone());
+/// # }
+/// ```
+#[macro_export]
+macro_rules! gong_command {
+    ( $name:expr ) => {
+        $crate::gong_command!($name, @opts $crate::gong_option_set_fixed!(), @cmds $crate::gong_command_set_fixed!())
+    };
+    ( $name:expr, @opts $opts:expr ) => {
+        $crate::gong_command!($name, @opts $opts, @cmds $crate::gong_command_set_fixed!())
+    };
+    ( $name:expr, @cmds $sub_cmds:expr ) => {
+        $crate::gong_command!($name, @opts $crate::gong_option_set_fixed!(), @cmds $sub_cmds)
+    };
+    ( $name:expr, @opts $opts:expr, @cmds $sub_cmds:expr ) => {
+        $crate::commands::Command {
+            name: $name,
+            options: &$opts,
+            sub_commands: $sub_cmds,
+        }
+    };
 }

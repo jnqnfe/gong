@@ -26,9 +26,9 @@
 //!
 //! # Step #1: Create a `Parser`
 //!
-//! A [`Parser`] holds: a description of the available [*options*][options_doc], and settings to
-//! control parsing. It also provides the [`parse`][`Parser::parse`] method, that performs the
-//! actual parsing.
+//! A [`Parser`] holds: a description of the available [*options*][options_doc]; a description of
+//! the available [*commands*][commands_doc]; and settings to control parsing. It also provides the
+//! [`parse`][`Parser::parse`] method, that performs the actual parsing.
 //!
 //! One of the first things you need to do therefore, is construct a [`Parser`].
 //!
@@ -98,22 +98,38 @@
 //!    [`OptionSet`] exists).
 //!  - Macros are provided for constructing both as a convenience.
 //!
+//! ## Describe the available command arguments
+//!
+//! For programs designed with *[command arguments][commands_doc]*, in addition to describing a
+//! “main” *option set*, a *command set* must also be described, for which [`CommandSetEx`] and
+//! [`CommandSet`] types are provided, similar to the respective *option set* types.
+//!
+//! Note that [`Command`]s each hold an [`OptionSet`], and may hold a [`CommandSet`] of
+//! *sub-commands*.
+//!
+//! An example of constructing a *command* based structure is not given here, but it should be
+//! fairly trivial to understand how to achieve.
+//!
 //! ## Create the `Parser`
 //!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSet::default();
-//! let parser = Parser::new(&opts);
+//! # let cmds = gong::commands::CommandSet::default();
+//! let parser = Parser::new(&opts, Some(&cmds));
 //! ```
 //!
-//! Note that the [`Parser`] only accepts an [`OptionSet`], not the extendible variant, so if you
-//! have used the extendible one, you must use the `as_fixed` method.
+//! Note that the [`Parser`] only accepts [`OptionSet`] and [`CommandSet`] types, not the extendible
+//! variants, so if you have used the extendible ones, you must use the respective `as_fixed`
+//! methods.
 //!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSetEx::default();
+//! # let cmds = gong::commands::CommandSetEx::default();
 //! let opts_fixed = opts.as_fixed();
-//! let parser = Parser::new(&opts_fixed);
+//! let cmds_fixed = cmds.as_fixed();
+//! let parser = Parser::new(&opts_fixed, Some(&cmds_fixed));
 //! ```
 //!
 //! If you want to change any parser settings, e.g. choose which *option* mode (*standard* or
@@ -123,19 +139,21 @@
 //! ### Validation
 //!
 //! Once a parser has been built, it should be validated before use to ensure that there are no
-//! issues with the *option set* you have described. The [`is_valid`][`Parser::is_valid`] and
-//! [`validate`][`Parser::validate`] methods are provided for this. It is recommended that you
-//! typically only check validity in a *debug* assert variant, to allow catching mistakes in
-//! development, but otherwise avoid wasting energy in release builds for parser descriptions that
-//! you know must be perfectly valid.
+//! issues with the *option set* and *command set* you have described. The
+//! [`is_valid`][`Parser::is_valid`] and [`validate`][`Parser::validate`] methods are provided for
+//! this. It is recommended that you typically only check validity in a *debug* assert variant,
+//! to allow catching mistakes in development, but otherwise avoid wasting energy in release builds
+//! for parser descriptions that you know must be perfectly valid.
 //!
-//! Note, some basic validation is also performed directly by the `add_*` methods on
-//! [`OptionSetEx`], but this does not cover checking for duplicates. The *option set* and structure
-//! also has its own validation checking methods, which are used internally by the *parser*
-//! validation checks. There is no need to run them in addition to checking the *parser*.
+//! Note, some basic validation is performed directly by the `add_*` methods on [`OptionSetEx`] and
+//! [`CommandSetEx`], but this does not cover checking for duplicates. The *option set* and
+//! *command set* structures also have their own validation checking methods, which are used
+//! internally by the *parser* validation checks. There is no need to run them in addition to
+//! checking the *parser*.
 //!
-//! **Note**: With respect to what is or is not a duplicate, only the name/`char` of the *option*
-//! matters; the `expects_data` attribute makes no difference.
+//! **Note**: With respect to what is or is not a duplicate, only the name/`char` of the *option* or
+//! *command* matters; the `expects_data` attribute of *options* and *option set* and *sub-command
+//! set* of *commands* make no difference.
 //!
 //! # Step #2: Gather arguments to be processed
 //!
@@ -164,14 +182,15 @@
 //!
 //! # Step #3: Processing
 //!
-//! With input args gathered and “available” *options* and described, now you’re ready for
-//! processing. All you need to do is feed the argument list to the parser’s
+//! With input args gathered and “available” *options* and *commands* described, now you’re ready
+//! for parsing. All you need to do is feed the argument list to the parser’s
 //! [`parse`][`Parser::parse`] method and it will spit out an analysis that describes what it
 //! identified.
 //!
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
-//! # let parser = gong::parser::Parser::new(&opts);
+//! # let cmds = gong::commands::CommandSet::default();
+//! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
 //! # let args: Vec<String> = std::env::args().collect();
 //! let analysis = parser.parse(&args[..]);
 //! ```
@@ -222,9 +241,13 @@
 //! [`OptionSetEx`]: ../../options/struct.OptionSetEx.html
 //! [`OptionSet::to_extendible`]: ../../options/struct.OptionSet.html#method.to_extendible
 //! [`OptionSetEx::as_fixed`]: ../../options/struct.OptionSetEx.html#method.as_fixed
+//! [`Command`]: ../../commands/struct.Command.html
+//! [`CommandSet`]: ../../commands/struct.CommandSet.html
+//! [`CommandSetEx`]: ../../commands/struct.CommandSetEx.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
 //! [`ItemClass`]: ../../analysis/enum.ItemClass.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [commands_doc]: ../commands/index.html
 //! [options_doc]: ../options/index.html

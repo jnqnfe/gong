@@ -13,11 +13,11 @@
 //! # How do I specify “positional” arguments?
 //!
 //! > What are “positional” arguments? They are *generic* arguments, basically any argument which is
-//! > not interpreted as an *option* argument or an *early terminator*. They are referred to as
-//! > *non-option* arguments by this library. The term “positional” relates to the fact that the
-//! > position in the argument list determines the purpose of each one. Contrast this with a
-//! > data-taking option argument, where the option name/character gives purpose to the data value
-//! > (and allows greater flexibility, for instance in terms of order).
+//! > not interpreted as an *option* argument, a *command* argument, or an *early terminator*. They
+//! > are sometimes referred to as *non-option* arguments by this library. The term “positional”
+//! > relates to the fact that the position in the argument list determines the purpose of each one.
+//! > Contrast this with a data-taking option argument, where the option name/character gives
+//! > purpose to the data value (and allows greater flexibility, for instance in terms of order).
 //!
 //! You don’t. *Describing* positional arguments would only be useful if something would be done
 //! with that information, which is not the case with this library. If a positional argument is
@@ -71,36 +71,26 @@
 //! struck as to how much of the work this library does and how much you do, and it seems right that
 //! this library steers away from attempting to incorporate this.
 //!
-//! # How do I handle command arguments?
-//!
-//! Currently there is no built-in understanding of these, and thus no way to describe them; To
-//! handle them, simply compare reported *non-options* in the analysis against your list of known
-//! command arguments, and act accordingly.
-//!
-//! Obviously, since any arguments following a command argument should be processed against an
-//! option set and sub-command set specific to that command, you should ignore the items in the
-//! analysis for arguments that came after the command argument, and re-run the slice of the
-//! argument list covering them against the command‘s option set.
-//!
 //! # What exactly is “mismatch suggestions”?
 //!
 //! This is a feature that assists in generating more helpful error messages when a user supplies an
-//! unknown long option to your program. Instead of just outputting an error that points out the
-//! problematic argument, it may be helpful to users if you can included in that error message a
-//! suggestion of the option that most closely resembles what they tried to use, if any real ones
-//! are a close enough match. (Note, this does not apply to *short* options, obviously).
+//! unknown long option or command to your program. Instead of just outputting an error that points
+//! out the problematic argument, it may be helpful to users if you can included in that error
+//! message a suggestion of the option/command that most closely resembles what they tried to use,
+//! if any real ones are a close enough match. (Note, this does not apply to *short* options,
+//! obviously).
 //!
-//! Thus, this feature consists of a means by which a supplied unknown long option can be compared
-//! with the set of available long options you described for your program, and the best suggestion,
-//! if any, obtained.
+//! Thus, this feature consists of a means by which a supplied unknown option/command can be
+//! compared with the set of available options/commands you described for your program, and the best
+//! suggestion, if any, obtained.
 //!
 //! This capability is provided by this crate, built upon use of a string comparison measuring
 //! algorithm (specifically `jaro_winkler`) from the `strsim` crate. This is an optional feature
 //! controlled via the `suggestions` `Cargo` feature.
 //!
-//! # Is option matching case-sensitive?
+//! # Is option and/or command argument matching case-sensitive?
 //!
-//! Yes.
+//! Yes for both.
 //!
 //! # Is any whitespace trimming (or other modification) performed?
 //!

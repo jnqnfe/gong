@@ -369,7 +369,7 @@ mod abbreviations {
             ],
             []
         );
-        let parser = Parser::new(&opts);
+        let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }
@@ -807,6 +807,372 @@ mod data {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Command processing
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod commands {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let args = arg_list!("commit");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Command, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// We do not support case-insensitive matching
+    #[test]
+    fn case_sensitivity() {
+        let args = arg_list!("Commit");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, NonOption, "Commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check repeated use correctly fails, where same command is used
+    ///
+    /// After the first, the command set, if any, of that command is in effect, so the second use
+    /// should be checked against that; since that does not contain it, this should fail!
+    #[test]
+    fn repeated_same() {
+        let args = arg_list!("commit", "commit");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Command, "commit"),
+                expected_item!(1, NonOption, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check repeated use correctly fails, where different commands are used
+    #[test]
+    fn repeated_different() {
+        let args = arg_list!("push", "commit");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Command, "push"),
+                expected_item!(1, NonOption, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check early terminator forces command to be treated as non-option
+    #[test]
+    fn after_early_term() {
+        let args = arg_list!("--", "commit");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, EarlyTerminator),
+                expected_item!(1, NonOption, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check works alongside option arguments
+    #[test]
+    fn with_options() {
+        let args = arg_list!(
+            "--foo", "-h",  // Long and short options from the main set
+            "commit"        // Our command
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Short, 'h'),
+                expected_item!(2, Command, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check name clash with option
+    #[test]
+    fn name_clash() {
+        let args = arg_list!(
+            "--foo", // As long option
+            "foo"    // As command
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Command, "foo"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check names that look like options, take preference as options
+    ///
+    /// Command names simply should not be prefixed like this.
+    #[test]
+    fn name_like_option() {
+        let opts = gong_option_set_fixed!(
+            [
+                gong_longopt!("foo"),
+            ], []
+        );
+        let cmds = gong_command_set_fixed!([
+            gong_command!("--foo"),
+            gong_command!("--bar"),
+        ]);
+
+        let args = arg_list!("--foo", "--bar");
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, UnknownLong, "bar"),
+            ]
+        );
+
+        let parser = Parser::new(&opts, Some(&cmds));
+        check_result(&Actual(parser.parse(&args)), &expected);
+    }
+
+    /// Check consumed as option argument data
+    #[test]
+    fn opt_data_consumed() {
+        let args = arg_list!(
+            "--hah",    // Long option taking data
+            "commit"    // Available command, but should be consumed as option data
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, LongWithData, "hah", "commit", DataLocation::NextArg),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check not recognised as command in secondary non-option position, and first non-option is
+    /// reported as a non-option, not as an unrecognised command (n/a to current design).
+    #[test]
+    fn following_unknown() {
+        let args = arg_list!(
+            "--hah", "foo",     // Option taking data
+            "blah",             // Non-option, not matching any command
+            "commit"            // A command, but one or more non-options already given
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
+                expected_item!(2, NonOption, "blah"),
+                expected_item!(3, NonOption, "commit"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check that the option set is changed following the command, with command that has no option
+    /// set of its own.
+    #[test]
+    fn option_set_change_none() {
+        let args = arg_list!(
+            "--foo", "-h",      // Options from main set
+            "commit",           // Our command, which has no options of its own
+            "--foo", "-oq"      // Options, some match the main set, but set in use should have
+                                // changed, resulting in them not being recognised.
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Short, 'h'),
+                expected_item!(2, Command, "commit"),
+                expected_item!(3, UnknownLong, "foo"),
+                expected_item!(4, UnknownShort, 'o'),
+                expected_item!(4, UnknownShort, 'q'),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check that the option set is changed following the command, with command that has an option
+    /// set of its own.
+    #[test]
+    fn option_set_change_some() {
+        let args = arg_list!(
+            "--foo", "-h",      // Options from the main set
+            "push",             // Our command, which has options of its own
+            "--foo",            // Option unknown in command’s option set, and should **not**
+                                // be matched against same option in main set.
+            "--help",           // Option applicable to command (as well as main set, though
+                                // the main set is irrelevant here).
+            "--tags",           // Option applicable to command
+            "-o"                // Option unknown to command, but exists in main set
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Short, 'h'),
+                expected_item!(2, Command, "push"),
+                expected_item!(3, UnknownLong, "foo"),
+                expected_item!(4, Long, "help"),
+                expected_item!(5, Long, "tags"),
+                expected_item!(6, UnknownShort, 'o'),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check nested sub-commands
+    #[test]
+    fn nested() {
+        let args = arg_list!(
+            "branch",           // Our command, which has options of its own
+            "--foo",            // Option unknown to command, known to main set
+            "--help",           // Option known to command (and main set)
+            "--sorted",         // Option known to command (only)
+            "--show-current",   // Option for sub-command, but unknown to command itself
+            "list",             // Sub-command
+            "--foo",            // Option known to sub-command (and main, but not parent command)
+            "--help",           // Option known to sub-command
+            "--sorted",         // Option unknown to sub-command (but known to parent)
+            "--show-current",   // Option known to sub-command (only)
+            "remote",           // Sub-command (level 2)
+            "--foo",            // Option unknown to sub-command
+            "--help",           // Option unknown to sub-command
+            "--nope",           // Option unknown to sub-command
+            "--show-current",   // Option unknown to sub-command
+            "blah"              // Non-option
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Command, "branch"),
+                expected_item!(1, UnknownLong, "foo"),
+                expected_item!(2, Long, "help"),
+                expected_item!(3, Long, "sorted"),
+                expected_item!(4, UnknownLong, "show-current"),
+                expected_item!(5, Command, "list"),
+                expected_item!(6, Long, "foo"),
+                expected_item!(7, Long, "help"),
+                expected_item!(8, UnknownLong, "sorted"),
+                expected_item!(9, Long, "show-current"),
+                expected_item!(10, Command, "remote"),
+                expected_item!(11, UnknownLong, "foo"),
+                expected_item!(12, UnknownLong, "help"),
+                expected_item!(13, UnknownLong, "nope"),
+                expected_item!(14, UnknownLong, "show-current"),
+                expected_item!(15, NonOption, "blah"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check early terminator works in nested sub-command usage
+    #[test]
+    fn nested_earlyterm() {
+        let args = arg_list!(
+            "branch",           // Our command, which has options of its own
+            "--foo",            // Option unknown to command, known to main set
+            "--help",           // Option known to command (and main set)
+            "--sorted",         // Option known to command (only)
+            "--show-current",   // Option for sub-command, but unknown to command itself
+            "del",              // Sub-command
+            "--foo",            // Option unknown to sub-command
+            "--",               // Early terminator
+            "--show-current",   // Everything here onwards should be taken as non-options
+            "remotely",         // Sub-command (level 2)
+            "--foo",            // Option unknown to sub-command
+            "blah"              // Non-option
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Command, "branch"),
+                expected_item!(1, UnknownLong, "foo"),
+                expected_item!(2, Long, "help"),
+                expected_item!(3, Long, "sorted"),
+                expected_item!(4, UnknownLong, "show-current"),
+                expected_item!(5, Command, "del"),
+                expected_item!(6, UnknownLong, "foo"),
+                expected_item!(7, EarlyTerminator),
+                expected_item!(8, NonOption, "--show-current"),
+                expected_item!(9, NonOption, "remotely"),
+                expected_item!(10, NonOption, "--foo"),
+                expected_item!(11, NonOption, "blah"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check known command from wrong set
+    #[test]
+    fn nested_wrong_set() {
+        let args = arg_list!(
+            "branch",   // Primary command
+            "del",      // Sub-command (level 1)
+            "list",     // Sub-command from level 1, used at level 2, thus unrecognised
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Command, "branch"),
+                expected_item!(1, Command, "del"),
+                expected_item!(2, NonOption, "list"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Check known sub-command, given after a non-option that is not a known sub-command
+    #[test]
+    fn nested_following_nonoption() {
+        let args = arg_list!(
+            "branch",   // Primary command
+            "blah",     // Non-option
+            "list",     // Sub-command, but follows non-option, so not taken as a command
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Command, "branch"),
+                expected_item!(1, NonOption, "blah"),
+                expected_item!(2, NonOption, "list"),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Alt-mode option processing
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -900,6 +1266,34 @@ mod alt_mode {
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
+            ]
+        );
+        let mut parser = get_parser();
+        parser.settings.set_mode(OptionsMode::Alternate);
+        check_result(&Actual(parser.parse(&args)), &expected);
+    }
+
+    /// Check command use
+    #[test]
+    fn with_commands() {
+        let args = arg_list!(
+            "-foo",     // Option from the main set
+            "push",     // Our command, which has options of its own
+            "-foo",     // Option unknown in command’s option set, and should **not** be matched
+                        // against same option in main set.
+            "-help",    // Option applicable to command (as well as main set, though the main set is
+                        // irrelevant here).
+            "-tags"     // Option applicable to command
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, Command, "push"),
+                expected_item!(2, UnknownLong, "foo"),
+                expected_item!(3, Long, "help"),
+                expected_item!(4, Long, "tags"),
             ]
         );
         let mut parser = get_parser();

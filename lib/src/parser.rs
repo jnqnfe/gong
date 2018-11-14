@@ -10,9 +10,9 @@
 
 //! The parser & parser settings
 //!
-//! The `Parser` wraps a description of a collection of available program [*options*][options] along
-//! with parser settings, and provides methods that take a list of input arguments to parse, and
-//! returns an analysis.
+//! The `Parser` wraps a description of a collection of available program [*options*][options] and
+//! [*command arguments*][commands], along with parser settings, and provides methods that take a
+//! list of input arguments to parse, and returns an analysis.
 //!
 //! The `Parser` has methods for parsing input arguments in both of the following forms:
 //!
@@ -27,10 +27,12 @@
 //! in the [option support documentation][options]), and whether or not to allow abbreviated *long
 //! option* name matching.
 //!
+//! [commands]: ../docs/commands/index.html
 //! [options]: ../docs/options/index.html
 
 use std::convert::AsRef;
 use std::ffi::OsStr;
+use super::commands::{CommandSet, CommandFlaw};
 use super::options::{OptionSet, OptionFlaw};
 
 /// Default abbreviation support state
@@ -40,13 +42,15 @@ pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 
 /// Parser
 ///
-/// Holds the option set used for parsing, along with parser settings, and provides the parse method
-/// for parsing an argument set.
+/// Holds the option set and command set used for parsing, along with parser settings, and provides
+/// the parse method for parsing an argument set.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parser<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
     pub options: &'r OptionSet<'r, 's>,
+    /// Command set
+    pub commands: &'r CommandSet<'r, 's>,
     /// Settings
     pub settings: Settings,
 }
@@ -55,6 +59,7 @@ impl<'r, 's: 'r> Default for Parser<'r, 's> {
     fn default() -> Self {
         Self {
             options: &gong_option_set_fixed!(),
+            commands: &gong_command_set_fixed!(),
             settings: Settings::default(),
         }
     }
@@ -102,7 +107,7 @@ impl Settings {
         self
     }
 
-    /// Enable/disable abbreviated matching
+    /// Enable/disable long option name abbreviated matching
     #[inline(always)]
     pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
         self.allow_abbreviations = allow;
@@ -112,9 +117,10 @@ impl Settings {
 
 impl<'r, 's: 'r> Parser<'r, 's> {
     /// Create a new parser
-    pub fn new(options: &'r OptionSet<'r, 's>) -> Self {
+    pub fn new(options: &'r OptionSet<'r, 's>, commands: Option<&'r CommandSet<'r, 's>>) -> Self {
         Self {
             options: options,
+            commands: commands.unwrap_or(&gong_command_set_fixed!()),
             settings: Settings::default(),
         }
     }
@@ -125,20 +131,30 @@ impl<'r, 's: 'r> Parser<'r, 's> {
         &mut self.settings
     }
 
-    /// Checks validity of the option set
+    /// Checks validity of the option set and command set
     ///
     /// Returns `true` if valid.
     ///
     /// See also the [`validate`](#method.validate) method.
-    #[inline(always)]
+    #[inline]
     pub fn is_valid(&self) -> bool {
-        self.options.is_valid()
+        self.options.is_valid() && self.commands.is_valid()
     }
 
-    /// Checks validity of the option set, returning details of any problems
-    #[inline(always)]
-    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
-        self.options.validate()
+    /// Checks validity of the option set and command set, returning details of any problems
+    ///
+    /// If any flaws are found, a tuple is returned, wrapped in `Err`. The first item in the tuple
+    /// is the `Vec` of flaws for the main option set, and the second is the flaws for the command
+    /// set.
+    pub fn validate(&self) -> Result<(), (Vec<OptionFlaw<'s>>, Vec<CommandFlaw<'s>>)> {
+        let option_set_flaws = self.options.validate();
+        let command_set_flaws = self.commands.validate();
+        match (option_set_flaws, command_set_flaws) {
+            (Ok(_), Ok(_)) => Ok(()),
+            (Ok(_), Err(f)) => Err((Vec::new(), f)),
+            (Err(f), Ok(_)) => Err((f, Vec::new())),
+            (Err(f1), Err(f2)) => Err((f1, f2)),
+        }
     }
 
     /// Parses provided program arguments

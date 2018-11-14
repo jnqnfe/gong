@@ -64,7 +64,7 @@ impl<'a, S: 'a + ?Sized> Clone for ItemClass<'a, S> {
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Item<'a, S: 'a + ?Sized> {
-    /// Argument not considered an option.
+    /// Argument not considered an option, command, or early terminator.
     NonOption(usize, &'a S),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
@@ -76,6 +76,8 @@ pub enum Item<'a, S: 'a + ?Sized> {
     Short(usize, char),
     /// Short option match, with expected data argument.
     ShortWithData{ i: usize, c: char, d: &'a S, l: DataLocation },
+    /// Command match.
+    Command(usize, &'a str),
 }
 
 impl<'a, S: 'a + ?Sized> Copy for Item<'a, S> {}

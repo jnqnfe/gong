@@ -54,6 +54,16 @@ pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
     let mut results = Analysis::new(args.len());
     let mut early_terminator_encountered = false;
 
+    // A non-option is only assessed as being a possible command if 1) it is the first encountered
+    // for each option-set analysis (reset for each command identified), and 2) we have not
+    // encountered an early terminator.
+    let mut try_command_matching = true;
+
+    // Proxy, changed on encountering a command, switching to the command’s option set and
+    // sub-commands
+    let mut opts_actual = parser.options;
+    let mut cmds_actual = parser.commands.commands;
+
     let mut arg_iter = args.iter().enumerate();
 
     'arguments: while let Some((arg_index, arg_non_ref)) = arg_iter.next() {
@@ -66,7 +76,18 @@ pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
 
         match arg_type {
             ArgTypeBasic::NonOption => {
+                if try_command_matching && !early_terminator_encountered {
+                    for candidate in cmds_actual {
+                        if candidate.name == arg_ref {
+                            results.add(ItemClass::Ok(Item::Command(arg_index, arg_ref)));
+                            opts_actual = candidate.options;
+                            cmds_actual = candidate.sub_commands.commands;
+                            continue 'arguments;
+                        }
+                    }
+                }
                 results.add(ItemClass::Ok(Item::NonOption(arg_index, arg_ref)));
+                try_command_matching = false;
             },
             ArgTypeBasic::EarlyTerminator => {
                 early_terminator_encountered = true;
@@ -101,11 +122,11 @@ pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
 
                 let mut matched: Option<&LongOption> = None;
                 let mut ambiguity = false;
-                'l_candidates: for candidate in parser.options.long {
+                'l_candidates: for candidate in opts_actual.long {
                     // Exact
                     if candidate.name == name {
-                        // An exact match overrules a previously found partial match and ambiguity
-                        // found with multiple partial matches.
+                        // An exact match overrules a previously found partial match and
+                        // ambiguity found with multiple partial matches.
                         matched = Some(candidate);
                         ambiguity = false;
                         break 'l_candidates;
@@ -175,7 +196,7 @@ pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
                 'shorts: for (i, (byte_pos, ch)) in optset_string.char_indices().enumerate() {
                     let mut match_found = false;
                     let mut expects_data = false;
-                    's_candidates: for candidate in parser.options.short {
+                    's_candidates: for candidate in opts_actual.short {
                         if candidate.ch == ch {
                             match_found = true;
                             expects_data = candidate.expects_data;

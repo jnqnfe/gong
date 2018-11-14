@@ -16,6 +16,8 @@
 //! - Standard: supporting traditional *long* and *short* options
 //! - Alternate: supporting *long options* only, with a single-dash prefix
 //!
+//! It also understands [“command” arguments](../commands/index.html).
+//!
 //! Basic feature support is on par with the C `getopt_long` function. (See the [overview] section
 //! for mention of the small differences).
 //!

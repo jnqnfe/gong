@@ -1,11 +1,15 @@
 # [unreleased]
 
  * Added support for processing `AsRef<OsStr>` based argument lists
+ * Baked in understanding of “command” arguments.
+   Although program designs incorporating “command” arguments could use this crate, it was not easy
+   to make use of them. Direct understanding has now been built in, trading very little overhead for
+   significant user simplification.
  * Redesigned things based upon a new `Parser` type.
     - The settings that lived within option set objects have been moved into a separate `Settings`
       struct, found in the `parser` mod.
-    - This new `Parser` type wraps the option set and settings. Previously there was just the option
-      set type(s), which directly included settings.
+    - This new `Parser` type wraps the main option set, the (optional) command set, and settings.
+      Previously there was just the option set type(s), which directly included settings.
     - The `process` methods on the option set objects have been replaced with a `parse` method on
       this new wrapping `Parser` object.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method

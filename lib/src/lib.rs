@@ -19,6 +19,7 @@
 //!
 //! - [Overview](docs/overview/index.html)
 //! - [Options support](docs/options/index.html)
+//! - [Command argument support](docs/commands/index.html)
 //! - [Usage](docs/usage/index.html)
 
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
@@ -31,6 +32,7 @@ pub mod docs;
 #[macro_use]
 mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
 pub mod analysis;
+pub mod commands;
 mod engine;
 mod engine_os;
 pub mod options;

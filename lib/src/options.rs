@@ -106,6 +106,7 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Takes estimations of the number of options to expect to be added (for efficient vector
     /// allocation).
+    #[inline]
     pub fn with_capacity(long_count_est: usize, short_count_est: usize) -> Self {
         Self {
             long: Vec::with_capacity(long_count_est),
@@ -114,6 +115,7 @@ impl<'s> OptionSetEx<'s> {
     }
 
     /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices.
+    #[inline]
     pub fn as_fixed(&self) -> OptionSet<'_, 's> {
         OptionSet {
             long: &self.long[..],
@@ -122,6 +124,7 @@ impl<'s> OptionSetEx<'s> {
     }
 
     /// Checks if empty
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.long.is_empty() && self.short.is_empty()
     }
@@ -129,6 +132,7 @@ impl<'s> OptionSetEx<'s> {
     /// Add a long option
     ///
     /// Panics (debug only) on invalid name.
+    #[inline]
     pub fn add_long(&mut self, name: &'s str) -> &mut Self {
         self.long.push(LongOption::new(name, false));
         self
@@ -137,6 +141,7 @@ impl<'s> OptionSetEx<'s> {
     /// Add a short option
     ///
     /// Panics (debug only) on invalid `char` choice.
+    #[inline]
     pub fn add_short(&mut self, ch: char) -> &mut Self {
         self.short.push(ShortOption::new(ch, false));
         self
@@ -145,6 +150,7 @@ impl<'s> OptionSetEx<'s> {
     /// Add a long option that expects data
     ///
     /// Panics (debug only) on invalid name.
+    #[inline]
     pub fn add_long_data(&mut self, name: &'s str) -> &mut Self {
         self.long.push(LongOption::new(name, true));
         self
@@ -153,18 +159,21 @@ impl<'s> OptionSetEx<'s> {
     /// Add a short option that expects data
     ///
     /// Panics (debug only) on invalid `char` choice.
+    #[inline]
     pub fn add_short_data(&mut self, ch: char) -> &mut Self {
         self.short.push(ShortOption::new(ch, true));
         self
     }
 
     /// Add an existing (ready-made) long option
+    #[inline]
     pub fn add_existing_long(&mut self, long: LongOption<'s>) -> &mut Self {
         self.long.push(long);
         self
     }
 
     /// Add an existing (ready-made) short option
+    #[inline]
     pub fn add_existing_short(&mut self, short: ShortOption) -> &mut Self {
         self.short.push(short);
         self
@@ -175,13 +184,13 @@ impl<'s> OptionSetEx<'s> {
     /// Returns `true` if valid.
     ///
     /// See also the [`validate`](#method.validate) method.
-    #[inline(always)]
+    #[inline]
     pub fn is_valid(&self) -> bool {
         validation::validate_set(&self.as_fixed(), false).is_ok()
     }
 
     /// Checks validity of option set, returning details of any problems
-    #[inline(always)]
+    #[inline]
     pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(&self.as_fixed(), true)
     }
@@ -215,6 +224,7 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     }
 
     /// Checks if empty
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.long.is_empty() && self.short.is_empty()
     }

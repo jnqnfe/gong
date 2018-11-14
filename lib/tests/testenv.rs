@@ -19,7 +19,7 @@ extern crate gong;
 mod common;
 
 use gong::parser::{Settings, OptionsMode};
-use common::{get_parser, get_base};
+use common::{get_parser, get_base_opts, get_base_cmds};
 
 /// Checks default settings match those expected. If they change, we need to update the test suite.
 #[test]
@@ -39,7 +39,7 @@ mod base_opt_set {
 
     #[test]
     fn is_valid() {
-        let opts = get_base();
+        let opts = get_base_opts();
         assert!(opts.is_valid());
         assert_eq!(opts.validate(), Ok(()));
     }
@@ -48,10 +48,35 @@ mod base_opt_set {
     #[test]
     #[should_panic]
     fn can_break() {
-        let mut opts = get_base().to_extendible();
+        let mut opts = get_base_opts().to_extendible();
         opts.add_long("foo"); // Duplicate - should panic here in debug mode!
         assert!(opts.is_valid());
         assert_eq!(opts.validate(), Ok(()));
+    }
+}
+
+/// Check common base “available command” set validity
+///
+/// Doing it once here allows avoiding inefficiently doing so in every test using it (without
+/// modification).
+mod base_cmd_set {
+    use super::*;
+
+    #[test]
+    fn is_valid() {
+        let cmds = get_base_cmds();
+        assert!(cmds.is_valid());
+        assert_eq!(cmds.validate(), Ok(()));
+    }
+
+    /// Double check inserting a problem does break it
+    #[test]
+    #[should_panic]
+    fn can_break() {
+        let mut cmds = get_base_cmds().to_extendible();
+        cmds.add_command("foo", None, Default::default()); // Duplicate - should panic here in debug mode!
+        assert!(cmds.is_valid());
+        assert_eq!(cmds.validate(), Ok(()));
     }
 }
 

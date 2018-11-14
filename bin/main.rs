@@ -82,7 +82,7 @@ fn main() {
             gong_shortopt!('o', true),
         ]
     );
-    let mut parser = Parser::new(&opts);
+    let mut parser = Parser::new(&opts, None);
 
     match cfg!(feature = "alt_mode") {
         true => { parser.settings.set_mode(OptionsMode::Alternate); },
@@ -203,6 +203,7 @@ fn main() {
                 let desc = desc_char(c);
                 printer(i, "UnknownShort", &desc);
             },
+            ItemClass::Ok(Item::Command(i, n)) => printer(i, "Command", n),
         }
     }
     if results.items.len() != 0 {

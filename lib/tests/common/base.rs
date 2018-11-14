@@ -11,6 +11,7 @@
 //! Base “available” option set used by most tests
 
 use gong::options::OptionSet;
+use gong::commands::CommandSet;
 
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = gong_option_set_fixed!(
@@ -34,7 +35,80 @@ static BASE_OPTS: OptionSet = gong_option_set_fixed!(
     ]
 );
 
+/// A base set of commands for common usage in tests
+static BASE_CMDS: CommandSet = gong_command_set_fixed!([
+    gong_command!("foo"), // For command/option name clash testing
+    gong_command!("add"),
+    gong_command!("commit"),
+    gong_command!("push",
+        @opts &gong_option_set_fixed!(
+            [
+                gong_longopt!("help"),
+                gong_longopt!("tags"),
+            ],
+            [
+                gong_shortopt!('h'),
+            ]
+        ),
+        @cmds gong_command_set_fixed!([
+            gong_command!("origin",
+                @opts &gong_option_set_fixed!(
+                    [
+                        gong_longopt!("help"),
+                        gong_longopt!("force"),
+                        gong_longopt!("foo"),
+                    ],
+                    []
+                )
+            ),
+            gong_command!("remote"),
+        ])
+    ),
+    gong_command!("branch",
+        @opts &gong_option_set_fixed!(
+            [
+                gong_longopt!("help"),
+                gong_longopt!("sorted"),
+            ],
+            [
+                gong_shortopt!('h'),
+            ]
+        ),
+        @cmds gong_command_set_fixed!([
+            gong_command!("add"),
+            gong_command!("del",
+                @opts &gong_option_set_fixed!([], []),
+                @cmds gong_command_set_fixed!([
+                    // Note, the names here are chosen to be different to those below for greater
+                    // assurance that a match is made from this set, not the sibling below.
+                    gong_command!("locally"),
+                    gong_command!("remotely"),
+                ])
+            ),
+            gong_command!("list",
+                @opts &gong_option_set_fixed!(
+                    [
+                        gong_longopt!("help"),
+                        gong_longopt!("show-current"),
+                        gong_longopt!("foo"),
+                    ],
+                    []
+                ),
+                @cmds gong_command_set_fixed!([
+                    gong_command!("local"),
+                    gong_command!("remote"),
+                ])
+            ),
+        ])
+    ),
+]);
+
 /// Provides a base set of options for common usage in tests
-pub fn get_base() -> &'static OptionSet<'static, 'static> {
+pub fn get_base_opts() -> &'static OptionSet<'static, 'static> {
     &BASE_OPTS
+}
+
+/// Provides a base set of commands for common usage in tests
+pub fn get_base_cmds() -> &'static CommandSet<'static, 'static> {
+    &BASE_CMDS
 }

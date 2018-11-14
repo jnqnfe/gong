@@ -2,6 +2,7 @@
 
  * Updated per move of settings out of option sets to own structure
  * Updated per introduction of `Parser`
+ * Updated per addition of understanding of command arguments (though not using any yet)
 
 # 1.2.1 (November 25th, 2020)
 
