@@ -224,6 +224,47 @@ mod short_dash {
     }
 }
 
+/// The unicode replacement character (`\u{FFFD}`) is an invalid short option. If it were valid, it
+/// would allow incorrect analysis with `OsStr` based processing.
+mod short_rep_char {
+    use std::char::REPLACEMENT_CHARACTER;
+    use super::*;
+
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn add_short() {
+        let mut opts = OptionSetEx::new();
+        opts.add_short(REPLACEMENT_CHARACTER); // Should panic here in debug mode!
+    }
+
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn add_short_data() {
+        let mut opts = OptionSetEx::new();
+        opts.add_short_data(REPLACEMENT_CHARACTER); // Should panic here in debug mode!
+    }
+
+    #[test]
+    fn add_short_existing() {
+        let mut opts = OptionSetEx::new();
+        opts.add_existing_short(gong_shortopt!(REPLACEMENT_CHARACTER, false)); // Should work, no validation done
+    }
+
+    /// Bypassing add methods, check validation fails
+    #[test]
+    fn invalid_set() {
+        let opts = gong_option_set_fixed!(
+            [], [
+                gong_shortopt!('a'),
+                gong_shortopt!(REPLACEMENT_CHARACTER),
+                gong_shortopt!('b'),
+            ]
+        );
+        assert_eq!(false, opts.is_valid());
+        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortRepChar ]));
+    }
+}
+
 /// An empty string is not a valid long-option name property
 mod long_no_name {
     use super::*;
@@ -330,6 +371,72 @@ mod long_equals {
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         check_result(&Actual(opts.process(&args, None)), &expected);
+    }
+}
+
+/// Long option names cannot contain the unicode replacement character (`\u{FFFD}`). If it were
+/// allowed, it would allow incorrect analysis with `OsStr` based processing.
+mod long_rep_char {
+    use super::*;
+
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn add_long() {
+        let mut opts = OptionSetEx::new();
+        opts.add_long("a\u{FFFD}b"); // Should panic here in debug mode!
+    }
+
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn add_long_data() {
+        let mut opts = OptionSetEx::new();
+        opts.add_long_data("a\u{FFFD}b"); // Should panic here in debug mode!
+    }
+
+    #[test]
+    fn add_long_existing() {
+        let mut opts = OptionSetEx::new();
+        opts.add_existing_long(gong_longopt!("\u{FFFD}", false)); // Should work, no validation done
+    }
+
+    /// Bypassing add methods, check validation fails
+    #[test]
+    fn invalid_set() {
+        let opts = gong_option_set_fixed!(
+            [
+                gong_longopt!("foo"),
+                gong_longopt!("a\u{FFFD}b"),
+                gong_longopt!("bar"),
+            ], []
+        );
+        assert_eq!(false, opts.is_valid());
+        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongIncludesRepChar("a\u{FFFD}b") ]));
+    }
+}
+
+/// Check what happens with multiple flaws at a time. Naturally this does not apply to short options.
+mod multi {
+    use super::*;
+
+    /// Bypassing add methods, check validation fails
+    #[test]
+    fn invalid_set() {
+        let opts = gong_option_set_fixed!(
+            [
+                gong_longopt!("foo"),
+                gong_longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws
+                gong_longopt!("w=x=y\u{FFFD}z"), // Same
+                gong_longopt!("foo\u{FFFD}bar"), // Single flaw, without the equals flaw
+                gong_longopt!("bar"),
+            ], []
+        );
+        assert_eq!(false, opts.is_valid());
+        assert_eq!(opts.validate(), Err(vec![
+            /// Only the first flaw identified of each option is returned
+            OptionFlaw::LongIncludesEquals("a\u{FFFD}b=c=d"),
+            OptionFlaw::LongIncludesEquals("w=x=y\u{FFFD}z"),
+            OptionFlaw::LongIncludesRepChar("foo\u{FFFD}bar"),
+        ]));
     }
 }
 

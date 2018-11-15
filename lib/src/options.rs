@@ -82,8 +82,12 @@ pub enum OptionFlaw<'a> {
     LongEmpty,
     /// Long option name contains equals
     LongIncludesEquals(&'a str),
+    /// Long option name contains unicode replacement char (`U+FFFD`)
+    LongIncludesRepChar(&'a str),
     /// Short option char is dash (`-`)
     ShortDash,
+    /// Short option char is unicode replacement char (`U+FFFD`)
+    ShortRepChar,
     /// Duplicate short option found
     ShortDup(char),
     /// Duplicate long option found
@@ -290,10 +294,12 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
 impl<'a> LongOption<'a> {
     /// Create a new long option descriptor
     ///
-    /// Panics (debug only) if the given name contains an `=` or is an empty string.
+    /// Panics (debug only) if the given name is an empty string, contains an equals ('=') or
+    /// contains a unicode replacement character ('\u{FFFD}').
     fn new(name: &'a str, expects_data: bool) -> Self {
         debug_assert!(!name.is_empty(), "Long option name cannot be an empty string!");
         debug_assert!(!name.contains('='), "Long option name cannot contain ‘=’!");
+        debug_assert!(!name.contains('\u{FFFD}'), "Long option name cannot contain ‘\\u{FFFD}’!");
         Self { name, expects_data, }
     }
 }
@@ -301,9 +307,11 @@ impl<'a> LongOption<'a> {
 impl ShortOption {
     /// Create a new short option descriptor
     ///
-    /// Panics (debug only) if the given char is `-`.
+    /// Panics (debug only) if the given `char` is a dash ('-') or the unicode replacement character
+    /// ('\u{FFFD}').
     fn new(ch: char, expects_data: bool) -> Self {
         debug_assert_ne!('-', ch, "Dash (‘-’) is not a valid short option!");
+        debug_assert_ne!('\u{FFFD}', ch, "Unicode replacement char (‘\u{FFFD}’) is not a valid short option!");
         Self { ch, expects_data, }
     }
 }
@@ -334,12 +342,24 @@ mod validation {
                     false => { return Err(flaws); },
                 }
             }
+            else if candidate.name.contains('\u{FFFD}') {
+                match detail {
+                    true => { flaws.push(OptionFlaw::LongIncludesRepChar(candidate.name)); },
+                    false => { return Err(flaws); },
+                }
+            }
         }
 
         for candidate in set.short {
             if candidate.ch == '-' {
                 match detail {
                     true => { flaws.push(OptionFlaw::ShortDash); },
+                    false => { return Err(flaws); },
+                }
+            }
+            else if candidate.ch == '\u{FFFD}' {
+                match detail {
+                    true => { flaws.push(OptionFlaw::ShortRepChar); },
                     false => { return Err(flaws); },
                 }
             }
@@ -429,6 +449,18 @@ mod tests {
         let _opt = ShortOption::new('-', false); // Should panic here in debug mode!
     }
 
+    /* A short option cannot be represented by the unicode replacement char (`\u{FFFD}`). Support
+     * for handling `OsStr` based argument sets involves a temporary lossy conversion to `str`, and
+     * if the replacement char was allowed in valid options, this could result in incorrect matches.
+     */
+
+    /// Check `ShortOption::new` rejects ‘\u{FFFD}’
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn create_short_rep_char() {
+        let _opt = ShortOption::new('\u{FFFD}', false); // Should panic here in debug mode!
+    }
+
     /// Check `LongOption::new` rejects empty string
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
@@ -438,12 +470,25 @@ mod tests {
 
     /* Long option names cannot contain an `=` (used for declaring a data sub-argument in the same
      * argument; if names could contain an `=`, as data can, we would not know where to do the
-     * split, complicating matching. */
+     * split, complicating matching.
+     */
 
     /// Check `LongOption::new` rejects equals (`=`) char
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_long_with_equals() {
         let _opt = LongOption::new("a=b", false); // Should panic here in debug mode!
+    }
+
+    /* Long option names cannot contain the unicode replacement char (`\u{FFFD}`). Support for
+     * handling `OsStr` based argument sets involves a temporary lossy conversion to `str`, and if
+     * the replacement char was allowed in valid options, this could result in incorrect matches.
+     */
+
+    /// Check `LongOption::new` rejects unicode replacement char (`\u{FFFD}`)
+    #[test]
+    #[cfg_attr(debug_assertions, should_panic)]
+    fn create_long_with_rep_char() {
+        let _opt = LongOption::new("a\u{FFFD}b", false); // Should panic here in debug mode!
     }
 }
