@@ -96,7 +96,7 @@ fn duplicates() {
         .add_command("bbb", None, Default::default());     // dup
     assert_eq!(false, cmds.is_valid());
     assert_eq!(cmds.validate(), Err(vec![
-        CommandFlaw::Dup("ccc"),
         CommandFlaw::Dup("bbb"),
+        CommandFlaw::Dup("ccc"),
     ]));
 }

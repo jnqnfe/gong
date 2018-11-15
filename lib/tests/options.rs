@@ -342,8 +342,8 @@ mod duplicates {
             .add_short('b');      // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
-            OptionFlaw::ShortDup('c'),
             OptionFlaw::ShortDup('b'),
+            OptionFlaw::ShortDup('c'),
         ]));
     }
 
@@ -360,8 +360,8 @@ mod duplicates {
             .add_long("bbb");     // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
-            OptionFlaw::LongDup("ccc"),
             OptionFlaw::LongDup("bbb"),
+            OptionFlaw::LongDup("ccc"),
         ]));
     }
 }

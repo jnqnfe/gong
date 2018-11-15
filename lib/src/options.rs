@@ -368,20 +368,21 @@ pub(crate) mod validation {
         detail: bool, found: &mut bool)
     {
         let opts = set.short;
-        let mut checked: Vec<char> = Vec::with_capacity(opts.len());
-
+        if opts.is_empty() { return; }
         let mut duplicates = Vec::new();
-        for short in opts {
+        for (i, short) in opts[..opts.len()-1].iter().enumerate() {
             let ch = short.ch;
             if !duplicates.contains(&OptionFlaw::ShortDup(ch)) {
-                match checked.contains(&ch) {
-                    true => {
+                for short2 in opts[i+1..].iter() {
+                    if ch == short2.ch {
                         match detail {
-                            true => { duplicates.push(OptionFlaw::ShortDup(ch)); },
+                            true => {
+                                duplicates.push(OptionFlaw::ShortDup(ch));
+                                break;
+                            },
                             false => { *found = true; return; },
                         }
-                    },
-                    false => { checked.push(ch); },
+                    }
                 }
             }
         }
@@ -394,20 +395,21 @@ pub(crate) mod validation {
         detail: bool, found: &mut bool)
     {
         let opts = set.long;
-        let mut checked: Vec<&'s str> = Vec::with_capacity(opts.len());
-
+        if opts.is_empty() { return; }
         let mut duplicates = Vec::new();
-        for long in opts {
+        for (i, long) in opts[..opts.len()-1].iter().enumerate() {
             let name = long.name.clone();
             if !duplicates.contains(&OptionFlaw::LongDup(name)) {
-                match checked.contains(&name) {
-                    true => {
+                for long2 in opts[i+1..].iter() {
+                    if name == long2.name {
                         match detail {
-                            true => { duplicates.push(OptionFlaw::LongDup(name)); },
+                            true => {
+                                duplicates.push(OptionFlaw::LongDup(name));
+                                break;
+                            },
                             false => { *found = true; return; },
                         }
-                    },
-                    false => { checked.push(name); },
+                    }
                 }
             }
         }

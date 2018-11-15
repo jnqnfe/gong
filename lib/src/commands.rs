@@ -309,20 +309,21 @@ mod validation {
         flaws: &mut Vec<CommandFlaw<'s>>, detail: bool, found: &mut bool)
     {
         let cmds = set.commands;
-        let mut checked: Vec<&'s str> = Vec::with_capacity(cmds.len());
-
+        if cmds.is_empty() { return; }
         let mut duplicates: Vec<CommandFlaw<'s>> = Vec::new();
-        for cmd in cmds {
+        for (i, cmd) in cmds[..cmds.len()-1].iter().enumerate() {
             let name = cmd.name.clone();
             if !duplicates.contains(&CommandFlaw::Dup(name)) {
-                match checked.contains(&name) {
-                    true => {
+                for cmd2 in cmds[i+1..].iter() {
+                    if name == cmd2.name {
                         match detail {
-                            true => { duplicates.push(CommandFlaw::Dup(name)); },
+                            true => {
+                                duplicates.push(CommandFlaw::Dup(name));
+                                break;
+                            },
                             false => { *found = true; return; },
                         }
-                    },
-                    false => { checked.push(name); },
+                    }
                 }
             }
         }
