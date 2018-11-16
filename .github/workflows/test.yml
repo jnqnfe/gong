@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         rustc:
           - 1.26.0 # MSRV (Minimum supported rust version)
           - stable
