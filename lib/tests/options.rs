@@ -57,6 +57,11 @@ fn basic() {
 /// Check `is_empty`
 #[test]
 fn is_empty() {
+    // Here, let's double-check that the derive of `Default` for fixed option sets is really an
+    // empty set
+    let opt_set = OptionSet::default();
+    assert!(opt_set.is_empty());
+
     let opt_set = gong_option_set_fixed!([], []);
     assert!(opt_set.is_empty());
 
