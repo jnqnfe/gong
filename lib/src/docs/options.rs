@@ -44,6 +44,8 @@
 //! option is recognised as an “available” program option that takes a *data value*, as discussed
 //! below.
 //!
+//! Note, option name matching is case-sensitive.
+//!
 //! ## Data values
 //!
 //! *Long* and *short* options can be configured as either “flag” style (used to signal a condition)
