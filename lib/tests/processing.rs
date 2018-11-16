@@ -91,6 +91,21 @@ fn basic() {
     check_result(&Actual(get_base().process(&args)), &expected);
 }
 
+/// Enforce that option matching is case sensitive
+#[test]
+fn case_sensitivity() {
+    let args = arg_list!("--Foo", "-O");
+    let expected = expected!(
+        error: false,
+        warn: true,
+        [
+            expected_item!(0, UnknownLong, "Foo"),
+            expected_item!(1, UnknownShort, 'O'),
+        ]
+    );
+    check_result(&Actual(get_base().process(&args)), &expected);
+}
+
 /// Test that everything after an early terminator is taken to be a non-option, including any
 /// further early terminators.
 #[test]
