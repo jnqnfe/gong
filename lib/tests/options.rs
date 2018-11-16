@@ -175,7 +175,6 @@ mod short_dash {
 
     /// Bypassing add methods, check validation fails
     #[test]
-    #[should_panic]
     fn invalid_set() {
         let opts = gong_option_set_fixed!(
             [], [
@@ -184,7 +183,7 @@ mod short_dash {
                 gong_shortopt!('b'),
             ]
         );
-        assert!(opts.is_valid());
+        assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortDash ]));
     }
 
@@ -254,7 +253,6 @@ mod long_no_name {
 
     /// Bypassing add methods, check validation fails
     #[test]
-    #[should_panic]
     fn invalid_set() {
         let opts = gong_option_set_fixed!(
             [
@@ -263,7 +261,7 @@ mod long_no_name {
                 gong_longopt!("bar"),
             ], []
         );
-        assert!(opts.is_valid());
+        assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmpty ]));
     }
 }
@@ -296,7 +294,6 @@ mod long_equals {
 
     /// Bypassing add methods, check validation fails
     #[test]
-    #[should_panic]
     fn invalid_set() {
         let opts = gong_option_set_fixed!(
             [
@@ -305,7 +302,7 @@ mod long_equals {
                 gong_longopt!("bar"),
             ], []
         );
-        assert!(opts.is_valid());
+        assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongIncludesEquals("a=b") ]));
     }
 
@@ -348,7 +345,6 @@ mod duplicates {
     use super::*;
 
     #[test]
-    #[should_panic]
     fn short() {
         let mut opts = OptionSetEx::new(0, 8);
         opts.add_short('a')
@@ -359,7 +355,7 @@ mod duplicates {
             .add_short_data('b')  // dup (ignore data indicator)
             .add_short('e')
             .add_short('b');      // dup
-        assert!(opts.is_valid());
+        assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::ShortDup('c'),
             OptionFlaw::ShortDup('b'),
@@ -367,7 +363,6 @@ mod duplicates {
     }
 
     #[test]
-    #[should_panic]
     fn long() {
         let mut opts = OptionSetEx::new(8, 0);
         opts.add_long("aaa")
@@ -378,7 +373,7 @@ mod duplicates {
             .add_long_data("bbb") // dup (ignore data indicator)
             .add_long("eee")
             .add_long("bbb");     // dup
-        assert!(opts.is_valid());
+        assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::LongDup("ccc"),
             OptionFlaw::LongDup("bbb"),
