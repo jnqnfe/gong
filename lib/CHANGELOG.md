@@ -3,6 +3,7 @@
  * Improved efficiency of `is_valid` for option sets
  * Improved the efficiency of the test suite further
  * Fixed a rare abbreviated match inefficiency
+ * Added `is_empty()` method to `OptionSet` and `OptionSetEx`
  * Fixed incorrect order of license filenames mentioned in header blocks
 
 # 1.3.0 (October 29th, 2018)

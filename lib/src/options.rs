@@ -155,6 +155,11 @@ impl<'a> OptionSetEx<'a> {
         self
     }
 
+    /// Checks if empty
+    pub fn is_empty(&self) -> bool {
+        self.long.is_empty() && self.short.is_empty()
+    }
+
     /// Add a long option
     ///
     /// Panics (debug only) on invalid name.
@@ -252,6 +257,11 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
         self.allow_abbreviations = allow;
         self
+    }
+
+    /// Checks if empty
+    pub fn is_empty(&self) -> bool {
+        self.long.is_empty() && self.short.is_empty()
     }
 
     /// Checks validity of option set

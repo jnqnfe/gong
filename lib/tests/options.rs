@@ -54,6 +54,25 @@ fn basic() {
     assert!(opts.validate().is_ok());
 }
 
+/// Check `is_empty`
+#[test]
+fn is_empty() {
+    let opt_set = gong_option_set_fixed!([], []);
+    assert!(opt_set.is_empty());
+
+    let opt_set = gong_option_set_fixed!([ gong_longopt!("foo", false) ], []);
+    assert!(!opt_set.is_empty());
+
+    let opt_set = gong_option_set_fixed!([], [ gong_shortopt!('h', false) ]);
+    assert!(!opt_set.is_empty());
+
+    let opt_set = gong_option_set_fixed!(
+        [ gong_longopt!("foo", false) ],
+        [ gong_shortopt!('h', false) ]
+    );
+    assert!(!opt_set.is_empty());
+}
+
 /// Check set type (`OptionSet`/`OptionSetEx`) conversion and comparison
 #[test]
 fn set_types() {
