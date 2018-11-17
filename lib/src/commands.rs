@@ -110,7 +110,7 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
 
     /// Create a [`CommandSet`](struct.CommandSet.html) referencing `self`’s vectors as slices
     #[inline]
-    pub fn as_fixed(&self) -> CommandSet<'_, 's> {
+    pub fn as_fixed(&'r self) -> CommandSet<'r, 's> {
         CommandSet { commands: &self.commands[..], }
     }
 

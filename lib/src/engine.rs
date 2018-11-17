@@ -35,10 +35,8 @@ enum ArgTypeBasic<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
-pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
-    -> Analysis<'s, str>
-    where A: 's + AsRef<str>,
-          'r: 'p, 's: 'r
+pub(crate) fn process<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, str>
+    where A: 's + AsRef<str>, 's: 'r
 {
     /* NOTE: We deliberately do not perform validation of the provided parser data within this
      * function; the burden to do so is left to the user. The choice to not do this is for reasons

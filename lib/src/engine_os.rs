@@ -75,10 +75,9 @@ use super::engine::{self, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
 /// `Cargo` itself needs this to be able to pass on arguments to user programs in run mode
 /// correctly, to then allow such programs ot choose how they want to obtain their args (as when
 /// not run under `Cargo`, and allowing them to receive non-valid utf-8 data values / non-options.
-pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
-    -> Analysis<'s, OsStr>
+pub(crate) fn process<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, OsStr>
     where A: 's + AsRef<OsStr>,
-          'r: 'p, 's: 'r
+          's: 'r
 {
     let longopt_prefix_osstr = match parser.settings.mode {
         OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),

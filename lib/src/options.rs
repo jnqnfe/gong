@@ -116,7 +116,7 @@ impl<'s> OptionSetEx<'s> {
 
     /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices.
     #[inline]
-    pub fn as_fixed(&self) -> OptionSet<'_, 's> {
+    pub fn as_fixed<'r>(&'r self) -> OptionSet<'r, 's> where 's: 'r {
         OptionSet {
             long: &self.long[..],
             short: &self.short[..],
@@ -241,7 +241,7 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
 
     /// Checks validity of option set, returning details of any problems
     #[inline(always)]
-    pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'s>>> {
+    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(self, true)
     }
 
