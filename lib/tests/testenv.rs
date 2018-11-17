@@ -18,8 +18,8 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::analysis::{Settings, OptionsMode};
-use common::get_base;
+use gong::parser::{Settings, OptionsMode};
+use common::{get_parser, get_base};
 
 /// Checks default settings match those expected. If they change, we need to update the test suite.
 #[test]
@@ -34,7 +34,7 @@ fn check_default_settings() {
 ///
 /// Doing it once here allows avoiding inefficiently doing so in every test using it (without
 /// modification).
-mod base_set {
+mod base_opt_set {
     use super::*;
 
     #[test]
@@ -53,4 +53,12 @@ mod base_set {
         assert!(opts.is_valid());
         assert_eq!(opts.validate(), Ok(()));
     }
+}
+
+/// Check a `Parser` combining the base option set and the base command set is valid (not reason
+/// for it not to be if they are individually).
+#[test]
+fn parser() {
+    assert!(get_parser().is_valid());
+    assert_eq!(get_parser().validate(), Ok(()));
 }

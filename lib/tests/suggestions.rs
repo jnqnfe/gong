@@ -19,6 +19,7 @@ mod common;
 #[cfg(feature = "suggestions")]
 mod options {
     use gong::analysis::*;
+    use gong::parser::Parser;
     use common::{Actual, Expected, check_result};
 
     #[test]
@@ -43,7 +44,8 @@ mod options {
             ], []
         );
         assert!(opts.is_valid());
-        let actual_results = Actual(opts.process(&args, None));
+        let parser = Parser::new(&opts);
+        let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
@@ -90,7 +92,8 @@ mod options {
             ], []
         );
         assert!(opts.is_valid());
-        let actual_results = Actual(opts.process(&args, None));
+        let parser = Parser::new(&opts);
+        let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());

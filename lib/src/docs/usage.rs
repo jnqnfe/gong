@@ -24,7 +24,15 @@
 //!
 //! Now proceed with the following steps.
 //!
-//! # Step #1: Describe the available options
+//! # Step #1: Create a `Parser`
+//!
+//! A [`Parser`] holds: a description of the available [*options*][options_doc], and settings to
+//! control parsing. It also provides the [`parse`][`Parser::parse`] method, that performs the
+//! actual parsing.
+//!
+//! One of the first things you need to do therefore, is construct a [`Parser`].
+//!
+//! ## Describe the available options
 //!
 //! First, you need to create a description of the options to be made available to users of your
 //! program.
@@ -37,7 +45,7 @@
 //!    requiring dynamic construction, where a set can be declared as a `static` (though is not
 //!    limited to use in `static`s).
 //!
-//! “Builder” style:
+//! An example of *option set* construction, “builder” style:
 //!
 //! ```rust
 //! use gong::options::OptionSetEx;
@@ -55,7 +63,7 @@
 //! debug_assert!(opts.is_valid());
 //! ```
 //!
-//! “Fixed” style:
+//! An example of *option set* construction, “fixed” style, using macros:
 //!
 //! ```rust
 //! # #[macro_use]
@@ -90,19 +98,44 @@
 //!    [`OptionSet`] exists).
 //!  - Macros are provided for constructing both as a convenience.
 //!
-//! ## Validation
+//! ## Create the `Parser`
 //!
-//! Once an option set has been described, it should be validated before use. The `is_valid` and
-//! `validate` methods are provided for this. It is recommended that you typically only check
-//! validity it in a *debug* assert variant, as here, to allow catching mistakes in development, but
-//! otherwise avoid wasting energy for option sets in release builds that you know must be perfectly
-//! valid.
+//! ```rust
+//! use gong::parser::Parser;
+//! # let opts = gong::options::OptionSet::default();
+//! let parser = Parser::new(&opts);
+//! ```
 //!
-//! Some basic validation is also performed directly by the `add_*` methods on [`OptionSetEx`], but
-//! this does not cover checking for duplicates.
+//! Note that the [`Parser`] only accepts an [`OptionSet`], not the extendible variant, so if you
+//! have used the extendible one, you must use the `as_fixed` method.
 //!
-//! **Note:** With respect to what is or is not a duplicate, only the name/`char` matters; the
-//! `expects_data` attribute makes no difference.
+//! ```rust
+//! use gong::parser::Parser;
+//! # let opts = gong::options::OptionSetEx::default();
+//! let opts_fixed = opts.as_fixed();
+//! let parser = Parser::new(&opts_fixed);
+//! ```
+//!
+//! If you want to change any parser settings, e.g. choose which *option* mode (*standard* or
+//! *alternate*) is used, or whether or not abbreviated long option name matching is allowed, you
+//! can control this now via the parser’s `settings` attribute.
+//!
+//! ### Validation
+//!
+//! Once a parser has been built, it should be validated before use to ensure that there are no
+//! issues with the *option set* you have described. The [`is_valid`][`Parser::is_valid`] and
+//! [`validate`][`Parser::validate`] methods are provided for this. It is recommended that you
+//! typically only check validity in a *debug* assert variant, to allow catching mistakes in
+//! development, but otherwise avoid wasting energy in release builds for parser descriptions that
+//! you know must be perfectly valid.
+//!
+//! Note, some basic validation is also performed directly by the `add_*` methods on
+//! [`OptionSetEx`], but this does not cover checking for duplicates. The *option set* and structure
+//! also has its own validation checking methods, which are used internally by the *parser*
+//! validation checks. There is no need to run them in addition to checking the *parser*.
+//!
+//! **Note**: With respect to what is or is not a duplicate, only the name/`char` of the *option*
+//! matters; the `expects_data` attribute makes no difference.
 //!
 //! # Step #2: Gather arguments to be processed
 //!
@@ -131,37 +164,34 @@
 //!
 //! # Step #3: Processing
 //!
-//! With input args gathered and “available” option set constructed, now you’re ready for analysis.
-//! All you need to do is feed the argument list to the option set’s `process` method and it will
-//! spit out an analysis that describes what it identified.
+//! With input args gathered and “available” *options* and described, now you’re ready for
+//! processing. All you need to do is feed the argument list to the parser’s
+//! [`parse`][`Parser::parse`] method and it will spit out an analysis that describes what it
+//! identified.
 //!
 //! ```rust
-//! # let opts: gong::options::OptionSetEx = Default::default();
+//! # let opts = gong::options::OptionSet::default();
+//! # let parser = gong::parser::Parser::new(&opts);
 //! # let args: Vec<String> = std::env::args().collect();
-//! let analysis = opts.process(&args[..], None);
+//! let analysis = parser.parse(&args[..]);
 //! ```
 //!
 //! If you are taking arguments in `OsString` form, as discussed above, you should use the alternate
 //! `process_os` method here instead.
 //!
-//! Note that the `process` method takes an optional [`Settings`] parameter for controlling the
-//! analysis engine. It is used for choosing between *standard* (default) and *alternate* option
-//! style, and whether or not to allow abbreviated long option name matching. (See the
-//! [`options`][options_doc_chapter] documentation chapter to learn more about this).
-//!
 //! Of course if for any reason you do **not** want to process all arguments in one go, you always
 //! have the option of processing one argument at a time (or in groups of whatever number you
-//! choose), calling `process` for each. (Naturally though you must beware the complications
-//! handling “in-next-arg” *data values* doing this).
+//! choose), calling `parse` for each. (Naturally though you must beware the complications handling
+//! “in-next-arg” *data values* doing this).
 //!
 //! # Step #4: Take action
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The [`Analysis`] object returned by the `process` method contains `error` and `warn` booleans,
-//! which give a quick indication of problems. It also contains a list of items, describing in
-//! detail what was found. The items in the item list are stored in the same order as found in the
-//! input arguments.
+//! The [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains `error` and
+//! `warn` booleans, which give a quick indication of problems. It also contains a list of items,
+//! describing in detail what was found. The items in the item list are stored in the same order as
+//! found in the input arguments.
 //!
 //! The entries in the item list are [`ItemClass`] variants, which wrap variants of [`Item`],
 //! [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants
@@ -171,8 +201,9 @@
 //! next.
 //!
 //! **Note:** some item variants that may be returned in the [`Analysis`] struct hold `&str`
-//! references to strings that were provided in the argument and option data provided to `process`.
-//! This is done for efficiency. Beware of this with respect to lifetimes.
+//! references to strings that were provided in the argument data provided to `parse`, and or to the
+//! option data held by the parser. This is done for efficiency. Beware of this with respect to
+//! lifetimes.
 //!
 //! # Have a play
 //!
@@ -182,14 +213,18 @@
 //! provided arguments against them. Instruction on using it are provided in the `README.md` file
 //! that accompanies it.
 //!
-//! [`ItemClass`]: ../../analysis/enum.ItemClass.html
-//! [`Item`]: ../../analysis/enum.Item.html
-//! [`ItemW`]: ../../analysis/enum.ItemW.html
-//! [`ItemE`]: ../../analysis/enum.ItemE.html
-//! [`Settings`]: ../../analysis/struct.Settings.html
-//! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`Parser`]: ../../parser/struct.Parser.html
+//! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
+//! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
+//! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
+//! [`Settings`]: ../../parser/struct.Settings.html
 //! [`OptionSet`]: ../../options/struct.OptionSet.html
 //! [`OptionSetEx`]: ../../options/struct.OptionSetEx.html
 //! [`OptionSet::to_extendible`]: ../../options/struct.OptionSet.html#method.to_extendible
 //! [`OptionSetEx::as_fixed`]: ../../options/struct.OptionSetEx.html#method.as_fixed
-//! [options_doc_chapter]: ../options/index.html
+//! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`ItemClass`]: ../../analysis/enum.ItemClass.html
+//! [`Item`]: ../../analysis/enum.Item.html
+//! [`ItemW`]: ../../analysis/enum.ItemW.html
+//! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [options_doc]: ../options/index.html

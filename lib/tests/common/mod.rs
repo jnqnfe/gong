@@ -15,6 +15,7 @@ pub use self::base::get_base;
 
 use std::ffi::OsStr;
 use gong::analysis::Analysis;
+use gong::parser::Parser;
 
 /// Wrapper for actual analysis result
 #[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a, str>);
@@ -83,6 +84,11 @@ macro_rules! expected_item {
     ( $i:expr, LongMissingData, $n:expr ) => { ItemClass::Err(ItemE::LongMissingData($i, $n)) };
     ( $i:expr, ShortMissingData, $c:expr ) => { ItemClass::Err(ItemE::ShortMissingData($i, $c)) };
     ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ItemE::AmbiguousLong($i, $n)) };
+}
+
+/// Get common base `Parser` set with common base option and command sets
+pub fn get_parser() -> Parser<'static, 'static> {
+    Parser::new(base::get_base())
 }
 
 /// Common central function for comparing actual analysis result with expected.

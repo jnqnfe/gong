@@ -1,6 +1,7 @@
 # [unreleased]
 
  * Updated per move of settings out of option sets to own structure
+ * Updated per introduction of `Parser`
 
 # 1.2.1 (November 25th, 2020)
 

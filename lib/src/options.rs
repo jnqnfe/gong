@@ -8,13 +8,10 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! “Available” option sets
+//! “Available” options
 
 #[cfg(feature = "suggestions")]
 use strsim;
-use std::convert::AsRef;
-use std::ffi::OsStr;
-use super::analysis::Settings;
 
 /// Extendible option set
 ///
@@ -189,36 +186,6 @@ impl<'s> OptionSetEx<'s> {
         validation::validate_set(&self.as_fixed(), true)
     }
 
-    /// Analyses provided program arguments.
-    ///
-    /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided in the `args` parameter and in `self`. Take note of this with
-    /// respect to object lifetimes.
-    ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    #[inline(always)]
-    pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s, str>
-        where T: AsRef<str>
-    {
-        super::engine::process(args, &self.as_fixed(), settings)
-    }
-
-    /// Analyses provided program arguments, given as `OsStr`.
-    ///
-    /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided `self` and `OsStr` to those provided in the `args` parameter.
-    /// Take note of this with respect to object lifetimes.
-    ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    #[inline(always)]
-    pub fn process_os<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s, OsStr>
-        where T: AsRef<OsStr>
-    {
-        super::engine_os::process(args, &self.as_fixed(), settings)
-    }
-
     /// Find the best matching long option for the given string
     ///
     /// This is intended to be used when an unknown long option is encountered in an analysis, to
@@ -266,36 +233,6 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     #[inline(always)]
     pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(self, true)
-    }
-
-    /// Analyses provided program arguments.
-    ///
-    /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided in the `args` parameter and in `self`. Take note of this with
-    /// respect to object lifetimes.
-    ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    #[inline(always)]
-    pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s, str>
-        where T: AsRef<str>
-    {
-        super::engine::process(args, self, settings)
-    }
-
-    /// Analyses provided program arguments, given as `OsStr`.
-    ///
-    /// Returns a result set describing the result of the analysis. This may include `&str`
-    /// references to strings provided in `self` and `OsStr` to those provided in the `args`
-    /// parameter. Take note of this with respect to object lifetimes.
-    ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    #[inline(always)]
-    pub fn process_os<T>(&self, args: &'s [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'s, OsStr>
-        where T: AsRef<OsStr>
-    {
-        super::engine_os::process(args, self, settings)
     }
 
     /// Find the best matching long option for the given string
@@ -350,17 +287,20 @@ impl ShortOption {
 }
 
 /// Option set validation
-mod validation {
+pub(crate) mod validation {
     use super::{OptionSet, OptionFlaw};
 
     /// Checks validity of option set, returning details of any problems
     ///
+    /// If no problems are found, it returns `Ok(())`, otherwise `Err(_)`.
+    ///
     /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
-    /// useful for quick `is_valid` checks. Otherwise builds up a complete list of flaws.
-    pub fn validate_set<'r, 's: 'r>(set: &OptionSet<'r, 's>, detail: bool
-        ) -> Result<(), Vec<OptionFlaw<'s>>>
+    /// useful for quick `is_valid` checks. Otherwise it builds up and provides a complete list of
+    /// flaws.
+    pub fn validate_set<'r, 's: 'r>(set: &OptionSet<'r, 's>, detail: bool)
+        -> Result<(), Vec<OptionFlaw<'s>>>
     {
-        let mut flaws = Vec::new();
+        let mut flaws: Vec<OptionFlaw<'s>> = Vec::new();
 
         for candidate in set.long {
             if candidate.name.is_empty() {

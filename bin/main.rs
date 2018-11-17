@@ -25,7 +25,8 @@ extern crate gong;
 extern crate term_ctrl;
 
 use term_ctrl::predefined::*;
-use gong::analysis::{Settings, OptionsMode, ItemClass, Item, ItemW, ItemE, DataLocation};
+use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
+use gong::parser::{Parser, OptionsMode};
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
 const COL_O: &str = colours::fg::GREEN;  //okay
@@ -81,18 +82,17 @@ fn main() {
             gong_shortopt!('o', true),
         ]
     );
+    let mut parser = Parser::new(&opts);
 
-    debug_assert!(opts.is_valid());
-
-    let mut settings = Settings::default();
     match cfg!(feature = "alt_mode") {
-        true => { settings.set_mode(OptionsMode::Alternate); },
-        false => { settings.set_mode(OptionsMode::Standard); },
+        true => { parser.settings.set_mode(OptionsMode::Alternate); },
+        false => { parser.settings.set_mode(OptionsMode::Standard); },
     }
     match cfg!(feature = "no_abbreviations") {
-        true => { settings.set_allow_abbreviations(false); },
-        false => { settings.set_allow_abbreviations(true); },
+        true => { parser.settings.set_allow_abbreviations(false); },
+        false => { parser.settings.set_allow_abbreviations(true); },
     }
+    debug_assert!(parser.is_valid());
 
     println!("\n[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
 
@@ -146,7 +146,7 @@ fn main() {
         },
     }
 
-    let results = opts.process(&args[..], Some(&settings));
+    let results = parser.parse(&args[..]);
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 

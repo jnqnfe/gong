@@ -34,3 +34,4 @@ pub mod analysis;
 mod engine;
 mod engine_os;
 pub mod options;
+pub mod parser;

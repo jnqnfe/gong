@@ -17,7 +17,8 @@ extern crate gong;
 mod common;
 
 use gong::analysis::*;
-use common::{get_base, Actual, Expected, check_result};
+use gong::parser::{Parser, OptionsMode};
+use common::{get_parser, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -31,12 +32,12 @@ fn arg_list_owned_set() {
     // Test works (compiles) using a `String` based slice (as given from `env::args()` for real args)
     // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
-    let _ = get_base().process(&args, None);
+    let _ = get_parser().parse(&args);
 
     // Test works (compiles) using a `&str` based slice
     // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<&str> = vec![ "--foo", "--bah" ];
-    let _ = get_base().process(&args, None);
+    let _ = get_parser().parse(&args);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +88,7 @@ fn basic() {
             expected_item!(13, NonOption, "jkl"),
         ]
     );
-    check_result(&Actual(get_base().process(&args, None)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Enforce that option matching is case sensitive
@@ -102,7 +103,7 @@ fn case_sensitivity() {
             expected_item!(1, UnknownShort, 'O'),
         ]
     );
-    check_result(&Actual(get_base().process(&args, None)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test that everything after an early terminator is taken to be a non-option, including any
@@ -139,7 +140,7 @@ fn early_term() {
             expected_item!(14, NonOption, "-b"),
         ]
     );
-    check_result(&Actual(get_base().process(&args, None)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test empty long option names with data param (-- on it’s own is obviously picked up as early
@@ -155,7 +156,7 @@ fn long_no_name() {
             expected_item!(1, LongWithNoName),
         ]
     );
-    check_result(&Actual(get_base().process(&args, None)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test repetition - each instance should exist in the results in its own right. Note, data arg
@@ -179,7 +180,7 @@ fn repetition() {
             expected_item!(7, Short, 'h'),
         ]
     );
-    check_result(&Actual(get_base().process(&args, None)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,7 +207,7 @@ mod utf8 {
                 expected_item!(4, Short, '❤'), // '\u{2764}' black heart
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Some utf8 multi-byte char handling - chars with combinator chars (e.g. accent)
@@ -232,7 +233,7 @@ mod utf8 {
                 expected_item!(7, Long, "ábc"),              // with combinator
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Some utf8 multi-byte char width handling - chars with variation selector
@@ -253,7 +254,7 @@ mod utf8 {
                 expected_item!(2, UnknownLong, "❤️"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Some utf8 multi-byte char width handling - lone combinator chars
@@ -270,7 +271,7 @@ mod utf8 {
                 expected_item!(3, Short, '\u{030a}'),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -296,7 +297,7 @@ mod abbreviations {
                 expected_item!(1, AmbiguousLong, "fo"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test handling of abbreviated long options, without ambiguity
@@ -318,7 +319,7 @@ mod abbreviations {
                 expected_item!(3, Long, "foobar"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test handling when abbreviated matching is disabled
@@ -337,9 +338,9 @@ mod abbreviations {
                 expected_item!(5, Long, "foobar"),
             ]
         );
-        let mut settings = Settings::default();
-        settings.set_allow_abbreviations(false);
-        check_result(&Actual(get_base().process(&args, Some(&settings))), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_allow_abbreviations(false);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test that an exact match overrides ambiguity
@@ -368,7 +369,8 @@ mod abbreviations {
             ],
             []
         );
-        check_result(&Actual(opts.process(&args, None)), &expected);
+        let parser = Parser::new(&opts);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 }
 
@@ -398,7 +400,7 @@ mod data {
                 expected_item!(4, Long, "help"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test calculation of whether or not short-opt taking data is the last character in the short
@@ -418,7 +420,7 @@ mod data {
                 expected_item!(1, NonOption, "g"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, provided in next argument for short options
@@ -446,7 +448,7 @@ mod data {
                 expected_item!(6, ShortWithData, 'o', "def", DataLocation::NextArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, provided in same argument for short options
@@ -489,7 +491,7 @@ mod data {
                 expected_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for long option
@@ -503,7 +505,7 @@ mod data {
                 expected_item!(0, LongMissingData, "hah"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for short option
@@ -520,7 +522,7 @@ mod data {
                 expected_item!(0, ShortMissingData, 'o'),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test some misc. data handling.
@@ -559,7 +561,7 @@ mod data {
                 expected_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test repetition - each instance should exist in the results in its own right. Note, basic
@@ -577,7 +579,7 @@ mod data {
                 expected_item!(4, ShortWithData, 'o', "bc", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, declared to be in same argument, but empty
@@ -599,7 +601,7 @@ mod data {
                 expected_item!(3, NonOption, "help"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
@@ -633,7 +635,7 @@ mod data {
                 expected_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test argument data that looks like options
@@ -672,7 +674,7 @@ mod data {
                 expected_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -694,7 +696,7 @@ mod data {
                 expected_item!(5, ShortWithData, 'o', "--", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test long option involving multi-byte chars, to ensure "in-arg" component splitting for
@@ -713,7 +715,7 @@ mod data {
                 expected_item!(5, LongMissingData, "ƒƒ"),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test short options involving multi-byte chars to check offset calculations in iterating
@@ -755,7 +757,7 @@ mod data {
                 expected_item!(13, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
@@ -800,7 +802,7 @@ mod data {
                 expected_item!(6, ShortWithData, 'Ɛ', "\u{030a}b❤\u{fe0f}", DataLocation::SameArg),
             ]
         );
-        check_result(&Actual(get_base().process(&args, None)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -858,9 +860,9 @@ mod alt_mode {
                 expected_item!(16, NonOption, "-help"),
             ]
         );
-        let mut settings = Settings::default();
-        settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(get_base().process(&args, Some(&settings))), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_mode(OptionsMode::Alternate);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Check unexpected and missing data
@@ -880,9 +882,9 @@ mod alt_mode {
                 expected_item!(2, LongMissingData, "hah"),
             ]
         );
-        let mut settings = Settings::default();
-        settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(get_base().process(&args, Some(&settings))), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_mode(OptionsMode::Alternate);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -900,8 +902,8 @@ mod alt_mode {
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
             ]
         );
-        let mut settings = Settings::default();
-        settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(get_base().process(&args, Some(&settings))), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_mode(OptionsMode::Alternate);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 }

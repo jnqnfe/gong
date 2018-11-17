@@ -65,7 +65,7 @@ use std::ops::Range;
 use std::os::unix::ffi::OsStrExt;
 #[cfg(windows)]
 use self::windows::OsStrExt;
-use super::options::*;
+use super::parser::*;
 use super::analysis::*;
 use super::engine::{self, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
 
@@ -75,14 +75,12 @@ use super::engine::{self, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
 /// `Cargo` itself needs this to be able to pass on arguments to user programs in run mode
 /// correctly, to then allow such programs ot choose how they want to obtain their args (as when
 /// not run under `Cargo`, and allowing them to receive non-valid utf-8 data values / non-options.
-pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, 's>,
-    settings: Option<&Settings>) -> Analysis<'s, OsStr>
+pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
+    -> Analysis<'s, OsStr>
     where A: 's + AsRef<OsStr>,
-          'r: 'o, 's: 'r
+          'r: 'p, 's: 'r
 {
-    let settings = settings.map_or(Default::default(), |s| *s);
-
-    let longopt_prefix_osstr = match settings.mode {
+    let longopt_prefix_osstr = match parser.settings.mode {
         OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),
         OptionsMode::Alternate => OsStr::new(SINGLE_DASH_PREFIX),
     };
@@ -95,7 +93,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
     };
 
     // Get `str` based analysis (avoids duplicating functionality)
-    let analysis = engine::process(args_as_str_slice, options, Some(&settings));
+    let analysis = engine::process(args_as_str_slice, parser);
 
     // Start converting
     let mut converted = Analysis::<'s, OsStr>::new(args.len());
@@ -142,7 +140,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
             ItemClass::Ok(Item::LongWithData{ i, n, l, .. }) => {
                 let data = match l {
                     DataLocation::SameArg => {
-                        let index = match settings.mode {
+                        let index = match parser.settings.mode {
                             OptionsMode::Standard => DOUBLE_DASH_PREFIX.len(),
                             OptionsMode::Alternate => SINGLE_DASH_PREFIX.len(),
                         } + n.len() + "=".len();
@@ -174,7 +172,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
             },
             // Reminder, this can obviously only occur with 'in-same-arg' data values.
             ItemClass::Warn(ItemW::LongWithUnexpectedData{ i, n, .. }) => {
-                let index = match settings.mode {
+                let index = match parser.settings.mode {
                     OptionsMode::Standard => DOUBLE_DASH_PREFIX.len(),
                     OptionsMode::Alternate => SINGLE_DASH_PREFIX.len(),
                 } + n.len() + "=".len();

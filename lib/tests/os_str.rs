@@ -32,7 +32,7 @@ mod common;
 
 use std::ffi::{OsStr, OsString};
 use gong::analysis::*;
-use common::{get_base, ActualOs, ExpectedOs, check_result_os};
+use common::{get_parser, ActualOs, ExpectedOs, check_result_os};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -47,12 +47,12 @@ fn arg_list_owned_set() {
     // real args)
     // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<OsString> = vec![ OsString::from("--foo"), OsString::from("--bah") ];
-    let _ = get_base().process_os(&args, None);
+    let _ = get_parser().parse_os(&args);
 
     // Test works (compiles) using a `&OsStr` based slice
     // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<&OsStr> = vec![ &OsStr::new("--foo"), &OsStr::new("--bah") ];
-    let _ = get_base().process_os(&args, None);
+    let _ = get_parser().parse_os(&args);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +104,7 @@ fn basic() {
             expected_item!(17, EarlyTerminator),
         ]
     );
-    check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
 }
 
 /// This tests a long option missing data example
@@ -120,7 +120,7 @@ fn long_missing_data() {
             expected_item!(0, LongMissingData, "hah"),
         ]
     );
-    check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
 }
 
 /// This tests a short option missing data example
@@ -136,7 +136,7 @@ fn short_missing_data() {
             expected_item!(0, ShortMissingData, 'o'),
         ]
     );
-    check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
 }
 
 /// This tests some example items using multi-byte characters, where slicing of the input arguments
@@ -179,7 +179,7 @@ fn multi_byte() {
             expected_item!(14, ShortWithData, 'Ɛ', OsStr::new("argş"), DataLocation::NextArg),
         ]
     );
-    check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
 }
 
 /// These test some example items using invalid UTF-8 byte sequences, where the invalid sequences
@@ -334,7 +334,7 @@ mod invalid_byte_sequences {
                 expected_item!(17, UnknownShort, '�'),
             ]
         );
-        check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+        check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
     }
 
     #[cfg(windows)]
@@ -427,6 +427,6 @@ mod invalid_byte_sequences {
                 expected_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
             ]
         );
-        check_result_os(&ActualOs(get_base().process_os(&args, None)), &expected);
+        check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
     }
 }

@@ -1,11 +1,15 @@
 # [unreleased]
 
  * Added support for processing `AsRef<OsStr>` based argument lists
+ * Redesigned things based upon a new `Parser` type.
+    - The settings that lived within option set objects have been moved into a separate `Settings`
+      struct, found in the `parser` mod.
+    - This new `Parser` type wraps the option set and settings. Previously there was just the option
+      set type(s), which directly included settings.
+    - The `process` methods on the option set objects have been replaced with a `parse` method on
+      this new wrapping `Parser` object.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
- * Moved analysis settings out of `OptionSet` and `OptionSetEx` into a separate `Settings` struct,
-   found in the `analysis` mod. An instance of this is now optionally to be passed to the `process`
-   method.
  * Purged old deprecated stuff
 
 # 1.4.2 (December 15th, 2020)

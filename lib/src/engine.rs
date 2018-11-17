@@ -9,6 +9,7 @@
 // respectively.
 
 use std::convert::AsRef;
+use super::parser::*;
 use super::options::*;
 use super::analysis::*;
 
@@ -34,10 +35,10 @@ enum ArgTypeBasic<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
-pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, 's>,
-    settings: Option<&Settings>) -> Analysis<'s, str>
+pub(crate) fn process<'p, 'r, 's, A>(args: &'s [A], parser: &'p Parser<'r, 's>)
+    -> Analysis<'s, str>
     where A: 's + AsRef<str>,
-          'r: 'o, 's: 'r
+          'r: 'p, 's: 'r
 {
     /* NOTE: We deliberately do not perform validation of the provided parser data within this
      * function; the burden to do so is left to the user. The choice to not do this is for reasons
@@ -45,9 +46,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
      * function is called multiple times with the same set.
      */
 
-    let settings = settings.map_or(Default::default(), |s| *s);
-
-    let get_basic_arg_type_fn = match settings.mode {
+    let get_basic_arg_type_fn = match parser.settings.mode {
         OptionsMode::Standard => get_basic_arg_type_standard,
         OptionsMode::Alternate => get_basic_arg_type_alternate,
     };
@@ -102,7 +101,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
 
                 let mut matched: Option<&LongOption> = None;
                 let mut ambiguity = false;
-                'l_candidates: for candidate in options.long {
+                'l_candidates: for candidate in parser.options.long {
                     // Exact
                     if candidate.name == name {
                         // An exact match overrules a previously found partial match and ambiguity
@@ -112,7 +111,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
                         break 'l_candidates;
                     }
                     // Abbreviated
-                    else if settings.allow_abbreviations && !ambiguity
+                    else if parser.settings.allow_abbreviations && !ambiguity
                         && name.len() < candidate.name.len()
                         && candidate.name.starts_with(name)
                     {
@@ -176,7 +175,7 @@ pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, '
                 'shorts: for (i, (byte_pos, ch)) in optset_string.char_indices().enumerate() {
                     let mut match_found = false;
                     let mut expects_data = false;
-                    's_candidates: for candidate in options.short {
+                    's_candidates: for candidate in parser.options.short {
                         if candidate.ch == ch {
                             match_found = true;
                             expects_data = candidate.expects_data;
