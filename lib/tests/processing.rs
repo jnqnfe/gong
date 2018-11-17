@@ -29,7 +29,7 @@ use common::{get_base, Actual, Expected, check_result};
 /// All that we really need concern ourselves with is that it compiles.
 #[test]
 fn arg_list_owned_set() {
-    // Test works (compiles) using a `String` based slice (as given from `evn::args()` for real args)
+    // Test works (compiles) using a `String` based slice (as given from `env::args()` for real args)
     // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
     let _ = gong::process(&args, &get_base());
