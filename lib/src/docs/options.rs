@@ -155,9 +155,8 @@
 //! widened `char` type broadens the range of possible characters that can be used as *short
 //! options*, without us worrying about any multi-byte complexity. This allows for instance `💖`
 //! (the “sparkle heart” `char`) to be a *short option*, if you wanted, along with a huge set of
-//! other characters of various types to choose from. (The “sparkle heart” `char` take three bytes
-//! in a Utf-8 string, and would not have been easy to support in C with the legacy `getopt`
-//! solution).
+//! other characters of various types to choose from. (The “sparkle heart” `char` take four bytes in
+//! a Utf-8 string, and would not have been easy to support in C with the legacy `getopt` solution).
 //!
 //! With respect to *long options*, `--foo`, `--föö` and `--föö` are all different options (the last
 //! two may look the same, but read on), and are all perfectly valid options to make available. The
