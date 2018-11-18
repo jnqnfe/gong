@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -35,7 +35,7 @@ enum ArgTypeBasic<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
-pub(crate) fn process<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, str>
+pub(crate) fn parse<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, str>
     where A: 's + AsRef<str>, 's: 'r
 {
     /* NOTE: We deliberately do not perform validation of the provided parser data within this

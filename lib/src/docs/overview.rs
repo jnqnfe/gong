@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -10,7 +10,7 @@
 
 //! Documentation: Overview
 //!
-//! A common requirement of a program is the need to process command line arguments supplied to it.
+//! A common requirement of a program is the need to parse command line arguments supplied to it.
 //! This library was designed to *assist* Rust based programs in this area.
 //!
 //! # Motivation
@@ -34,9 +34,9 @@
 //!
 //! The basic premise of usage is simple:
 //!
-//!  1. Provide the processing function with a description of available options (and optionally
-//!     command arguments) along with the input arguments to be processed, and it returns the
-//!     results of its analysis.
+//!  1. Provide the parsing function with a description of available options (and optionally
+//!     command arguments) along with the input arguments to be parsed, and it returns the results
+//!     of its analysis.
 //!  2. You can then work through this analysis to respond as applicable: Output error information
 //!     if the user made a mistake; output help/usage information if requested; store state
 //!     information from recognised flag type options; and store data (converting values as
@@ -45,7 +45,7 @@
 //!
 //! Differences to the old `getopt`/`getopt_long` C solution include:
 //!
-//!  * All processing can be done in one go, rather than with recursive function calls.
+//!  * All parsing can be done in one go, rather than with recursive function calls.
 //!  * Use of static global variables for “position” tracking is avoided.
 //!  * *Non-options* are **not** shuffled to the end of the list, unlike the default behaviour of
 //!    `getopt`.

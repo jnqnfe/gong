@@ -1,6 +1,6 @@
 // Copyright 2018 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -68,7 +68,7 @@ impl<'r, 's: 'r> Default for Parser<'r, 's> {
 /// Settings for parser
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Settings {
-    /// Option processing mode to use
+    /// Option parsing mode to use
     pub mode: OptionsMode,
     /// Whether or not to allow abbreviated longoption name matching
     pub allow_abbreviations: bool,
@@ -83,7 +83,7 @@ impl Default for Settings {
     }
 }
 
-/// Used to specify which option processing mode to use
+/// Used to specify which option parsing mode to use
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptionsMode {
     /// Standard (default): Short (`-o`) and long (`--foo`) options, with single and double dash
@@ -168,7 +168,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     pub fn parse<A>(&self, args: &'s [A]) -> super::analysis::Analysis<'s, str>
         where A: 's + AsRef<str>
     {
-        super::engine::process(args, self)
+        super::engine::parse(args, self)
     }
 
     /// Parses provided program arguments, given as `OsStr`
@@ -182,6 +182,6 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     pub fn parse_os<A>(&self, args: &'s [A]) -> super::analysis::Analysis<'s, OsStr>
         where A: 's + AsRef<OsStr>
     {
-        super::engine_os::process(args, self)
+        super::engine_os::parse(args, self)
     }
 }

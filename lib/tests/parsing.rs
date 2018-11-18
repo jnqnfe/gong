@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -24,7 +24,7 @@ use common::{get_parser, Actual, Expected, check_result};
 // Arg list string types
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check arg processing accepts `&[String]` and `&[&str]`
+/// Check arg parsing accepts `&[String]` and `&[&str]`
 ///
 /// All that we really need concern ourselves with is that it compiles.
 #[test]
@@ -529,7 +529,7 @@ mod data {
     ///
     /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
     /// data; recognised with empty unexpected data; and that long option "component" splitting
-    /// based on the first equals character (`=`) has no effect on short option set processing.
+    /// based on the first equals character (`=`) has no effect on short option set parsing.
     #[test]
     fn misc() {
         let args = arg_list!(
@@ -761,8 +761,8 @@ mod data {
     }
 
     /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
-    /// position calculation whilst processing a short option set. Safe to assume it won’t, but
-    /// may as well throw down a few samples.
+    /// position calculation whilst parsing a short option set. Safe to assume it won’t, but may as
+    /// well throw down a few samples.
     #[test]
     fn multibyte_utf8combi_short() {
         let args = arg_list!(
@@ -807,7 +807,7 @@ mod data {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Command processing
+// Command parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod commands {
@@ -1173,14 +1173,14 @@ mod commands {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Alt-mode option processing
+// Alt-mode option parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod alt_mode {
     use super::*;
 
-    /* Some tests for alt-mode option processing (no short options, long options use single dash
-     * prefix. There is little difference in processing, so few tests should be required. */
+    /* Some tests for alt-mode option parsing (no short options, long options use single dash
+     * prefix. There is little difference in parsing, so few tests should be required. */
 
     /// Check a range of inputs
     #[test]

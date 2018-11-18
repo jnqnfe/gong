@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -76,7 +76,7 @@ mod short_dash {
     /// terminator, as appropriate, giving no consideration to the possibility of it being a short
     /// option.
     #[test]
-    fn bypassed_processing() {
+    fn bypassed_parsing() {
         let args = arg_list!(
             "--abc",    // Can’t use as a shortopt like this, will be interpreted as long opt
             "-a-bc",    // Can use like this
@@ -105,7 +105,7 @@ mod short_dash {
 }
 
 /// The unicode replacement character (`\u{FFFD}`) is an invalid short option. If it were valid, it
-/// would allow incorrect analysis with `OsStr` based processing.
+/// would allow incorrect analysis with `OsStr` based parsing.
 mod short_rep_char {
     use std::char::REPLACEMENT_CHARACTER;
     use super::*;
@@ -230,7 +230,7 @@ mod long_equals {
     /// this test verifies that things behave though as we expect if the set is invalid due to a
     /// long with an equals (`=`).
     #[test]
-    fn bypassed_processing() {
+    fn bypassed_parsing() {
         let args = arg_list!(
             "--a",      // This should match against the “a=b” invalid option as an abbreviation
             "--a=b",    // Here, this is a long option with “in-arg” data, thus the name is “a”,
@@ -256,7 +256,7 @@ mod long_equals {
 }
 
 /// Long option names cannot contain the unicode replacement character (`\u{FFFD}`). If it were
-/// allowed, it would allow incorrect analysis with `OsStr` based processing.
+/// allowed, it would allow incorrect analysis with `OsStr` based parsing.
 mod long_rep_char {
     use super::*;
 

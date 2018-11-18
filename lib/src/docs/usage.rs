@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -155,9 +155,9 @@
 //! *command* matters; the `expects_data` attribute of *options* and *option set* and *sub-command
 //! set* of *commands* make no difference.
 //!
-//! # Step #2: Gather arguments to be processed
+//! # Step #2: Gather arguments to be parsed
 //!
-//! You also need to retrieve (or build) a set of arguments to be processed. A simple example:
+//! You also need to retrieve (or build) a set of arguments to be parsed. A simple example:
 //!
 //! ```rust
 //! let args: Vec<String> = std::env::args().collect();
@@ -165,8 +165,8 @@
 //!
 //! The very first entry in the list is the program path/name, and often you will not be interested
 //! in it. You can skip it in two easy ways, either: a) providing `&args[1..]` instead of
-//! `&args[..]` to the processing function in the next step, or b) using the iterator `skip` method,
-//! as here:
+//! `&args[..]` to the parsing function in the next step, or b) using the iterator `skip` method, as
+//! here:
 //!
 //! ```rust
 //! let args: Vec<String> = std::env::args().skip(1).collect();
@@ -178,9 +178,9 @@
 //! invalid Unicode. Those that are used for specifying filenames/paths are an example of ones that
 //! may. If any of your inputs fall into this category you should use the alternative
 //! `std::env::args_os()` function, which returns strings in `OsString` form, for which an alternate
-//! processing function is available.
+//! parsing function is available.
 //!
-//! # Step #3: Processing
+//! # Step #3: Parsing
 //!
 //! With input args gathered and “available” *options* and *commands* described, now you’re ready
 //! for parsing. All you need to do is feed the argument list to the parser’s
@@ -196,11 +196,11 @@
 //! ```
 //!
 //! If you are taking arguments in `OsString` form, as discussed above, you should use the alternate
-//! `process_os` method here instead.
+//! `parse_os` method here instead.
 //!
-//! Of course if for any reason you do **not** want to process all arguments in one go, you always
-//! have the option of processing one argument at a time (or in groups of whatever number you
-//! choose), calling `parse` for each. (Naturally though you must beware the complications handling
+//! Of course if for any reason you do **not** want to parse all arguments in one go, you always
+//! have the option of parsing one argument at a time (or in groups of whatever number you choose),
+//! calling `parse` for each. (Naturally though you must beware the complications handling
 //! “in-next-arg” *data values* doing this).
 //!
 //! # Step #4: Take action

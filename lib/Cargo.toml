@@ -7,7 +7,7 @@ readme = "README.md"
 homepage = "https://github.com/jnqnfe/gong"
 repository = "https://github.com/jnqnfe/gong"
 description = """
-A lightweight, flexible and simple-to-use command line argument processor.
+A lightweight, flexible and simple-to-use command line argument parser.
 """
 keywords = ["gong", "getopt", "terminal", "command-line"]
 

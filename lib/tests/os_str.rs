@@ -1,6 +1,6 @@
 // Copyright 2018 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -16,7 +16,7 @@
 //! against a temporary lossy `str` conversion, then converting and rebuilding the analysis upon
 //! `OsStr` from the original arguments.
 //!
-//! Thus, there is no need to test the full processing capabilities for `AsRef<OsStr>` argument list
+//! Thus, there is no need to test the full parsing capabilities for `AsRef<OsStr>` argument list
 //! inputs; instead we only need to test that:
 //!
 //!  1) Using both `&[&OsStr]` and `&[OsString]` types work.
@@ -38,7 +38,7 @@ use common::{get_parser, ActualOs, ExpectedOs, check_result_os};
 // Arg list string types
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check arg processing accepts `&[OsString]` and `&[&OsStr]`
+/// Check arg parsing accepts `&[OsString]` and `&[&OsStr]`
 ///
 /// All that we really need concern ourselves with is that it compiles.
 #[test]

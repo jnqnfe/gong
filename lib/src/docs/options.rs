@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -10,8 +10,8 @@
 
 //! Documentation: Option support
 //!
-//! This crate has been designed around standard option conventions, and can process an argument
-//! list in two different common styles:
+//! This crate has been designed around standard option conventions, and can parse an argument list
+//! in two different common styles:
 //!
 //! - Standard: supporting traditional *long* and *short* options
 //! - Alternate: supporting *long options* only, with a single-dash prefix
@@ -23,7 +23,7 @@
 //!
 //! # Standard style (default)
 //!
-//! This mode supports traditional *long* and *short* options. The fundamental argument processing
+//! This mode supports traditional *long* and *short* options. The fundamental argument parsing
 //! logic follows this model:
 //!
 //!  - An argument either **not** starting with a dash (`-`) or consisting only of a single dash is
@@ -41,7 +41,7 @@
 //!    some cases). Note also that interpretation of what consists of a “character” may surprise you
 //!    as actually being a complicated matter, as per the dedicated “Utf-8” discussion later.
 //!
-//! Processing of each argument may alter how one or more subsequent arguments are interpreted,
+//! parsing of each argument may alter how one or more subsequent arguments are interpreted,
 //! deviating from the above. Specifically this applies to the *early terminator* and where an
 //! option is recognised as an “available” program option that takes a *data value*, as discussed
 //! below.
@@ -61,7 +61,7 @@
 //!    Note that “available” program *long options* are forbidden from containing an equals (`=`)
 //!    character in their name as this would otherwise introduce significant problems.
 //!
-//!    When processing a *long option* argument, if the argument contains one or more equals (`=`)
+//!    When parsing a *long option* argument, if the argument contains one or more equals (`=`)
 //!    characters then it is considered to have an “in-argument” *data value* (since names are not
 //!    permitted to contain them), and is split into two components, thus the left hand portion
 //!    (minus the double-dash prefix) is taken as the name, and the right as the “in-argument” *data
@@ -147,7 +147,7 @@
 //!  - `--f` and `--fo` are invalid as being ambiguous (and noted as such in the analysis).
 //!  - `--foob` and `--fooba` both uniquely match `foobar` and so are valid.
 //!
-//! This is enabled by default, but can be opted out of when processing if not desired.
+//! This is enabled by default, but can be opted out of when parsing if not desired.
 //!
 //! # Utf-8 notes
 //!

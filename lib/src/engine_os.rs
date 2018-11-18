@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -19,7 +19,7 @@
  *  1. Valid short and long options must be forbidden from using the unicode replacement char
  *     (`U+FFFD`) else incorrect matches could occur, which needs enforcing throughout the library.
  *  2. Do a lossy conversion to `Cow<str>`, collecting in a `Vec`.
- *  3. Process this with the normal `str` based parser (avoids unnecessarily duplicating logic).
+ *  3. Parse this with the normal `str` based parser (avoids unnecessarily duplicating logic).
  *  4. Convert the `Analysis<&str>` based analysis to `Analysis<&OsStr>`, using the original
  *     strings:
  *      a. Copy warn/error booleans
@@ -69,15 +69,14 @@ use super::parser::*;
 use super::analysis::*;
 use super::engine::{self, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
 
-/// This is a variant of the standard process function which takes `OsStr` based arguments instead
-/// of `str` based ones. It is to be used in situations where users want to handle arguments taken
-/// from the environment via `std::end::os_args()` instead of `std::env::args()`, for instance
-/// `Cargo` itself needs this to be able to pass on arguments to user programs in run mode
-/// correctly, to then allow such programs ot choose how they want to obtain their args (as when
-/// not run under `Cargo`, and allowing them to receive non-valid utf-8 data values / non-options.
-pub(crate) fn process<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, OsStr>
-    where A: 's + AsRef<OsStr>,
-          's: 'r
+/// This is a variant of the standard parse function which takes `OsStr` based arguments instead of
+/// `str` based ones. It is to be used in situations where users want to handle arguments taken from
+/// the environment via `std::end::os_args()` instead of `std::env::args()`, for instance `Cargo`
+/// itself needs this to be able to pass on arguments to user programs in run mode correctly, to
+/// then allow such programs ot choose how they want to obtain their args (as when not run under
+/// `Cargo`, and allowing them to receive non-valid utf-8 data values / non-options.
+pub(crate) fn parse<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, OsStr>
+    where A: 's + AsRef<OsStr>, 's: 'r
 {
     let longopt_prefix_osstr = match parser.settings.mode {
         OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),
@@ -86,13 +85,13 @@ pub(crate) fn process<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Anal
 
     // Temporary lossy conversion
     let args_as_str: Vec<Cow<'s, str>> = args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
-    // HACK: We must adjust the lifetime for use with `process`
+    // HACK: We must adjust the lifetime for use with `parse`
     let args_as_str_slice = unsafe {
         mem::transmute::<&'_ [Cow<str>], &'s [Cow<str>]>(&args_as_str[..])
     };
 
     // Get `str` based analysis (avoids duplicating functionality)
-    let analysis = engine::process(args_as_str_slice, parser);
+    let analysis = engine::parse(args_as_str_slice, parser);
 
     // Start converting
     let mut converted = Analysis::<'s, OsStr>::new(args.len());

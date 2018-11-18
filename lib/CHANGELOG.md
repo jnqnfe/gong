@@ -1,6 +1,6 @@
 # [unreleased]
 
- * Added support for processing `AsRef<OsStr>` based argument lists
+ * Added support for parsing `AsRef<OsStr>` based argument lists
  * Baked in understanding of “command” arguments.
    Although program designs incorporating “command” arguments could use this crate, it was not easy
    to make use of them. Direct understanding has now been built in, trading very little overhead for

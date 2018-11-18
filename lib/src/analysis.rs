@@ -1,6 +1,6 @@
 // Copyright 2017 Lyndon Brown
 //
-// This file is part of the `gong` command-line argument processing library.
+// This file is part of the `gong` command-line argument parsing library.
 //
 // Licensed under the MIT license or the Apache license (version 2.0), at your option. You may not
 // copy, modify, or distribute this file except in compliance with said license. You can find copies
@@ -10,7 +10,7 @@
 
 //! Analysis components
 
-/// Analysis of processing arguments
+/// Analysis of parsing arguments
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Analysis<'s, S: 's + ?Sized> {
     /// Set of items describing what was found
