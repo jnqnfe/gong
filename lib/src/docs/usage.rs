@@ -46,7 +46,7 @@
 //!     .add_long("foo")
 //!     .add_long("version")
 //!     .add_long("foobar")
-//!     .add_long("ábc")      // Using a combining char (accent)
+//!     .add_long("ábc")
 //!     .add_long_data("hah") // This one expects a data arg
 //!     .add_short('❤')
 //!     .add_short('x')
@@ -65,7 +65,7 @@
 //!         gong_longopt!("foo"),
 //!         gong_longopt!("version"),
 //!         gong_longopt!("foobar"),
-//!         gong_longopt!("ábc"),       // Using a combinator char (accent)
+//!         gong_longopt!("ábc"),
 //!         gong_longopt!("hah", true), // This one expects a data arg
 //!     ], [
 //!         gong_shortopt!('h'),

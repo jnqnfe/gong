@@ -74,14 +74,13 @@ fn main() {
             gong_longopt!("version"),
             gong_longopt!("foobar"),
             gong_longopt!("hah", true),
-            gong_longopt!("ábc"),        // Using a combinator char (accent)
+            gong_longopt!("ábc"),
         ],
         [
             gong_shortopt!('h'),
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
             gong_shortopt!('o', true),
-            gong_shortopt!('\u{030A}'),   // A lone combinator (“ring above”)
         ],
         OptionsMode::Standard,
         true
