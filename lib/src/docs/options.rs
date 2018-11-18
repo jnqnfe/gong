@@ -126,7 +126,7 @@
 //!
 //! # Abbreviated long option name matching
 //!
-//! Abbreviated *long option* name matching is supported, i.e. the feature than users can use an
+//! Abbreviated *long option* name matching is supported, i.e. the feature that users can use an
 //! abbreviated form of a *long option's* name and get a match, so long as the abbreviation uniquely
 //! matches a single *long option*.
 //!
