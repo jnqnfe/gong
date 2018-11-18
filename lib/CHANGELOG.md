@@ -2,6 +2,10 @@
 
  * Documentation: Fixed a minor oversight in usage documentation, where it was not updated
    correctly.
+ * Documentation: Fixed broken text. An apparent bug in an one of my development tools corrupted a
+   multi-byte UTF-8 character in my UTF-8 related documentation during v1.1 development, encoding
+   the bytes as UTF-8 TWICE, resulting in an incorrect sequence of 8-bytes instead of the real
+   4-byte sequence, which gave incorrect text.
 
 # 1.2.1 (October 28th, 2018)
 
