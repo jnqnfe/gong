@@ -7,6 +7,7 @@
    multi-byte UTF-8 character in my UTF-8 related documentation during v1.1 development, encoding
    the bytes as UTF-8 TWICE, resulting in an incorrect sequence of 8-bytes instead of the real
    4-byte sequence, which gave incorrect text.
+ * Documentation: Fixed a mistake in the described UTF-8 encoding width of a multi-byte character
 
 # 1.3.0 (October 29th, 2018)
 
