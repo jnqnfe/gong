@@ -53,6 +53,7 @@ mod no_name {
 /// Command names cannot contain the unicode replacement character (`\u{FFFD}`). If it were allowed,
 /// it would allow incorrect analysis with `OsStr` based parsing.
 mod rep_char {
+    use std::char::REPLACEMENT_CHARACTER;
     use super::*;
 
     #[test]
@@ -77,7 +78,9 @@ mod rep_char {
             gong_command!("bar"),
         ]);
         assert_eq!(false, cmds.is_valid());
-        assert_eq!(cmds.validate(), Err(vec![ CommandFlaw::NameIncludesRepChar("a\u{FFFD}b") ]));
+        assert_eq!(cmds.validate(), Err(vec![
+            CommandFlaw::NameHasForbiddenChar("a\u{FFFD}b", REPLACEMENT_CHARACTER)
+        ]));
     }
 }
 
@@ -96,7 +99,7 @@ fn duplicates() {
         .add_command("bbb", None, Default::default());     // dup
     assert_eq!(false, cmds.is_valid());
     assert_eq!(cmds.validate(), Err(vec![
-        CommandFlaw::Dup("bbb"),
-        CommandFlaw::Dup("ccc"),
+        CommandFlaw::Duplicated("bbb"),
+        CommandFlaw::Duplicated("ccc"),
     ]));
 }

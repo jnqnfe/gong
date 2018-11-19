@@ -60,7 +60,7 @@ mod short_dash {
             ]
         );
         assert_eq!(false, opts.is_valid());
-        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortDash ]));
+        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortIsForbiddenChar('-') ]));
     }
 
     /// Check behaviour when validity check bypassed.
@@ -141,7 +141,9 @@ mod short_rep_char {
             ]
         );
         assert_eq!(false, opts.is_valid());
-        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortRepChar ]));
+        assert_eq!(opts.validate(), Err(vec![
+            OptionFlaw::ShortIsForbiddenChar(REPLACEMENT_CHARACTER)
+        ]));
     }
 }
 
@@ -180,7 +182,7 @@ mod long_no_name {
             ], []
         );
         assert_eq!(false, opts.is_valid());
-        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmpty ]));
+        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmptyName ]));
     }
 }
 
@@ -221,7 +223,7 @@ mod long_equals {
             ], []
         );
         assert_eq!(false, opts.is_valid());
-        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongIncludesEquals("a=b") ]));
+        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongNameHasForbiddenChar("a=b", '=') ]));
     }
 
     /// Check behaviour when validity check bypassed.
@@ -258,6 +260,7 @@ mod long_equals {
 /// Long option names cannot contain the unicode replacement character (`\u{FFFD}`). If it were
 /// allowed, it would allow incorrect analysis with `OsStr` based parsing.
 mod long_rep_char {
+    use std::char::REPLACEMENT_CHARACTER;
     use super::*;
 
     #[test]
@@ -291,12 +294,15 @@ mod long_rep_char {
             ], []
         );
         assert_eq!(false, opts.is_valid());
-        assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongIncludesRepChar("a\u{FFFD}b") ]));
+        assert_eq!(opts.validate(), Err(vec![
+            OptionFlaw::LongNameHasForbiddenChar("a\u{FFFD}b", REPLACEMENT_CHARACTER)
+        ]));
     }
 }
 
 /// Check what happens with multiple flaws at a time. Naturally this does not apply to short options.
 mod multi {
+    use std::char::REPLACEMENT_CHARACTER;
     use super::*;
 
     /// Bypassing add methods, check validation fails
@@ -314,9 +320,9 @@ mod multi {
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             /// Only the first flaw identified of each option is returned
-            OptionFlaw::LongIncludesEquals("a\u{FFFD}b=c=d"),
-            OptionFlaw::LongIncludesEquals("w=x=y\u{FFFD}z"),
-            OptionFlaw::LongIncludesRepChar("foo\u{FFFD}bar"),
+            OptionFlaw::LongNameHasForbiddenChar("a\u{FFFD}b=c=d", '='),
+            OptionFlaw::LongNameHasForbiddenChar("w=x=y\u{FFFD}z", '='),
+            OptionFlaw::LongNameHasForbiddenChar("foo\u{FFFD}bar", REPLACEMENT_CHARACTER),
         ]));
     }
 }
@@ -342,8 +348,8 @@ mod duplicates {
             .add_short('b');      // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
-            OptionFlaw::ShortDup('b'),
-            OptionFlaw::ShortDup('c'),
+            OptionFlaw::ShortDuplicated('b'),
+            OptionFlaw::ShortDuplicated('c'),
         ]));
     }
 
@@ -360,8 +366,8 @@ mod duplicates {
             .add_long("bbb");     // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
-            OptionFlaw::LongDup("bbb"),
-            OptionFlaw::LongDup("ccc"),
+            OptionFlaw::LongDuplicated("bbb"),
+            OptionFlaw::LongDuplicated("ccc"),
         ]));
     }
 }

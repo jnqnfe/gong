@@ -91,19 +91,15 @@ pub struct ShortOption {
 #[derive(Debug, PartialEq, Eq)]
 pub enum OptionFlaw<'a> {
     /// Long option name is empty string
-    LongEmpty,
-    /// Long option name contains equals
-    LongIncludesEquals(&'a str),
-    /// Long option name contains unicode replacement char (`U+FFFD`)
-    LongIncludesRepChar(&'a str),
-    /// Short option char is dash (`-`)
-    ShortDash,
-    /// Short option char is unicode replacement char (`U+FFFD`)
-    ShortRepChar,
+    LongEmptyName,
+    /// Long option name contains a forbidden `char`
+    LongNameHasForbiddenChar(&'a str, char),
+    /// Short option `char` is a forbidden `char`
+    ShortIsForbiddenChar(char),
     /// Duplicate short option found
-    ShortDup(char),
+    ShortDuplicated(char),
     /// Duplicate long option found
-    LongDup(&'a str),
+    LongDuplicated(&'a str),
 }
 
 impl<'s> OptionSetEx<'s> {
@@ -319,17 +315,16 @@ impl<'a> LongOption<'a> {
     /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
     /// free of issues.
     fn validate(name: &str) -> Result<(), OptionFlaw> {
+        static FORBIDDEN: &[char] = &[
+            '=',        // Would clash with “in-same-arg” data value extraction
+            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
+        ];
         if name.is_empty() {
-            return Err(OptionFlaw::LongEmpty);
+            return Err(OptionFlaw::LongEmptyName);
         }
-        else {
-            // Would clash with 'in-same-arg' data value extraction
-            if name.contains('=') {
-                return Err(OptionFlaw::LongIncludesEquals(name));
-            }
-            // Would cause problems with correct `OsStr` based parsing
-            if name.contains('\u{FFFD}') {
-                return Err(OptionFlaw::LongIncludesRepChar(name));
+        for c in FORBIDDEN {
+            if name.contains(*c) {
+                return Err(OptionFlaw::LongNameHasForbiddenChar(name, *c));
             }
         }
         Ok(())
@@ -354,13 +349,14 @@ impl ShortOption {
     /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
     /// free of issues.
     fn validate<'a>(ch: char) -> Result<(), OptionFlaw<'a>> {
-        // Would clash with correct identification of short option sets in some cases
-        if ch == '-' {
-            return Err(OptionFlaw::ShortDash);
-        }
-        // Would cause problems with correct `OsStr` based parsing
-        if ch == '\u{FFFD}' {
-            return Err(OptionFlaw::ShortRepChar);
+        static FORBIDDEN: &[char] = &[
+            '-',        // Would clash with correct identification of short option sets in some cases
+            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
+        ];
+        for c in FORBIDDEN {
+            if ch == *c {
+                return Err(OptionFlaw::ShortIsForbiddenChar(*c));
+            }
         }
         Ok(())
     }
@@ -424,12 +420,12 @@ pub(crate) mod validation {
         let mut duplicates = Vec::new();
         for (i, short) in opts[..opts.len()-1].iter().enumerate() {
             let ch = short.ch;
-            if !duplicates.contains(&OptionFlaw::ShortDup(ch)) {
+            if !duplicates.contains(&OptionFlaw::ShortDuplicated(ch)) {
                 for short2 in opts[i+1..].iter() {
                     if ch == short2.ch {
                         match detail {
                             true => {
-                                duplicates.push(OptionFlaw::ShortDup(ch));
+                                duplicates.push(OptionFlaw::ShortDuplicated(ch));
                                 break;
                             },
                             false => { *found = true; return; },
@@ -451,12 +447,12 @@ pub(crate) mod validation {
         let mut duplicates = Vec::new();
         for (i, long) in opts[..opts.len()-1].iter().enumerate() {
             let name = long.name.clone();
-            if !duplicates.contains(&OptionFlaw::LongDup(name)) {
+            if !duplicates.contains(&OptionFlaw::LongDuplicated(name)) {
                 for long2 in opts[i+1..].iter() {
                     if name == long2.name {
                         match detail {
                             true => {
-                                duplicates.push(OptionFlaw::LongDup(name));
+                                duplicates.push(OptionFlaw::LongDuplicated(name));
                                 break;
                             },
                             false => { *found = true; return; },

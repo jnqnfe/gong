@@ -93,10 +93,10 @@ pub struct Command<'r, 's: 'r> {
 pub enum CommandFlaw<'a> {
     /// Command name is an empty string
     EmptyName,
-    /// Command name contains unicode replacement char (`U+FFFD`)
-    NameIncludesRepChar(&'a str),
+    /// Command name contains a forbidden `char`
+    NameHasForbiddenChar(&'a str, char),
     /// Duplicate command found
-    Dup(&'a str),
+    Duplicated(&'a str),
     /// Flaws for the option set belonging to a command
     NestedOptSetFlaws(&'a str, Vec<OptionFlaw<'a>>),
     /// Flaws for the sub-command set belonging to a command
@@ -286,7 +286,7 @@ impl<'r, 's: 'r> Command<'r, 's> {
         }
         // Would cause problems with correct `OsStr` based parsing
         if name.contains('\u{FFFD}') {
-            return Err(CommandFlaw::NameIncludesRepChar(name));
+            return Err(CommandFlaw::NameHasForbiddenChar(name, '\u{FFFD}'));
         }
         Ok(())
     }
@@ -352,15 +352,15 @@ mod validation {
     {
         let cmds = set.commands;
         if cmds.is_empty() { return; }
-        let mut duplicates: Vec<CommandFlaw<'s>> = Vec::new();
+        let mut duplicates = Vec::new();
         for (i, cmd) in cmds[..cmds.len()-1].iter().enumerate() {
             let name = cmd.name.clone();
-            if !duplicates.contains(&CommandFlaw::Dup(name)) {
+            if !duplicates.contains(&CommandFlaw::Duplicated(name)) {
                 for cmd2 in cmds[i+1..].iter() {
                     if name == cmd2.name {
                         match detail {
                             true => {
-                                duplicates.push(CommandFlaw::Dup(name));
+                                duplicates.push(CommandFlaw::Duplicated(name));
                                 break;
                             },
                             false => { *found = true; return; },

@@ -20,6 +20,9 @@
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Improved internal validation checks to use shared logic for checking identifier flaws
+ * Modified option flaw enum to rename some variants and to make invalid character related ones
+   generic, able to hold the invalid `char` found, and thus future proof for any further addition of
+   additional forbidden `char`s.
  * Purged old deprecated stuff
  * Documentation:
     - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, thoroughly
