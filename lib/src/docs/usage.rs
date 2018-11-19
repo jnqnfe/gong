@@ -82,7 +82,7 @@
 //! Notes:
 //!
 //!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
-//!    [`to_extendible`][`OptionSet::to_extendible`], which creates owned copies of the strings.
+//!    [`to_extendible`][`OptionSet::to_extendible`].
 //!  - An [`OptionSet`] can similarly be created from an [`OptionSetEx`] with
 //!    [`as_fixed`][`OptionSetEx::as_fixed`]. It will hold slice references to the [`OptionSetEx`]'s
 //!    `Vec` lists, with the lifetime tied to it (thus the set cannot be modified whilst the
