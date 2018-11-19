@@ -28,8 +28,8 @@ mod available_options {
         let fixed: &OptionSet = common::get_base_opts();
 
         // Re-build with “non-fixed” (`OptionSetEx` based) macro
-        let non_fixed: OptionSetEx = gong_option_set!(
-            vec![
+        let non_fixed = OptionSetEx {
+            long: vec![
                 gong_longopt!("help"),
                 gong_longopt!("foo"),
                 gong_longopt!("version"),
@@ -39,7 +39,7 @@ mod available_options {
                 gong_longopt!("ƒƒ", true),
                 gong_longopt!("ƒo"),
             ],
-            vec![
+            short: vec![
                 gong_shortopt!('h'),
                 gong_shortopt!('❤'),
                 gong_shortopt!('x'),
@@ -47,7 +47,7 @@ mod available_options {
                 gong_shortopt!('\u{030a}'),
                 gong_shortopt!('Ɛ', true),
             ]
-        );
+        };
         assert_eq!(*fixed, non_fixed);
     }
 

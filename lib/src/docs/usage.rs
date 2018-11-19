@@ -100,7 +100,6 @@
 //!    [`OptionSet`] exists).
 //!  - An [`OptionSetEx`] can be created from an [`OptionSet`] with
 //!    [`to_extendible`][`OptionSet::to_extendible`].
-//!  - Macros are provided for constructing both as a convenience.
 //!
 //! ## Describe the available command arguments
 //!

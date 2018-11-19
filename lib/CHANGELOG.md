@@ -12,6 +12,9 @@
       Previously there was just the option set type(s), which directly included settings.
     - The `process` methods on the option set objects have been replaced with a `parse` method on
       this new wrapping `Parser` object.
+ * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
+   little point to it, with virtually no difference to creating a raw object. It was a legacy
+   hangover.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Purged old deprecated stuff

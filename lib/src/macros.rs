@@ -8,30 +8,6 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-/// Constructs an [`OptionSetEx`](options/struct.OptionSetEx.html)
-///
-/// Takes:
-///
-/// 1. A `Vec` of long options
-/// 2. A `Vec` of short options
-///
-/// # Example
-///
-/// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = gong_option_set!(vec![ gong_longopt!("foo") ], vec![ gong_shortopt!('a') ]);
-/// # }
-/// ```
-#[macro_export]
-macro_rules! gong_option_set {
-    ( $long:expr, $short:expr ) => {
-        $crate::options::OptionSetEx { long: $long, short: $short }
-    };
-    () => { gong_option_set!(vec![], vec![]) };
-}
-
 /// Constructs an [`OptionSet`](options/struct.OptionSet.html)
 ///
 /// Takes:
