@@ -135,6 +135,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     ///
     /// Returns `true` if valid.
     ///
+    /// Note, only the most crucial command and option identifier (name or character) problems that
+    /// could cause issues when parsing are checked for; Passing validation is not a confirmation
+    /// that the command or option identifiers used are all sensible or otherwise entirely free of
+    /// issues.
+    ///
     /// See also the [`validate`](#method.validate) method.
     #[inline]
     pub fn is_valid(&self) -> bool {
@@ -146,6 +151,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// If any flaws are found, a tuple is returned, wrapped in `Err`. The first item in the tuple
     /// is the `Vec` of flaws for the main option set, and the second is the flaws for the command
     /// set.
+    ///
+    /// Note, only the most crucial command and option identifier (name or character) problems that
+    /// could cause issues when parsing are checked for; Passing validation is not a confirmation
+    /// that the command or option identifiers used are all sensible or otherwise entirely free of
+    /// issues.
     pub fn validate(&self) -> Result<(), (Vec<OptionFlaw<'s>>, Vec<CommandFlaw<'s>>)> {
         let option_set_flaws = self.options.validate();
         let command_set_flaws = self.commands.validate();

@@ -29,6 +29,11 @@ use super::options::{self, OptionSet, OptionFlaw};
 ///
 /// This is the "extendible" variant which uses `Vec`s to hold the command lists and thus is
 /// flexible in allowing addition of commands, and may re-allocate as necessary.
+///
+/// Note, certain add option methods panic with invalid identifiers, as documented, however you must
+/// understand that the validation checks only do the bare minimum of checking for the most crucial
+/// problems that could cause issues when parsing. It is up to you to otherwise ensure that
+/// identifiers are sensibly chosen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandSetEx<'r, 's: 'r> {
     /* NOTE: these have been left public to allow creation via macros */
@@ -151,6 +156,10 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
     ///
     /// Returns `true` if valid.
     ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    ///
     /// See also the [`validate`](#method.validate) method.
     #[inline]
     pub fn is_valid(&self) -> bool {
@@ -158,6 +167,10 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
     }
 
     /// Checks validity of command set, returning details of any problems
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
     #[inline]
     pub fn validate(&self) -> Result<(), Vec<CommandFlaw<'s>>> {
         validation::validate_set(&self.as_fixed(), true)
@@ -200,6 +213,10 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
     ///
     /// Returns `true` if valid.
     ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    ///
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
@@ -207,6 +224,10 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
     }
 
     /// Checks validity of command set, returning details of any problems
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
     #[inline(always)]
     pub fn validate(&self) -> Result<(), Vec<CommandFlaw<'s>>> {
         validation::validate_set(self, true)
@@ -243,19 +264,37 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
 impl<'r, 's: 'r> Command<'r, 's> {
     /// Create a new command descriptor
     ///
-    /// Panics (debug only) if the given name is an empty string or contains a unicode replacement
-    /// character ('\u{FFFD}').
-    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>, sub_commands: CommandSet<'r, 's>) -> Self {
-        debug_assert!(!name.is_empty(), "Command name cannot be an empty string!");
-        debug_assert!(!name.contains('\u{FFFD}'), "Command name cannot contain ‘\\u{FFFD}’!");
+    /// Panics (debug only) if the given name is invalid.
+    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
+        sub_commands: CommandSet<'r, 's>) -> Self
+    {
+        debug_assert!(Self::validate(name).is_ok());
         let opts_actual = options.unwrap_or(&gong_option_set!());
         Self { name, options: opts_actual, sub_commands }
+    }
+
+    /// Validate a given name as a possible command
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate(name: &str) -> Result<(), CommandFlaw> {
+        if name.is_empty() {
+            return Err(CommandFlaw::EmptyName);
+        }
+        // Would cause problems with correct `OsStr` based parsing
+        if name.contains('\u{FFFD}') {
+            return Err(CommandFlaw::NameIncludesRepChar(name));
+        }
+        Ok(())
     }
 }
 
 /// Command set validation
 mod validation {
-    use super::{options, CommandSet, CommandFlaw};
+    use super::{options, Command, CommandSet, CommandFlaw};
 
     /// Checks validity of command set, optionally returning details of any problems
     ///
@@ -271,15 +310,9 @@ mod validation {
 
         // Validate command names
         for command in set.commands {
-            if command.name.is_empty() {
+            if let Err(f) = Command::validate(command.name) {
                 match detail {
-                    true => { flaws.push(CommandFlaw::EmptyName); },
-                    false => { return Err(flaws); },
-                }
-            }
-            else if command.name.contains('\u{FFFD}') {
-                match detail {
-                    true => { flaws.push(CommandFlaw::NameIncludesRepChar(command.name)); },
+                    true => { flaws.push(f); },
                     false => { return Err(flaws); },
                 }
             }

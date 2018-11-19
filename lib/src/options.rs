@@ -28,6 +28,11 @@ use strsim;
 ///
 /// This is the "extendible" variant which uses `Vec`s to hold the option lists and thus is flexible
 /// in allowing addition of options, and may re-allocate as necessary.
+///
+/// Note, certain add option methods panic with invalid identifiers, as documented, however you must
+/// understand that the validation checks only do the bare minimum of checking for the most crucial
+/// problems that could cause issues when parsing. It is up to you to otherwise ensure that
+/// identifiers are sensibly chosen.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct OptionSetEx<'s> {
     /* NOTE: these have been left public to allow creation via macros */
@@ -192,6 +197,10 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Returns `true` if valid.
     ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    ///
     /// See also the [`validate`](#method.validate) method.
     #[inline]
     pub fn is_valid(&self) -> bool {
@@ -199,6 +208,10 @@ impl<'s> OptionSetEx<'s> {
     }
 
     /// Checks validity of option set, returning details of any problems
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
     #[inline]
     pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(&self.as_fixed(), true)
@@ -242,6 +255,10 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     ///
     /// Returns `true` if valid.
     ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    ///
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
     pub fn is_valid(&self) -> bool {
@@ -249,6 +266,10 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     }
 
     /// Checks validity of option set, returning details of any problems
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
     #[inline(always)]
     pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(self, true)
@@ -283,31 +304,71 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
 impl<'a> LongOption<'a> {
     /// Create a new long option descriptor
     ///
-    /// Panics (debug only) if the given name is an empty string, contains an equals ('=') or
-    /// contains a unicode replacement character ('\u{FFFD}').
+    /// Panics (debug only) if the given name is invalid.
+    #[inline]
     fn new(name: &'a str, expects_data: bool) -> Self {
-        debug_assert!(!name.is_empty(), "Long option name cannot be an empty string!");
-        debug_assert!(!name.contains('='), "Long option name cannot contain ‘=’!");
-        debug_assert!(!name.contains('\u{FFFD}'), "Long option name cannot contain ‘\\u{FFFD}’!");
+        debug_assert!(Self::validate(name).is_ok());
         Self { name, expects_data, }
+    }
+
+    /// Validate a given name as a possible long option
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate(name: &str) -> Result<(), OptionFlaw> {
+        if name.is_empty() {
+            return Err(OptionFlaw::LongEmpty);
+        }
+        else {
+            // Would clash with 'in-same-arg' data value extraction
+            if name.contains('=') {
+                return Err(OptionFlaw::LongIncludesEquals(name));
+            }
+            // Would cause problems with correct `OsStr` based parsing
+            if name.contains('\u{FFFD}') {
+                return Err(OptionFlaw::LongIncludesRepChar(name));
+            }
+        }
+        Ok(())
     }
 }
 
 impl ShortOption {
     /// Create a new short option descriptor
     ///
-    /// Panics (debug only) if the given `char` is a dash ('-') or the unicode replacement character
-    /// ('\u{FFFD}').
+    /// Panics (debug only) if the given `char` is invalid.
+    #[inline]
     fn new(ch: char, expects_data: bool) -> Self {
-        debug_assert_ne!('-', ch, "Dash (‘-’) is not a valid short option!");
-        debug_assert_ne!('\u{FFFD}', ch, "Unicode replacement char (‘\u{FFFD}’) is not a valid short option!");
+        debug_assert!(Self::validate(ch).is_ok());
         Self { ch, expects_data, }
+    }
+
+    /// Validate a given character as a possible short option
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate<'a>(ch: char) -> Result<(), OptionFlaw<'a>> {
+        // Would clash with correct identification of short option sets in some cases
+        if ch == '-' {
+            return Err(OptionFlaw::ShortDash);
+        }
+        // Would cause problems with correct `OsStr` based parsing
+        if ch == '\u{FFFD}' {
+            return Err(OptionFlaw::ShortRepChar);
+        }
+        Ok(())
     }
 }
 
 /// Option set validation
 pub(crate) mod validation {
-    use super::{OptionSet, OptionFlaw};
+    use super::{LongOption, ShortOption, OptionSet, OptionFlaw};
 
     /// Checks validity of option set, optionally returning details of any problems
     ///
@@ -322,36 +383,18 @@ pub(crate) mod validation {
         let mut flaws: Vec<OptionFlaw<'s>> = Vec::new();
 
         for candidate in set.long {
-            if candidate.name.is_empty() {
+            if let Err(f) = LongOption::validate(candidate.name) {
                 match detail {
-                    true => { flaws.push(OptionFlaw::LongEmpty); },
-                    false => { return Err(flaws); },
-                }
-            }
-            else if candidate.name.contains('=') {
-                match detail {
-                    true => { flaws.push(OptionFlaw::LongIncludesEquals(candidate.name)); },
-                    false => { return Err(flaws); },
-                }
-            }
-            else if candidate.name.contains('\u{FFFD}') {
-                match detail {
-                    true => { flaws.push(OptionFlaw::LongIncludesRepChar(candidate.name)); },
+                    true => { flaws.push(f); },
                     false => { return Err(flaws); },
                 }
             }
         }
 
         for candidate in set.short {
-            if candidate.ch == '-' {
+            if let Err(f) = ShortOption::validate(candidate.ch) {
                 match detail {
-                    true => { flaws.push(OptionFlaw::ShortDash); },
-                    false => { return Err(flaws); },
-                }
-            }
-            else if candidate.ch == '\u{FFFD}' {
-                match detail {
-                    true => { flaws.push(OptionFlaw::ShortRepChar); },
+                    true => { flaws.push(f); },
                     false => { return Err(flaws); },
                 }
             }

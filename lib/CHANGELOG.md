@@ -19,6 +19,7 @@
    now that the shorter name is freed up.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
+ * Improved internal validation checks to use shared logic for checking identifier flaws
  * Purged old deprecated stuff
  * Documentation:
     - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, thoroughly
