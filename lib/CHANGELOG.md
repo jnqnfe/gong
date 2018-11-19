@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.2.2 (November 19th, 2018)
 
  * Fixed incorrect order of license filenames mentioned in header blocks
  * Documentation: Fixed a minor oversight in usage documentation, where it was not updated
