@@ -89,7 +89,7 @@ pub struct Command<'r, 's: 'r> {
 
 /// Description of a validation issue within a command in a [`CommandSet`](struct.CommandSet.html)
 /// or [`CommandSetEx`](struct.CommandSetEx.html) set.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommandFlaw<'a> {
     /// Command name is an empty string
     EmptyName,
