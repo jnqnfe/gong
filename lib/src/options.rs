@@ -88,7 +88,7 @@ pub struct ShortOption {
 
 /// Description of a validation issue within an option in an [`OptionSet`](struct.OptionSet.html) or
 /// [`OptionSetEx`](struct.OptionSetEx.html) set.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum OptionFlaw<'a> {
     /// Long option name is empty string
     LongEmptyName,
