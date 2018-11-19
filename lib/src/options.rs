@@ -77,7 +77,7 @@ pub struct LongOption<'a> {
 }
 
 /// Description of an available short option
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ShortOption {
     /* NOTE: these have been left public to allow efficient static creation of options */
     /// Short option character
