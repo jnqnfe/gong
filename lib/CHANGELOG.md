@@ -16,8 +16,8 @@
    that takes the estimations instead.
  * Purged old deprecated stuff
  * Documentation:
-    - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, and
-      re-written it.
+    - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, thoroughly
+      re-written it, and added text regarding input arguments.
     - Some significant re-writing done in other places also, along with updating per above changes
     - Added a FAQ and feature list
 

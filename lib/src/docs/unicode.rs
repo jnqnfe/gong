@@ -14,6 +14,45 @@
 //!
 //! Note that no understanding of Unicode or UTF-8 is actually necessary to use it.
 //!
+//! # Input arguments
+//!
+//! The primary string types in Rust code (`&str` and `String`) use UTF-8 encoding and are expected
+//! to always hold valid UTF-8 sequences. At program boundary points however (where foreign code is
+//! interacted with, e.g. in *system calls*), strings may need to be converted from or to either C
+//! string form (typically nul-terminated), or OS platform string form. While Rust largely hides
+//! this from us, doing it in the background, it is something that we are exposed to when it comes
+//! to handling program environment data such as input arguments or in dealing with *environment
+//! variables*.
+//!
+//! Note, modern operating systems typically handle strings in a Unicode **based** form, though
+//! without enforcing all of the rules of valid Unicode sequences. Unix systems are UTF-8 based,
+//! while Windows is UTF-16 based. It is this fact that operating systems do not enforce all of the
+//! rules of valid Unicode sequences (and thus strings may not be fully valid UTF-8/16) which means
+//! that OS strings cannot always be converted directly to a perfectly valid (UTF-8) Rust string,
+//! and hence the need for the `OsString`/`OsStr` Rust types. Conversion to a Rust string may
+//! require “lossy” conversion, replacing invalid sequences with the *Unicode replacement
+//! character*.
+//!
+//! Getting back to input arguments, Rust provides two standard means of retrieving them:
+//!
+//!  - `std::env::args()`: This returns an `Iterator` that returns arguments in `String` form. This
+//!    actually uses `args_os()` in the background, and performs a *non-lossy* UTF-8 conversion. If
+//!    the string cannot be converted, it panics, killing your program with a string conversion
+//!    error.
+//!  - `std::env::args_os()`: This returns an `Iterator` that returns arguments in `OsString` form.
+//!    Capturing arguments in this form will always be successful.
+//!
+//! If a program is interested in accepting arguments representing filenames/paths then it should
+//! want to take such arguments in `OsString` form to ensure full compatibility, and thus should use
+//! the latter function.
+//!
+//! This library provides parsing methods that work with both forms.
+//!
+//! > **Note**: Command line arguments are strings, typically provided to a program (hidden behind
+//! > the scenes by Rust functions) in *nul-terminated* C string form. Since a zero (nul) is used to
+//! > mark the end of an argument string, arbitrary byte sequences cannot be provided to a program
+//! > this way; A file or `stdin` are two workable means of accepting such input.
+//!
 //! # Options and commands
 //!
 //! > **Note**: Available program *option* and *command* names/`char`s are always expected to be
@@ -76,5 +115,8 @@
 //! option*, while `-❤️` is a pair of matched/unmatched *short options*, one for the “black heart”
 //! `char` and one for the selector `char`.
 //!
+//! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
+//! [`Parser::parse_os`]: ../../parser/struct.Parser.html#method.parse_os
+//! [overview]: ../overview/index.html
 //! [commands]: ../commands/index.html
 //! [options]: ../options/index.html
