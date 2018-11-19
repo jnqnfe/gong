@@ -47,7 +47,7 @@ pub struct OptionSetEx<'s> {
 /// This is the non-“extendible” variant. Unlike its cousin `OptionSetEx`, this holds options lists
 /// as slice references rather than `Vec`s, and thus cannot be extended in size (hence no `add_*`
 /// methods). This is particularly useful in efficient creation of static/const option sets.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct OptionSet<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation of options */
     pub long: &'r [LongOption<'s>],
