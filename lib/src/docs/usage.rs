@@ -59,7 +59,6 @@
 //!     .add_short('❤')
 //!     .add_short('x')
 //!     .add_short_data('o'); // So does this one
-//! debug_assert!(opts.is_valid());
 //! ```
 //!
 //! An example of *option set* construction, “fixed” style, using macros:
@@ -84,9 +83,7 @@
 //!         gong_shortopt!('o', true),  // So does this one
 //!     ]
 //! );
-//! # fn main() {
-//! debug_assert!(OPTS.is_valid());
-//! # }
+//! # fn main() {}
 //! ```
 //!
 //! You are encouraged to care about efficiency and thus use the latter model wherever possible. In
