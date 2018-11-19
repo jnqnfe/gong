@@ -12,8 +12,11 @@
 ///
 /// Takes:
 ///
-/// 1. An array of long options
-/// 2. An array of short options
+/// 1. An optional array of long options, annotated with `@long`
+/// 2. An optional array of short options, annotated with `@short`
+///
+/// The macro, thanks to the required annotations, is flexible, allowing one, both, or neither set
+/// to be provided, and in either order.
 ///
 /// # Example
 ///
@@ -21,15 +24,21 @@
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_option_set!([ gong_longopt!("foo") ], [ gong_shortopt!('a') ]);
+/// let _ = gong_option_set!(
+///     @long [ gong_longopt!("foo") ],
+///     @short [ gong_shortopt!('a') ]
+/// );
 /// # }
 /// ```
 #[macro_export]
 macro_rules! gong_option_set {
-    ( $long:tt, $short:tt ) => {
+    ( @long $long:tt, @short $short:tt ) => {
         $crate::options::OptionSet { long: &$long, short: &$short }
     };
-    () => { gong_option_set!([], []) };
+    ( @short $short:tt, @long $long:tt ) => { gong_option_set!(@long $long, @short $short) };
+    ( @long $long:tt ) => { gong_option_set!(@long $long, @short []) };
+    ( @short $short:tt ) => { gong_option_set!(@long [], @short $short) };
+    () => { gong_option_set!(@long [], @short []) };
 }
 
 /// Constructs a [`CommandSet`](commands/struct.CommandSet.html)

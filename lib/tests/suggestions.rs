@@ -35,14 +35,12 @@ mod options {
                 expected_item!(3, UnknownLong, "but_i_digest"),
             ]
         );
-        let opts = gong_option_set!(
-            [
-                gong_longopt!("b"),
-                gong_longopt!("bar"),
-                gong_longopt!("help"),
-                gong_longopt!("but_i_digress"),
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            gong_longopt!("b"),
+            gong_longopt!("bar"),
+            gong_longopt!("help"),
+            gong_longopt!("but_i_digress"),
+        ]);
         assert!(opts.is_valid());
         let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
@@ -78,19 +76,17 @@ mod options {
                 expected_item!(2, UnknownLong, "fooa"),
             ]
         );
-        let opts = gong_option_set!(
-            [
-                // Putting best match for `bard` first
-                gong_longopt!("bar"),   //bart gets metric of 0.9416666666666667
-                gong_longopt!("bart"),  //bart gets metric of 0.8833333333333333
-                // Putting best match for `hellp` last
-                gong_longopt!("hello"), //hellp gets metric of 0.92
-                gong_longopt!("help"),  //hellp gets metric of 0.9533333333333333
-                // Equal matches for `fooa`
-                gong_longopt!("foob"),  //fooa gets metric of 0.8833333333333333
-                gong_longopt!("fooc"),  //fooa gets metric of 0.8833333333333333
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            // Putting best match for `bard` first
+            gong_longopt!("bar"),   //bart gets metric of 0.9416666666666667
+            gong_longopt!("bart"),  //bart gets metric of 0.8833333333333333
+            // Putting best match for `hellp` last
+            gong_longopt!("hello"), //hellp gets metric of 0.92
+            gong_longopt!("help"),  //hellp gets metric of 0.9533333333333333
+            // Equal matches for `fooa`
+            gong_longopt!("foob"),  //fooa gets metric of 0.8833333333333333
+            gong_longopt!("fooc"),  //fooa gets metric of 0.8833333333333333
+        ]);
         assert!(opts.is_valid());
         let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
@@ -130,14 +126,12 @@ mod commands {
             ]
         );
         let opts = gong_option_set!();
-        let cmds = gong_command_set!(
-            [
-                gong_command!("b"),
-                gong_command!("bar"),
-                gong_command!("but_i_digress"),
-                gong_command!("help"),
-            ]
-        );
+        let cmds = gong_command_set!([
+            gong_command!("b"),
+            gong_command!("bar"),
+            gong_command!("but_i_digress"),
+            gong_command!("help"),
+        ]);
         assert!(cmds.is_valid());
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
@@ -169,13 +163,11 @@ mod commands {
             ]
         );
         let opts = gong_option_set!();
-        let cmds = gong_command_set!(
-            [
-                // Putting best match for `bard` first
-                gong_command!("bar"),   //bart gets metric of 0.9416666666666667
-                gong_command!("bart"),  //bart gets metric of 0.8833333333333333
-            ]
-        );
+        let cmds = gong_command_set!([
+            // Putting best match for `bard` first
+            gong_command!("bar"),   //bart gets metric of 0.9416666666666667
+            gong_command!("bart"),  //bart gets metric of 0.8833333333333333
+        ]);
         assert!(cmds.is_valid());
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
@@ -207,13 +199,11 @@ mod commands {
             ]
         );
         let opts = gong_option_set!();
-        let cmds = gong_command_set!(
-            [
-                // Putting best match for `hellp` last
-                gong_command!("hello"), //hellp gets metric of 0.92
-                gong_command!("help"),  //hellp gets metric of 0.9533333333333333
-            ]
-        );
+        let cmds = gong_command_set!([
+            // Putting best match for `hellp` last
+            gong_command!("hello"), //hellp gets metric of 0.92
+            gong_command!("help"),  //hellp gets metric of 0.9533333333333333
+        ]);
         assert!(cmds.is_valid());
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
@@ -245,13 +235,11 @@ mod commands {
             ]
         );
         let opts = gong_option_set!();
-        let cmds = gong_command_set!(
-            [
-                // Equal matches for `fooa`
-                gong_command!("foob"), //fooa gets metric of 0.8833333333333333
-                gong_command!("fooc"), //fooa gets metric of 0.8833333333333333
-            ]
-        );
+        let cmds = gong_command_set!([
+            // Equal matches for `fooa`
+            gong_command!("foob"), //fooa gets metric of 0.8833333333333333
+            gong_command!("fooc"), //fooa gets metric of 0.8833333333333333
+        ]);
         assert!(cmds.is_valid());
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));

@@ -15,7 +15,7 @@ use gong::commands::CommandSet;
 
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = gong_option_set!(
-    [
+    @long [
         gong_longopt!("help"),
         gong_longopt!("foo"),
         gong_longopt!("version"),
@@ -25,7 +25,7 @@ static BASE_OPTS: OptionSet = gong_option_set!(
         gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
         gong_longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
     ],
-    [
+    @short [
         gong_shortopt!('h'),
         gong_shortopt!('❤'),
         gong_shortopt!('x'),
@@ -42,23 +42,22 @@ static BASE_CMDS: CommandSet = gong_command_set!([
     gong_command!("commit"),
     gong_command!("push",
         @opts &gong_option_set!(
-            [
+            @long [
                 gong_longopt!("help"),
                 gong_longopt!("tags"),
             ],
-            [
+            @short [
                 gong_shortopt!('h'),
             ]
         ),
         @cmds gong_command_set!([
             gong_command!("origin",
                 @opts &gong_option_set!(
-                    [
+                    @long [
                         gong_longopt!("help"),
                         gong_longopt!("force"),
                         gong_longopt!("foo"),
-                    ],
-                    []
+                    ]
                 )
             ),
             gong_command!("remote"),
@@ -66,18 +65,18 @@ static BASE_CMDS: CommandSet = gong_command_set!([
     ),
     gong_command!("branch",
         @opts &gong_option_set!(
-            [
+            @long [
                 gong_longopt!("help"),
                 gong_longopt!("sorted"),
             ],
-            [
+            @short [
                 gong_shortopt!('h'),
             ]
         ),
         @cmds gong_command_set!([
             gong_command!("add"),
             gong_command!("del",
-                @opts &gong_option_set!([], []),
+                @opts &gong_option_set!(),
                 @cmds gong_command_set!([
                     // Note, the names here are chosen to be different to those below for greater
                     // assurance that a match is made from this set, not the sibling below.
@@ -87,12 +86,11 @@ static BASE_CMDS: CommandSet = gong_command_set!([
             ),
             gong_command!("list",
                 @opts &gong_option_set!(
-                    [
+                    @long [
                         gong_longopt!("help"),
                         gong_longopt!("show-current"),
                         gong_longopt!("foo"),
-                    ],
-                    []
+                    ]
                 ),
                 @cmds gong_command_set!([
                     gong_command!("local"),

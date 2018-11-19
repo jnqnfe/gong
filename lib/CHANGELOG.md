@@ -17,6 +17,8 @@
    hangover.
  * Renamed the `gong_option_set_fixed` macro that constructs an `OptionSet` to `gong_option_set`,
    now that the shorter name is freed up.
+ * The option set creation macro now requires `@long` and/or `@short` annotations, which helps
+   bring clarity and neater usage for sets with only short options.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Improved internal validation checks to use shared logic for checking identifier flaws

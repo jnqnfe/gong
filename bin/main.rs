@@ -67,7 +67,7 @@ fn main() {
 
     // Set up valid option descriptions
     let opts = gong_option_set!(
-        [
+        @long [
             gong_longopt!("help"),
             gong_longopt!("foo"),
             gong_longopt!("version"),
@@ -75,7 +75,7 @@ fn main() {
             gong_longopt!("hah", true),
             gong_longopt!("ábc"),
         ],
-        [
+        @short [
             gong_shortopt!('h'),
             gong_shortopt!('❤'),
             gong_shortopt!('x'),

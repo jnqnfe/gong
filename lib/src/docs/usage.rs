@@ -69,14 +69,15 @@
 //! # extern crate gong;
 //! use gong::options::OptionSet;
 //! static OPTS: OptionSet = gong_option_set!(
-//!     [
+//!     @long [
 //!         gong_longopt!("help"),
 //!         gong_longopt!("foo"),
 //!         gong_longopt!("version"),
 //!         gong_longopt!("foobar"),
 //!         gong_longopt!("ábc"),
 //!         gong_longopt!("hah", true), // This one expects a data arg
-//!     ], [
+//!     ],
+//!     @short [
 //!         gong_shortopt!('h'),
 //!         gong_shortopt!('❤'),
 //!         gong_shortopt!('x'),

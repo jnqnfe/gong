@@ -61,18 +61,24 @@ mod options {
 
         let opt_set = gong_option_set!();
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set!([], []);
+        let opt_set = gong_option_set!(@long [], @short []);
+        assert!(opt_set.is_empty());
+        let opt_set = gong_option_set!(@short [], @long []);
+        assert!(opt_set.is_empty());
+        let opt_set = gong_option_set!(@long []);
+        assert!(opt_set.is_empty());
+        let opt_set = gong_option_set!(@short []);
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set!([ gong_longopt!("foo", false) ], []);
+        let opt_set = gong_option_set!(@long [ gong_longopt!("foo", false) ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set!([], [ gong_shortopt!('h', false) ]);
+        let opt_set = gong_option_set!(@short [ gong_shortopt!('h', false) ]);
         assert!(!opt_set.is_empty());
 
         let opt_set = gong_option_set!(
-            [ gong_longopt!("foo", false) ],
-            [ gong_shortopt!('h', false) ]
+            @long [ gong_longopt!("foo", false) ],
+            @short [ gong_shortopt!('h', false) ]
         );
         assert!(!opt_set.is_empty());
     }
@@ -154,13 +160,13 @@ mod options {
         const LONG_OPT_HELP: LongOption = gong_longopt!("help");
 
         let _ = gong_option_set!(
-            [
+            @long [
                 LONG_OPT_HELP,
                 gong_longopt!("foo", false),
                 gong_longopt!("bar", true),
                 gong_longopt!("foobar", false),
             ],
-            [
+            @short [
                 SHORT_OPT_H,
                 gong_shortopt!('o', true),
                 gong_shortopt!('a', false),
@@ -211,19 +217,19 @@ mod commands {
     fn set_types() {
         // Construction of commands/sub-commands to be used in test set
         let subcmd_opts = gong_option_set!(
-            [
+            @long [
                 gong_longopt!("manic"),
             ],
-            [
+            @short [
                 gong_shortopt!('m'),
             ]
         );
         let cmd_opts = gong_option_set!(
-            [
+            @long [
                 gong_longopt!("hammer"),
                 gong_longopt!("saw"),
             ],
-            [
+            @short [
                 gong_shortopt!('h'),
             ]
         );

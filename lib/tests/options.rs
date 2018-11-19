@@ -52,13 +52,11 @@ mod short_dash {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [], [
-                gong_shortopt!('a'),
-                gong_shortopt!('-'),
-                gong_shortopt!('b'),
-            ]
-        );
+        let opts = gong_option_set!(@short [
+            gong_shortopt!('a'),
+            gong_shortopt!('-'),
+            gong_shortopt!('b'),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortIsForbiddenChar('-') ]));
     }
@@ -96,7 +94,7 @@ mod short_dash {
         );
 
         // Using a custom **invalid** option set (short is '-')
-        let opts = gong_option_set!([], [ gong_shortopt!('-') ]);
+        let opts = gong_option_set!(@short [ gong_shortopt!('-') ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -133,13 +131,11 @@ mod short_rep_char {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [], [
-                gong_shortopt!('a'),
-                gong_shortopt!(REPLACEMENT_CHARACTER),
-                gong_shortopt!('b'),
-            ]
-        );
+        let opts = gong_option_set!(@short [
+            gong_shortopt!('a'),
+            gong_shortopt!(REPLACEMENT_CHARACTER),
+            gong_shortopt!('b'),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::ShortIsForbiddenChar(REPLACEMENT_CHARACTER)
@@ -174,13 +170,11 @@ mod long_no_name {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [
-                gong_longopt!("foo"),
-                gong_longopt!(""),
-                gong_longopt!("bar"),
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            gong_longopt!("foo"),
+            gong_longopt!(""),
+            gong_longopt!("bar"),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmptyName ]));
     }
@@ -215,13 +209,11 @@ mod long_equals {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [
-                gong_longopt!("foo"),
-                gong_longopt!("a=b"),
-                gong_longopt!("bar"),
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            gong_longopt!("foo"),
+            gong_longopt!("a=b"),
+            gong_longopt!("bar"),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongNameHasForbiddenChar("a=b", '=') ]));
     }
@@ -249,7 +241,7 @@ mod long_equals {
         );
 
         // Using a custom **invalid** option set (long name contains `=`)
-        let opts = gong_option_set!([ gong_longopt!("a=b") ], []);
+        let opts = gong_option_set!(@long [ gong_longopt!("a=b") ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -286,13 +278,11 @@ mod long_rep_char {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [
-                gong_longopt!("foo"),
-                gong_longopt!("a\u{FFFD}b"),
-                gong_longopt!("bar"),
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            gong_longopt!("foo"),
+            gong_longopt!("a\u{FFFD}b"),
+            gong_longopt!("bar"),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::LongNameHasForbiddenChar("a\u{FFFD}b", REPLACEMENT_CHARACTER)
@@ -308,15 +298,13 @@ mod multi {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(
-            [
-                gong_longopt!("foo"),
-                gong_longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws
-                gong_longopt!("w=x=y\u{FFFD}z"), // Same
-                gong_longopt!("foo\u{FFFD}bar"), // Single flaw, without the equals flaw
-                gong_longopt!("bar"),
-            ], []
-        );
+        let opts = gong_option_set!(@long [
+            gong_longopt!("foo"),
+            gong_longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws
+            gong_longopt!("w=x=y\u{FFFD}z"), // Same
+            gong_longopt!("foo\u{FFFD}bar"), // Single flaw, without the equals flaw
+            gong_longopt!("bar"),
+        ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             /// Only the first flaw identified of each option is returned
