@@ -66,7 +66,7 @@ fn main() {
     config::init();
 
     // Set up valid option descriptions
-    let opts = gong_option_set_fixed!(
+    let opts = gong_option_set!(
         [
             gong_longopt!("help"),
             gong_longopt!("foo"),

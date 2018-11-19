@@ -15,6 +15,8 @@
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.
+ * Renamed the `gong_option_set_fixed` macro that constructs an `OptionSet` to `gong_option_set`,
+   now that the shorter name is freed up.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Purged old deprecated stuff

@@ -35,7 +35,7 @@ mod options {
                 expected_item!(3, UnknownLong, "but_i_digest"),
             ]
         );
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("b"),
                 gong_longopt!("bar"),
@@ -78,7 +78,7 @@ mod options {
                 expected_item!(2, UnknownLong, "fooa"),
             ]
         );
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 // Putting best match for `bard` first
                 gong_longopt!("bar"),   //bart gets metric of 0.9416666666666667
@@ -129,8 +129,8 @@ mod commands {
                 expected_item!(0, NonOption, "but_i_digest"),
             ]
         );
-        let opts = gong_option_set_fixed!();
-        let cmds = gong_command_set_fixed!(
+        let opts = gong_option_set!();
+        let cmds = gong_command_set!(
             [
                 gong_command!("b"),
                 gong_command!("bar"),
@@ -168,8 +168,8 @@ mod commands {
                 expected_item!(0, NonOption, "bard"),
             ]
         );
-        let opts = gong_option_set_fixed!();
-        let cmds = gong_command_set_fixed!(
+        let opts = gong_option_set!();
+        let cmds = gong_command_set!(
             [
                 // Putting best match for `bard` first
                 gong_command!("bar"),   //bart gets metric of 0.9416666666666667
@@ -206,8 +206,8 @@ mod commands {
                 expected_item!(0, NonOption, "hellp"),
             ]
         );
-        let opts = gong_option_set_fixed!();
-        let cmds = gong_command_set_fixed!(
+        let opts = gong_option_set!();
+        let cmds = gong_command_set!(
             [
                 // Putting best match for `hellp` last
                 gong_command!("hello"), //hellp gets metric of 0.92
@@ -244,8 +244,8 @@ mod commands {
                 expected_item!(0, NonOption, "fooa"),
             ]
         );
-        let opts = gong_option_set_fixed!();
-        let cmds = gong_command_set_fixed!(
+        let opts = gong_option_set!();
+        let cmds = gong_command_set!(
             [
                 // Equal matches for `fooa`
                 gong_command!("foob"), //fooa gets metric of 0.8833333333333333

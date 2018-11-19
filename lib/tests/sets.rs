@@ -59,18 +59,18 @@ mod options {
         let opt_set = OptionSet::default();
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set_fixed!();
+        let opt_set = gong_option_set!();
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set_fixed!([], []);
+        let opt_set = gong_option_set!([], []);
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set_fixed!([ gong_longopt!("foo", false) ], []);
+        let opt_set = gong_option_set!([ gong_longopt!("foo", false) ], []);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set_fixed!([], [ gong_shortopt!('h', false) ]);
+        let opt_set = gong_option_set!([], [ gong_shortopt!('h', false) ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set_fixed!(
+        let opt_set = gong_option_set!(
             [ gong_longopt!("foo", false) ],
             [ gong_shortopt!('h', false) ]
         );
@@ -153,7 +153,7 @@ mod options {
         const SHORT_OPT_H: ShortOption = gong_shortopt!('h');
         const LONG_OPT_HELP: LongOption = gong_longopt!("help");
 
-        let _ = gong_option_set_fixed!(
+        let _ = gong_option_set!(
             [
                 LONG_OPT_HELP,
                 gong_longopt!("foo", false),
@@ -197,12 +197,12 @@ mod commands {
         let cmd_set = CommandSet::default();
         assert!(cmd_set.is_empty());
 
-        let cmd_set = gong_command_set_fixed!();
+        let cmd_set = gong_command_set!();
         assert!(cmd_set.is_empty());
-        let cmd_set = gong_command_set_fixed!([]);
+        let cmd_set = gong_command_set!([]);
         assert!(cmd_set.is_empty());
 
-        let cmd_set = gong_command_set_fixed!([ gong_command!("foo") ]);
+        let cmd_set = gong_command_set!([ gong_command!("foo") ]);
         assert!(!cmd_set.is_empty());
     }
 
@@ -210,7 +210,7 @@ mod commands {
     #[test]
     fn set_types() {
         // Construction of commands/sub-commands to be used in test set
-        let subcmd_opts = gong_option_set_fixed!(
+        let subcmd_opts = gong_option_set!(
             [
                 gong_longopt!("manic"),
             ],
@@ -218,7 +218,7 @@ mod commands {
                 gong_shortopt!('m'),
             ]
         );
-        let cmd_opts = gong_option_set_fixed!(
+        let cmd_opts = gong_option_set!(
             [
                 gong_longopt!("hammer"),
                 gong_longopt!("saw"),
@@ -227,7 +227,7 @@ mod commands {
                 gong_shortopt!('h'),
             ]
         );
-        let cmd_subcmds = gong_command_set_fixed!(
+        let cmd_subcmds = gong_command_set!(
             [
                 gong_command!("build", @opts &subcmd_opts),
                 gong_command!("destroy", @opts &subcmd_opts),

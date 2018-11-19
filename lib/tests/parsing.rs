@@ -358,7 +358,7 @@ mod abbreviations {
                 expected_item!(0, Long, "foo"),
             ]
         );
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 // Multiple options that “foo” will match as an abbreviation for before getting to
                 // the exact match.
@@ -930,12 +930,12 @@ mod commands {
     /// Command names simply should not be prefixed like this.
     #[test]
     fn name_like_option() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("foo"),
             ], []
         );
-        let cmds = gong_command_set_fixed!([
+        let cmds = gong_command_set!([
             gong_command!("--foo"),
             gong_command!("--bar"),
         ]);

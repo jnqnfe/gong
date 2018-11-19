@@ -40,7 +40,7 @@ mod no_name {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let cmds = gong_command_set_fixed!([
+        let cmds = gong_command_set!([
             gong_command!("foo"),
             gong_command!(""),
             gong_command!("bar"),
@@ -71,7 +71,7 @@ mod rep_char {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let cmds = gong_command_set_fixed!([
+        let cmds = gong_command_set!([
             gong_command!("foo"),
             gong_command!("a\u{FFFD}b"),
             gong_command!("bar"),

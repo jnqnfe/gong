@@ -52,7 +52,7 @@ mod short_dash {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [], [
                 gong_shortopt!('a'),
                 gong_shortopt!('-'),
@@ -96,7 +96,7 @@ mod short_dash {
         );
 
         // Using a custom **invalid** option set (short is '-')
-        let opts = gong_option_set_fixed!([], [ gong_shortopt!('-') ]);
+        let opts = gong_option_set!([], [ gong_shortopt!('-') ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -133,7 +133,7 @@ mod short_rep_char {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [], [
                 gong_shortopt!('a'),
                 gong_shortopt!(REPLACEMENT_CHARACTER),
@@ -172,7 +172,7 @@ mod long_no_name {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("foo"),
                 gong_longopt!(""),
@@ -213,7 +213,7 @@ mod long_equals {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("foo"),
                 gong_longopt!("a=b"),
@@ -247,7 +247,7 @@ mod long_equals {
         );
 
         // Using a custom **invalid** option set (long name contains `=`)
-        let opts = gong_option_set_fixed!([ gong_longopt!("a=b") ], []);
+        let opts = gong_option_set!([ gong_longopt!("a=b") ], []);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -283,7 +283,7 @@ mod long_rep_char {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("foo"),
                 gong_longopt!("a\u{FFFD}b"),
@@ -302,7 +302,7 @@ mod multi {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set_fixed!(
+        let opts = gong_option_set!(
             [
                 gong_longopt!("foo"),
                 gong_longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws

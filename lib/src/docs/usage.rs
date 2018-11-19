@@ -68,7 +68,7 @@
 //! # #[macro_use]
 //! # extern crate gong;
 //! use gong::options::OptionSet;
-//! static OPTS: OptionSet = gong_option_set_fixed!(
+//! static OPTS: OptionSet = gong_option_set!(
 //!     [
 //!         gong_longopt!("help"),
 //!         gong_longopt!("foo"),
