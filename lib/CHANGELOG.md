@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.1.3 (November 19th, 2018)
 
  * Fixed incorrect order of license filenames mentioned in header blocks
  * Documentation: Fixed broken text. An apparent bug in an one of my development tools corrupted a
