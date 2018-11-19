@@ -44,7 +44,7 @@ pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
 ///
 /// Holds the option set and command set used for parsing, along with parser settings, and provides
 /// the parse method for parsing an argument set.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Parser<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
