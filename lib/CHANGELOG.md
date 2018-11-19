@@ -1,3 +1,7 @@
+# <unreleased>
+
+ * Fixed incorrect order of license filenames mentioned in header blocks
+
 # 1.0.4 (October 26th, 2018)
 
  * **BUGFIX:** Fixed a bug with abbreviated match ambiguity.
