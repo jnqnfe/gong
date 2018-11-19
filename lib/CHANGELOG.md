@@ -1,5 +1,6 @@
 # <unreleased>
 
+ * Fixed incorrect order of license filenames mentioned in header blocks
  * Documentation: Fixed a minor oversight in usage documentation, where it was not updated
    correctly.
  * Documentation: Fixed broken text. An apparent bug in an one of my development tools corrupted a
