@@ -54,7 +54,7 @@ impl<'r, 's: 'r> Default for CommandSetEx<'r, 's> {
 /// list as a slice reference rather than a `Vec`, and thus cannot be extended in size (hence no
 /// `add_*` methods). This is particularly useful in efficient creation of static/const command
 /// sets.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct CommandSet<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation of commands */
     pub commands: &'r [Command<'r, 's>],
@@ -76,7 +76,7 @@ impl<'r, 's: 'r> PartialEq<CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
 ///
 /// The `options` and `sub_commands` attributes are used to specify the sets to be used for parsing
 /// arguments that follow use of a specific command in an argument list.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Command<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation of options */
     /// Command name
