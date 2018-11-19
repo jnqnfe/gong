@@ -121,6 +121,7 @@
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
 //! let parser = Parser::new(&opts, Some(&cmds));
+//! debug_assert!(parser.is_valid());
 //! ```
 //!
 //! Note that the [`Parser`] only accepts [`OptionSet`] and [`CommandSet`] types, not the extendible
@@ -134,6 +135,7 @@
 //! let opts_fixed = opts.as_fixed();
 //! let cmds_fixed = cmds.as_fixed();
 //! let parser = Parser::new(&opts_fixed, Some(&cmds_fixed));
+//! debug_assert!(parser.is_valid());
 //! ```
 //!
 //! If you want to change any parser settings, e.g. choose which *option* mode (*standard* or
