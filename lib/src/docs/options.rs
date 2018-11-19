@@ -10,24 +10,42 @@
 
 //! Documentation: Option support
 //!
-//! This crate has been designed around standard option conventions, and can parse an argument list
-//! in two different common styles:
-//!
-//! - Standard: supporting traditional *long* and *short* options
-//! - Alternate: supporting *long options* only, with a single-dash prefix
+//! This crate has been designed around standard *option* conventions.
 //!
 //! Basic feature support is on par with the C `getopt_long` function. (See the [overview] section
 //! for mention of the small differences).
 //!
-//! If you don’t know what the terms *long* and *short* mean when referring to command line options,
-//! these come from the fact that *short* options are identified and signalled with single
-//! *characters* only (e.g. `h` traditionally is used to request help output and `V` for version
-//! number output), while *long* options use a *name* (e.g. `help` or `version`, respectively).
+//! # Option styles
 //!
-//! # Standard style (default)
+//! Firstly, if you don’t know what the terms *long* and *short* mean when referring to command line
+//! *options*, these come from the fact that *short options* are identified and signalled with
+//! single *characters* only (e.g. `h` traditionally is used to request help output and `V` for
+//! version number output), while *long options* use a *name* (e.g. `help` or `version`,
+//! respectively).
 //!
-//! This mode supports traditional *long* and *short* options. The fundamental argument parsing
-//! logic follows this model:
+//! There are two different common *option* styles this library can parse, which we refer to in this
+//! library as the *option* parsing “mode”:
+//!
+//! - Standard mode (default) supports traditional *long* and *short* *options*, where *long
+//!   options* use a “double-dash” (`--`) prefix (e.g. `--help`), and *short option sets* use a
+//!   single dash (e.g. `-h`).
+//! - Alternate mode supports *long options* only (no *short options*), with a single dash prefix
+//!   (i.e. `-help` rather than `--help`). Some people simply prefer this style, and support for it
+//!   was both trivial to add and involves very little overhead.
+//!
+//! > **Note:** *Short options* can still be added to an *option set* when using this mode, it will
+//! > still pass as valid; they will simply be ignored when performing matching.
+//!
+//! Which style an argument list will be parsed with must be specified in the parser settings, at
+//! some point prior to parsing.
+//!
+//! Note, from this point on, the below discussion is written towards *standard* mode conventions,
+//! though everything applies equally to *alternate* mode, only with a few obvious details adjusted
+//! and stuff relating to *short options* ignored, as applicable.
+//!
+//! # Basic parsing model
+//!
+//! The fundamental argument parsing logic follows this model:
 //!
 //!  - An argument either **not** starting with a dash (`-`), or consisting only of a single dash,
 //!    is not an *option*, it is a *non-option* (aka *positional*) argument. A *non-option* argument
@@ -43,25 +61,28 @@
 //!    (More than one *short option* can be specified in a single argument). Note that a dash (`-`)
 //!    itself is not permitted to be a valid program *short option* (it would be misinterpreted in
 //!    some cases). Note also that interpretation of what consists of a “character” may surprise you
-//!    as actually being a complicated matter, as per the dedicated “unicode” related discussion
-//!    later.
+//!    as actually being a complicated matter, as per the dedicated [unicode related
+//!    discussion][unicode].
 //!
-//! parsing of each argument may alter how one or more subsequent arguments are interpreted,
+//! Naturally, for *alternate* mode *option* style, ignore the discussion of *short options*, and
+//! remember that only a single dash is used as the prefix for *long options*.
+//!
+//! Parsing of each argument may alter how one or more subsequent arguments are interpreted,
 //! deviating from the above. Specifically this applies to the *early terminator* and where an
-//! option is recognised as an option that takes a *data value*, as discussed below.
+//! *option* is recognised as an *option* that takes a *data value*, as discussed below.
 //!
-//! Note, option name matching is case-sensitive.
+//! Note, *option* matching is case-sensitive.
 //!
-//! ## Data values
+//! # Data values
 //!
-//! *Long* and *short* options can be configured as either “flag” style (used to signal a condition)
-//! or as “data taking” style, accepting an accompanying single *data value*. *Data values* for both
-//! *long* and *short* options can either be supplied within the same argument as the option itself
-//! (“in-same-argument”), or as the next argument, in which case that will thus be consumed as the
-//! option’s *data value* and otherwise ignored.
+//! *Long* and *short* *options* can be configured as either “flag” style (used to signal a
+//! condition) or as “data taking” style, accepting an accompanying single *data value*.
+//! *Data values* for both *long* and *short* *options* can either be supplied within the same
+//! argument as the *option* itself (“in-same-argument”), or as the next argument, in which case
+//! that will thus be consumed as the *option*’s *data value* and otherwise ignored.
 //!
 //!  - For *long options*, “in-next-argument” style looks like `--foo bar`, while “in-same-argument”
-//!    style uses an equals (`=`) character between the option name and value components, e.g.
+//!    style uses an equals (`=`) character between the *option name* and *value* components, e.g.
 //!    `--foo=bar`. Note that a program’s “available” *long options* are forbidden from containing
 //!    an equals (`=`) character in their name as this would otherwise introduce significant
 //!    problems.
@@ -100,7 +121,7 @@
 //!       reported.
 //!     - If a match is found that **does** take a *data value*, then one needs to be found. If this
 //!       character is **not** the last in the set, then the remaining portion of the argument is
-//!       consumed as this option’s *data value* (e.g. if `o` is such an option then in `-oarg`,
+//!       consumed as this *option*’s *data value* (e.g. if `o` is such an *option* then in `-oarg`,
 //!       `arg` is it’s *data value*). If it is the last character in the set, then the next
 //!       argument is consumed (e.g. `-o arg` → `arg`). If it is the last in the set and there is no
 //!       next argument, then the *data value* is reported as missing.
@@ -109,7 +130,7 @@
 //!    last in that group can be one that takes a *data value*, and users must be careful when
 //!    constructing such groups.
 //!
-//! ## Early terminator
+//! # Early terminator
 //!
 //! An *early terminator* is an argument which consists entirely of two dashes only (`--`). It is
 //! a special argument used to control interpretation of arguments. More specifically, it is used to
@@ -132,27 +153,17 @@
 //! Thus, `cargo` here in “run” mode passes along `--foo` and `--bar` to the project program it
 //! runs. This is equivalent to running `<my-prog> --foo --bar` directly. Without the *early
 //! terminator*, `cargo` would have seen `--foo` and `--bar` to be *options* and thus tried to
-//! consume them for itself (resulting in unrecognised option errors).
+//! consume them for itself (resulting in unrecognised *option* errors).
 //!
 //! ```text
 //! cargo run --release -- --foo --bar
 //! ```
 //!
-//! # Alternate style
-//!
-//! This mode is almost identical to *standard* style. The only difference is that *short options*
-//! are **not** supported, and *long options* use a single dash (`-`) as a prefix rather than two,
-//! i.e. `-help` rather than `--help`. Some people simply prefer this style, and support for it was
-//! both trivial to add and involves very little overhead.
-//!
-//! **Note:** *Short options* can still be added to an option set when using this mode, it will
-//! still pass as valid; they will simply be ignored when performing matching.
-//!
 //! # Abbreviated long option name matching
 //!
-//! Abbreviated *long option* name matching is a feature whereby an abbreviated form of a
-//! *long option’s* name can be used and matched successfully to the option, so long as the
-//! abbreviation uniquely matches a single *long option*.
+//! Abbreviated *long option* name matching is a feature whereby an abbreviated form of a *long
+//! option’s* name can be used and matched successfully to the *option*, so long as the abbreviation
+//! uniquely matches a single *long option*.
 //!
 //! This is supported and is optional. It is enabled by default, but can be opted out of when
 //! parsing, if not desired, through a parser setting.
@@ -165,7 +176,7 @@
 //!
 //! If the feature is enabled, and `foo` and `foobar` are available *long options*, then:
 //!
-//!  - `--foo` and `--foobar` are exact matches for the available `foo` and `foobar` options
+//!  - `--foo` and `--foobar` are exact matches for the available `foo` and `foobar` *options*
 //!    respectively.
 //!  - `--f` and `--fo` are invalid as being ambiguous (and reported as such by the parser).
 //!  - `--foob` and `--fooba` both uniquely match `foobar` and so are valid.
@@ -174,3 +185,4 @@
 //!
 //! [overview]: ../overview/index.html
 //! [commands]: ../commands/index.html
+//! [unicode]: ../unicode/index.html
