@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.0.5 (November 19th, 2018)
 
  * Fixed incorrect order of license filenames mentioned in header blocks
 
