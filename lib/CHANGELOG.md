@@ -23,7 +23,7 @@
  * Modified option flaw enum to rename some variants and to make invalid character related ones
    generic, able to hold the invalid `char` found, and thus future proof for any further addition of
    additional forbidden `char`s.
- * Derived `Copy` for `ShortOption`
+ * Derived `Copy` for `ShortOption` and `LongOption`
  * Purged old deprecated stuff
  * Documentation:
     - Moved the UTF-8 discussion in the `options` chapter into a new `unicode` chapter, thoroughly

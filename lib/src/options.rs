@@ -67,7 +67,7 @@ impl<'r, 's: 'r> PartialEq<OptionSetEx<'s>> for OptionSet<'r, 's> {
 }
 
 /// Description of an available long option
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct LongOption<'a> {
     /* NOTE: these have been left public to allow efficient static creation of options */
     /// Long option name, excluding the `--` prefix
