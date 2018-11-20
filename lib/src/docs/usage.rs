@@ -109,7 +109,7 @@
 //! Some basic validation is also performed directly by the `add_*` methods on [`OptionSetEx`], but
 //! this does not cover checking for duplicates.
 //!
-//! **Note**: With respect to what is or is not a duplicate, only the name/`char` matters; the
+//! **Note:** With respect to what is or is not a duplicate, only the name/`char` matters; the
 //! `expects_data` attribute makes no difference.
 //!
 //! # Step #2: Gather arguments to be processed
@@ -131,7 +131,7 @@
 //! let args: Vec<String> = std::env::args().skip(1).collect();
 //! ```
 //!
-//! **Note**: Of course you do not have to provide the real program args, you can provide any set of
+//! **Note:** Of course you do not have to provide the real program args, you can provide any set of
 //! `String` objects, and you can even of course take the real set and modify it first if you wish.
 //!
 //! # Step #3: Processing
@@ -167,7 +167,7 @@
 //! applicable with *data values* as to whether the data arg was located in the same argument or the
 //! next.
 //!
-//! **Note**: some item variants that may be returned in the [`Analysis`] struct hold `&str`
+//! **Note:** some item variants that may be returned in the [`Analysis`] struct hold `&str`
 //! references to strings that were provided in the argument and option data provided to `process`.
 //! This is done for efficiency. Beware of this with respect to lifetimes.
 //!

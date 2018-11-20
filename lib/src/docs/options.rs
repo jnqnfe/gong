@@ -123,7 +123,7 @@
 //! than two, i.e. `-help` rather than `--help`. Some people simply prefer this style, and support
 //! for it was both trivial to add and involves very little overhead.
 //!
-//! **Note**: *Short options* can still be added to the option set in this mode, and it will still
+//! **Note:** *Short options* can still be added to the option set in this mode, and it will still
 //! pass as valid; they will simply be ignored when performing matching.
 //!
 //! # Abbreviated long option name matching
