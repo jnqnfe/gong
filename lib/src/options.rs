@@ -22,9 +22,9 @@ use super::analysis::Settings;
 /// This is the "extendible" variant which uses `Vec`s to hold the option lists and thus is flexible
 /// in allowing addition of options, and may re-allocate as necessary.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct OptionSetEx<'a> {
+pub struct OptionSetEx<'s> {
     /* NOTE: these have been left public to allow creation via macros */
-    pub long: Vec<LongOption<'a>>,
+    pub long: Vec<LongOption<'s>>,
     pub short: Vec<ShortOption>,
 }
 
@@ -36,20 +36,20 @@ pub struct OptionSetEx<'a> {
 /// as slice references rather than `Vec`s, and thus cannot be extended in size (hence no `add_*`
 /// methods). This is particularly useful in efficient creation of static/const option sets.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct OptionSet<'r, 'a: 'r> {
+pub struct OptionSet<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation of options */
-    pub long: &'r [LongOption<'a>],
+    pub long: &'r [LongOption<'s>],
     pub short: &'r [ShortOption],
 }
 
-impl<'r, 'a: 'r> PartialEq<OptionSet<'r, 'a>> for OptionSetEx<'a> {
-    fn eq(&self, rhs: &OptionSet<'r, 'a>) -> bool {
+impl<'r, 's: 'r> PartialEq<OptionSet<'r, 's>> for OptionSetEx<'s> {
+    fn eq(&self, rhs: &OptionSet<'r, 's>) -> bool {
         rhs.eq(&self.as_fixed())
     }
 }
 
-impl<'r, 'a: 'r> PartialEq<OptionSetEx<'a>> for OptionSet<'r, 'a> {
-    fn eq(&self, rhs: &OptionSetEx<'a>) -> bool {
+impl<'r, 's: 'r> PartialEq<OptionSetEx<'s>> for OptionSet<'r, 's> {
+    fn eq(&self, rhs: &OptionSetEx<'s>) -> bool {
         self.eq(&rhs.as_fixed())
     }
 }
@@ -90,7 +90,7 @@ pub enum OptionFlaw<'a> {
     LongDup(&'a str),
 }
 
-impl<'a> OptionSetEx<'a> {
+impl<'s> OptionSetEx<'s> {
     /// Create a new object
     ///
     /// You can alternatively use [`with_capacity`](#method.with_capacity) for more efficient `Vec`
@@ -112,7 +112,7 @@ impl<'a> OptionSetEx<'a> {
     }
 
     /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices.
-    pub fn as_fixed(&self) -> OptionSet<'_, 'a> {
+    pub fn as_fixed(&self) -> OptionSet<'_, 's> {
         OptionSet {
             long: &self.long[..],
             short: &self.short[..],
@@ -127,7 +127,7 @@ impl<'a> OptionSetEx<'a> {
     /// Add a long option
     ///
     /// Panics (debug only) on invalid name.
-    pub fn add_long(&mut self, name: &'a str) -> &mut Self {
+    pub fn add_long(&mut self, name: &'s str) -> &mut Self {
         self.long.push(LongOption::new(name, false));
         self
     }
@@ -143,7 +143,7 @@ impl<'a> OptionSetEx<'a> {
     /// Add a long option that expects data
     ///
     /// Panics (debug only) on invalid name.
-    pub fn add_long_data(&mut self, name: &'a str) -> &mut Self {
+    pub fn add_long_data(&mut self, name: &'s str) -> &mut Self {
         self.long.push(LongOption::new(name, true));
         self
     }
@@ -157,7 +157,7 @@ impl<'a> OptionSetEx<'a> {
     }
 
     /// Add an existing (ready-made) long option
-    pub fn add_existing_long(&mut self, long: LongOption<'a>) -> &mut Self {
+    pub fn add_existing_long(&mut self, long: LongOption<'s>) -> &mut Self {
         self.long.push(long);
         self
     }
@@ -180,7 +180,7 @@ impl<'a> OptionSetEx<'a> {
 
     /// Checks validity of option set, returning details of any problems
     #[inline(always)]
-    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'a>>> {
+    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(&self.as_fixed(), true)
     }
 
@@ -191,8 +191,8 @@ impl<'a> OptionSetEx<'a> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    pub fn process<T>(&self, args: &'a [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'a>
+    pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'s>
         where T: AsRef<str>
     {
         super::engine::process(args, &self.as_fixed(), settings)
@@ -210,16 +210,16 @@ impl<'a> OptionSetEx<'a> {
     /// with the highest metric.
     #[cfg(feature = "suggestions")]
     #[inline]
-    pub fn suggest(&self, unknown: &str) -> Option<&'a str> {
+    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
         self.as_fixed().suggest(unknown)
     }
 }
 
-impl<'r, 'a: 'r> OptionSet<'r, 'a> {
+impl<'r, 's: 'r> OptionSet<'r, 's> {
     /// Creates an “extendible” copy of `self`
     ///
     /// This duplicates the options in `self` into an [`OptionSetEx`](struct.OptionSetEx.html).
-    pub fn to_extendible(&self) -> OptionSetEx<'a> {
+    pub fn to_extendible(&self) -> OptionSetEx<'s> {
         OptionSetEx {
             long: self.long.iter().cloned().collect(),
             short: self.short.iter().cloned().collect(),
@@ -243,7 +243,7 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
 
     /// Checks validity of option set, returning details of any problems
     #[inline(always)]
-    pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'a>>> {
+    pub fn validate(&'r self) -> Result<(), Vec<OptionFlaw<'s>>> {
         validation::validate_set(self, true)
     }
 
@@ -254,8 +254,8 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
-    pub fn process<T>(&self, args: &'a [T], settings: Option<&Settings>)
-        -> super::analysis::Analysis<'a>
+    pub fn process<T>(&self, args: &'s [T], settings: Option<&Settings>)
+        -> super::analysis::Analysis<'s>
         where T: AsRef<str>
     {
         super::engine::process(args, self, settings)
@@ -272,7 +272,7 @@ impl<'r, 'a: 'r> OptionSet<'r, 'a> {
     /// out any options with a metric calculated as less than `0.8`, and returns the first option
     /// with the highest metric.
     #[cfg(feature = "suggestions")]
-    pub fn suggest(&self, unknown: &str) -> Option<&'a str> {
+    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
         let filter = 0.8;
         let mut best_metric: f64 = filter;
         let mut best: Option<&str> = None;
@@ -316,8 +316,8 @@ mod validation {
     ///
     /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
     /// useful for quick `is_valid` checks. Otherwise builds up a complete list of flaws.
-    pub fn validate_set<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, detail: bool
-        ) -> Result<(), Vec<OptionFlaw<'a>>>
+    pub fn validate_set<'r, 's: 'r>(set: &OptionSet<'r, 's>, detail: bool
+        ) -> Result<(), Vec<OptionFlaw<'s>>>
     {
         let mut flaws = Vec::new();
 
@@ -361,7 +361,7 @@ mod validation {
         }
     }
 
-    fn find_duplicates_short<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, flaws: &mut Vec<OptionFlaw<'a>>,
+    fn find_duplicates_short<'r, 's: 'r>(set: &OptionSet<'r, 's>, flaws: &mut Vec<OptionFlaw<'s>>,
         detail: bool, found: &mut bool)
     {
         let opts = set.short;
@@ -387,11 +387,11 @@ mod validation {
         }
     }
 
-    fn find_duplicates_long<'r, 'a: 'r>(set: &OptionSet<'r, 'a>, flaws: &mut Vec<OptionFlaw<'a>>,
+    fn find_duplicates_long<'r, 's: 'r>(set: &OptionSet<'r, 's>, flaws: &mut Vec<OptionFlaw<'s>>,
         detail: bool, found: &mut bool)
     {
         let opts = set.long;
-        let mut checked: Vec<&'a str> = Vec::with_capacity(opts.len());
+        let mut checked: Vec<&'s str> = Vec::with_capacity(opts.len());
 
         let mut duplicates = Vec::new();
         for long in opts {

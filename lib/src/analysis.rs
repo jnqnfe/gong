@@ -51,9 +51,9 @@ impl Default for OptionsMode {
 
 /// Analysis of processing arguments against an option set
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Analysis<'a> {
+pub struct Analysis<'s> {
     /// Set of items describing what was found
-    pub items: Vec<ItemClass<'a>>,
+    pub items: Vec<ItemClass<'s>>,
     /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
     pub error: bool,
     /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
@@ -84,13 +84,13 @@ pub struct Analysis<'a> {
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`NonOption`]: enum.Item.html#variant.NonOption
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ItemClass<'a> {
+pub enum ItemClass<'s> {
     /// Non-problematic item
-    Ok(Item<'a>),
+    Ok(Item<'s>),
     /// Warn-level item
-    Warn(ItemW<'a>),
+    Warn(ItemW<'s>),
     /// Error-level item
-    Err(ItemE<'a>),
+    Err(ItemE<'s>),
 }
 
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
@@ -166,7 +166,7 @@ impl Settings {
     }
 }
 
-impl<'a> Analysis<'a> {
+impl<'s> Analysis<'s> {
     /// Create a new result set (mostly only useful internally)
     pub fn new(size_guess: usize) -> Self {
         Self {
@@ -178,7 +178,7 @@ impl<'a> Analysis<'a> {
 
     /// Add a new item to the analysis (mostly only useful internally)
     #[inline]
-    pub fn add(&mut self, item: ItemClass<'a>) {
+    pub fn add(&mut self, item: ItemClass<'s>) {
         self.items.push(item);
     }
 }

@@ -34,10 +34,10 @@ enum ArgTypeBasic<'a> {
 ///
 /// Expects available `options` data to have already been validated. (See
 /// [`OptionSet::is_valid`](options/struct.OptionSet.html#method.is_valid)).
-pub(crate) fn process<'o, 'r, 'a, A>(args: &'a [A], options: &'o OptionSet<'r, 'a>,
-    settings: Option<&Settings>) -> Analysis<'a>
-    where A: 'a + AsRef<str>,
-          'r: 'o, 'a: 'r
+pub(crate) fn process<'o, 'r, 's, A>(args: &'s [A], options: &'o OptionSet<'r, 's>,
+    settings: Option<&Settings>) -> Analysis<'s>
+    where A: 's + AsRef<str>,
+          'r: 'o, 's: 'r
 {
     /* NOTE: We deliberately do not perform validation of the provided `options` data within this
      * function; the burden to do so is left to the user. The choice to not do this is for reasons
