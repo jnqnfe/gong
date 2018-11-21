@@ -19,17 +19,11 @@ use super::analysis::Settings;
 ///
 /// This is the "extendible" variant which uses `Vec`s to hold the option lists and thus is flexible
 /// in allowing addition of options, and may re-allocate as necessary.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct OptionSetEx<'a> {
     /* NOTE: these have been left public to allow creation via macros */
     pub long: Vec<LongOption<'a>>,
     pub short: Vec<ShortOption>,
-}
-
-impl<'a> Default for OptionSetEx<'a> {
-    fn default() -> Self {
-        OptionSetEx::new()
-    }
 }
 
 /// Option set
@@ -99,8 +93,9 @@ impl<'a> OptionSetEx<'a> {
     ///
     /// You can alternatively use [`with_capacity`](#method.with_capacity) for more efficient `Vec`
     /// creation.
+    #[inline(always)]
     pub fn new() -> Self {
-        Self::with_capacity(0, 0)
+        Default::default()
     }
 
     /// Create a new object, with size estimation
