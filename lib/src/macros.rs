@@ -44,6 +44,7 @@ macro_rules! gong_option_set {
             allow_abbreviations: true
         }
     };
+    () => { gong_option_set!(vec![], vec![]) };
 }
 
 /// Construct an [`OptionSet`](options/struct.OptionSet.html)
@@ -82,6 +83,7 @@ macro_rules! gong_option_set_fixed {
             allow_abbreviations: true
         }
     };
+    () => { gong_option_set_fixed!([], []) };
 }
 
 /// Construct a [`LongOption`](options/struct.LongOption.html)

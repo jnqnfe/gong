@@ -62,6 +62,8 @@ fn is_empty() {
     let opt_set = OptionSet::default();
     assert!(opt_set.is_empty());
 
+    let opt_set = gong_option_set_fixed!();
+    assert!(opt_set.is_empty());
     let opt_set = gong_option_set_fixed!([], []);
     assert!(opt_set.is_empty());
 
