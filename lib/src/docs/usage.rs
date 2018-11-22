@@ -28,9 +28,10 @@
 //!
 //! A [`Parser`] holds: a description of the available [*options*][options_doc]; a description of
 //! the available [*commands*][commands_doc]; and settings to control parsing. It also provides the
-//! [`parse`][`Parser::parse`] method, that performs the actual parsing.
+//! methods for performing the actual parsing.
 //!
-//! One of the first things you need to do therefore, is construct a [`Parser`].
+//! One of the first things you need to do therefore, is construct a [`Parser`]. We will begin here
+//! by creating descriptions of the data that the [`Parser`] object will need to hold.
 //!
 //! ## Describe the available options
 //!
@@ -113,13 +114,20 @@
 //!
 //! ## Create the `Parser`
 //!
+//! Creating a [`Parser`] requires providing an *option set* reference, and optionally a *command
+//! set* reference.
+//!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSet::default();
-//! # let cmds = gong::commands::CommandSet::default();
-//! let parser = Parser::new(&opts, Some(&cmds));
+//! let parser = Parser::new(&opts, None);
 //! debug_assert!(parser.is_valid());
 //! ```
+//!
+//! If you have a *command set*, replace `None` in the previous example with `Some(&cmds)` where
+//! `&cmds` is a reference to your *command set*. Understand that with a command-based program
+//! design, the *option set* specified here is the *top-level* set of *options* (see the
+//! *[command arguments documentation][commands_doc]* for more information on this).
 //!
 //! Note that the [`Parser`] only accepts [`OptionSet`] and [`CommandSet`] types, not the extendible
 //! variants, so if you have used the extendible ones, you must use the respective `as_fixed`
@@ -182,10 +190,29 @@
 //!
 //! # Step #3: Parse
 //!
-//! With input args gathered and “available” *options* and *commands* described, now you’re ready
-//! for parsing. All you need to do is feed the argument list to the parser’s
-//! [`parse`][`Parser::parse`] method and it will spit out an analysis that describes what it
-//! identified.
+//! With input arguments gathered and “available” *options* and *commands* described, now you’re
+//! ready for parsing. You have two choices here for how you want to approach this, either “one at a
+//! time” (iterative) style or “all in one” (collect and data mine) style.
+//!
+//! The former is done with the [`parse_iter`][`Parser::parse_iter`] method, which returns an
+//! iterator, allowing arguments to be parsed and responded to one at a time. The latter is done
+//! with the [`parse`][`Parser::parse`] method; internally it uses the iterator method, collecting
+//! the results into an object that it returns, which has methods suitable for performing “data
+//! mining” on them.
+//!
+//! An example of “one at a time” (iterative) analysis:
+//!
+//! ```rust
+//! # let opts = gong::options::OptionSet::default();
+//! # let cmds = gong::commands::CommandSet::default();
+//! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
+//! # let args: Vec<String> = std::env::args().collect();
+//! for item in parser.parse_iter(&args[..]) {
+//!     // react to it...
+//! }
+//! ```
+//!
+//! An example of “all in one” (collect and data mine) analysis:
 //!
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
@@ -193,31 +220,32 @@
 //! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
 //! # let args: Vec<String> = std::env::args().collect();
 //! let analysis = parser.parse(&args[..]);
+//! // now react to it...
 //! ```
 //!
-//! If you are taking arguments in `OsString` form, as discussed above, you should use the alternate
-//! `parse_os` method here instead.
+//! If you are taking arguments in `OsString` form, as discussed above,
+//! [alternate parsing methods][parse_mod] are available.
+//!
+//! Items are returned in both cases in the same order as respective arguments are given in the
+//! input list.
 //!
 //! # Step #4: Take action
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains `error` and
-//! `warn` booleans, which give a quick indication of problems. It also contains a list of items,
-//! describing in detail what was found. The items in the item list are stored in the same order as
-//! found in the input arguments.
+//! The analysis items are [`ItemClass`] variants, which wrap variants of [`Item`], [`ItemW`] or
+//! [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants of each item
+//! class hold a `usize` value to be used for indicating the index of the argument in which the item
+//! was found, should you want to know that. Similarly, information is returned where applicable
+//! with *data values* as to whether the data arg was located in the same argument or the next.
 //!
-//! The entries in the item list are [`ItemClass`] variants, which wrap variants of [`Item`],
-//! [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants
-//! of each item class hold a `usize` value to be used for indicating the index of the argument in
-//! which the item was found, should you want to know that. Similarly, information is returned where
-//! applicable with *data values* as to whether the data arg was located in the same argument or the
-//! next.
+//! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
+//! `error` and `warn` booleans which give a quick indication of problems, alongside the list of
+//! items, describing in detail what was found.
 //!
-//! > **Note:** some item variants that may be returned in the [`Analysis`] struct hold string
-//! > references to strings that were provided in the argument and option data provided to
-//! > [`parse`][`Parser::parse`]. This is done for efficiency. Beware of this with respect to
-//! > lifetimes.
+//! > **Note:** some item variants that may be returned hold string references to strings that were
+//! > provided in the argument and option data used by the parse method. This is done for
+//! > efficiency. Beware of this with respect to lifetimes.
 //!
 //! # Have a play
 //!
@@ -229,7 +257,9 @@
 //!
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
+//! [`Parser::parse_iter`]: ../../parser/struct.Parser.html#method.parse_iter
 //! [`Parser::parse_os`]: ../../parser/struct.Parser.html#method.parse_os
+//! [`Parser::parse_iter_os`]: ../../parser/struct.Parser.html#method.parse_iter_os
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
 //! [`Settings`]: ../../parser/struct.Settings.html
@@ -245,6 +275,7 @@
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [parse_mod]: ../../parser/index.html
 //! [commands_doc]: ../commands/index.html
 //! [options_doc]: ../options/index.html
 //! [unicode_doc]: ../unicode/index.html

@@ -1,5 +1,9 @@
 # [unreleased]
 
+ * Reworked the analysis engine upon an iterative based design, adding the ability to do “one at a
+   time” (iterator based) parsing as an alternative to the original “all in one” solution. This is
+   used via an iterator object returned by the `parse_iter` method available on the new `Parser`
+   object, discussed shortly.
  * Added support for parsing `AsRef<OsStr>` based argument lists
  * Baked in understanding of “command” arguments.
    Although program designs incorporating “command” arguments could use this crate, it was not easy
@@ -10,8 +14,9 @@
       struct, found in the `parser` mod.
     - This new `Parser` type wraps the main option set, the (optional) command set, and settings.
       Previously there was just the option set type(s), which directly included settings.
-    - The `process` methods on the option set objects have been replaced with a `parse` method on
-      this new wrapping `Parser` object.
+    - The `process` methods on the option set objects have been replaced with “parse” methods on
+      this new wrapping `Parser` object. There is a `parse_iter` method for iterative based parsing,
+      and a `parse` method for the “all in one” style.
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.

@@ -18,10 +18,9 @@
  *
  *  1. Valid short and long options must be forbidden from using the unicode replacement char
  *     (`U+FFFD`) else incorrect matches could occur, which needs enforcing throughout the library.
- *  2. Do a lossy conversion to `Cow<str>`, collecting in a `Vec`.
+ *  2. Do a lossy conversion of arguments to `Cow<str>`.
  *  3. Parse this with the normal `str` based parser (avoids unnecessarily duplicating logic).
- *  4. Convert the `Analysis<&str>` based analysis to `Analysis<&OsStr>`, using the original
- *     strings:
+ *  4. Convert the analysis item returned by the `str` based parser:
  *      a. Copy warn/error booleans
  *      b. Loop through analysis items, converting and adding each.
  *          - Some cases will be easy to handle, for instance with non-options and in-next-arg data
@@ -48,7 +47,6 @@
  *               extract any in-same-arg data value. The tricky part is that where the `str` based
  *               parser signals that the current character is the unicode replacement character, we
  *               need to figure out how many bytes this represents in the original argument.
- *  5. Return the `OsStr` based analysis.
  *
  * So long as the unicode replacement char is forbidden in valid long option names and as a
  * short option char, this should work perfectly.
@@ -67,120 +65,186 @@ use std::os::unix::ffi::OsStrExt;
 use self::windows::OsStrExt;
 use super::parser::*;
 use super::analysis::*;
-use super::engine::{self, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
+use super::engine::{ParseIter, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
 
-/// This is a variant of the standard parse function which takes `OsStr` based arguments instead of
-/// `str` based ones. It is to be used in situations where users want to handle arguments taken from
-/// the environment via `std::end::os_args()` instead of `std::env::args()`, for instance `Cargo`
-/// itself needs this to be able to pass on arguments to user programs in run mode correctly, to
-/// then allow such programs ot choose how they want to obtain their args (as when not run under
-/// `Cargo`, and allowing them to receive non-valid utf-8 data values / non-options.
-pub(crate) fn parse<'r, 's, A>(args: &'s [A], parser: &Parser<'r, 's>) -> Analysis<'s, OsStr>
+/// This brings clarity, ensuring correct starting value used
+macro_rules! set_shortset_consumed_init { () => { SINGLE_DASH_PREFIX.len() } }
+
+/// An argument list parsing iterator
+///
+/// Created by the [`parse_iter_os`] method of [`Parser`].
+///
+/// [`parse_iter_os`]: ../parser/struct.Parser.html#method.parse_iter_os
+/// [`Parser`]: ../parser/struct.Parser.html
+#[derive(Clone)]
+pub struct ParseIterOs<'r, 's: 'r, A: 's + AsRef<OsStr>> {
+    /// The original argument list
+    args: &'s [A],
+    /// The original argument list, lossy converted
+    args_as_str: Vec<Cow<'s, str>>,
+    /// Inner `AsRef<str>` based parsing iterator
+    parse_iter: ParseIter<'r, 's, Cow<'s, str>>,
+    /// Short option set tracking data
+    short_set_tracking_data: ShortOptSetData,
+    /// Cached prefix used by long options, depending upon parsing mode
+    longopt_prefix: &'s OsStr,
+}
+
+/// Used for tracking short option set consumption, which is necessary for correctly extracting an
+/// in-same-arg data value, if there is one, and in the face of possible invalid bytes in the option
+/// set in the option set argument.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+struct ShortOptSetData {
+    /// Index of argument that the previous short option came from, or zero
+    last_arg: usize,
+    /// How many bytes of the current option set have been consumed so far
+    consumed: usize,
+}
+
+impl Default for ShortOptSetData {
+    fn default() -> Self {
+        Self { last_arg: 0, consumed: set_shortset_consumed_init!(), }
+    }
+}
+
+impl<'r, 's, A> Iterator for ParseIterOs<'r, 's, A>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
-    let longopt_prefix_osstr = match parser.settings.mode {
-        OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),
-        OptionsMode::Alternate => OsStr::new(SINGLE_DASH_PREFIX),
-    };
+    type Item = ItemClass<'s, OsStr>;
 
-    // Temporary lossy conversion
-    let args_as_str: Vec<Cow<'s, str>> = args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
-    // HACK: We must adjust the lifetime for use with `parse`
-    let args_as_str_slice = unsafe {
-        mem::transmute::<&'_ [Cow<str>], &'s [Cow<str>]>(&args_as_str[..])
-    };
+    fn next(&mut self) -> Option<Self::Item> {
+        self.parse_iter.next().and_then(|i| Some(ParseIterOs::convert_item(self, i)))
+    }
+}
 
-    // Get `str` based analysis (avoids duplicating functionality)
-    let analysis = engine::parse(args_as_str_slice, parser);
+impl<'r, 's, A> ParseIterOs<'r, 's, A>
+    where A: 's + AsRef<OsStr>, 's: 'r
+{
+    /// Create a new instance
+    pub(crate) fn new(args: &'s [A], parser: &Parser<'r, 's>) -> Self {
+        // Temporary lossy conversion
+        let args_as_str: Vec<Cow<'s, str>> =
+            args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
+        // HACK: We must adjust the lifetime for use with `parse`
+        let args_as_str_slice = unsafe {
+            mem::transmute::<&'_ [Cow<'s, str>], &'s [Cow<'s, str>]>(&args_as_str[..])
+        };
 
-    // Start converting
-    let mut converted = Analysis::<'s, OsStr>::new(args.len());
-    converted.error = analysis.error;
-    converted.warn = analysis.warn;
-
-    let mut short_opt_set_last_arg = 0;
-    let mut short_opt_set_consumed = SINGLE_DASH_PREFIX.len();
-    let mut track_short_opt = |short_opt_set_consumed: &mut usize, i, c| {
-        if short_opt_set_last_arg != i {
-            short_opt_set_last_arg = i;
-            *short_opt_set_consumed = SINGLE_DASH_PREFIX.len();
+        Self {
+            args: args,
+            args_as_str: args_as_str,
+            parse_iter: ParseIter::new(args_as_str_slice, parser),
+            short_set_tracking_data: ShortOptSetData::default(),
+            longopt_prefix: Self::give_longopt_prefix(parser.settings.mode),
         }
-        track_short_opt_set(args[i].as_ref(), short_opt_set_consumed, c);
-    };
+    }
 
-    // REMINDER: We **MUST** throw away all strings in the original analysis which have been sourced
-    // from the `args` param we gave, since those were from our local lossy `str` conversion. These
-    // must be replaced with respective slices/strings from the originals.
-    for item in &analysis.items {
-        converted.items.push(match item {
+    #[inline]
+    fn give_longopt_prefix(mode: OptionsMode) -> &'s OsStr {
+        match mode {
+            OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),
+            OptionsMode::Alternate => OsStr::new(SINGLE_DASH_PREFIX),
+        }
+    }
+
+    /// Convert an analysis item from `str` form to `OsStr` form from the original arguments. This
+    /// requires access to an object for tracking short option set consumption, for correct
+    /// extraction of an in-same-argument data value.
+    fn convert_item(&mut self, item: ItemClass<'s, str>) -> ItemClass<'s, OsStr> {
+        let short_set_data = &mut self.short_set_tracking_data;
+        let opt_mode = self.parse_iter.parser_data.settings.mode;
+
+        let args = self.args; //Get around borrow checker
+        let track_short_opt = |data: &mut ShortOptSetData, i, c| {
+            if data.last_arg != i {
+                data.reset(i);
+            }
+            track_short_opt_set(args[i].as_ref(), &mut data.consumed, c);
+        };
+
+        // REMINDER: We **MUST** throw away all strings in the original items which have been
+        // sourced from the `args` param we gave to the `str` based parser, since those were from
+        // our local lossy `str` conversion. These must be replaced with respective slices/strings
+        // from the originals.
+        match item {
             /* These can all be copied directly */
 
-            ItemClass::Ok(Item::EarlyTerminator(i)) =>       ItemClass::Ok(Item::EarlyTerminator(*i)),
-            ItemClass::Ok(Item::Long(i, n)) =>               ItemClass::Ok(Item::Long(*i, *n)),
-            ItemClass::Ok(Item::Command(i, n)) =>            ItemClass::Ok(Item::Command(*i, *n)),
-            ItemClass::Err(ItemE::LongMissingData(i, n)) =>  ItemClass::Err(ItemE::LongMissingData(*i, *n)),
-            ItemClass::Err(ItemE::ShortMissingData(i, c)) => ItemClass::Err(ItemE::ShortMissingData(*i, *c)),
-            ItemClass::Warn(ItemW::LongWithNoName(i)) =>     ItemClass::Warn(ItemW::LongWithNoName(*i)),
+            ItemClass::Ok(Item::EarlyTerminator(i)) =>       ItemClass::Ok(Item::EarlyTerminator(i)),
+            ItemClass::Ok(Item::Long(i, n)) =>               ItemClass::Ok(Item::Long(i, n)),
+            ItemClass::Ok(Item::Command(i, n)) =>            ItemClass::Ok(Item::Command(i, n)),
+            ItemClass::Err(ItemE::LongMissingData(i, n)) =>  ItemClass::Err(ItemE::LongMissingData(i, n)),
+            ItemClass::Err(ItemE::ShortMissingData(i, c)) => ItemClass::Err(ItemE::ShortMissingData(i, c)),
+            ItemClass::Warn(ItemW::LongWithNoName(i)) =>     ItemClass::Warn(ItemW::LongWithNoName(i)),
 
             /* These can be copied directly, but we need to track the short option set */
 
             ItemClass::Ok(Item::Short(i, c)) => {
-                track_short_opt(&mut short_opt_set_consumed, *i, *c);
-                ItemClass::Ok(Item::Short(*i, *c))
+                track_short_opt(short_set_data, i, c);
+                ItemClass::Ok(Item::Short(i, c))
             },
             ItemClass::Warn(ItemW::UnknownShort(i, c)) => {
-                track_short_opt(&mut short_opt_set_consumed, *i, *c);
-                ItemClass::Warn(ItemW::UnknownShort(*i, *c))
+                track_short_opt(short_set_data, i, c);
+                ItemClass::Warn(ItemW::UnknownShort(i, c))
             },
 
             /* These need more work, capturing part or all of the original `OsStr` */
 
-            ItemClass::Ok(Item::NonOption(i, _)) => ItemClass::Ok(Item::NonOption(*i, args[*i].as_ref())),
+            ItemClass::Ok(Item::NonOption(i, _)) => {
+                ItemClass::Ok(Item::NonOption(i, self.args[i].as_ref()))
+            },
             ItemClass::Ok(Item::LongWithData{ i, n, l, .. }) => {
                 let data = match l {
                     DataLocation::SameArg => {
-                        let index = match parser.settings.mode {
+                        let index = match opt_mode {
                             OptionsMode::Standard => DOUBLE_DASH_PREFIX.len(),
                             OptionsMode::Alternate => SINGLE_DASH_PREFIX.len(),
                         } + n.len() + "=".len();
-                        get_osstr_suffix(args[*i].as_ref(), index)
+                        get_osstr_suffix(self.args[i].as_ref(), index)
                     },
-                    DataLocation::NextArg => args[*i+1].as_ref(),
+                    DataLocation::NextArg => self.args[i+1].as_ref(),
                 };
-                ItemClass::Ok(Item::LongWithData{ i: *i, n: *n, d: data, l: *l })
+                ItemClass::Ok(Item::LongWithData{ i, n, d: data, l })
             },
             ItemClass::Ok(Item::ShortWithData{ i, c, l, .. }) => {
                 let data = match l {
                     DataLocation::SameArg => {
                         // NB: This works because both Unix and Windows OsStr implementations use
                         // less-string UTF-8 sequence based storage.
-                        track_short_opt(&mut short_opt_set_consumed, *i, *c);
-                        get_osstr_suffix(args[*i].as_ref(), short_opt_set_consumed)
+                        track_short_opt(short_set_data, i, c);
+                        get_osstr_suffix(self.args[i].as_ref(), short_set_data.consumed)
                     },
-                    DataLocation::NextArg => args[*i+1].as_ref(),
+                    DataLocation::NextArg => self.args[i+1].as_ref(),
                 };
-                ItemClass::Ok(Item::ShortWithData{ i: *i, c: *c, d: data, l: *l })
+                ItemClass::Ok(Item::ShortWithData{ i, c, d: data, l })
             },
             ItemClass::Err(ItemE::AmbiguousLong(i, _)) => {
-                let opt_name = get_osstr_longopt_name(args[*i].as_ref(), longopt_prefix_osstr);
-                ItemClass::Err(ItemE::AmbiguousLong(*i, opt_name))
+                let opt_name = get_osstr_longopt_name(self.args[i].as_ref(), self.longopt_prefix);
+                ItemClass::Err(ItemE::AmbiguousLong(i, opt_name))
             },
             ItemClass::Warn(ItemW::UnknownLong(i, _)) => {
-                let opt_name = get_osstr_longopt_name(args[*i].as_ref(), longopt_prefix_osstr);
-                ItemClass::Warn(ItemW::UnknownLong(*i, opt_name))
+                let opt_name = get_osstr_longopt_name(self.args[i].as_ref(), self.longopt_prefix);
+                ItemClass::Warn(ItemW::UnknownLong(i, opt_name))
             },
             // Reminder, this can obviously only occur with 'in-same-arg' data values.
             ItemClass::Warn(ItemW::LongWithUnexpectedData{ i, n, .. }) => {
-                let index = match parser.settings.mode {
+                let index = match opt_mode {
                     OptionsMode::Standard => DOUBLE_DASH_PREFIX.len(),
                     OptionsMode::Alternate => SINGLE_DASH_PREFIX.len(),
                 } + n.len() + "=".len();
-                let data = get_osstr_suffix(args[*i].as_ref(), index);
-                ItemClass::Warn(ItemW::LongWithUnexpectedData{ i: *i, n: *n, d: data })
+                let data = get_osstr_suffix(self.args[i].as_ref(), index);
+                ItemClass::Warn(ItemW::LongWithUnexpectedData{ i, n, d: data })
             },
-        });
+        }
     }
-    converted
+}
+
+impl ShortOptSetData {
+    /// Reset for new argument short option set
+    #[inline]
+    fn reset(&mut self, arg_index: usize) {
+        self.last_arg = arg_index;
+        self.consumed = set_shortset_consumed_init!();
+    }
 }
 
 //TODO: THIS HELPER IS A NECESSARY HACK DUE TO LACK OF OSSTR SLICING IN STD

@@ -38,8 +38,11 @@
 //!
 //!  1. Describe the *options* (and optionally *command arguments*) to be “available” in your
 //!     program.
-//!  2. Provide the input argument(s) to be parsed to the `parse` method, which will parse them
-//!     against the *option* (and *command arg*) descriptions, returning an *analysis*.
+//!  2. Provide the input argument(s) to be parsed to either the `parse` method or the `parse_iter`
+//!     method, for them to be parsed against the *option* (and *command arg*) descriptions. The
+//!     `parse` method does this all in one go, returning the full *analysis*, while the
+//!     `parse_iter` method returns an iterator, with which you can retrieve one recognised item at
+//!     a time.
 //!  3. You can then use this analysis to respond as applicable.
 //!
 //! What it does not attempt to do includes: Automating help/usage/version request response (though
@@ -51,7 +54,8 @@
 //!
 //! Differences to the old `getopt`/`getopt_long` C solution include:
 //!
-//!  * All parsing can be done in one go, rather than with recursive function calls.
+//!  * All parsing can be done in one go, rather than with recursive function calls, though this is
+//!    optional.
 //!  * Use of static global variables for “position” tracking is avoided.
 //!  * *Non-options* are **not** shuffled to the end of the list, unlike the default behaviour of
 //!    `getopt`.
@@ -65,6 +69,8 @@
 //!         <tr><th>Feature</th><th>Supported/provided?</th></tr>
 //!     </thead>
 //!     <tbody>
+//!         <tr><td>Iterative parsing style</td><td>Yes</td></tr>
+//!         <tr><td>All-in-one (collect and data-mine) parsing style</td><td>Yes</td></tr>
 //!         <tr><td>Traditional style options (‘long’ and ‘short’)</td><td>Yes</td></tr>
 //!         <tr><td>Alternate style options (‘long’ only, with single dash)</td><td>Yes</td></tr>
 //!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
