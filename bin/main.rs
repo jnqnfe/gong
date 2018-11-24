@@ -24,9 +24,12 @@
 extern crate gong;
 extern crate term_ctrl;
 
+#[cfg(feature = "osstr")]
+use std::ffi::{OsStr, OsString};
 use term_ctrl::predefined::*;
 use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
 use gong::parser::{Parser, OptionsMode};
+use self::printers::*;
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
 const COL_O: &str = colours::fg::GREEN;  //okay
@@ -101,6 +104,11 @@ fn main() {
     #[cfg(feature = "alt_mode")]
     println!("Option style: {}Alternate{}", c!(COL_MODE), c!(RESET));
 
+    #[cfg(not(feature = "osstr"))]
+    println!("String processing mode: {}`str` based{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "osstr")]
+    println!("String processing mode: {}`OsStr` based{}", c!(COL_MODE), c!(RESET));
+
     #[cfg(not(feature = "keep_prog_name"))]
     println!("Skip first argument (program name): {}true{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "keep_prog_name")]
@@ -132,20 +140,34 @@ fn main() {
     println!("\nNote: Short options will be ignored in `alternative` mode. They are still printed \
               so you can test and see this is so!");
 
-    #[cfg(feature = "keep_prog_name")]
-    let args: Vec<String> = std::env::args().collect();
+    #[cfg(not(feature = "osstr"))]
+    let args = std::env::args();
+    #[cfg(feature = "osstr")]
+    let args = std::env::args_os();
+
     #[cfg(not(feature = "keep_prog_name"))]
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    let args = args.skip(1);
+
+    #[cfg(not(feature = "osstr"))]
+    let args: Vec<String> = args.collect();
+    #[cfg(feature = "osstr")]
+    let args: Vec<OsString> = args.collect();
 
     println!("\n[ {}Your input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
 
     match args.len() {
         0 => println!("None!"),
         _ => for (i, arg) in args.iter().enumerate() {
-            println!("[{}]: {}", i, arg);
+            #[cfg(not(feature = "osstr"))]
+            { println!("[{}]: {}", i, arg); }
+            #[cfg(feature = "osstr")]
+            { println!("[{}]: {:?}", i, arg); }
         },
     }
 
+    #[cfg(feature = "osstr")]
+    let results = parser.parse_os(&args[..]);
+    #[cfg(not(feature = "osstr"))]
     let results = parser.parse(&args[..]);
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
@@ -163,6 +185,18 @@ fn main() {
         },
     }
 
+    // `OsStr` wrapper
+    #[cfg(not(feature = "osstr"))]
+    let ow = |s| { s };
+    #[cfg(feature = "osstr")]
+    let ow = |s| { OsStr::new(s) };
+
+    // `OsStr` wrapper
+    #[cfg(not(feature = "osstr"))]
+    let ow2 = |s| { s };
+    #[cfg(feature = "osstr")]
+    let ow2 = |s| { OsString::from(s) };
+
     println!("Items: {}\n", results.items.len());
     for result in &results.items {
         let printer = match *result {
@@ -172,38 +206,41 @@ fn main() {
         };
         match *result {
             ItemClass::Ok(Item::NonOption(i, s)) => printer(i, "NonOption", s),
-            ItemClass::Ok(Item::EarlyTerminator(i)) => printer(i, "EarlyTerminator", ""),
-            ItemClass::Ok(Item::Long(i, n)) => printer(i, "Long", n),
+            ItemClass::Ok(Item::EarlyTerminator(i)) => printer(i, "EarlyTerminator", ow("")),
+            ItemClass::Ok(Item::Long(i, n)) => printer(i, "Long", ow(n)),
             ItemClass::Ok(Item::LongWithData { i, n, d, ref l }) => {
-                printer(i, "LongWithData", n);
+                printer(i, "LongWithData", ow(n));
                 print_data(*l, d);
             },
-            ItemClass::Err(ItemE::LongMissingData(i, n)) => printer(i, "LongMissingData", n),
+            ItemClass::Err(ItemE::LongMissingData(i, n)) => printer(i, "LongMissingData", ow(n)),
             ItemClass::Warn(ItemW::LongWithUnexpectedData { i, n, d }) => {
-                printer(i, "LongWithUnexpectedData", n);
-                println!("    data: {}", d)
+                printer(i, "LongWithUnexpectedData", ow(n));
+                #[cfg(not(feature = "osstr"))]
+                { println!("    data: {}", d) }
+                #[cfg(feature = "osstr")]
+                { println!("    data: {:?}", d) }
             },
             ItemClass::Err(ItemE::AmbiguousLong(i, n)) => printer(i, "AmbiguousLong", n),
-            ItemClass::Warn(ItemW::LongWithNoName(i)) => printer(i, "LongWithNoName", ""),
+            ItemClass::Warn(ItemW::LongWithNoName(i)) => printer(i, "LongWithNoName", ow("")),
             ItemClass::Warn(ItemW::UnknownLong(i, n)) => printer(i, "UnknownLong", n),
             ItemClass::Ok(Item::Short(i, c)) => {
-                let desc = desc_char(c);
+                let desc = ow2(desc_char(c));
                 printer(i, "Short", &desc);
             },
             ItemClass::Ok(Item::ShortWithData { i, c, d, ref l }) => {
-                let desc = desc_char(c);
+                let desc = ow2(desc_char(c));
                 printer(i, "ShortWithData", &desc);
                 print_data(*l, d);
             },
             ItemClass::Err(ItemE::ShortMissingData(i, c)) =>{
-                let desc = desc_char(c);
+                let desc = ow2(desc_char(c));
                 printer(i, "ShortMissingData", &desc);
             },
             ItemClass::Warn(ItemW::UnknownShort(i, c)) =>{
-                let desc = desc_char(c);
+                let desc = ow2(desc_char(c));
                 printer(i, "UnknownShort", &desc);
             },
-            ItemClass::Ok(Item::Command(i, n)) => printer(i, "Command", n),
+            ItemClass::Ok(Item::Command(i, n)) => printer(i, "Command", ow(n)),
         }
     }
     if results.items.len() != 0 {
@@ -211,35 +248,70 @@ fn main() {
     }
 }
 
-fn print_arg(col: &str, index: usize, ty: &str, desc: &str) {
+pub fn print_arg(col: &str, index: usize, ty: &str, desc: &str) {
     println!("[arg {}] {}{}{}: {}", index, col, ty, c!(RESET), desc)
 }
 
-fn print_arg_ok(index: usize, ty: &str, desc: &str) {
-    print_arg(c!(COL_O), index, ty, desc);
-}
-
-fn print_arg_err(index: usize, ty: &str, desc: &str) {
-    print_arg(c!(COL_E), index, ty, desc);
-}
-
-fn print_arg_warn(index: usize, ty: &str, desc: &str) {
-    print_arg(c!(COL_W), index, ty, desc);
-}
-
-fn desc_char(ch: char) -> String {
+pub fn desc_char(ch: char) -> String {
     format!("{} {}({}){}", ch, c!(COL_CHAR), ch.escape_unicode(), c!(RESET))
 }
 
-fn print_data(loc: DataLocation, data: &str) {
-    match loc {
-        DataLocation::SameArg =>
-            println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
-        DataLocation::NextArg =>
-            println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
+#[cfg(not(feature = "osstr"))]
+mod printers {
+    use super::*;
+
+    pub fn print_arg_ok(index: usize, ty: &str, desc: &str) {
+        print_arg(c!(COL_O), index, ty, desc);
     }
-    match data.is_empty() {
-        true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
-        false => println!("    data: {}", data),
+
+    pub fn print_arg_err(index: usize, ty: &str, desc: &str) {
+        print_arg(c!(COL_E), index, ty, desc);
+    }
+
+    pub fn print_arg_warn(index: usize, ty: &str, desc: &str) {
+        print_arg(c!(COL_W), index, ty, desc);
+    }
+
+    pub fn print_data(loc: DataLocation, data: &str) {
+        match loc {
+            DataLocation::SameArg =>
+                println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
+            DataLocation::NextArg =>
+                println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
+        }
+        match data.is_empty() {
+            true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
+            false => println!("    data: {}", data),
+        }
+    }
+}
+
+#[cfg(feature = "osstr")]
+mod printers {
+    use super::*;
+
+    pub fn print_arg_ok(index: usize, ty: &str, desc: &OsStr) {
+        print_arg(c!(COL_O), index, ty, &desc.to_string_lossy());
+    }
+
+    pub fn print_arg_err(index: usize, ty: &str, desc: &OsStr) {
+        print_arg(c!(COL_E), index, ty, &desc.to_string_lossy());
+    }
+
+    pub fn print_arg_warn(index: usize, ty: &str, desc: &OsStr) {
+        print_arg(c!(COL_W), index, ty, &desc.to_string_lossy());
+    }
+
+    pub fn print_data(loc: DataLocation, data: &OsStr) {
+        match loc {
+            DataLocation::SameArg =>
+                println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
+            DataLocation::NextArg =>
+                println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
+        }
+        match data.is_empty() {
+            true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
+            false => println!("    data: {:?}", data),
+        }
     }
 }

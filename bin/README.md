@@ -38,6 +38,7 @@ non-options and thus are passed on).
 
 The test program has the following features that can be enabled/disabled when compiling:
 
+ - `osstr` switches to using `AsRef<OsStr>` based processing rather than `AsRef<str>`
  - `alt_mode` enables use of `gong`’s “alt mode”.
  - `no_abbreviations` disables `gong`’s abbreviated matching feature.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
