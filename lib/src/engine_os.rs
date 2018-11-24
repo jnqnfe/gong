@@ -181,6 +181,27 @@ impl<'r, 's, A> ParseIterOs<'r, 's, A>
         self.parse_iter.set_command_set(cmd_set);
     }
 
+    /// Get copy of parser settings in use
+    ///
+    /// The point of this is for use in situations where `set_parse_settings` might be used, where
+    /// a copy of the original settings are wanted for modification before applying on the iterator,
+    /// avoiding the need for a pointer to the original parser object.
+    #[inline]
+    pub fn get_parse_settings(&self) -> Settings {
+        self.parse_iter.get_parse_settings()
+    }
+
+    /// Change the settings used for parsing by subsequent iterations
+    ///
+    /// The use case for this method is similar to that of the methods for changing the *option
+    /// set* and *command set* to be used, though more niche. It is thought unlikely that any
+    /// program should have any need to change settings in the middle of parsing, but you can if you
+    /// absolutely want to (there is no reason to prevent you from doing so).
+    pub fn set_parse_settings(&mut self, settings: Settings) {
+        self.parse_iter.set_parse_settings(settings);
+        self.longopt_prefix = Self::give_longopt_prefix(settings.mode);
+    }
+
     /// Convert an analysis item from `str` form to `OsStr` form from the original arguments. This
     /// requires access to an object for tracking short option set consumption, for correct
     /// extraction of an in-same-argument data value.

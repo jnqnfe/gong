@@ -84,14 +84,14 @@ fn basic_os() {
 /// to a command-specific handling function.
 mod change_data {
     use super::*;
-    use gong::parser::{Parser, ParseIter};
+    use gong::parser::{Parser, OptionsMode, ParseIter};
 
     #[test]
     fn main() {
         let args = arg_list!(
             "--foo",    // Long option from set #1, using standard style
             "c1",       // Command from set #1
-            "--bar",    // Long option belonging to `c1` command
+            "-bar",     // Long option belonging to `c1` command, using alternate style
             "c2",       // Command belonging to `c1` command
         );
 
@@ -101,7 +101,8 @@ mod change_data {
         let main_opt_set = gong_option_set!(@long [ gong_longopt!("foo") ]);
         let main_cmd_set = gong_command_set!([ gong_command!("c1") ]);
 
-        let parser = Parser::new(&main_opt_set, Some(&main_cmd_set));
+        let mut parser = Parser::new(&main_opt_set, Some(&main_cmd_set));
+        parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
         let mut parse_iter = parser.parse_iter(&args);
 
@@ -123,6 +124,15 @@ mod change_data {
         parse_iter.set_option_set(&c1_opt_set);   // Change option set
         parse_iter.set_command_set(&c1_cmd_set);  // Change command set
 
+        // Programs would not normally change settings part way through, it would confuse users,
+        // this just tests that the ability to change settings (if a program really wanted to, or
+        // actually has a genuine need) works.
+        let mut new_settings = parse_iter.get_parse_settings(); // Get current settings
+        new_settings.set_mode(OptionsMode::Alternate);          // Change them
+        parse_iter.set_parse_settings(new_settings);            // Apply them
+        // NB: We confirm change of settings took place successfully by the fact that we're matching
+        // the next option in alternate mode.
+
         assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar")));
         assert_eq!(parse_iter.next(), Some(expected_item!(3, Command, "c2")));
         assert_eq!(parse_iter.next(), None);
@@ -132,14 +142,14 @@ mod change_data {
 /// Repeating the previous test, but for OS string parsing this time
 mod change_data_os {
     use super::*;
-    use gong::parser::{Parser, ParseIterOs};
+    use gong::parser::{Parser, OptionsMode, ParseIterOs};
 
     #[test]
     fn main() {
         let args = arg_list_os!(
             "--foo",    // Long option from set #1, using standard style
             "c1",       // Command from set #1
-            "--bar",    // Long option belonging to `c1` command
+            "-bar",     // Long option belonging to `c1` command, using alternate style
             "c2",       // Command belonging to `c1` command
         );
 
@@ -149,7 +159,8 @@ mod change_data_os {
         let main_opt_set = gong_option_set!(@long [ gong_longopt!("foo") ]);
         let main_cmd_set = gong_command_set!([ gong_command!("c1") ]);
 
-        let parser = Parser::new(&main_opt_set, Some(&main_cmd_set));
+        let mut parser = Parser::new(&main_opt_set, Some(&main_cmd_set));
+        parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
         let mut parse_iter = parser.parse_iter_os(&args);
 
@@ -170,6 +181,15 @@ mod change_data_os {
 
         parse_iter.set_option_set(&c1_opt_set);   // Change option set
         parse_iter.set_command_set(&c1_cmd_set);  // Change command set
+
+        // Programs would not normally change settings part way through, it would confuse users,
+        // this just tests that the ability to change settings (if a program really wanted to, or
+        // actually has a genuine need) works.
+        let mut new_settings = parse_iter.get_parse_settings(); // Get current settings
+        new_settings.set_mode(OptionsMode::Alternate);          // Change them
+        parse_iter.set_parse_settings(new_settings);            // Apply them
+        // NB: We confirm change of settings took place successfully by the fact that we're matching
+        // the next option in alternate mode.
 
         assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar")));
         assert_eq!(parse_iter.next(), Some(expected_item!(3, Command, "c2")));
