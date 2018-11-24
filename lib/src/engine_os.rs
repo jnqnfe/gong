@@ -63,6 +63,8 @@ use std::ops::Range;
 use std::os::unix::ffi::OsStrExt;
 #[cfg(windows)]
 use self::windows::OsStrExt;
+use super::commands::CommandSet;
+use super::options::OptionSet;
 use super::parser::*;
 use super::analysis::*;
 use super::engine::{ParseIter, SINGLE_DASH_PREFIX, DOUBLE_DASH_PREFIX};
@@ -76,6 +78,12 @@ macro_rules! set_shortset_consumed_init { () => { SINGLE_DASH_PREFIX.len() } }
 ///
 /// [`parse_iter_os`]: ../parser/struct.Parser.html#method.parse_iter_os
 /// [`Parser`]: ../parser/struct.Parser.html
+///
+/// Note that methods are provided for changing the *option set* and *command set* used for
+/// subsequent iterations. These are typically only applicable where you are using the iterative
+/// parsing style with a command based program, where instead of describing the entire command
+/// structure to the parser up front, you want to dynamically switch the sets used for subsequent
+/// iterations (arguments) manually, after encountering a command.
 #[derive(Clone)]
 pub struct ParseIterOs<'r, 's: 'r, A: 's + AsRef<OsStr>> {
     /// The original argument list
@@ -145,6 +153,32 @@ impl<'r, 's, A> ParseIterOs<'r, 's, A>
             OptionsMode::Standard => OsStr::new(DOUBLE_DASH_PREFIX),
             OptionsMode::Alternate => OsStr::new(SINGLE_DASH_PREFIX),
         }
+    }
+
+    /// Change the *option set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *option set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid option set.
+    #[inline]
+    pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 's>) {
+        self.parse_iter.set_option_set(opt_set);
+    }
+
+    /// Change the *command set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *command set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid command set.
+    #[inline]
+    pub fn set_command_set(&mut self, cmd_set: &'r CommandSet<'r, 's>) {
+        self.parse_iter.set_command_set(cmd_set);
     }
 
     /// Convert an analysis item from `str` form to `OsStr` form from the original arguments. This

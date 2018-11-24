@@ -109,6 +109,9 @@
 //! Note that [`Command`]s each hold an [`OptionSet`], and may hold a [`CommandSet`] of
 //! *sub-commands*.
 //!
+//! Also, note that you do **not** *have* to describe the entire command tree up front, as will be
+//! discussed in step #3.
+//!
 //! An example of constructing a *command* based structure is not given here, but it should be
 //! fairly trivial to understand how to achieve.
 //!
@@ -228,6 +231,15 @@
 //!
 //! Items are returned in both cases in the same order as respective arguments are given in the
 //! input list.
+//!
+//! Note that if you have nested sub-commands, you do **not** *have* to describe the full structure
+//! up front when creating the [`Parser`] if you use the iterative approach; the iterator object
+//! provides methods for changing the *option set* and *command set* for subsequent iterations, thus
+//! you can specify the top-level command names only, with empty *option*/*command* sets, and on
+//! encountering a command, give the iterator to the relevant function handling that command, which
+//! can set the right *option* and *command* sets to use from that point onwards, before continuing
+//! to iterate over any remaining arguments. (See the *[command arguments documentation][commands_doc]*
+//! to understand how a command should affect parsing of subsequent items in an argument list).
 //!
 //! # Step #4: Take action
 //!

@@ -24,6 +24,12 @@
 //! - “Iterative” style: The [`parse_iter`] and [`parse_iter_os`] methods return an iterator, which
 //!   returns analysis items one at a time.
 //!
+//! Note that the iterator objects have methods that allow you to change the *option set* and
+//! *command set* used for subsequent iterations. The purpose behind these methods is for situations
+//! where you have a [*command argument*][commands] based program, but do not wish to describe the
+//! full command structure up front, with these methods giving you the ability to manually set the
+//! *option* and *command* sets to use in subsequent iterations after encountering a *command*.
+//!
 //! # Input arguments
 //!
 //! A [`Parser`] can parse input arguments in both of the following forms:

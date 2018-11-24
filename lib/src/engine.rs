@@ -12,6 +12,7 @@ use std::convert::AsRef;
 use std::iter::Enumerate;
 use std::slice;
 use std::str::CharIndices;
+use super::commands::CommandSet;
 use super::parser::*;
 use super::options::*;
 use super::analysis::*;
@@ -28,6 +29,12 @@ type ArgTypeAssessor = fn(&str) -> ArgTypeBasic<'_>;
 ///
 /// [`parse_iter`]: ../parser/struct.Parser.html#method.parse_iter
 /// [`Parser`]: ../parser/struct.Parser.html
+///
+/// Note that methods are provided for changing the *option set* and *command set* used for
+/// subsequent iterations. These are typically only applicable where you are using the iterative
+/// parsing style with a command based program, where instead of describing the entire command
+/// structure to the parser up front, you want to dynamically switch the sets used for subsequent
+/// iterations (arguments) manually, after encountering a command.
 #[derive(Clone)]
 pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
     /// Enumerated iterator over the argument list
@@ -133,6 +140,36 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         match mode {
             OptionsMode::Standard => get_basic_arg_type_standard,
             OptionsMode::Alternate => get_basic_arg_type_alternate,
+        }
+    }
+
+    /// Change the *option set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *option set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid option set.
+    pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 's>) {
+        self.parser_data.options = opt_set;
+        if let Some(ref mut short_set_iter) = self.short_set_iter {
+            short_set_iter.parser_data.options = opt_set;
+        }
+    }
+
+    /// Change the *command set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *command set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid command set.
+    pub fn set_command_set(&mut self, cmd_set: &'r CommandSet<'r, 's>) {
+        self.parser_data.commands = cmd_set;
+        if let Some(ref mut short_set_iter) = self.short_set_iter {
+            short_set_iter.parser_data.commands = cmd_set;
         }
     }
 
