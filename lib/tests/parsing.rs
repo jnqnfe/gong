@@ -601,6 +601,26 @@ mod data {
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
+    /// Test option with expected data arg, provided in next argument, but empty. Note that users
+    /// can easily achieve this in a command line using quotes (the command lines does not
+    /// necessarily remove such an empty string item), e.g. `<prog-name> --hah ""`.
+    #[test]
+    fn next_arg_empty() {
+        let args = arg_list!(
+            "--hah", "",    // Long
+            "-o", "",       // Short
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
+                expected_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
     /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
     /// denotes an "in-arg" data value and thus it is broken up into name and data components. Here
     /// we check that an `=` does not result in unwanted behaviour in order positions.
