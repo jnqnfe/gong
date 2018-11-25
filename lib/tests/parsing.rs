@@ -1188,6 +1188,61 @@ mod commands {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Trimming - We do not do any, prove this and ensure implementation stays consistent with respect
+// to this, by causing test suite failure on change.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod trimming {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let args = arg_list!(
+            // In all of these cases the whitespace is expected to be preserved, which thus might
+            // cause arguments to be seen as non-options, or cause option match failure.
+            " --foo",                   // Whitespace at start of long option style argument
+            "--foo ",                   // Whitespace at end of long option name
+            "-- foo",                   // Whitespace at start of long option name
+            "--f o\to",                 // Whitespace in middle of option name
+            " -a",                      // Whitespace at start of short option style argument
+            "-a ",                      // Whitespace at end of short option set
+            "- a",                      // Whitespace between prefix and first non-whitespace short
+            "-a \tb",                   // Whitespace in middle of short option set
+            "--hah=   a  b\t c ",       // Whitespace in in-same-arg long option data value
+            "--hah", "   a  b\t c ",    // Whitespace in in-next-arg long option data value
+            "-o   a  b\t c ",           // Whitespace in in-same-arg short option data value
+            "-o", "   a  b\t c ",       // Whitespace in in-next-arg short option data value
+            "   a  b\t c ",             // Whitespace in non-option
+        );
+        let expected = expected!(
+            error: false,
+            warn: true,
+            [
+                expected_item!(0, NonOption, " --foo"),
+                expected_item!(1, UnknownLong, "foo "),
+                expected_item!(2, UnknownLong, " foo"),
+                expected_item!(3, UnknownLong, "f o\to"),
+                expected_item!(4, NonOption, " -a"),
+                expected_item!(5, UnknownShort, 'a'),
+                expected_item!(5, UnknownShort, ' '),
+                expected_item!(6, UnknownShort, ' '),
+                expected_item!(6, UnknownShort, 'a'),
+                expected_item!(7, UnknownShort, 'a'),
+                expected_item!(7, UnknownShort, ' '),
+                expected_item!(7, UnknownShort, '\t'),
+                expected_item!(7, UnknownShort, 'b'),
+                expected_item!(8, LongWithData, "hah", "   a  b\t c ", DataLocation::SameArg),
+                expected_item!(9, LongWithData, "hah", "   a  b\t c ", DataLocation::NextArg),
+                expected_item!(11, ShortWithData, 'o', "   a  b\t c ", DataLocation::SameArg),
+                expected_item!(12, ShortWithData, 'o', "   a  b\t c ", DataLocation::NextArg),
+                expected_item!(14, NonOption, "   a  b\t c "),
+            ]
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Alt-mode option parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
