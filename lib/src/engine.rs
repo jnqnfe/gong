@@ -288,7 +288,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 }
                 else if let Some(matched) = matched {
                     // Use option’s full name, not the possibly abbreviated user provided one
-                    let opt_name = &matched.name;
+                    let opt_name = matched.name;
 
                     if matched.expects_data {
                         // Data included in same argument
