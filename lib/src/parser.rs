@@ -239,12 +239,17 @@ impl<'r, 's: 'r> Parser<'r, 's> {
 
     /// Parses the provided program arguments
     ///
-    /// Returns an analysis describing the parsed argument list.
+    /// Returns an analysis describing the parsed argument list. While the [`parse_iter`] method is
+    /// aimed at iterative based parsing, this alternative provides a “parse-and-data-mine”
+    /// alternative; it basically uses an iterator, collecting all of the results into an object
+    /// which has a set of methods for mining the result set for information.
     ///
     /// The returned analysis item may include `&str` references to strings provided in the `args`
     /// parameter and/or in `self`. Take note of this with respect to object lifetimes.
     ///
     /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    ///
+    /// [`parse_iter`]: #method.parse_iter
     pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'s, str>
         where A: 's + AsRef<str>
     {

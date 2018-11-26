@@ -38,14 +38,18 @@ mod available_options {
                 gong_longopt!("ábc"),
                 gong_longopt!("ƒƒ", true),
                 gong_longopt!("ƒo"),
+                gong_longopt!("color"),
+                gong_longopt!("no-color"),
             ],
             short: vec![
                 gong_shortopt!('h'),
+                gong_shortopt!('v'),
                 gong_shortopt!('❤'),
                 gong_shortopt!('x'),
                 gong_shortopt!('o', true),
                 gong_shortopt!('\u{030a}'),
                 gong_shortopt!('Ɛ', true),
+                gong_shortopt!('C'),
             ]
         };
         assert_eq!(*fixed, non_fixed);
@@ -68,14 +72,18 @@ mod available_options {
                 LongOption { name: "ábc", expects_data: false },
                 LongOption { name: "ƒƒ", expects_data: true },
                 LongOption { name: "ƒo", expects_data: false },
+                LongOption { name: "color", expects_data: false },
+                LongOption { name: "no-color", expects_data: false },
             ],
             short: &[
                 ShortOption { ch: 'h', expects_data: false },
+                ShortOption { ch: 'v', expects_data: false },
                 ShortOption { ch: '❤', expects_data: false },
                 ShortOption { ch: 'x', expects_data: false },
                 ShortOption { ch: 'o', expects_data: true },
                 ShortOption { ch: '\u{030A}', expects_data: false },
                 ShortOption { ch: 'Ɛ', expects_data: true },
+                ShortOption { ch: 'C', expects_data: false },
             ]
         };
 
@@ -93,6 +101,7 @@ mod available_options {
         method_built
             .add_long("help")
             .add_short('h')
+            .add_short('v')
             .add_long("foo")
             .add_long("version")
             .add_long("foobar")
@@ -104,7 +113,10 @@ mod available_options {
             .add_short('\u{030A}')
             .add_long_data("ƒƒ")
             .add_long("ƒo")
-            .add_short_data('Ɛ');
+            .add_short_data('Ɛ')
+            .add_long("color")
+            .add_long("no-color")
+            .add_short('C');
 
         assert_eq!(*macro_built, method_built);
     }

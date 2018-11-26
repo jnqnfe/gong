@@ -226,6 +226,12 @@
 //! // now react to it...
 //! ```
 //!
+//! One benefit of the “all in one” approach is that the [`Analysis`] object provides a collection
+//! of data-mining methods for extracting information, whereas the iterative approach involves a
+//! large match block. However the iterative approach has its advantages also, with less overhead,
+//! being more efficient, and as discussed below, not requiring up-front construction of an entire
+//! command structure.
+//!
 //! If you are taking arguments in `OsString` form, as discussed above,
 //! [alternate parsing methods][parse_mod] are available.
 //!
@@ -245,11 +251,18 @@
 //!
 //! It is now up to you to take appropriate action in response to what was found.
 //!
-//! The analysis items are [`ItemClass`] variants, which wrap variants of [`Item`], [`ItemW`] or
-//! [`ItemE`] \(okay/warn/error), thus making it simple to match by class. All variants of each item
-//! class hold a `usize` value to be used for indicating the index of the argument in which the item
-//! was found, should you want to know that. Similarly, information is returned where applicable
-//! with *data values* as to whether the data arg was located in the same argument or the next.
+//! In the case of data-mining with respect to the “all in one” approach, go ahead and simply use
+//! the methods available on the [`Analysis`] object.
+//!
+//! If not taking a data-mining approach, you need to grasp how *items* are described in the
+//! returned analysis types. It is pretty straight forward. The analysis items are [`ItemClass`]
+//! variants which wrap variants of [`Item`], [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making
+//! it simple to match by class.
+//!
+//! All variants of each item class hold a `usize` value used to indicate the index of the argument
+//! in which the item was found, should you want to know that. Similarly, information is returned
+//! where applicable with *data values* as to whether the data arg was located in the same argument
+//! or the next.
 //!
 //! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
 //! `error` and `warn` booleans which give a quick indication of problems, alongside the list of

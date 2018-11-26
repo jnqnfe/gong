@@ -146,3 +146,47 @@ macro_rules! gong_command {
         }
     };
 }
+
+/// Constructs a [`FindOption`](analysis/enum.FindOption.html)
+///
+/// Takes either a long option name, a short option character, or both as a related pair. All must
+/// be annotated as appropriate to indicate which form.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let _ = gong_findopt!(@long "help");      // Long option name only
+/// let _ = gong_findopt!(@short 'h');        // Short option character only
+/// let _ = gong_findopt!(@pair 'h', "help"); // Related short+long pair
+/// # }
+/// ```
+#[macro_export]
+macro_rules! gong_findopt {
+    ( @long $name:expr ) => { $crate::analysis::FindOption::Long($name) };
+    ( @short $ch:expr ) => { $crate::analysis::FindOption::Short($ch) };
+    ( @pair $ch:expr, $name:expr ) => { $crate::analysis::FindOption::Pair($ch, $name) };
+}
+
+/// Constructs a [`FoundOption`](analysis/enum.FoundOption.html)
+///
+/// Takes either a long option name or a short option character. Both must be annotated as
+/// appropriate to indicate which form.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use]
+/// # extern crate gong;
+/// # fn main() {
+/// let _ = gong_foundopt!(@long "help"); // Long option name only
+/// let _ = gong_foundopt!(@short 'h');   // Short option character only
+/// # }
+/// ```
+#[macro_export]
+macro_rules! gong_foundopt {
+    ( @long $name:expr ) => { $crate::analysis::FoundOption::Long($name) };
+    ( @short $ch:expr ) => { $crate::analysis::FoundOption::Short($ch) };
+}

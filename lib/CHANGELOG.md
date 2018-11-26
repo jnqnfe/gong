@@ -17,6 +17,10 @@
     - The `process` methods on the option set objects have been replaced with “parse” methods on
       this new wrapping `Parser` object. There is a `parse_iter` method for iterative based parsing,
       and a `parse` method for the “all in one” style.
+ * Added data-mining methods to `Analysis`.
+   This means that you can now, for instance, ask if an option was used, how many times it was used,
+   retrieve the value from the last instance, or get the set of values of all instances, or get an
+   iterator over non-options.
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.
