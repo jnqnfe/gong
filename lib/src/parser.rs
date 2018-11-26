@@ -211,7 +211,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// The returned analysis item may include `&str` references to strings provided in the `args`
     /// parameter and/or in `self`. Take note of this with respect to object lifetimes.
     ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
+    ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
     #[inline(always)]
     pub fn parse_iter<A>(&'r self, args: &'s [A]) -> ParseIter<'r, 's, A>
         where A: 's + AsRef<str>
@@ -229,7 +233,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
     /// object lifetimes.
     ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
+    ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
     #[inline(always)]
     pub fn parse_iter_os<A>(&'r self, args: &'s [A]) -> ParseIterOs<'r, 's, A>
         where A: 's + AsRef<OsStr>
@@ -247,8 +255,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// The returned analysis item may include `&str` references to strings provided in the `args`
     /// parameter and/or in `self`. Take note of this with respect to object lifetimes.
     ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
     ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
     /// [`parse_iter`]: #method.parse_iter
     pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'s, str>
         where A: 's + AsRef<str>
@@ -274,7 +285,11 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
     /// object lifetimes.
     ///
-    /// Expects `self` to be valid (see [`is_valid`](#method.is_valid)).
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
+    ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
     pub fn parse_os<A>(&self, args: &'s [A]) -> Analysis<'s, OsStr>
         where A: 's + AsRef<OsStr>
     {
