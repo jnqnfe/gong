@@ -150,10 +150,4 @@ impl<'s, S: 's + ?Sized> Analysis<'s, S> {
             warn: false,
         }
     }
-
-    /// Add a new item to the analysis (mostly only useful internally)
-    #[inline]
-    pub fn add(&mut self, item: ItemClass<'s, S>) {
-        self.items.push(item);
-    }
 }

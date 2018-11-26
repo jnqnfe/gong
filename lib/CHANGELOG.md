@@ -30,6 +30,8 @@
  * Modified option flaw enum to rename some variants and to make invalid character related ones
    generic, able to hold the invalid `char` found, and thus future proof for any further addition of
    additional forbidden `char`s.
+ * Removed the `Analysis::add` method - not used internally anymore and doubtful anyone really
+   wants it kept around.
  * Derived `Copy` for `ShortOption`, `LongOption` and `OptionSet`
  * Derived `Copy` and `Clone` for `OptionFlaw`
  * Purged old deprecated stuff
