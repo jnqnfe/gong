@@ -142,7 +142,8 @@ pub enum DataLocation {
 }
 
 impl<'s, S: 's + ?Sized> Analysis<'s, S> {
-    /// Create a new result set (mostly only useful internally)
+    /// Create a new result set (mostly only useful internally and in test suite)
+    #[doc(hidden)]
     pub fn new(size_guess: usize) -> Self {
         Self {
             items: Vec::with_capacity(size_guess),
