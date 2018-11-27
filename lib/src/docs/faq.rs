@@ -71,6 +71,17 @@
 //! struck as to how much of the work this library does and how much you do, and it seems right that
 //! this library steers away from attempting to incorporate this.
 //!
+//! # What is “posixly correct” parsing?
+//!
+//! It is parsing in a way that conforms to the POSIX/SUS standard. Basically this standard requires
+//! that a user must specify options before positional arguments, i.e. they cannot be intermixed,
+//! thus an argument parser must assume (and interpret as such) that all subsequent arguments after
+//! encountering a positional argument must also be positional arguments. By default this library
+//! allows free intermixing, but you can control this via a setting. See the
+//! [`Settings::set_posixly_correct`] method documentation for a little more info.
+//!
+//! [`Settings::set_posixly_correct`]: ../../parser/struct.Settings.html#method.set_posixly_correct
+//!
 //! # What exactly is “mismatch suggestions”?
 //!
 //! This is a feature that assists in generating more helpful error messages when a user supplies an

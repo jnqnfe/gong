@@ -1371,3 +1371,61 @@ mod alt_mode {
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// “Posixly correct” parsing, i.e. no mixing of options and non-options, the first non-options
+// causes all subsequent arguments to be treated as non-options.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod posixly_correct {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let args = arg_list!(
+            "--help",   // Option
+            "abc",      // Non-option
+            "--foo",    // Option, to be taken as non-option
+            "--",       // Early terminator, to be taken as non-option
+            "bar",      // Option, to be taken as non-option
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Long, "help"),
+                expected_item!(1, NonOption, "abc"),
+                expected_item!(2, NonOption, "--foo"),
+                expected_item!(3, NonOption, "--"),
+                expected_item!(4, NonOption, "bar"),
+            ]
+        );
+        let mut parser = get_parser();
+        parser.settings.set_posixly_correct(true);
+        check_result(&Actual(parser.parse(&args)), &expected);
+    }
+
+    /// Check works with early terminator use, where it should not make any difference
+    #[test]
+    fn early_term_first() {
+        let args = arg_list!(
+            "--help",   // Option
+            "--",       // Early terminator
+            "abc",      // Non-option
+            "--foo",    // Option, to be taken as non-option
+        );
+        let expected = expected!(
+            error: false,
+            warn: false,
+            [
+                expected_item!(0, Long, "help"),
+                expected_item!(1, EarlyTerminator),
+                expected_item!(2, NonOption, "abc"),
+                expected_item!(3, NonOption, "--foo"),
+            ]
+        );
+        let mut parser = get_parser();
+        parser.settings.set_posixly_correct(true);
+        check_result(&Actual(parser.parse(&args)), &expected);
+    }
+}

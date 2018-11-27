@@ -71,6 +71,7 @@
 //!     <tbody>
 //!         <tr><td>Iterative parsing style</td><td>Yes</td></tr>
 //!         <tr><td>All-in-one (collect and data-mine) parsing style</td><td>Yes</td></tr>
+//!         <tr><td>“Posixly correct” parsing</td><td>Yes, available as a parser setting</td></tr>
 //!         <tr><td>Traditional style options (‘long’ and ‘short’)</td><td>Yes</td></tr>
 //!         <tr><td>Alternate style options (‘long’ only, with single dash)</td><td>Yes</td></tr>
 //!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>

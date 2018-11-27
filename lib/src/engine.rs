@@ -41,8 +41,9 @@ pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
     arg_iter: Enumerate<slice::Iter<'s, A>>,
     /// The parser data in use (will change on encountering a command)
     pub(crate) parser_data: Parser<'r, 's>,
-    /// Whether or not all remaining arguments should be interpreted as non-options (`true` if an
-    /// an early terminator has been encountered).
+    /// Whether or not all remaining arguments should be interpreted as non-options (`true` if
+    /// either an early terminator has been encountered, or “posixly correct” behaviour is required
+    /// and a non-option has been encountered).
     rest_are_nonoptions: bool,
     /// A non-option is only assessed as being a possible command if 1) it is the first encountered
     /// for each option-set analysis (reset for each command identified), and 2) we have not
@@ -218,6 +219,9 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                             return Some(ItemClass::Ok(Item::Command(arg_index, arg)));
                         }
                     }
+                }
+                if self.parser_data.settings.posixly_correct {
+                    self.rest_are_nonoptions = true;
                 }
                 self.try_command_matching = false;
                 Some(ItemClass::Ok(Item::NonOption(arg_index, arg)))
