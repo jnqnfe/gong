@@ -41,8 +41,9 @@ pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
     arg_iter: Enumerate<slice::Iter<'s, A>>,
     /// The parser data in use (will change on encountering a command)
     pub(crate) parser_data: Parser<'r, 's>,
-    /// If an early terminator has been encountered, all subsequent arguments are non-options
-    early_terminator_encountered: bool,
+    /// Whether or not all remaining arguments should be interpreted as non-options (`true` if an
+    /// an early terminator has been encountered).
+    rest_are_nonoptions: bool,
     /// A non-option is only assessed as being a possible command if 1) it is the first encountered
     /// for each option-set analysis (reset for each command identified), and 2) we have not
     /// encountered an early terminator.
@@ -128,7 +129,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         Self {
             arg_iter: args.iter().enumerate(),
             parser_data: *parser,
-            early_terminator_encountered: false,
+            rest_are_nonoptions: false,
             try_command_matching: true,
             get_basic_arg_type_fn: Self::get_type_assessor(parser.settings.mode),
             short_set_iter: None,
@@ -202,14 +203,14 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
-        let arg_type = match self.early_terminator_encountered {
+        let arg_type = match self.rest_are_nonoptions {
             true => ArgTypeBasic::NonOption,
             false => (self.get_basic_arg_type_fn)(arg),
         };
 
         match arg_type {
             ArgTypeBasic::NonOption => {
-                if self.try_command_matching && !self.early_terminator_encountered {
+                if self.try_command_matching && !self.rest_are_nonoptions {
                     for candidate in self.parser_data.commands.commands {
                         if candidate.name == arg {
                             self.parser_data.options = candidate.options;
@@ -222,7 +223,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 Some(ItemClass::Ok(Item::NonOption(arg_index, arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
-                self.early_terminator_encountered = true;
+                self.rest_are_nonoptions = true;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
                 // where, so let’s not leave it out of the results.
                 Some(ItemClass::Ok(Item::EarlyTerminator(arg_index)))
