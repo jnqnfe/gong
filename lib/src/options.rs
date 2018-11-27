@@ -189,6 +189,48 @@ impl<'s> OptionSetEx<'s> {
         self
     }
 
+    /// Add multiple short options from string
+    ///
+    /// Sometimes it may be preferable to add multiple short options by specifying them as a string,
+    /// rather than making multiple individual method calls. This method offers such a facility as a
+    /// convenience.
+    ///
+    /// Note that the colon (`:`) character has special meaning when used in the provided string;
+    /// each `char` may optionally be followed by a colon (`:`) which if present indicates that the
+    /// option is a data-taking short option. Unexpected colons (first `char` or after another
+    /// colon) are ignored.
+    ///
+    /// Also, note that this does nothing to avoid duplicates being added, and white space
+    /// characters in the provided string are **not** ignored (not that it is sensible or even makes
+    /// any sense to attempt to assign whitespace characters as short options).
+    ///
+    /// Panics (debug only) on invalid `char` choice.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # let mut set = gong::options::OptionSetEx::new();
+    /// set.add_shorts_from_str("ab:cde:f"); // Six short options, `b` and `e` take data
+    /// ```
+    pub fn add_shorts_from_str(&mut self, set: &str) -> &mut Self {
+        let mut iter = set.chars().peekable();
+        while let Some(':') = iter.peek() {
+            let _ = iter.next();
+        }
+        while let Some(ch) = iter.next() {
+            let data = match iter.peek() {
+                Some(':') => true,
+                _ => false,
+            };
+            // Note, we deliberately use a method known to panic on invalid `char` here!
+            self.short.push(ShortOption::new(ch, data));
+            while let Some(':') = iter.peek() {
+                let _ = iter.next();
+            }
+        }
+        self
+    }
+
     /// Checks validity of option set
     ///
     /// Returns `true` if valid.

@@ -51,6 +51,96 @@ mod options {
         assert!(opts.validate().is_ok());
     }
 
+    /// Check adding more than one short option at a time from string
+    #[test]
+    fn short_opt_string() {
+        let mut opts = OptionSetEx::new();
+
+        // Add some existing options, to check they are not modified in any way
+        opts.add_short('h')
+            .add_long("foo")
+            .add_short_data('o')
+            .add_long_data("bar");
+
+        opts.add_shorts_from_str("ab:cde:f");
+
+        let mut expected = OptionSetEx {
+            long: vec![
+                gong_longopt!("foo", false),
+                gong_longopt!("bar", true),
+            ],
+            short: vec![
+                gong_shortopt!('h', false),
+                gong_shortopt!('o', true),
+                gong_shortopt!('a', false),
+                gong_shortopt!('b', true),
+                gong_shortopt!('c', false),
+                gong_shortopt!('d', false),
+                gong_shortopt!('e', true),
+                gong_shortopt!('f', false),
+            ],
+        };
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str("");
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str(":");
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str(":::::");
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str(" ");
+        expected.add_short(' ');
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str(" :");
+        expected.add_short_data(' ');
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str(":jkl");
+        expected.add_short('j')
+                .add_short('k')
+                .add_short('l');
+        assert_eq!(opts, expected);
+
+        opts.add_shorts_from_str("mn:::op");
+        expected.add_short('m')
+                .add_short_data('n')
+                .add_short('o')
+                .add_short('p');
+        assert_eq!(opts, expected);
+
+        // Double check
+        let expected = OptionSetEx {
+            long: vec![
+                gong_longopt!("foo", false),
+                gong_longopt!("bar", true),
+            ],
+            short: vec![
+                gong_shortopt!('h', false),
+                gong_shortopt!('o', true),
+                gong_shortopt!('a', false),
+                gong_shortopt!('b', true),
+                gong_shortopt!('c', false),
+                gong_shortopt!('d', false),
+                gong_shortopt!('e', true),
+                gong_shortopt!('f', false),
+                gong_shortopt!(' ', false),
+                gong_shortopt!(' ', true),
+                gong_shortopt!('j', false),
+                gong_shortopt!('k', false),
+                gong_shortopt!('l', false),
+                gong_shortopt!('m', false),
+                gong_shortopt!('n', true),
+                gong_shortopt!('o', false),
+                gong_shortopt!('p', false),
+            ],
+        };
+        assert_eq!(opts, expected);
+    }
+
     /// Check `is_empty`
     #[test]
     fn is_empty() {

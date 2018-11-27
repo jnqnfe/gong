@@ -59,7 +59,8 @@
 //!     .add_long_data("hah") // This one expects a data arg
 //!     .add_short('❤')
 //!     .add_short('x')
-//!     .add_short_data('o'); // So does this one
+//!     .add_short_data('o')  // So does this one
+//!     .add_shorts_from_str("jk:l"); // Multiple shorts from string, where `k` takes data
 //! ```
 //!
 //! An example of *option set* construction, “fixed” style, using macros:
