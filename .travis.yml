@@ -10,5 +10,5 @@ matrix:
     - rust: nightly
 script:
   - cd lib
-  - cargo build --verbose --all
-  - cargo test --verbose --all
+  - cargo build --verbose
+  - cargo test --verbose
