@@ -39,9 +39,15 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rustc }}
           override: true
-      - name: Check building lib
+      - name: Check building lib - limited features
         working-directory: ./lib
-        run: cargo build --verbose
-      - name: Run tests for lib
+        run: cargo build --no-default-features --verbose
+      - name: Run tests for lib - limited features
         working-directory: ./lib
-        run: cargo test --verbose
+        run: cargo test --no-default-features --verbose
+      - name: Check building lib - with suggestions feature
+        working-directory: ./lib
+        run: cargo build --no-default-features --features suggestions --verbose
+      - name: Run tests for lib - with suggestions feature
+        working-directory: ./lib
+        run: cargo test --no-default-features --features suggestions --verbose
