@@ -76,13 +76,13 @@
 //!         gong_longopt!("version"),
 //!         gong_longopt!("foobar"),
 //!         gong_longopt!("ábc"),
-//!         gong_longopt!("hah", true), // This one expects a data arg
+//!         gong_longopt!(@data "hah"), // This one expects a data arg
 //!     ],
 //!     @short [
 //!         gong_shortopt!('h'),
 //!         gong_shortopt!('❤'),
 //!         gong_shortopt!('x'),
-//!         gong_shortopt!('o', true),  // So does this one
+//!         gong_shortopt!(@data 'o'),  // So does this one
 //!     ]
 //! );
 //! # fn main() {}

@@ -46,7 +46,7 @@ mod short_dash {
     #[test]
     fn add_short_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_short(gong_shortopt!('-', false)); // Should work, no validation done
+        opts.add_existing_short(gong_shortopt!('-')); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
@@ -125,7 +125,7 @@ mod short_rep_char {
     #[test]
     fn add_short_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_short(gong_shortopt!(REPLACEMENT_CHARACTER, false)); // Should work, no validation done
+        opts.add_existing_short(gong_shortopt!(REPLACEMENT_CHARACTER)); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
@@ -164,7 +164,7 @@ mod long_no_name {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("", false)); // Should work, no validation done
+        opts.add_existing_long(gong_longopt!("")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
@@ -203,7 +203,7 @@ mod long_equals {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("=", false)); // Should work, no validation done
+        opts.add_existing_long(gong_longopt!("=")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
@@ -272,7 +272,7 @@ mod long_rep_char {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("\u{FFFD}", false)); // Should work, no validation done
+        opts.add_existing_long(gong_longopt!("\u{FFFD}")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails

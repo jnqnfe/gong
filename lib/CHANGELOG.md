@@ -34,6 +34,8 @@
    now that the shorter name is freed up.
  * The option set creation macro now requires `@long` and/or `@short` annotations, which helps
    bring clarity and neater usage for sets with only short options.
+ * The long and short option creation macros now require an `@data` annotation for data-taking
+   options, instead of a secondary parameter set to `true`.
  * Changed the `new` method of `OptionSetEx` to take no params, adding a `with_capacity` method
    that takes the estimations instead.
  * Improved internal validation checks to use shared logic for checking identifier flaws

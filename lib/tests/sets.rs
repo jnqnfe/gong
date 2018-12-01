@@ -29,21 +29,21 @@ mod options {
         let mut opts = OptionSetEx::new();
         opts.add_short('h')
             .add_short_data('o')
-            .add_existing_short(gong_shortopt!('a', false))
+            .add_existing_short(gong_shortopt!('a'))
             .add_long("foo")
             .add_long_data("bar")
-            .add_existing_long(gong_longopt!("foobar", false));
+            .add_existing_long(gong_longopt!("foobar"));
 
         let expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
-                gong_longopt!("foobar", false),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
+                gong_longopt!("foobar"),
             ],
             short: vec![
-                gong_shortopt!('h', false),
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
+                gong_shortopt!('h'),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
             ],
         };
 
@@ -66,18 +66,18 @@ mod options {
 
         let mut expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
             ],
             short: vec![
-                gong_shortopt!('h', false),
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
-                gong_shortopt!('b', true),
-                gong_shortopt!('c', false),
-                gong_shortopt!('d', false),
-                gong_shortopt!('e', true),
-                gong_shortopt!('f', false),
+                gong_shortopt!('h'),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
+                gong_shortopt!(@data 'b'),
+                gong_shortopt!('c'),
+                gong_shortopt!('d'),
+                gong_shortopt!(@data 'e'),
+                gong_shortopt!('f'),
             ],
         };
         assert_eq!(opts, expected);
@@ -115,27 +115,27 @@ mod options {
         // Double check
         let expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
             ],
             short: vec![
-                gong_shortopt!('h', false),
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
-                gong_shortopt!('b', true),
-                gong_shortopt!('c', false),
-                gong_shortopt!('d', false),
-                gong_shortopt!('e', true),
-                gong_shortopt!('f', false),
-                gong_shortopt!(' ', false),
-                gong_shortopt!(' ', true),
-                gong_shortopt!('j', false),
-                gong_shortopt!('k', false),
-                gong_shortopt!('l', false),
-                gong_shortopt!('m', false),
-                gong_shortopt!('n', true),
-                gong_shortopt!('o', false),
-                gong_shortopt!('p', false),
+                gong_shortopt!('h'),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
+                gong_shortopt!(@data 'b'),
+                gong_shortopt!('c'),
+                gong_shortopt!('d'),
+                gong_shortopt!(@data 'e'),
+                gong_shortopt!('f'),
+                gong_shortopt!(' '),
+                gong_shortopt!(@data ' '),
+                gong_shortopt!('j'),
+                gong_shortopt!('k'),
+                gong_shortopt!('l'),
+                gong_shortopt!('m'),
+                gong_shortopt!(@data 'n'),
+                gong_shortopt!('o'),
+                gong_shortopt!('p'),
             ],
         };
         assert_eq!(opts, expected);
@@ -160,15 +160,15 @@ mod options {
         let opt_set = gong_option_set!(@short []);
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set!(@long [ gong_longopt!("foo", false) ]);
+        let opt_set = gong_option_set!(@long [ gong_longopt!("foo") ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set!(@short [ gong_shortopt!('h', false) ]);
+        let opt_set = gong_option_set!(@short [ gong_shortopt!('h') ]);
         assert!(!opt_set.is_empty());
 
         let opt_set = gong_option_set!(
-            @long [ gong_longopt!("foo", false) ],
-            @short [ gong_shortopt!('h', false) ]
+            @long [ gong_longopt!("foo") ],
+            @short [ gong_shortopt!('h') ]
         );
         assert!(!opt_set.is_empty());
     }
@@ -179,28 +179,28 @@ mod options {
         // Test set - fixed
         let opts_fixed = OptionSet {
             long: &[
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
-                gong_longopt!("foobar", false),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
+                gong_longopt!("foobar"),
             ],
             short: &[
-                gong_shortopt!('h', false),
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
+                gong_shortopt!('h'),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
             ],
         };
 
         // Test set - extendible
         let opts_extendible = OptionSetEx {
             long: vec![
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
-                gong_longopt!("foobar", false),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
+                gong_longopt!("foobar"),
             ],
             short: vec![
-                gong_shortopt!('h', false),
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
+                gong_shortopt!('h'),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
             ],
         };
 
@@ -224,14 +224,14 @@ mod options {
 
         let opts_fixed_2 = OptionSet {
             long: &[
-                gong_longopt!("blah", false),
+                gong_longopt!("blah"),
             ],
             short: &[],
         };
 
         let opts_extendible_2 = OptionSetEx {
             long: vec![
-                gong_longopt!("blah", false),
+                gong_longopt!("blah"),
             ],
             short: vec![],
         };
@@ -252,14 +252,14 @@ mod options {
         let _ = gong_option_set!(
             @long [
                 LONG_OPT_HELP,
-                gong_longopt!("foo", false),
-                gong_longopt!("bar", true),
-                gong_longopt!("foobar", false),
+                gong_longopt!("foo"),
+                gong_longopt!(@data "bar"),
+                gong_longopt!("foobar"),
             ],
             @short [
                 SHORT_OPT_H,
-                gong_shortopt!('o', true),
-                gong_shortopt!('a', false),
+                gong_shortopt!(@data 'o'),
+                gong_shortopt!('a'),
             ]
         );
     }

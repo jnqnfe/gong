@@ -64,10 +64,7 @@ macro_rules! gong_command_set {
 
 /// Constructs a [`LongOption`](options/struct.LongOption.html)
 ///
-/// Takes:
-///
-/// 1. Option name
-/// 2. Boolean indicating whether or not it takes a data arg (optional, defaults to false)
+/// Takes an option name, optionally annotated with `@data` to indicate a data-taking option.
 ///
 /// # Examples
 ///
@@ -75,24 +72,19 @@ macro_rules! gong_command_set {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_longopt!("foo");       // A simple option
-/// let _ = gong_longopt!("bar", true); // One that takes data
+/// let _ = gong_longopt!("foo");       // A flag type option
+/// let _ = gong_longopt!(@data "bar"); // One that takes data
 /// # }
 /// ```
 #[macro_export]
 macro_rules! gong_longopt {
-    ( $name:expr, $data:expr ) => {
-        $crate::options::LongOption { name: $name, expects_data: $data }
-    };
+    ( @data $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: true } };
     ( $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
 }
 
 /// Constructs a [`ShortOption`](options/struct.ShortOption.html)
 ///
-/// Takes:
-///
-/// 1. Option char
-/// 2. Boolean indicating whether or not it takes a data arg (optional, defaults to false)
+/// Takes a `char`, optionally annotated with `@data` to indicate a data-taking option.
 ///
 /// # Examples
 ///
@@ -100,13 +92,13 @@ macro_rules! gong_longopt {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_shortopt!('a');       // A simple option
-/// let _ = gong_shortopt!('b', true); // One that takes data
+/// let _ = gong_shortopt!('a');       // A flag type option
+/// let _ = gong_shortopt!(@data 'b'); // One that takes data
 /// # }
 /// ```
 #[macro_export]
 macro_rules! gong_shortopt {
-    ( $ch:expr, $data:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: $data } };
+    ( @data $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: true } };
     ( $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
 }
 

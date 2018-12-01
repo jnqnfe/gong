@@ -34,9 +34,9 @@ mod available_options {
                 gong_longopt!("foo"),
                 gong_longopt!("version"),
                 gong_longopt!("foobar"),
-                gong_longopt!("hah", true),
+                gong_longopt!(@data "hah"),
                 gong_longopt!("ábc"),
-                gong_longopt!("ƒƒ", true),
+                gong_longopt!(@data "ƒƒ"),
                 gong_longopt!("ƒo"),
                 gong_longopt!("color"),
                 gong_longopt!("no-color"),
@@ -46,9 +46,9 @@ mod available_options {
                 gong_shortopt!('v'),
                 gong_shortopt!('❤'),
                 gong_shortopt!('x'),
-                gong_shortopt!('o', true),
+                gong_shortopt!(@data 'o'),
                 gong_shortopt!('\u{030a}'),
-                gong_shortopt!('Ɛ', true),
+                gong_shortopt!(@data 'Ɛ'),
                 gong_shortopt!('C'),
             ]
         };

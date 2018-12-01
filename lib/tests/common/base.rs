@@ -20,9 +20,9 @@ static BASE_OPTS: OptionSet = gong_option_set!(
         gong_longopt!("foo"),
         gong_longopt!("version"),
         gong_longopt!("foobar"),
-        gong_longopt!("hah", true),
+        gong_longopt!(@data "hah"),
         gong_longopt!("ábc"),       // Using a combinator char (accent)
-        gong_longopt!("ƒƒ", true),  // For multi-byte with-data long option component split checking
+        gong_longopt!(@data "ƒƒ"),  // For multi-byte with-data long option component split checking
         gong_longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
         gong_longopt!("color"),
         gong_longopt!("no-color"),
@@ -32,9 +32,9 @@ static BASE_OPTS: OptionSet = gong_option_set!(
         gong_shortopt!('v'),
         gong_shortopt!('❤'),
         gong_shortopt!('x'),
-        gong_shortopt!('o', true),
+        gong_shortopt!(@data 'o'),
         gong_shortopt!('\u{030a}'), // A lone combinator (“ring above”)
-        gong_shortopt!('Ɛ', true),  // For multi-byte with-data calculation checking
+        gong_shortopt!(@data 'Ɛ'),  // For multi-byte with-data calculation checking
         gong_shortopt!('C'),        // For analysis data mining, using capital to avoid test conflicts
     ]
 );

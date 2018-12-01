@@ -75,14 +75,14 @@ fn main() {
             gong_longopt!("foo"),
             gong_longopt!("version"),
             gong_longopt!("foobar"),
-            gong_longopt!("hah", true),
+            gong_longopt!(@data "hah"),
             gong_longopt!("ábc"),
         ],
         @short [
             gong_shortopt!('h'),
             gong_shortopt!('❤'),
             gong_shortopt!('x'),
-            gong_shortopt!('o', true),
+            gong_shortopt!(@data 'o'),
         ]
     );
     let mut parser = Parser::new(&opts, None);
