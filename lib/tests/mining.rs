@@ -40,6 +40,10 @@ mod findopt {
         assert_eq!(gong_findopt!(@long "help"), FindOption::Long("help"));
         assert_eq!(gong_findopt!(@short 'h'), FindOption::Short('h'));
         assert_eq!(gong_findopt!(@pair 'h', "help"), FindOption::Pair('h', "help"));
+
+        // Conversion from option descriptors
+        assert_eq!(FindOption::from(gong_longopt!("help")), gong_findopt!(@long "help"));
+        assert_eq!(FindOption::from(gong_shortopt!('h')), gong_findopt!(@short 'h'));
     }
 
     /// Test invalid forms of specifying search parameters

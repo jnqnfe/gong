@@ -288,6 +288,20 @@ impl<'a> FindOption<'a> {
     }
 }
 
+impl<'a> From<super::options::LongOption<'a>> for FindOption<'a> {
+    #[inline(always)]
+    fn from(o: super::options::LongOption<'a>) -> Self {
+        FindOption::Long(o.name)
+    }
+}
+
+impl<'a> From<super::options::ShortOption> for FindOption<'a> {
+    #[inline(always)]
+    fn from(o: super::options::ShortOption) -> Self {
+        FindOption::Short(o.ch)
+    }
+}
+
 impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
