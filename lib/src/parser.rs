@@ -70,13 +70,6 @@ use super::options::{OptionSet, OptionFlaw};
 pub use super::engine::ParseIter;
 pub use super::engine_os::ParseIterOs;
 
-/// Default abbreviation support state
-pub(crate) const ABBR_SUP_DEFAULT: bool = true;
-/// Default mode
-pub(crate) const MODE_DEFAULT: OptionsMode = OptionsMode::Standard;
-/// Default posixly-correct state
-pub(crate) const POSIXLY_CORRECT_DEFAULT: bool = false;
-
 /// The parser
 ///
 /// Holds the option set and command set descriptions used for parsing input arguments, along with
@@ -121,9 +114,9 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            mode: MODE_DEFAULT,
-            allow_abbreviations: ABBR_SUP_DEFAULT,
-            posixly_correct: POSIXLY_CORRECT_DEFAULT,
+            mode: OptionsMode::Standard,
+            allow_abbreviations: true,
+            posixly_correct: false,
         }
     }
 }
@@ -140,7 +133,7 @@ pub enum OptionsMode {
 
 impl Default for OptionsMode {
     fn default() -> Self {
-        MODE_DEFAULT
+        OptionsMode::Standard
     }
 }
 
