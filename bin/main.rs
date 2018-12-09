@@ -93,24 +93,24 @@ fn main() {
 
     debug_assert!(opts.is_valid());
 
-    println!("\n[ {}Mode{} ]\n", c!(COL_HEADER), c!(RESET));
+    println!("\n[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
 
     #[cfg(not(feature = "alt_mode"))]
-    println!("{}STANDARD{}\n", c!(COL_MODE), c!(RESET));
+    println!("Option style: {}Standard{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "alt_mode")]
-    println!("{}ALTERNATE{}\n", c!(COL_MODE), c!(RESET));
+    println!("Option style: {}Alternate{}", c!(COL_MODE), c!(RESET));
 
     #[cfg(not(feature = "keep_prog_name"))]
-    println!("Skipping auto prog-name entry!\n(Compile with the `keep_prog_name` feature to not skip)\n");
+    println!("Skip first argument (program name): {}true{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "keep_prog_name")]
-    println!("NOT skipping auto prog-name entry!\n");
+    println!("Skip first argument (program name): {}false{}", c!(COL_MODE), c!(RESET));
 
+    #[cfg(not(feature = "no_abbreviations"))]
+    println!("Abbreviated option name matching: {}on{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "no_abbreviations")]
-    println!("Abbreviated matching disabled!\n");
+    println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
 
-    println!("Standard = {0}Short options with single dash prefix and long options with double dash \
-              prefix; compile with `alt_mode` feature for `alternate` mode.{1}\nAlternate = {0}Long \
-              options with single dash prefix only.{1}\n", c!(effects::ITALIC), c!(RESET));
+    println!("\nCompile with different features to change the config!\n");
 
     println!("[ {}Available options for test{} ]\n", c!(COL_HEADER), c!(RESET));
 
