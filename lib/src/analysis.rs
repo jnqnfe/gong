@@ -771,3 +771,20 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
         None
     }
 }
+
+impl<'s, S: 's + ?Sized> ItemClass<'s, S> {
+    /// Returns `true` if `self` is `Ok` variant
+    pub fn is_ok(&self) -> bool {
+        match *self { ItemClass::Ok(_) => true, _ => false }
+    }
+
+    /// Returns `true` if `self` is `Err` variant
+    pub fn is_err(&self) -> bool {
+        match *self { ItemClass::Err(_) => true, _ => false }
+    }
+
+    /// Returns `true` if `self` is `Warn` variant
+    pub fn is_warn(&self) -> bool {
+        match *self { ItemClass::Warn(_) => true, _ => false }
+    }
+}

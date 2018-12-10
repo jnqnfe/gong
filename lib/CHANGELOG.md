@@ -46,6 +46,7 @@
    additional forbidden `char`s.
  * Removed the `Analysis::add` method - not used internally anymore and doubtful anyone really
    wants it kept around.
+ * Added `is_ok`, `is_warn` and `is_err` methods to `ItemClass`
  * Derived `Copy` for `ShortOption`, `LongOption` and `OptionSet`
  * Derived `Copy` and `Clone` for `OptionFlaw`
  * Purged old deprecated stuff
