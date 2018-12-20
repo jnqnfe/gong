@@ -16,6 +16,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
+use std::ffi::{OsStr, OsString};
 use gong::analysis::*;
 use gong::parser::{Parser, OptionsMode};
 use common::{get_parser, Actual, Expected, check_result};
@@ -24,18 +25,25 @@ use common::{get_parser, Actual, Expected, check_result};
 // Arg list string types
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check arg parsing accepts `&[String]` and `&[&str]`
+/// Check arg parsing accepts `&[OsString]`, `&[&OsStr]`, `&[String]` and `&[&str]`
 ///
 /// All that we really need concern ourselves with is that it compiles.
 #[test]
 fn arg_list_owned_set() {
+    // Test works (compiles) using a `OsString` based slice (as given from `env::args_os()` for real
+    // args).
+    let args: Vec<OsString> = vec![ OsString::from("--foo"), OsString::from("--bah") ];
+    let _ = get_parser().parse(&args);
+
+    // Test works (compiles) using an `&OsStr` based slice
+    let args: Vec<&OsStr> = vec![ OsStr::new("--foo"), OsStr::new("--bah") ];
+    let _ = get_parser().parse(&args);
+
     // Test works (compiles) using a `String` based slice (as given from `env::args()` for real args)
-    // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
     let _ = get_parser().parse(&args);
 
     // Test works (compiles) using a `&str` based slice
-    // Note, **deliberately** not using the `arg_list` macro here!
     let args: Vec<&str> = vec![ "--foo", "--bah" ];
     let _ = get_parser().parse(&args);
 }

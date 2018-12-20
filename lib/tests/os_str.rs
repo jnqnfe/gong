@@ -8,19 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! `AsRef<OsStr>` based argument list testing
-//!
-//! The main focus of the library is on `AsRef<str>`, however a facility has been added on top for
-//! using `AsRef<OsStr>` based argument lists, for those that need this. The implementation is
-//! built directly on top of the existing parsing engine, to avoid duplication of logic, using it
-//! against a temporary lossy `str` conversion, then converting and rebuilding the analysis upon
-//! `OsStr` from the original arguments.
-//!
-//! Thus, there is no need to test the full parsing capabilities for `AsRef<OsStr>` argument list
-//! inputs; instead we only need to test that:
-//!
-//!  1) Using both `&[&OsStr]` and `&[OsString]` types work.
-//!  2) The analysis is correctly converted for all possible analysis item types.
+//TODO: Merge remaining tests here into the general `parsing` set
 
 #[macro_use]
 extern crate gong;
@@ -30,42 +18,16 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use gong::analysis::*;
-use common::{get_parser, ActualOs, ExpectedOs, check_result_os};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Arg list string types
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// Check arg parsing accepts `&[OsString]` and `&[&OsStr]`
-///
-/// All that we really need concern ourselves with is that it compiles.
-#[test]
-fn arg_list_owned_set() {
-    // Test works (compiles) using an `OsString` based slice (as given from `env::args_os()` for
-    // real args)
-    // Note, **deliberately** not using the `arg_list` macro here!
-    let args: Vec<OsString> = vec![ OsString::from("--foo"), OsString::from("--bah") ];
-    let _ = get_parser().parse_os(&args);
-
-    // Test works (compiles) using a `&OsStr` based slice
-    // Note, **deliberately** not using the `arg_list` macro here!
-    let args: Vec<&OsStr> = vec![ &OsStr::new("--foo"), &OsStr::new("--bah") ];
-    let _ = get_parser().parse_os(&args);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Processing, i.e. checking that the inner analysis is converted to an `OsStr` based one correctly
-// in all cases.
-////////////////////////////////////////////////////////////////////////////////////////////////////
+use common::{get_parser, Actual, Expected, check_result};
 
 /// This tests most of the variations that need to be converted from an `str` based `Analysis` to an
 /// `OsStr` based one. The things missing are long and short options with missing data, and a
 /// command example.
 #[test]
 fn basic() {
-    let args = arg_list_os!(
+    let args = arg_list!(
         "abc",              // Positional
         "--xxx",            // Unknown long option
         "--help",           // Known long option
@@ -83,84 +45,36 @@ fn basic() {
         "-o", "arg2",       // Known short option, with in-next-arg data
         "--",               // Early terminator
     );
-    let expected = expected_os!(
+    let expected = expected!(
         error: true,
         warn: true,
         [
-            expected_item!(0, Positional, OsStr::new("abc")),
-            expected_item!(1, UnknownLong, OsStr::new("xxx")),
+            expected_item!(0, Positional, "abc"),
+            expected_item!(1, UnknownLong, "xxx"),
             expected_item!(2, Long, "help"),
-            expected_item!(3, LongWithData, "hah", OsStr::new("abc"), DataLocation::SameArg),
-            expected_item!(4, LongWithData, "hah", OsStr::new("abc2"), DataLocation::NextArg),
-            expected_item!(6, LongWithData, "hah", OsStr::new(""), DataLocation::SameArg),
+            expected_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
+            expected_item!(4, LongWithData, "hah", "abc2", DataLocation::NextArg),
+            expected_item!(6, LongWithData, "hah", "", DataLocation::SameArg),
             expected_item!(7, Long, "foo"),
-            expected_item!(8, LongWithUnexpectedData, "foo", OsStr::new("xyz")),
-            expected_item!(9, AmbiguousLong, OsStr::new("fo")),
+            expected_item!(8, LongWithUnexpectedData, "foo", "xyz"),
+            expected_item!(9, AmbiguousLong, "fo"),
             expected_item!(10, LongWithNoName),
             expected_item!(11, LongWithNoName),
             expected_item!(12, UnknownShort, 'm'),
             expected_item!(13, Short, 'h'),
-            expected_item!(14, ShortWithData, 'o', OsStr::new("arg"), DataLocation::SameArg),
-            expected_item!(15, ShortWithData, 'o', OsStr::new("arg2"), DataLocation::NextArg),
+            expected_item!(14, ShortWithData, 'o', "arg", DataLocation::SameArg),
+            expected_item!(15, ShortWithData, 'o', "arg2", DataLocation::NextArg),
             expected_item!(17, EarlyTerminator),
         ]
     );
-    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
-}
-
-/// This tests a long option missing data example
-#[test]
-fn long_missing_data() {
-    let args = arg_list_os!(
-        "--hah", // Known long option, missing data
-    );
-    let expected = expected_os!(
-        error: true,
-        warn: false,
-        [
-            expected_item!(0, LongMissingData, "hah"),
-        ]
-    );
-    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
-}
-
-/// This tests a short option missing data example
-#[test]
-fn short_missing_data() {
-    let args = arg_list_os!(
-        "-o", // Known short option, missing data
-    );
-    let expected = expected_os!(
-        error: true,
-        warn: false,
-        [
-            expected_item!(0, ShortMissingData, 'o'),
-        ]
-    );
-    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
-}
-
-/// This tests a command based example
-#[test]
-fn command() {
-    let args = arg_list_os!(
-        "commit", // Known command
-    );
-    let expected = expected_os!(
-        error: false,
-        warn: false,
-        [
-            expected_item!(0, Command, "commit"),
-        ]
-    );
-    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// This tests some example items using multi-byte characters, where slicing of the input arguments
 /// is involved.
 #[test]
 fn multi_byte() {
-    let args = arg_list_os!(
+    let args = arg_list!(
         "--x❤x",            // Unknown long option
         "--ábc",           // Known long option
         "--ƒƒ=💖abc",        // Known long, with in-same-arg data
@@ -176,27 +90,27 @@ fn multi_byte() {
         "-Ɛaşrg",           // Known short option, with in-same-arg data
         "-Ɛ", "argş",       // Known short option, with in-next-arg data
     );
-    let expected = expected_os!(
+    let expected = expected!(
         error: true,
         warn: true,
         [
-            expected_item!(0, UnknownLong, OsStr::new("x❤x")),
+            expected_item!(0, UnknownLong, "x❤x"),
             expected_item!(1, Long, "ábc"),
-            expected_item!(2, LongWithData, "ƒƒ", OsStr::new("💖abc"), DataLocation::SameArg),
-            expected_item!(3, LongWithData, "ƒƒ", OsStr::new("abc💖"), DataLocation::NextArg),
-            expected_item!(5, LongWithData, "ƒƒ", OsStr::new(""), DataLocation::SameArg),
+            expected_item!(2, LongWithData, "ƒƒ", "💖abc", DataLocation::SameArg),
+            expected_item!(3, LongWithData, "ƒƒ", "abc💖", DataLocation::NextArg),
+            expected_item!(5, LongWithData, "ƒƒ", "", DataLocation::SameArg),
             expected_item!(6, Long, "ábc"),
-            expected_item!(7, LongWithUnexpectedData, "ábc", OsStr::new("x💖z")),
-            expected_item!(8, AmbiguousLong, OsStr::new("ƒ")),
+            expected_item!(7, LongWithUnexpectedData, "ábc", "x💖z"),
+            expected_item!(8, AmbiguousLong, "ƒ"),
             expected_item!(9, LongWithNoName),
             expected_item!(10, LongWithNoName),
             expected_item!(11, UnknownShort, 'ă'),
             expected_item!(12, Short, '❤'),
-            expected_item!(13, ShortWithData, 'Ɛ', OsStr::new("aşrg"), DataLocation::SameArg),
-            expected_item!(14, ShortWithData, 'Ɛ', OsStr::new("argş"), DataLocation::NextArg),
+            expected_item!(13, ShortWithData, 'Ɛ', "aşrg", DataLocation::SameArg),
+            expected_item!(14, ShortWithData, 'Ɛ', "argş", DataLocation::NextArg),
         ]
     );
-    check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
+    check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// These test some example items using invalid UTF-8 byte sequences, where the invalid sequences
@@ -303,7 +217,7 @@ mod invalid_byte_sequences {
             OsStr::from_bytes(b"ar\x84\x85g"),
         ];
 
-        let expected = expected_os!(
+        let expected = expected!(
             error: false,
             warn: true,
             [
@@ -351,7 +265,7 @@ mod invalid_byte_sequences {
                 expected_item!(17, UnknownShort, '�'),
             ]
         );
-        check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
     #[cfg(windows)]
@@ -408,7 +322,7 @@ mod invalid_byte_sequences {
             OsStr::from_bytes(b"ar\xed\xa0\x84\xed\xa0\x85g"),
         ];
 
-        let expected = expected_os!(
+        let expected = expected!(
             error: false,
             warn: true,
             [
@@ -444,6 +358,6 @@ mod invalid_byte_sequences {
                 expected_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
             ]
         );
-        check_result_os(&ActualOs(get_parser().parse_os(&args)), &expected);
+        check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 }

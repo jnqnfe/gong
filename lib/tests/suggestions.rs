@@ -18,9 +18,10 @@ mod common;
 
 #[cfg(feature = "suggestions")]
 mod options {
+    use std::ffi::OsStr;
     use gong::analysis::*;
     use gong::parser::Parser;
-    use common::{Actual, Expected, check_result};
+    use super::common::{Actual, Expected, check_result};
 
     #[test]
     fn basic() {
@@ -56,10 +57,10 @@ mod options {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("a", None),
-            ("foo", None),
-            ("hellp", Some("help")),
-            ("but_i_digest", Some("but_i_digress")),
+            (OsStr::new("a"), None),
+            (OsStr::new("foo"), None),
+            (OsStr::new("hellp"), Some("help")),
+            (OsStr::new("but_i_digest"), Some("but_i_digress")),
         ));
     }
 
@@ -102,18 +103,19 @@ mod options {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("hellp", Some("help")),
-            ("bard", Some("bar")),
-            ("fooa", Some("foob")),
+            (OsStr::new("hellp"), Some("help")),
+            (OsStr::new("bard"), Some("bar")),
+            (OsStr::new("fooa"), Some("foob")),
         ));
     }
 }
 
 #[cfg(feature = "suggestions")]
 mod commands {
+    use std::ffi::OsStr;
     use gong::analysis::*;
     use gong::parser::Parser;
-    use common::{Actual, Expected, check_result};
+    use super::common::{Actual, Expected, check_result};
 
     #[test]
     fn basic() {
@@ -147,7 +149,7 @@ mod commands {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("but_i_digest", Some("but_i_digress")),
+            (OsStr::new("but_i_digest"), Some("but_i_digress")),
         ));
     }
 
@@ -183,7 +185,7 @@ mod commands {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("bard", Some("bar")),
+            (OsStr::new("bard"), Some("bar")),
         ));
     }
 
@@ -219,7 +221,7 @@ mod commands {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("hellp", Some("help")),
+            (OsStr::new("hellp"), Some("help")),
         ));
     }
 
@@ -255,7 +257,7 @@ mod commands {
             }
         }
         assert_eq!(suggestions, vec!(
-            ("fooa", Some("foob")),
+            (OsStr::new("fooa"), Some("foob")),
         ));
     }
 }

@@ -46,7 +46,12 @@
 //! want to take such arguments in `OsString` form to ensure full compatibility, and thus should use
 //! the latter function.
 //!
-//! This library provides parsing methods that work with both forms.
+//! On the basis of ensuring full compatibility with any possible filename/path input argument, the
+//! parsing functionality of this library is designed to primarily work on `OsString`/`OsStr`
+//! strings (though it can handle pure `String`/`str` form also). Any arguments which do not
+//! represent OS strings that can legitimately contain invalid sequences, and thus should convert
+//! cleanly to a Rust string, you can convert yourself easily, giving an appropriate error on
+//! failure, when working with the results of argument parsing.
 //!
 //! > **Note**: Command line arguments are strings, typically provided to a program (hidden behind
 //! > the scenes by Rust functions) in *nul-terminated* C string form. Since a zero (nul) is used to

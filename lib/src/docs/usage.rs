@@ -172,12 +172,19 @@
 //!
 //! # Step #2: Gather arguments to be parsed
 //!
-//! You also need to retrieve (or build) a set of arguments to be parsed. A simple example:
+//! You also need to retrieve (or build) a set of arguments to be parsed. A simple example, skipping
+//! the program-name argument:
 //!
 //! ```rust
-//! let args: Vec<String> = std::env::args()
-//!                             .skip(1)        // Skip the program-name/path argument
-//!                             .collect();
+//! let args: Vec<_> = std::env::args_os().skip(1).collect();
+//! ```
+//!
+//! An alternate solution, capturing the program-name argument into a variable:
+//!
+//! ```rust
+//! let mut args_iter = std::env::args_os();
+//! let prog_name = args_iter.next().unwrap();
+//! let args: Vec<_> = args_iter.collect();
 //! ```
 //!
 //! Notes:
@@ -187,10 +194,16 @@
 //!    the `skip()` method when collecting, as above, or alternatively with the slice range used
 //!    when parsing (i.e. `&args[1..]` instead of `&args[..]`).
 //! 2. Rust’s `std` library provides two functions for obtaining arguments, `std::end::args()` and
-//!    `std::env::args_os()`; see the [Unicode discussion chapter][unicode_doc] of the documentation
-//!    module for information on which you should chose.
-//! 3. The parser methods also accept argument lists in string reference form (`&str` and `&OsStr`
-//!    respectively).
+//!    `std::env::args_os()`. Understand that both Windows and Unix based (Linux and Mac OSx)
+//!    operating systems allow file and folder names that may not be fully valid Unicode, while the
+//!    primary string types in Rust must be fully valid, hence Rust offers “OS” variants which
+//!    preserve the possible OS string quirks. With the latter function, Rust simply gives us the
+//!    arguments in `OsString` form. With the former, they are converted to `String` form, panicking
+//!    if they contained such quirks and thus could not be converted. The latter is what you should
+//!    use here; the parser handles strings in OS form, which is what you will want for taking
+//!    file or folder names. For other values you will want to later convert them to `&str` form,
+//!    just as you may want to convert a value from string to integer form.
+//! 3. The parser methods accept argument lists in both `&OsStr` and `&str` forms.
 //!
 //! # Step #3: Parse
 //!
@@ -210,7 +223,7 @@
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
 //! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
-//! # let args: Vec<String> = std::env::args().collect();
+//! # let args: Vec<_> = std::env::args_os().collect();
 //! for item in parser.parse_iter(&args[..]) {
 //!     // react to it...
 //! }
@@ -222,7 +235,7 @@
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
 //! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
-//! # let args: Vec<String> = std::env::args().collect();
+//! # let args: Vec<_> = std::env::args_os().collect();
 //! let analysis = parser.parse(&args[..]);
 //! // now react to it...
 //! ```
@@ -232,9 +245,6 @@
 //! large match block. However the iterative approach has its advantages also, with less overhead,
 //! being more efficient, and as discussed below, not requiring up-front construction of an entire
 //! command structure.
-//!
-//! If you are taking arguments in `OsString` form, as discussed above,
-//! [alternate parsing methods][parse_mod] are available.
 //!
 //! Items are returned in both cases in the same order as respective arguments are given in the
 //! input list.
@@ -263,11 +273,19 @@
 //! All variants of each item class hold a `usize` value used to indicate the index of the argument
 //! in which the item was found, should you want to know that. Similarly, information is returned
 //! where applicable with *data values* as to whether the data arg was located in the same argument
-//! or the next.
+//! or the next. Matched and unmatched long-option/command names are returned in `&str` form, whilst
+//! positionals and data values are returned in `&OsStr` form.
 //!
 //! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
 //! `error` and `warn` booleans which give a quick indication of problems, alongside the list of
 //! items, describing in detail what was found.
+//!
+//! As just mentioned, strings representing *positional arguments* and *option data values* are
+//! given in `&OsStr` form. This is ideal for those that represent filenames/paths, and can for
+//! instance be converted directly to a `std::path::Path`. For other inputs you likely will want to
+//! convert to `&str` form, which you can do either with `OsStr`’s `to_str` or `to_string_lossy`
+//! methods. You will also want to convert to `&str` form first if, for example, wanting to try to
+//! convert to an integer.
 //!
 //! > **Note:** some item variants that may be returned hold string references to strings that were
 //! > provided in the argument and option data used by the parse method. This is done for
@@ -284,8 +302,6 @@
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
 //! [`Parser::parse_iter`]: ../../parser/struct.Parser.html#method.parse_iter
-//! [`Parser::parse_os`]: ../../parser/struct.Parser.html#method.parse_os
-//! [`Parser::parse_iter_os`]: ../../parser/struct.Parser.html#method.parse_iter_os
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
 //! [`Settings`]: ../../parser/struct.Settings.html
@@ -301,7 +317,6 @@
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ItemW`]: ../../analysis/enum.ItemW.html
 //! [`ItemE`]: ../../analysis/enum.ItemE.html
-//! [parse_mod]: ../../parser/index.html
 //! [commands_doc]: ../commands/index.html
 //! [options_doc]: ../options/index.html
 //! [unicode_doc]: ../unicode/index.html

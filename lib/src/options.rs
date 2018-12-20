@@ -20,6 +20,8 @@
 //! [options]: ../docs/options/index.html
 
 #[cfg(feature = "suggestions")]
+use std::ffi::OsStr;
+#[cfg(feature = "suggestions")]
 use strsim;
 
 /// Extendible option set
@@ -267,7 +269,7 @@ impl<'s> OptionSetEx<'s> {
     /// with the highest metric.
     #[cfg(feature = "suggestions")]
     #[inline]
-    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
+    pub fn suggest(&self, unknown: &OsStr) -> Option<&'s str> {
         self.as_fixed().suggest(unknown)
     }
 }
@@ -324,12 +326,13 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     /// out any options with a metric calculated as less than `0.8`, and returns the first option
     /// with the highest metric.
     #[cfg(feature = "suggestions")]
-    pub fn suggest(&self, unknown: &str) -> Option<&'s str> {
+    pub fn suggest(&self, unknown: &OsStr) -> Option<&'s str> {
+        let unknown_lossy = unknown.to_string_lossy();
         let filter = 0.8;
         let mut best_metric: f64 = filter;
         let mut best: Option<&str> = None;
         for opt in self.long {
-            let metric = strsim::jaro_winkler(unknown, opt.name);
+            let metric = strsim::jaro_winkler(&unknown_lossy, opt.name);
             if metric > best_metric || (best.is_none() && metric >= filter) {
                 best = Some(opt.name);
                 best_metric = metric;

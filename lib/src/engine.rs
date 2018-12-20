@@ -8,8 +8,14 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
+use std::borrow::Cow;
+use std::char::REPLACEMENT_CHARACTER;
 use std::convert::AsRef;
+use std::ffi::OsStr;
 use std::iter::Enumerate;
+use std::mem;
+#[cfg(any(unix, target_os = "redox"))]
+use std::os::unix::ffi::OsStrExt;
 use std::slice;
 use std::str::CharIndices;
 use super::commands::CommandSet;
@@ -17,11 +23,7 @@ use super::parser::*;
 use super::options::*;
 use super::analysis::*;
 
-pub(crate) const SINGLE_DASH_PREFIX: &str = "-";
-pub(crate) const DOUBLE_DASH_PREFIX: &str = "--";
-const EARLY_TERMINATOR: &str = "--";
-
-type ArgTypeAssessor = fn(&str) -> ArgTypeBasic<'_>;
+type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
 
 /// An argument list parsing iterator
 ///
@@ -36,11 +38,11 @@ type ArgTypeAssessor = fn(&str) -> ArgTypeBasic<'_>;
 /// structure to the parser up front, you want to dynamically switch the sets used for subsequent
 /// iterations (arguments) manually, after encountering a command.
 #[derive(Clone)]
-pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
+pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<OsStr>> {
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'s, A>>,
     /// The parser data in use (will change on encountering a command)
-    pub(crate) parser_data: Parser<'r, 's>,
+    parser_data: Parser<'r, 's>,
     /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
     /// either an early terminator has been encountered, or “posixly correct” behaviour is required
     /// and a positional has been encountered).
@@ -57,16 +59,20 @@ pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
 
 /// A short option set string iterator
 #[derive(Debug, Clone)]
-struct ShortSetIter<'r, 's: 'r, A: 's + AsRef<str>> {
+struct ShortSetIter<'r, 's: 'r, A: 's + AsRef<OsStr>> {
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'s, A>>,
     /// The parser data in use
     parser_data: Parser<'r, 's>,
     /// The short option set string being iterated over.
     /// We need to hold a copy of this at least for the purpose of extracting in-same-arg data.
-    string: &'s str,
-    /// Char iterator
-    iter: CharIndices<'s>,
+    string: &'s OsStr,
+    /// A lossy UTF-8 conversion of the string
+    string_utf8: Cow<'r, str>,
+    /// Char iterator over the lossily converted UTF-8 string
+    iter: CharIndices<'r>,
+    /// Bytes consumed in the original `OsStr`, used for extraction of an in-same-arg data value.
+    bytes_consumed: usize,
     /// Index of argument the set came from, for recording in items
     arg_index: usize,
     /// For marking as fully consumed when remaining portion of the string has been consumed as the
@@ -77,17 +83,18 @@ struct ShortSetIter<'r, 's: 'r, A: 's + AsRef<str>> {
 /// Basic argument type
 ///
 /// Option variants should: include argument without prefix; include “in-same-arg” data values.
+#[derive(Debug)]
 enum ArgTypeBasic<'a> {
     NonOption,
     EarlyTerminator,
-    LongOption(&'a str),
-    ShortOptionSet(&'a str),
+    LongOption(&'a OsStr),
+    ShortOptionSet(&'a OsStr),
 }
 
 impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
-    where A: 's + AsRef<str>, 's: 'r
+    where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = ItemClass<'s, str>;
+    type Item = ItemClass<'s>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Continue from where we left off for a short option set?
@@ -111,9 +118,9 @@ impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
 }
 
 impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
-    where A: 's + AsRef<str>, 's: 'r
+    where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = ItemClass<'s, str>;
+    type Item = ItemClass<'s>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
@@ -123,7 +130,7 @@ impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
 }
 
 impl<'r, 's, A> ParseIter<'r, 's, A>
-    where A: 's + AsRef<str>, 's: 'r
+    where A: 's + AsRef<OsStr>, 's: 'r
 {
     /// Create a new instance
     pub(crate) fn new(args: &'s [A], parser: &Parser<'r, 's>) -> Self {
@@ -200,7 +207,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     }
 
     /// Parse next argument, if any
-    fn get_next(&mut self) -> Option<ItemClass<'s, str>> {
+    fn get_next(&mut self) -> Option<ItemClass<'s>> {
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
@@ -216,7 +223,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         if candidate.name == arg {
                             self.parser_data.options = candidate.options;
                             self.parser_data.commands = &candidate.sub_commands;
-                            return Some(ItemClass::Ok(Item::Command(arg_index, arg)));
+                            return Some(ItemClass::Ok(Item::Command(arg_index, candidate.name)));
                         }
                     }
                 }
@@ -249,16 +256,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                  */
 
                 // Extract name, splitting from optional “in-same-arg” data value
-                let (name, data_included) = match opt_string.find('=') {
-                    None => (opt_string, None),
-                    Some(i) => {
-                        let split = opt_string.split_at(i);
-                        // We know that the `=` is encoded as just one byte and that it is
-                        // definitely there, so we can safely skip it unchecked.
-                        let data_included = unsafe { split.1.get_unchecked(1..) };
-                        (split.0, Some(data_included))
-                    },
-                };
+                let (name, data_included) = split_long_components(opt_string);
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
@@ -277,13 +275,15 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         break 'l_candidates;
                     }
                     // Abbreviated
-                    else if self.parser_data.settings.allow_abbreviations && !ambiguity
-                        && name.len() < candidate.name.len()
-                        && candidate.name.starts_with(name)
-                    {
-                        match matched {
-                            Some(_) => { ambiguity = true; },
-                            None => { matched = Some(candidate); },
+                    else if self.parser_data.settings.allow_abbreviations && !ambiguity {
+                        let cand_name_osstr = OsStr::new(candidate.name);
+                        if name.len() < cand_name_osstr.len() {
+                            if &cand_name_osstr.as_bytes()[..name.len()] == name.as_bytes() {
+                                match matched {
+                                    Some(_) => { ambiguity = true; },
+                                    None => { matched = Some(candidate); },
+                                }
+                            }
                         }
                     }
                 }
@@ -313,18 +313,14 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                             Some(ItemClass::Err(ItemE::LongMissingData(arg_index, opt_name)))
                         }
                     }
+                    // Ignore unexpected data if empty string
+                    else if data_included.is_none() || data_included == Some(OsStr::new("")) {
+                        Some(ItemClass::Ok(Item::Long(arg_index, opt_name)))
+                    }
                     else {
-                        match data_included {
-                            None |
-                            // Ignore unexpected data if empty string
-                            Some("") => {
-                                Some(ItemClass::Ok(Item::Long(arg_index, opt_name)))
-                            },
-                            Some(data) => {
-                                Some(ItemClass::Warn(ItemW::LongWithUnexpectedData {
-                                    i: arg_index, n: opt_name, d: data }))
-                            },
-                        }
+                        let data = data_included.unwrap();
+                        Some(ItemClass::Warn(ItemW::LongWithUnexpectedData {
+                            i: arg_index, n: opt_name, d: data }))
                     }
                 }
                 else {
@@ -337,24 +333,33 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
 }
 
 impl<'r, 's, A> ShortSetIter<'r, 's, A>
-    where A: 's + AsRef<str>, 's: 'r
+    where A: 's + AsRef<OsStr>, 's: 'r
 {
     /// Create a new instance. Note, the provided string should **not** include the dash prefix.
-    pub(crate) fn new(parse_iter: &ParseIter<'r, 's, A>, short_set_string: &'s str,
+    pub(crate) fn new(parse_iter: &ParseIter<'r, 's, A>, short_set_string: &'s OsStr,
         arg_index: usize) -> Self
     {
+        // Note, both the lossy converted string and the char iterator over it will live within the
+        // struct, and will have the same lifetime. We are forced however to transmute the lifetime
+        // of the borrow in creating the iterator to achieve this, but we know there will be no
+        // problem doing so.
+        let lossy = short_set_string.to_string_lossy();
+        let lossy_ref = unsafe { mem::transmute::<&'_ Cow<str>, &'r Cow<str>>(&lossy) };
+        let iter = lossy_ref.char_indices();
         Self {
             arg_iter: parse_iter.arg_iter.clone(),
             parser_data: parse_iter.parser_data,
             string: short_set_string,
-            iter: short_set_string.char_indices(),
+            string_utf8: lossy,
+            iter: iter,
+            bytes_consumed: 0,
             arg_index: arg_index,
             consumed: false,
         }
     }
 
     /// Get next item, if any
-    fn get_next(&mut self) -> Option<ItemClass<'s, str>> {
+    fn get_next(&mut self) -> Option<ItemClass<'s>> {
         if self.consumed {
             return None;
         }
@@ -363,11 +368,54 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
 
         let mut match_found = false;
         let mut expects_data = false;
-        's_candidates: for candidate in self.parser_data.options.short {
-            if candidate.ch == ch {
-                match_found = true;
-                expects_data = candidate.expects_data;
-                break 's_candidates;
+
+        match ch {
+            // If we encounter the Unicode replacement character (U+FFFD) then we must beware that
+            // this may have come from either a real such character, or from a byte sequence that
+            // cannot be converted to valid UTF-8 in the original `OsStr`. To handle the latter, the
+            // former is not allowed as a valid short option character.
+            REPLACEMENT_CHARACTER => {
+                // Here all we do is update a byte index such that any in-same-arg data value can be
+                // correctly extracted later.
+
+                // Init tracking?
+                if self.bytes_consumed == 0 {
+                    self.bytes_consumed = byte_pos;
+                }
+
+                // On Unix, we need to put in some effort to figure out how many bytes to consume
+                #[cfg(not(windows))] {
+                    let slice = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
+                    self.bytes_consumed += get_urc_bytes(slice);
+                }
+                // On Windows, the `OsStr` is also holding a UTF-8 based byte sequence (WTF-8
+                // format), but lossy conversion is a WTF-8 to UTF-8 conversion, which does the
+                // minimal amount of work (only swapping encodings of code points U+D800 to U+DFFF),
+                // and such code points come out as a single replacement character, unlike on Unix
+                // where there is one per byte (3) for such code points.
+                //
+                // Actual replacement characters are three bytes (note that as per the Unix
+                // implementation we can ignore the possibility of the ‘overlong’ 4-byte form), and
+                // the encodings of “unpaired surrogate” code points (U+D800 to U+DFFF) are also
+                // three bytes, thus the answer here is always three.
+                #[cfg(windows)] {
+                    self.bytes_consumed += 3;
+                }
+            },
+            // Not a Unicode replacement character, so lets try to match it
+            _ => {
+                for candidate in self.parser_data.options.short {
+                    if candidate.ch == ch {
+                        match_found = true;
+                        expects_data = candidate.expects_data;
+                        break;
+                    }
+                }
+
+                // Tracking?
+                if self.bytes_consumed != 0 {
+                    self.bytes_consumed += ch.len_utf8();
+                }
             }
         }
 
@@ -378,12 +426,15 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             Some(ItemClass::Ok(Item::Short(self.arg_index, ch)))
         }
         else {
-            let next_char_byte_pos = byte_pos + ch.len_utf8();
+            let bytes_consumed_updated = byte_pos + ch.len_utf8();
 
             // If not last char, remaining chars are our data
-            if next_char_byte_pos < self.string.len() {
+            if bytes_consumed_updated < self.string_utf8.len() {
                 self.consumed = true;
-                let data = self.string.split_at(next_char_byte_pos).1;
+                if self.bytes_consumed == 0 {
+                    self.bytes_consumed = bytes_consumed_updated;
+                }
+                let data = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
                 Some(ItemClass::Ok(Item::ShortWithData {
                     i: self.arg_index, c: ch, d: data, l: DataLocation::SameArg }))
             }
@@ -406,7 +457,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
 // This is similar to a `starts_with` check, but the length must be longer than the prefix, equal
 // length is no good.
 #[inline(always)]
-fn has_prefix(arg: &str, prefix: &str) -> bool {
+fn has_prefix(arg: &OsStr, prefix: &OsStr) -> bool {
     // Note, it is safe to index into `arg` in here; we don’t care about char boundaries for the
     // simple byte-slice comparison. Doing this is optimally efficient, avoiding `start_with`’s
     // `>=` length comparison check, as well as utf-8 char boundary checks, etc.
@@ -415,15 +466,15 @@ fn has_prefix(arg: &str, prefix: &str) -> bool {
 }
 
 /// Assess argument type, returning options without their prefix, for “standard” mode
-fn get_basic_arg_type_standard(arg: &str) -> ArgTypeBasic<'_> {
-    if arg == EARLY_TERMINATOR {
+fn get_basic_arg_type_standard(arg: &OsStr) -> ArgTypeBasic<'_> {
+    if arg == OsStr::new("--") {
         ArgTypeBasic::EarlyTerminator
     }
-    else if has_prefix(arg, DOUBLE_DASH_PREFIX) {
-        ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(DOUBLE_DASH_PREFIX.len()..) })
+    else if has_prefix(arg, OsStr::new("--")) {
+        ArgTypeBasic::LongOption(OsStr::from_bytes(&arg.as_bytes()[2..]))
     }
-    else if has_prefix(arg, SINGLE_DASH_PREFIX) {
-        ArgTypeBasic::ShortOptionSet(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
+    else if has_prefix(arg, OsStr::new("-")) {
+        ArgTypeBasic::ShortOptionSet(OsStr::from_bytes(&arg.as_bytes()[1..]))
     }
     else {
         ArgTypeBasic::NonOption
@@ -431,14 +482,93 @@ fn get_basic_arg_type_standard(arg: &str) -> ArgTypeBasic<'_> {
 }
 
 /// Assess argument type, returning options without their prefix, for “alternate” mode
-fn get_basic_arg_type_alternate(arg: &str) -> ArgTypeBasic<'_> {
-    if arg == EARLY_TERMINATOR {
+fn get_basic_arg_type_alternate(arg: &OsStr) -> ArgTypeBasic<'_> {
+    if arg == OsStr::new("--") {
         ArgTypeBasic::EarlyTerminator
     }
-    else if has_prefix(arg, SINGLE_DASH_PREFIX) {
-        ArgTypeBasic::LongOption(unsafe { arg.get_unchecked(SINGLE_DASH_PREFIX.len()..) })
+    else if has_prefix(arg, OsStr::new("-")) {
+        ArgTypeBasic::LongOption(OsStr::from_bytes(&arg.as_bytes()[1..]))
     }
     else {
         ArgTypeBasic::NonOption
+    }
+}
+
+/// Splits the name and optional in-same-argument data value component from a long option (with
+/// prefix already stripped).
+#[inline]
+fn split_long_components(string: &OsStr) -> (&'_ OsStr, Option<&'_ OsStr>) {
+    let bytes = string.as_bytes();
+
+    let mut separator = None;
+    for (i, b) in bytes.iter().enumerate() {
+        if *b == b'=' {
+            separator = Some(i);
+            break;
+        }
+    }
+    match separator {
+        Some(i) => (OsStr::from_bytes(&bytes[..i]), Some(OsStr::from_bytes(&bytes[i+1..]))),
+        None => (string, None),
+    }
+}
+
+/// Returns the number of bytes that would result in a single Unicode replacement character, from
+/// the start of the string, if the string went through a lossy conversion to `str`.
+///
+/// This assumes that the start of the string is a point from which lossy conversion would
+/// definitely result in a replacement character, whether from a real replacement character, or from
+/// one or more invalid bytes.
+#[cfg(not(windows))]
+#[cold]
+fn get_urc_bytes(string: &OsStr) -> usize {
+    let as_bytes = string.as_bytes();
+
+    // Did a replacement character come from a real replacement character?
+    //
+    // A real replacement character (U+FFFD) encoded is 0xEFBFBD (3 bytes).
+    //
+    // Note, we do not need to worry about the ‘overlong’ 4-byte form (0xF08FBFBD). This is a
+    // correctly formed encoding of the code point, but is invalid UTF-8 since valid UTF-8 only
+    // allows a one-to-one mapping between code-points and encoding form, thus with a requirement
+    // that decoders reject ‘overlong’ forms, as the Rust `std` library does.
+    match as_bytes.get(..3) == Some(&[0xef, 0xbf, 0xbd]) {
+        true => 3,
+        false => {
+            // On Unix/Redox, the `OsStr` is holding a UTF-8 based byte sequence, which is lossily
+            // converted to `str` via the same code as `std::str::from_utf8`, thus we can use that.
+            //
+            // Note, while the function calls here potentially processes the entire string to check
+            // validity, which we don’t want that to happen for efficiency; we know here that it
+            // will only be run in the case of invalid bytes, and considering how invalid byte
+            // sequences are converted to unicode replacement characters, we know it will only
+            // process 1-4 bytes, and there is no point in trying to enforce that with the slice
+            // that we give it.
+            match std::str::from_utf8(as_bytes) {
+                Err(e) => match e.error_len() {
+                    Some(i) => i,
+                    None => as_bytes.len() - e.valid_up_to(),
+                },
+                Ok(_) => unreachable!(),
+            }
+        },
+    }
+}
+
+#[cfg(windows)]
+pub trait OsStrExt {
+    fn from_bytes(slice: &[u8]) -> &Self;
+    fn as_bytes(&self) -> &[u8];
+}
+
+#[cfg(windows)]
+impl OsStrExt for OsStr {
+    #[inline(always)]
+    fn from_bytes(slice: &[u8]) -> &OsStr {
+        unsafe { mem::transmute(slice) }
+    }
+    #[inline(always)]
+    fn as_bytes(&self) -> &[u8] {
+        unsafe { mem::transmute(self) }
     }
 }

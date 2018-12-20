@@ -43,28 +43,20 @@
 //! [`FindOption`]: enum.FindOption.html
 //! [`FoundOption`]: enum.FoundOption.html
 
+use std::ffi::OsStr;
+
 /// Analysis of parsing arguments
 ///
 /// This type provides a set of “data-mining” methods for extracing information from the set of
 /// wrapped items. Note that most such methods ignore problem items.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Analysis<'s, S: 's + ?Sized> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Analysis<'s> {
     /// Set of items describing what was found
-    pub items: Vec<ItemClass<'s, S>>,
+    pub items: Vec<ItemClass<'s>>,
     /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
     pub error: bool,
     /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
     pub warn: bool,
-}
-
-impl<'s, S: 's + ?Sized> Clone for Analysis<'s, S> {
-    fn clone(&self) -> Self {
-        Self {
-            items: self.items.clone(),
-            error: self.error,
-            warn: self.warn,
-        }
-    }
 }
 
 /// The possible classes of items identified and extracted from command line arguments.
@@ -90,73 +82,52 @@ impl<'s, S: 's + ?Sized> Clone for Analysis<'s, S> {
 /// [`ItemE`]: enum.ItemE.html
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`Positional`]: enum.Item.html#variant.Positional
-#[derive(Debug, PartialEq, Eq)]
-pub enum ItemClass<'s, S: 's + ?Sized> {
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ItemClass<'s> {
     /// Non-problematic item
-    Ok(Item<'s, S>),
+    Ok(Item<'s>),
     /// Warn-level item
-    Warn(ItemW<'s, S>),
+    Warn(ItemW<'s>),
     /// Error-level item
-    Err(ItemE<'s, S>),
-}
-
-impl<'a, S: 'a + ?Sized> Copy for ItemClass<'a, S> {}
-impl<'a, S: 'a + ?Sized> Clone for ItemClass<'a, S> {
-    fn clone(&self) -> Self {
-        *self
-    }
+    Err(ItemE<'s>),
 }
 
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, PartialEq, Eq)]
-pub enum Item<'a, S: 'a + ?Sized> {
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Item<'a> {
     /// Positional argument (not an option, command, or early terminator).
-    Positional(usize, &'a S),
+    Positional(usize, &'a OsStr),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
     /// Long option match.
     Long(usize, &'a str),
     /// Long option match, with expected data argument.
-    LongWithData{ i: usize, n: &'a str, d: &'a S, l: DataLocation },
+    LongWithData{ i: usize, n: &'a str, d: &'a OsStr, l: DataLocation },
     /// Short option match.
     Short(usize, char),
     /// Short option match, with expected data argument.
-    ShortWithData{ i: usize, c: char, d: &'a S, l: DataLocation },
+    ShortWithData{ i: usize, c: char, d: &'a OsStr, l: DataLocation },
     /// Command match.
     Command(usize, &'a str),
 }
 
-impl<'a, S: 'a + ?Sized> Copy for Item<'a, S> {}
-impl<'a, S: 'a + ?Sized> Clone for Item<'a, S> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 /// Error-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, PartialEq, Eq)]
-pub enum ItemE<'a, S: 'a + ?Sized> {
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ItemE<'a> {
     /// Long option match, but data argument missing [ERROR]
     LongMissingData(usize, &'a str),
     /// Short option match, but data argument missing [ERROR]
     ShortMissingData(usize, char),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found. [ERROR]
-    AmbiguousLong(usize, &'a S),
-}
-
-impl<'a, S: 'a + ?Sized> Copy for ItemE<'a, S> {}
-impl<'a, S: 'a + ?Sized> Clone for ItemE<'a, S> {
-    fn clone(&self) -> Self {
-        *self
-    }
+    AmbiguousLong(usize, &'a OsStr),
 }
 
 /// Warn-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, PartialEq, Eq)]
-pub enum ItemW<'a, S: 'a + ?Sized> {
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ItemW<'a> {
     /// Looked like a long option, but no match [WARN]
-    UnknownLong(usize, &'a S),
+    UnknownLong(usize, &'a OsStr),
     /// Unknown short option `char` [WARN]
     UnknownShort(usize, char),
     /// Looked like a long option, but a name was not actually specified. This only occurs for
@@ -167,14 +138,7 @@ pub enum ItemW<'a, S: 'a + ?Sized> {
     LongWithNoName(usize),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. [WARN]
-    LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a S },
-}
-
-impl<'a, S: 'a + ?Sized> Copy for ItemW<'a, S> {}
-impl<'a, S: 'a + ?Sized> Clone for ItemW<'a, S> {
-    fn clone(&self) -> Self {
-        *self
-    }
+    LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a OsStr },
 }
 
 /// Used to describe where data was located, for options that require data
@@ -302,7 +266,7 @@ impl<'a> From<super::options::ShortOption> for FindOption<'a> {
     }
 }
 
-impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
+impl<'r, 's: 'r> Analysis<'s> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
     pub fn new(size_guess: usize) -> Self {
@@ -315,12 +279,12 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
 
     /// Gives an iterator over all items
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s, S>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
         self.items.iter()
     }
 
     /// Gives an iterator over any good (non-error/warn) items
-    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s, S>> {
+    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
         self.items.iter()
             .filter(|i| match i {
                 ItemClass::Ok(_) => true,
@@ -339,7 +303,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     ///
     /// [`get_first_problem`]: #method.get_first_problem
     /// [`stop_on_problem`]: ../parser/struct.Settings.html#structfield.stop_on_problem
-    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s, S>> {
+    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
         self.items.iter()
             .filter(|i| match i {
                 ItemClass::Err(_) | ItemClass::Warn(_) => true,
@@ -359,7 +323,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// if let Some(problem) = analysis.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
@@ -368,7 +332,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     ///
     /// [`get_problem_items`]: #method.get_problem_items
     #[inline]
-    pub fn get_first_problem(&'r self) -> Option<&'r ItemClass<'s, S>> {
+    pub fn get_first_problem(&'r self) -> Option<&'r ItemClass<'s>> {
         self.get_problem_items().next()
     }
 
@@ -382,11 +346,11 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let positionals: Vec<_> = analysis.get_positionals().collect();
     /// # }
     /// ```
-    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s S> + 'r {
+    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
         self.items.iter()
             .filter_map(|i| match i {
                 ItemClass::Ok(Item::Positional(_, s)) => Some(*s),
@@ -408,7 +372,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// if analysis.option_used(gong_findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
@@ -451,7 +415,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let count = analysis.count_instances(gong_findopt!(@short 'v'));
     /// # }
     /// ```
@@ -501,13 +465,13 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_last_value(gong_findopt!(@long "output-format"));
     /// # }
     /// ```
     ///
     /// [`get_all_values`]: #method.get_all_values
-    pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s S> {
+    pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s OsStr> {
         for item in self.items.iter().rev() {
             match *item {
                 ItemClass::Ok(Item::LongWithData { n, ref d, .. }) => {
@@ -536,13 +500,15 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// for val in analysis.get_all_values(gong_findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
     /// # }
     /// ```
-    pub fn get_all_values(&'r self, option: FindOption<'r>) -> impl Iterator<Item = &'s S> + 'r {
+    pub fn get_all_values(&'r self, option: FindOption<'r>)
+        -> impl Iterator<Item = &'s OsStr> + 'r
+    {
         self.items.iter()
             .filter_map(move |i| match i {
                 ItemClass::Ok(Item::LongWithData { n, d, .. }) => {
@@ -571,7 +537,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let find = [
     ///     gong_findopt!(@pair 'c', "color"),
     ///     gong_findopt!(@long "no-color"),
@@ -647,7 +613,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state(
     ///         gong_findopt!(@pair 'c', "color"), // Positive (true)
     ///         gong_findopt!(@long "no-color")    // Negative (false)
@@ -696,7 +662,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # #[macro_use]
     /// # extern crate gong;
     /// # fn main() {
-    /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
+    /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state_multi(
     ///         &[ gong_findopt!(@pair 'c', "color") ],
     ///         &[ gong_findopt!(@long "no-color"), gong_findopt!(@long "nocolor") ]
@@ -772,7 +738,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     }
 }
 
-impl<'s, S: 's + ?Sized> ItemClass<'s, S> {
+impl<'s> ItemClass<'s> {
     /// Returns `true` if `self` is `Ok` variant
     pub fn is_ok(&self) -> bool {
         match *self { ItemClass::Ok(_) => true, _ => false }

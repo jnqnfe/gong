@@ -18,6 +18,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
+use std::ffi::OsStr;
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;

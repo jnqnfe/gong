@@ -31,6 +31,5 @@ mod macros; //Note: If we use these in the lib (e.g. internal tests) then this m
 pub mod analysis;
 pub mod commands;
 mod engine;
-mod engine_os;
 pub mod options;
 pub mod parser;

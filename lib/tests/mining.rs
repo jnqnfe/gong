@@ -18,6 +18,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
+use std::ffi::OsStr;
 use gong::analysis::*;
 use common::{get_parser, Actual, Expected, check_result};
 
@@ -34,13 +35,13 @@ fn env() {
 /// Check `ItemClass` type checking shortcuts
 #[test]
 fn itemclass_type_shortcuts() {
-    let item: ItemClass<str> = expected_item!(0, Long, "help");
+    let item = expected_item!(0, Long, "help");
     assert!(item.is_ok() && !item.is_err() && !item.is_warn());
 
-    let item: ItemClass<str> = expected_item!(0, UnknownLong, "help");
+    let item = expected_item!(0, UnknownLong, "help");
     assert!(!item.is_ok() && !item.is_err() && item.is_warn());
 
-    let item: ItemClass<str> = expected_item!(0, LongMissingData, "help");
+    let item = expected_item!(0, LongMissingData, "help");
     assert!(!item.is_ok() && item.is_err() && !item.is_warn());
 }
 
@@ -345,12 +346,12 @@ mod iter {
         assert_eq!(6, analysis.get_positionals().count());
 
         let mut iter = analysis.get_positionals();
-        assert_eq!(iter.next(), Some("abc"));
-        assert_eq!(iter.next(), Some("def"));
-        assert_eq!(iter.next(), Some("hij"));
-        assert_eq!(iter.next(), Some("klm"));
-        assert_eq!(iter.next(), Some("nop"));
-        assert_eq!(iter.next(), Some("--help"));
+        assert_eq!(iter.next(), Some(OsStr::new("abc")));
+        assert_eq!(iter.next(), Some(OsStr::new("def")));
+        assert_eq!(iter.next(), Some(OsStr::new("hij")));
+        assert_eq!(iter.next(), Some(OsStr::new("klm")));
+        assert_eq!(iter.next(), Some(OsStr::new("nop")));
+        assert_eq!(iter.next(), Some(OsStr::new("--help")));
         assert_eq!(iter.next(), None);
     }
 }
@@ -394,9 +395,9 @@ fn last_value() {
     assert_eq!(None, analysis.get_last_value(FindOption::Long("help")));
     assert_eq!(None, analysis.get_last_value(FindOption::Short('h')));
     assert_eq!(None, analysis.get_last_value(FindOption::Pair('h', "help")));
-    assert_eq!(Some("456"), analysis.get_last_value(FindOption::Long("hah")));
-    assert_eq!(Some("654"), analysis.get_last_value(FindOption::Short('o')));
-    assert_eq!(Some("654"), analysis.get_last_value(FindOption::Pair('o', "hah")));
+    assert_eq!(Some(OsStr::new("456")), analysis.get_last_value(FindOption::Long("hah")));
+    assert_eq!(Some(OsStr::new("654")), analysis.get_last_value(FindOption::Short('o')));
+    assert_eq!(Some(OsStr::new("654")), analysis.get_last_value(FindOption::Pair('o', "hah")));
     // Check known and unused
     assert_eq!(None, analysis.get_last_value(FindOption::Long("foo")));
     assert_eq!(None, analysis.get_last_value(FindOption::Short('x')));
@@ -448,28 +449,28 @@ fn all_values() {
     let analysis = get_parser().parse(&args);
     check_result(&Actual(analysis.clone()), &expected);
 
-    let empty_vec: Vec<&str> = Vec::new();
+    let empty_vec: Vec<&OsStr> = Vec::new();
 
     // Check known and used
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("help")).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('h')).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('h', "help")).collect::<Vec<&str>>());
-    assert_eq!(vec!["123","456"], analysis.get_all_values(FindOption::Long("hah")).collect::<Vec<&str>>());
-    assert_eq!(vec!["321","654","987"], analysis.get_all_values(FindOption::Short('o')).collect::<Vec<&str>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("help")).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('h')).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('h', "help")).collect::<Vec<&OsStr>>());
+    assert_eq!(vec!["123","456"], analysis.get_all_values(FindOption::Long("hah")).collect::<Vec<&OsStr>>());
+    assert_eq!(vec!["321","654","987"], analysis.get_all_values(FindOption::Short('o')).collect::<Vec<&OsStr>>());
     assert_eq!(vec!["123","321","654","456","987"],
-               analysis.get_all_values(FindOption::Pair('o', "hah")).collect::<Vec<&str>>());
+               analysis.get_all_values(FindOption::Pair('o', "hah")).collect::<Vec<&OsStr>>());
     // Check known and unused
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("foo")).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('x')).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('x', "foo")).collect::<Vec<&str>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("foo")).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('x')).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('x', "foo")).collect::<Vec<&OsStr>>());
     // Check unknown but used
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("ooo")).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('d')).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('d', "ooo")).collect::<Vec<&str>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("ooo")).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('d')).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('d', "ooo")).collect::<Vec<&OsStr>>());
     // Check unknown and unused
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("aaa")).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('w')).collect::<Vec<&str>>());
-    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('w', "aaa")).collect::<Vec<&str>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Long("aaa")).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Short('w')).collect::<Vec<&OsStr>>());
+    assert_eq!(empty_vec, analysis.get_all_values(FindOption::Pair('w', "aaa")).collect::<Vec<&OsStr>>());
 }
 
 /// Test that checking last option used in list works, as well as getting boolean state
@@ -669,7 +670,7 @@ mod last_used {
     /// Empty argument list
     #[test]
     fn no_args() {
-        let args: Vec<&str> = Vec::new();
+        let args: Vec<&OsStr> = Vec::new();
         let expected = expected!(
             error: false,
             warn: false,

@@ -19,29 +19,16 @@
 //! Parsing an argument list can be done in two different ways, depending upon your preferences or
 //! application design requirements:
 //!
-//! - “All in one” style: The [`parse`] and [`parse_os`] methods return an [`Analysis`] object,
-//!   which contains a `Vec` holding descriptions from parsing the entire argument list in one go.
-//! - “Iterative” style: The [`parse_iter`] and [`parse_iter_os`] methods return an iterator, which
-//!   returns analysis items one at a time.
+//! - “All in one” style: The [`parse`] method returns an [`Analysis`] object, which contains a
+//!   `Vec` holding descriptions from parsing the entire argument list in one go.
+//! - “Iterative” style: The [`parse_iter`] method returns an iterator, which returns analysis items
+//!   one at a time.
 //!
 //! Note that the iterator objects have methods that allow you to change the *option set* and
 //! *command set* used for subsequent iterations. The purpose behind these methods is for situations
 //! where you have a [*command argument*][commands] based program, but do not wish to describe the
 //! full command structure up front, with these methods giving you the ability to manually set the
 //! *option* and *command* sets to use in subsequent iterations after encountering a *command*.
-//!
-//! # Input arguments
-//!
-//! A [`Parser`] can parse input arguments in both of the following forms:
-//!
-//!  - `AsRef<str>` (`String` and `&str`)
-//!  - `AsRef<OsStr>` (`OsString` and `&OsStr`)
-//!
-//! Most programs will only want the former, however there may be cases where the latter is
-//! wanted or needed. The [unicode documentation][unicode] may also be of interest here.
-//!
-//! Note that the [`parse`] and [`parse_iter`] methods are both `AsRef<str>` based, while
-//! [`parse_os`] and [`parse_iter_os`] are the `AsRef<OsStr>` based alternatives.
 //!
 //! # Settings
 //!
@@ -54,11 +41,8 @@
 //! [`Parser`]: struct.Parser.html
 //! [`parse`]: struct.Parser.html#method.parse
 //! [`parse_iter`]: struct.Parser.html#method.parse_iter
-//! [`parse_os`]: struct.Parser.html#method.parse_os
-//! [`parse_iter_os`]: struct.Parser.html#method.parse_iter_os
 //! [commands]: ../docs/commands/index.html
 //! [options]: ../docs/options/index.html
-//! [unicode]: ../docs/unicode/index.html
 
 use std::convert::AsRef;
 use std::ffi::OsStr;
@@ -66,9 +50,8 @@ use super::analysis::{Analysis, ItemClass};
 use super::commands::{CommandSet, CommandFlaw};
 use super::options::{OptionSet, OptionFlaw};
 
-// NB: We export this in the public API here (the `engine` and `engine_os` mods are private)
+// NB: We export this in the public API here (the `engine` mod is private)
 pub use super::engine::ParseIter;
-pub use super::engine_os::ParseIterOs;
 
 /// The parser
 ///
@@ -247,27 +230,6 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// with a *short option set* where one short option in the set is consumed), returning a single
     /// analysis item.
     ///
-    /// The returned analysis item may include `&str` references to strings provided in the `args`
-    /// parameter and/or in `self`. Take note of this with respect to object lifetimes.
-    ///
-    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
-    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
-    ///
-    /// [`is_valid`]: #method.is_valid
-    /// [`validate`]: #method.validate
-    #[inline(always)]
-    pub fn parse_iter<A>(&'r self, args: &'s [A]) -> ParseIter<'r, 's, A>
-        where A: 's + AsRef<str>
-    {
-        ParseIter::new(args, self)
-    }
-
-    /// Gives an iterator for parsing the provided program arguments, given as `OsStr`
-    ///
-    /// Returns an iterator. Each iteration consumes one (or sometimes two) input arguments (except
-    /// with a *short option set* where one short option in the set is consumed), returning a single
-    /// analysis item.
-    ///
     /// The returned analysis item may include `&str` references to strings provided in `self`,
     /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
     /// object lifetimes.
@@ -278,10 +240,10 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`is_valid`]: #method.is_valid
     /// [`validate`]: #method.validate
     #[inline(always)]
-    pub fn parse_iter_os<A>(&'r self, args: &'s [A]) -> ParseIterOs<'r, 's, A>
+    pub fn parse_iter<A>(&'r self, args: &'s [A]) -> ParseIter<'r, 's, A>
         where A: 's + AsRef<OsStr>
     {
-        ParseIterOs::new(args, self)
+        ParseIter::new(args, self)
     }
 
     /// Parses the provided program arguments
@@ -291,35 +253,6 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// alternative; it basically uses an iterator, collecting all of the results into an object
     /// which has a set of methods for mining the result set for information.
     ///
-    /// The returned analysis item may include `&str` references to strings provided in the `args`
-    /// parameter and/or in `self`. Take note of this with respect to object lifetimes.
-    ///
-    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
-    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
-    ///
-    /// [`is_valid`]: #method.is_valid
-    /// [`validate`]: #method.validate
-    /// [`parse_iter`]: #method.parse_iter
-    pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'s, str>
-        where A: 's + AsRef<str>
-    {
-        let mut analysis = Analysis::new(args.len());
-        let parse_iter = ParseIter::new(args, self);
-        let items = parse_iter.inspect(|item| {
-            match item {
-                ItemClass::Err(_) => analysis.error = true,
-                ItemClass::Warn(_) => analysis.warn = true,
-                ItemClass::Ok(_) => {},
-            }
-        }).collect();
-        analysis.items = items;
-        analysis
-    }
-
-    /// Parses the provided program arguments, given as `OsStr`
-    ///
-    /// Returns an analysis describing the parsed argument list.
-    ///
     /// The returned analysis item may include `&str` references to strings provided in `self`,
     /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
     /// object lifetimes.
@@ -329,11 +262,12 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     ///
     /// [`is_valid`]: #method.is_valid
     /// [`validate`]: #method.validate
-    pub fn parse_os<A>(&self, args: &'s [A]) -> Analysis<'s, OsStr>
+    /// [`parse_iter`]: #method.parse_iter
+    pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'s>
         where A: 's + AsRef<OsStr>
     {
         let mut analysis = Analysis::new(args.len());
-        let parse_iter = ParseIterOs::new(args, self);
+        let parse_iter = ParseIter::new(args, self);
         let items = parse_iter.inspect(|item| {
             match item {
                 ItemClass::Err(_) => analysis.error = true,
