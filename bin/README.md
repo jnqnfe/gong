@@ -39,6 +39,8 @@ positionals and thus are passed on).
 The test program has the following features that can be enabled/disabled when compiling:
 
  - `alt_mode` enables use of `gong`’s “alt mode”.
+ - `posixly_correct` enables “posixly correct” parsing mode, where all arguments after the first
+    positional argument are also taken to be positionals, per the POSIX standard.
  - `no_abbreviations` disables `gong`’s abbreviated matching feature.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.

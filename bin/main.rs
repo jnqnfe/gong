@@ -89,10 +89,9 @@ fn main() {
         true => { parser.settings.set_mode(OptionsMode::Alternate); },
         false => { parser.settings.set_mode(OptionsMode::Standard); },
     }
-    match cfg!(feature = "no_abbreviations") {
-        true => { parser.settings.set_allow_abbreviations(false); },
-        false => { parser.settings.set_allow_abbreviations(true); },
-    }
+    parser.settings.set_allow_abbreviations(!cfg!(feature = "no_abbreviations"))
+                   .set_posixly_correct(cfg!(feature = "posixly_correct"));
+
     debug_assert!(parser.is_valid());
 
     println!("\n[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
@@ -101,6 +100,11 @@ fn main() {
     println!("Option style: {}Standard{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "alt_mode")]
     println!("Option style: {}Alternate{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "posixly_correct"))]
+    println!("Posixly correct?: {}No{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "posixly_correct")]
+    println!("Posixly correct?: {}Yes{}", c!(COL_MODE), c!(RESET));
 
     #[cfg(not(feature = "keep_prog_name"))]
     println!("Skip first argument (program name): {}true{}", c!(COL_MODE), c!(RESET));

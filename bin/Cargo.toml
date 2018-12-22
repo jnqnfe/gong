@@ -23,6 +23,7 @@ term-ctrl = "0.7"
 default = ["color"]
 # See the `README.md` file for documentation of these
 alt_mode = []
+posixly_correct = []
 keep_prog_name = []
 no_abbreviations = []
 color = []

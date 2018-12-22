@@ -4,6 +4,7 @@
  * Updated per introduction of `Parser`
  * Updated per addition of understanding of command arguments (though not using any yet)
  * Updated per refactor upon `OsStr` based parsing
+ * Added `posixly_correct` feature
 
 # 1.2.1 (November 25th, 2020)
 
