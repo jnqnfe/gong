@@ -10,6 +10,7 @@ description = """
 A lightweight, flexible and simple-to-use command line argument parser.
 """
 keywords = ["gong", "getopt", "terminal", "command-line"]
+edition = "2018"
 
 [dependencies]
 strsim = { version = "0.8", optional = true }

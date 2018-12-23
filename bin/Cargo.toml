@@ -9,6 +9,7 @@ An interactive “playground” program for testing out the `gong` library crate
 prints analysis of given command line arguments.
 """
 publish = false
+edition = "2018"
 
 [[bin]]
 name = "gong-playground"
