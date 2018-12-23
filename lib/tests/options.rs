@@ -22,7 +22,7 @@ use gong::{option_set, longopt, shortopt};
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;
-use common::{Actual, Expected, check_result};
+use self::common::{Actual, Expected, check_result};
 
 /// Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its own
 /// (`--`), and would be misinterpreted as a long option if given as the first in a short option set

@@ -19,7 +19,7 @@ use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{Parser, OptionsMode};
-use common::{get_parser, Actual, Expected, check_result};
+use self::common::{get_parser, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types

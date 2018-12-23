@@ -46,13 +46,13 @@
 
 use std::convert::AsRef;
 use std::ffi::OsStr;
-use super::{option_set, command_set};
-use super::analysis::{Analysis, ItemClass};
-use super::commands::{CommandSet, CommandFlaw};
-use super::options::{OptionSet, OptionFlaw};
+use crate::{option_set, command_set};
+use crate::analysis::{Analysis, ItemClass};
+use crate::commands::{CommandSet, CommandFlaw};
+use crate::options::{OptionSet, OptionFlaw};
 
 // NB: We export this in the public API here (the `engine` mod is private)
-pub use super::engine::ParseIter;
+pub use crate::engine::ParseIter;
 
 /// The parser
 ///

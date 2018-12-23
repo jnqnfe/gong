@@ -20,7 +20,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
-use common::{get_parser, Actual, Expected, check_result};
+use self::common::{get_parser, Actual, Expected, check_result};
 
 /// Some of the tests here expect certain options to exist in the common options set, where such
 /// options are **not** being used in the test arguments, so we need to assert that they definitely

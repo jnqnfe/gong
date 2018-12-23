@@ -17,7 +17,7 @@ extern crate gong;
 mod common;
 
 use gong::parser::{Settings, OptionsMode};
-use common::{get_parser, get_base_opts, get_base_cmds};
+use self::common::{get_parser, get_base_opts, get_base_cmds};
 
 /// Checks default settings match those expected. If they change, we need to update the test suite.
 #[test]

@@ -21,8 +21,6 @@
 
 #[cfg(feature = "suggestions")]
 use std::ffi::OsStr;
-#[cfg(feature = "suggestions")]
-use strsim;
 
 /// Extendible option set
 ///
@@ -514,7 +512,7 @@ pub(crate) mod validation {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{LongOption, ShortOption};
 
     /* Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its
      * own (`--`), and would be misinterpreted as a long option if given as the first in a short

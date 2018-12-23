@@ -18,10 +18,10 @@ use std::mem;
 use std::os::unix::ffi::OsStrExt;
 use std::slice;
 use std::str::CharIndices;
-use super::commands::CommandSet;
-use super::parser::*;
-use super::options::*;
-use super::analysis::*;
+use crate::commands::CommandSet;
+use crate::parser::*;
+use crate::options::*;
+use crate::analysis::*;
 
 type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
 

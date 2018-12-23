@@ -21,7 +21,7 @@ mod options {
     use gong::{longopt, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use super::common::{Actual, Expected, check_result};
+    use self::super::common::{Actual, Expected, check_result};
 
     #[test]
     fn basic() {
@@ -116,7 +116,7 @@ mod commands {
     use gong::{command, command_set, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use super::common::{Actual, Expected, check_result};
+    use self::super::common::{Actual, Expected, check_result};
 
     #[test]
     fn basic() {

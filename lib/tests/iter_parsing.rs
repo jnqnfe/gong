@@ -24,7 +24,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{longopt, command, command_set, option_set};
 use gong::analysis::*;
-use common::get_parser;
+use self::common::get_parser;
 
 /// Some general, basic argument handling
 #[test]
