@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rustc:
-          - 1.26.0 # MSRV (Minimum supported rust version)
+          - 1.31.0 # MSRV (Minimum supported rust version)
           - stable
           - beta
         experimental: [false]
