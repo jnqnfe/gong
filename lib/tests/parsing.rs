@@ -398,13 +398,13 @@ mod abbreviations {
                 expected_item!(0, Long, "foo"),
             ]
         );
-        let opts = gong_option_set!(@long [
+        let opts = option_set!(@long [
             // Multiple options that “foo” will match as an abbreviation for before getting to the
             // exact match.
-            gong_longopt!("fooo"),
-            gong_longopt!("foooo"),
-            gong_longopt!("fooooo"),
-            gong_longopt!("foo"),    // Exact match for input `--foo`
+            longopt!("fooo"),
+            longopt!("foooo"),
+            longopt!("fooooo"),
+            longopt!("foo"),    // Exact match for input `--foo`
         ]);
         let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
@@ -987,12 +987,12 @@ mod commands {
     /// Command names simply should not be prefixed like this.
     #[test]
     fn name_like_option() {
-        let opts = gong_option_set!(@long [
-            gong_longopt!("foo"),
+        let opts = option_set!(@long [
+            longopt!("foo"),
         ]);
-        let cmds = gong_command_set!([
-            gong_command!("--foo"),
-            gong_command!("--bar"),
+        let cmds = command_set!([
+            command!("--foo"),
+            command!("--bar"),
         ]);
 
         let args = arg_list!("--foo", "--bar");

@@ -28,8 +28,8 @@ use common::{get_parser, Actual, Expected, check_result};
 #[test]
 fn env() {
     let parser = get_parser();
-    assert!(parser.options.long.contains(&gong_longopt!("foo")));
-    assert!(parser.options.short.contains(&gong_shortopt!('x')));
+    assert!(parser.options.long.contains(&longopt!("foo")));
+    assert!(parser.options.short.contains(&shortopt!('x')));
 }
 
 /// Check `ItemClass` type checking shortcuts
@@ -51,20 +51,20 @@ mod findopt {
     /// Test various forms of specifying search parameters
     #[test]
     fn search_params() {
-        assert_eq!(gong_findopt!(@long "help"), FindOption::Long("help"));
-        assert_eq!(gong_findopt!(@short 'h'), FindOption::Short('h'));
-        assert_eq!(gong_findopt!(@pair 'h', "help"), FindOption::Pair('h', "help"));
+        assert_eq!(findopt!(@long "help"), FindOption::Long("help"));
+        assert_eq!(findopt!(@short 'h'), FindOption::Short('h'));
+        assert_eq!(findopt!(@pair 'h', "help"), FindOption::Pair('h', "help"));
 
         // Conversion from option descriptors
-        assert_eq!(FindOption::from(gong_longopt!("help")), gong_findopt!(@long "help"));
-        assert_eq!(FindOption::from(gong_shortopt!('h')), gong_findopt!(@short 'h'));
+        assert_eq!(FindOption::from(longopt!("help")), findopt!(@long "help"));
+        assert_eq!(FindOption::from(shortopt!('h')), findopt!(@short 'h'));
     }
 
     /// Test invalid forms of specifying search parameters
     #[test]
     #[cfg(compile_fail)]
     fn search_params_fail() {
-        let _ = gong_findopt!(@pair "help", 'h'); // Wrong order
+        let _ = findopt!(@pair "help", 'h'); // Wrong order
     }
 }
 
@@ -75,15 +75,15 @@ mod foundopt {
     #[test]
     fn search_results() {
         // Single
-        assert_eq!(gong_foundopt!(@long "help"), FoundOption::Long("help"));
-        assert_eq!(gong_foundopt!(@short 'h'), FoundOption::Short('h'));
+        assert_eq!(foundopt!(@long "help"), FoundOption::Long("help"));
+        assert_eq!(foundopt!(@short 'h'), FoundOption::Short('h'));
     }
 
     /// Test invalid forms of search results
     #[test]
     #[cfg(compile_fail)]
     fn search_results_fail() {
-        let _ = gong_foundopt!(@pair 'h', "help"); // `FoundOption` does not capture a pair
+        let _ = foundopt!(@pair 'h', "help"); // `FoundOption` does not capture a pair
     }
 }
 

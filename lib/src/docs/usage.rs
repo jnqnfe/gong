@@ -69,20 +69,20 @@
 //! # #[macro_use]
 //! # extern crate gong;
 //! use gong::options::OptionSet;
-//! static OPTS: OptionSet = gong_option_set!(
+//! static OPTS: OptionSet = option_set!(
 //!     @long [
-//!         gong_longopt!("help"),
-//!         gong_longopt!("foo"),
-//!         gong_longopt!("version"),
-//!         gong_longopt!("foobar"),
-//!         gong_longopt!("ábc"),
-//!         gong_longopt!(@data "hah"), // This one expects a data arg
+//!         longopt!("help"),
+//!         longopt!("foo"),
+//!         longopt!("version"),
+//!         longopt!("foobar"),
+//!         longopt!("ábc"),
+//!         longopt!(@data "hah"), // This one expects a data arg
 //!     ],
 //!     @short [
-//!         gong_shortopt!('h'),
-//!         gong_shortopt!('❤'),
-//!         gong_shortopt!('x'),
-//!         gong_shortopt!(@data 'o'),  // So does this one
+//!         shortopt!('h'),
+//!         shortopt!('❤'),
+//!         shortopt!('x'),
+//!         shortopt!(@data 'o'),  // So does this one
 //!     ]
 //! );
 //! # fn main() {}

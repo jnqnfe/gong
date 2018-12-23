@@ -29,21 +29,21 @@ mod options {
         let mut opts = OptionSetEx::new();
         opts.add_short('h')
             .add_short_data('o')
-            .add_existing_short(gong_shortopt!('a'))
+            .add_existing_short(shortopt!('a'))
             .add_long("foo")
             .add_long_data("bar")
-            .add_existing_long(gong_longopt!("foobar"));
+            .add_existing_long(longopt!("foobar"));
 
         let expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
-                gong_longopt!("foobar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
+                longopt!("foobar"),
             ],
             short: vec![
-                gong_shortopt!('h'),
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
+                shortopt!('h'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
             ],
         };
 
@@ -66,18 +66,18 @@ mod options {
 
         let mut expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
             ],
             short: vec![
-                gong_shortopt!('h'),
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
-                gong_shortopt!(@data 'b'),
-                gong_shortopt!('c'),
-                gong_shortopt!('d'),
-                gong_shortopt!(@data 'e'),
-                gong_shortopt!('f'),
+                shortopt!('h'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
+                shortopt!(@data 'b'),
+                shortopt!('c'),
+                shortopt!('d'),
+                shortopt!(@data 'e'),
+                shortopt!('f'),
             ],
         };
         assert_eq!(opts, expected);
@@ -115,27 +115,27 @@ mod options {
         // Double check
         let expected = OptionSetEx {
             long: vec![
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
             ],
             short: vec![
-                gong_shortopt!('h'),
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
-                gong_shortopt!(@data 'b'),
-                gong_shortopt!('c'),
-                gong_shortopt!('d'),
-                gong_shortopt!(@data 'e'),
-                gong_shortopt!('f'),
-                gong_shortopt!(' '),
-                gong_shortopt!(@data ' '),
-                gong_shortopt!('j'),
-                gong_shortopt!('k'),
-                gong_shortopt!('l'),
-                gong_shortopt!('m'),
-                gong_shortopt!(@data 'n'),
-                gong_shortopt!('o'),
-                gong_shortopt!('p'),
+                shortopt!('h'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
+                shortopt!(@data 'b'),
+                shortopt!('c'),
+                shortopt!('d'),
+                shortopt!(@data 'e'),
+                shortopt!('f'),
+                shortopt!(' '),
+                shortopt!(@data ' '),
+                shortopt!('j'),
+                shortopt!('k'),
+                shortopt!('l'),
+                shortopt!('m'),
+                shortopt!(@data 'n'),
+                shortopt!('o'),
+                shortopt!('p'),
             ],
         };
         assert_eq!(opts, expected);
@@ -149,26 +149,26 @@ mod options {
         let opt_set = OptionSet::default();
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set!();
+        let opt_set = option_set!();
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set!(@long [], @short []);
+        let opt_set = option_set!(@long [], @short []);
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set!(@short [], @long []);
+        let opt_set = option_set!(@short [], @long []);
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set!(@long []);
+        let opt_set = option_set!(@long []);
         assert!(opt_set.is_empty());
-        let opt_set = gong_option_set!(@short []);
+        let opt_set = option_set!(@short []);
         assert!(opt_set.is_empty());
 
-        let opt_set = gong_option_set!(@long [ gong_longopt!("foo") ]);
+        let opt_set = option_set!(@long [ longopt!("foo") ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set!(@short [ gong_shortopt!('h') ]);
+        let opt_set = option_set!(@short [ shortopt!('h') ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = gong_option_set!(
-            @long [ gong_longopt!("foo") ],
-            @short [ gong_shortopt!('h') ]
+        let opt_set = option_set!(
+            @long [ longopt!("foo") ],
+            @short [ shortopt!('h') ]
         );
         assert!(!opt_set.is_empty());
     }
@@ -179,28 +179,28 @@ mod options {
         // Test set - fixed
         let opts_fixed = OptionSet {
             long: &[
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
-                gong_longopt!("foobar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
+                longopt!("foobar"),
             ],
             short: &[
-                gong_shortopt!('h'),
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
+                shortopt!('h'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
             ],
         };
 
         // Test set - extendible
         let opts_extendible = OptionSetEx {
             long: vec![
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
-                gong_longopt!("foobar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
+                longopt!("foobar"),
             ],
             short: vec![
-                gong_shortopt!('h'),
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
+                shortopt!('h'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
             ],
         };
 
@@ -224,14 +224,14 @@ mod options {
 
         let opts_fixed_2 = OptionSet {
             long: &[
-                gong_longopt!("blah"),
+                longopt!("blah"),
             ],
             short: &[],
         };
 
         let opts_extendible_2 = OptionSetEx {
             long: vec![
-                gong_longopt!("blah"),
+                longopt!("blah"),
             ],
             short: vec![],
         };
@@ -246,20 +246,20 @@ mod options {
     /// Check re-use of descriptors
     #[test]
     fn reuse() {
-        const SHORT_OPT_H: ShortOption = gong_shortopt!('h');
-        const LONG_OPT_HELP: LongOption = gong_longopt!("help");
+        const SHORT_OPT_H: ShortOption = shortopt!('h');
+        const LONG_OPT_HELP: LongOption = longopt!("help");
 
-        let _ = gong_option_set!(
+        let _ = option_set!(
             @long [
                 LONG_OPT_HELP,
-                gong_longopt!("foo"),
-                gong_longopt!(@data "bar"),
-                gong_longopt!("foobar"),
+                longopt!("foo"),
+                longopt!(@data "bar"),
+                longopt!("foobar"),
             ],
             @short [
                 SHORT_OPT_H,
-                gong_shortopt!(@data 'o'),
-                gong_shortopt!('a'),
+                shortopt!(@data 'o'),
+                shortopt!('a'),
             ]
         );
     }
@@ -273,12 +273,12 @@ mod commands {
     fn basic() {
         let mut cmds = CommandSetEx::new();
         cmds.add_command("wave", None, Default::default())
-            .add_existing_command(gong_command!("throw_ninja_star"));
+            .add_existing_command(command!("throw_ninja_star"));
 
         let expected = CommandSetEx {
             commands: vec![
-                gong_command!("wave"),
-                gong_command!("throw_ninja_star"),
+                command!("wave"),
+                command!("throw_ninja_star"),
             ],
         };
 
@@ -293,12 +293,12 @@ mod commands {
         let cmd_set = CommandSet::default();
         assert!(cmd_set.is_empty());
 
-        let cmd_set = gong_command_set!();
+        let cmd_set = command_set!();
         assert!(cmd_set.is_empty());
-        let cmd_set = gong_command_set!([]);
+        let cmd_set = command_set!([]);
         assert!(cmd_set.is_empty());
 
-        let cmd_set = gong_command_set!([ gong_command!("foo") ]);
+        let cmd_set = command_set!([ command!("foo") ]);
         assert!(!cmd_set.is_empty());
     }
 
@@ -306,43 +306,43 @@ mod commands {
     #[test]
     fn set_types() {
         // Construction of commands/sub-commands to be used in test set
-        let subcmd_opts = gong_option_set!(
+        let subcmd_opts = option_set!(
             @long [
-                gong_longopt!("manic"),
+                longopt!("manic"),
             ],
             @short [
-                gong_shortopt!('m'),
+                shortopt!('m'),
             ]
         );
-        let cmd_opts = gong_option_set!(
+        let cmd_opts = option_set!(
             @long [
-                gong_longopt!("hammer"),
-                gong_longopt!("saw"),
+                longopt!("hammer"),
+                longopt!("saw"),
             ],
             @short [
-                gong_shortopt!('h'),
+                shortopt!('h'),
             ]
         );
-        let cmd_subcmds = gong_command_set!(
+        let cmd_subcmds = command_set!(
             [
-                gong_command!("build", @opts &subcmd_opts),
-                gong_command!("destroy", @opts &subcmd_opts),
+                command!("build", @opts &subcmd_opts),
+                command!("destroy", @opts &subcmd_opts),
             ]
         );
 
         // Test set - fixed
         let cmds_fixed = CommandSet {
             commands: &[
-                gong_command!("take_a_break"),
-                gong_command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
+                command!("take_a_break"),
+                command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
             ],
         };
 
         // Test set - extendible
         let cmds_extendible = CommandSetEx {
             commands: vec![
-                gong_command!("take_a_break"),
-                gong_command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
+                command!("take_a_break"),
+                command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
             ],
         };
 
@@ -366,13 +366,13 @@ mod commands {
 
         let cmds_fixed_2 = CommandSet {
             commands: &[
-                gong_command!("not_available"),
+                command!("not_available"),
             ],
         };
 
         let cmds_extendible_2 = CommandSetEx {
             commands: vec![
-                gong_command!("not_available"),
+                command!("not_available"),
             ],
         };
 

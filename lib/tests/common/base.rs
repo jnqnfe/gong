@@ -14,91 +14,91 @@ use gong::options::OptionSet;
 use gong::commands::CommandSet;
 
 /// A base set of options for common usage in tests
-static BASE_OPTS: OptionSet = gong_option_set!(
+static BASE_OPTS: OptionSet = option_set!(
     @long [
-        gong_longopt!("help"),
-        gong_longopt!("foo"),
-        gong_longopt!("version"),
-        gong_longopt!("foobar"),
-        gong_longopt!(@data "hah"),
-        gong_longopt!("ábc"),       // Using a combinator char (accent)
-        gong_longopt!(@data "ƒƒ"),  // For multi-byte with-data long option component split checking
-        gong_longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
-        gong_longopt!("color"),
-        gong_longopt!("no-color"),
+        longopt!("help"),
+        longopt!("foo"),
+        longopt!("version"),
+        longopt!("foobar"),
+        longopt!(@data "hah"),
+        longopt!("ábc"),       // Using a combinator char (accent)
+        longopt!(@data "ƒƒ"),  // For multi-byte with-data long option component split checking
+        longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
+        longopt!("color"),
+        longopt!("no-color"),
     ],
     @short [
-        gong_shortopt!('h'),
-        gong_shortopt!('v'),
-        gong_shortopt!('❤'),
-        gong_shortopt!('x'),
-        gong_shortopt!(@data 'o'),
-        gong_shortopt!('\u{030a}'), // A lone combinator (“ring above”)
-        gong_shortopt!(@data 'Ɛ'),  // For multi-byte with-data calculation checking
-        gong_shortopt!('C'),        // For analysis data mining, using capital to avoid test conflicts
+        shortopt!('h'),
+        shortopt!('v'),
+        shortopt!('❤'),
+        shortopt!('x'),
+        shortopt!(@data 'o'),
+        shortopt!('\u{030a}'), // A lone combinator (“ring above”)
+        shortopt!(@data 'Ɛ'),  // For multi-byte with-data calculation checking
+        shortopt!('C'),        // For analysis data mining, using capital to avoid test conflicts
     ]
 );
 
 /// A base set of commands for common usage in tests
-static BASE_CMDS: CommandSet = gong_command_set!([
-    gong_command!("foo"), // For command/option name clash testing
-    gong_command!("add"),
-    gong_command!("commit"),
-    gong_command!("push",
-        @opts &gong_option_set!(
+static BASE_CMDS: CommandSet = command_set!([
+    command!("foo"), // For command/option name clash testing
+    command!("add"),
+    command!("commit"),
+    command!("push",
+        @opts &option_set!(
             @long [
-                gong_longopt!("help"),
-                gong_longopt!("tags"),
+                longopt!("help"),
+                longopt!("tags"),
             ],
             @short [
-                gong_shortopt!('h'),
+                shortopt!('h'),
             ]
         ),
-        @cmds gong_command_set!([
-            gong_command!("origin",
-                @opts &gong_option_set!(
+        @cmds command_set!([
+            command!("origin",
+                @opts &option_set!(
                     @long [
-                        gong_longopt!("help"),
-                        gong_longopt!("force"),
-                        gong_longopt!("foo"),
+                        longopt!("help"),
+                        longopt!("force"),
+                        longopt!("foo"),
                     ]
                 )
             ),
-            gong_command!("remote"),
+            command!("remote"),
         ])
     ),
-    gong_command!("branch",
-        @opts &gong_option_set!(
+    command!("branch",
+        @opts &option_set!(
             @long [
-                gong_longopt!("help"),
-                gong_longopt!("sorted"),
+                longopt!("help"),
+                longopt!("sorted"),
             ],
             @short [
-                gong_shortopt!('h'),
+                shortopt!('h'),
             ]
         ),
-        @cmds gong_command_set!([
-            gong_command!("add"),
-            gong_command!("del",
-                @opts &gong_option_set!(),
-                @cmds gong_command_set!([
+        @cmds command_set!([
+            command!("add"),
+            command!("del",
+                @opts &option_set!(),
+                @cmds command_set!([
                     // Note, the names here are chosen to be different to those below for greater
                     // assurance that a match is made from this set, not the sibling below.
-                    gong_command!("locally"),
-                    gong_command!("remotely"),
+                    command!("locally"),
+                    command!("remotely"),
                 ])
             ),
-            gong_command!("list",
-                @opts &gong_option_set!(
+            command!("list",
+                @opts &option_set!(
                     @long [
-                        gong_longopt!("help"),
-                        gong_longopt!("show-current"),
-                        gong_longopt!("foo"),
+                        longopt!("help"),
+                        longopt!("show-current"),
+                        longopt!("foo"),
                     ]
                 ),
-                @cmds gong_command_set!([
-                    gong_command!("local"),
-                    gong_command!("remote"),
+                @cmds command_set!([
+                    command!("local"),
+                    command!("remote"),
                 ])
             ),
         ])

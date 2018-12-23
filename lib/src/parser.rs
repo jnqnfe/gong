@@ -71,8 +71,8 @@ pub struct Parser<'r, 's: 'r> {
 impl<'r, 's: 'r> Default for Parser<'r, 's> {
     fn default() -> Self {
         Self {
-            options: &gong_option_set!(),
-            commands: &gong_command_set!(),
+            options: &option_set!(),
+            commands: &command_set!(),
             settings: Settings::default(),
         }
     }
@@ -177,7 +177,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     pub fn new(options: &'r OptionSet<'r, 's>, commands: Option<&'r CommandSet<'r, 's>>) -> Self {
         Self {
             options: options,
-            commands: commands.unwrap_or(&gong_command_set!()),
+            commands: commands.unwrap_or(&command_set!()),
             settings: Settings::default(),
         }
     }

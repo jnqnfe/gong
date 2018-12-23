@@ -34,16 +34,16 @@ mod no_name {
     #[test]
     fn add_existing() {
         let mut cmds = CommandSetEx::new();
-        cmds.add_existing_command(gong_command!("")); // Should work, no validation done
+        cmds.add_existing_command(command!("")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let cmds = gong_command_set!([
-            gong_command!("foo"),
-            gong_command!(""),
-            gong_command!("bar"),
+        let cmds = command_set!([
+            command!("foo"),
+            command!(""),
+            command!("bar"),
         ]);
         assert_eq!(false, cmds.is_valid());
         assert_eq!(cmds.validate(), Err(vec![ CommandFlaw::EmptyName ]));
@@ -66,16 +66,16 @@ mod rep_char {
     #[test]
     fn add_existing() {
         let mut cmds = CommandSetEx::new();
-        cmds.add_existing_command(gong_command!("\u{FFFD}")); // Should work, no validation done
+        cmds.add_existing_command(command!("\u{FFFD}")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let cmds = gong_command_set!([
-            gong_command!("foo"),
-            gong_command!("a\u{FFFD}b"),
-            gong_command!("bar"),
+        let cmds = command_set!([
+            command!("foo"),
+            command!("a\u{FFFD}b"),
+            command!("bar"),
         ]);
         assert_eq!(false, cmds.is_valid());
         assert_eq!(cmds.validate(), Err(vec![

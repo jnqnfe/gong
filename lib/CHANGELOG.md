@@ -34,6 +34,8 @@
    hangover.
  * Renamed the `gong_option_set_fixed` macro that constructs an `OptionSet` to `gong_option_set`,
    now that the shorter name is freed up.
+ * Updated to Rust 2018 edition symantics, including renaming of macros to drop the `gong_` prefix,
+   preferring the new style of namespace based access, e.g. `gong::longopt!()`.
  * The option set creation macro now requires `@long` and/or `@short` annotations, which helps
    bring clarity and neater usage for sets with only short options.
  * The long and short option creation macros now require an `@data` annotation for data-taking

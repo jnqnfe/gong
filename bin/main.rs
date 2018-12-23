@@ -67,20 +67,20 @@ fn main() {
     config::init();
 
     // Set up valid option descriptions
-    let opts = gong_option_set!(
+    let opts = option_set!(
         @long [
-            gong_longopt!("help"),
-            gong_longopt!("foo"),
-            gong_longopt!("version"),
-            gong_longopt!("foobar"),
-            gong_longopt!(@data "hah"),
-            gong_longopt!("ábc"),
+            longopt!("help"),
+            longopt!("foo"),
+            longopt!("version"),
+            longopt!("foobar"),
+            longopt!(@data "hah"),
+            longopt!("ábc"),
         ],
         @short [
-            gong_shortopt!('h'),
-            gong_shortopt!('❤'),
-            gong_shortopt!('x'),
-            gong_shortopt!(@data 'o'),
+            shortopt!('h'),
+            shortopt!('❤'),
+            shortopt!('x'),
+            shortopt!(@data 'o'),
         ]
     );
     let mut parser = Parser::new(&opts, None);

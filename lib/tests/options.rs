@@ -47,16 +47,16 @@ mod short_dash {
     #[test]
     fn add_short_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_short(gong_shortopt!('-')); // Should work, no validation done
+        opts.add_existing_short(shortopt!('-')); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@short [
-            gong_shortopt!('a'),
-            gong_shortopt!('-'),
-            gong_shortopt!('b'),
+        let opts = option_set!(@short [
+            shortopt!('a'),
+            shortopt!('-'),
+            shortopt!('b'),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::ShortIsForbiddenChar('-') ]));
@@ -95,7 +95,7 @@ mod short_dash {
         );
 
         // Using a custom **invalid** option set (short is '-')
-        let opts = gong_option_set!(@short [ gong_shortopt!('-') ]);
+        let opts = option_set!(@short [ shortopt!('-') ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -126,16 +126,16 @@ mod short_rep_char {
     #[test]
     fn add_short_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_short(gong_shortopt!(REPLACEMENT_CHARACTER)); // Should work, no validation done
+        opts.add_existing_short(shortopt!(REPLACEMENT_CHARACTER)); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@short [
-            gong_shortopt!('a'),
-            gong_shortopt!(REPLACEMENT_CHARACTER),
-            gong_shortopt!('b'),
+        let opts = option_set!(@short [
+            shortopt!('a'),
+            shortopt!(REPLACEMENT_CHARACTER),
+            shortopt!('b'),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
@@ -165,16 +165,16 @@ mod long_no_name {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("")); // Should work, no validation done
+        opts.add_existing_long(longopt!("")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@long [
-            gong_longopt!("foo"),
-            gong_longopt!(""),
-            gong_longopt!("bar"),
+        let opts = option_set!(@long [
+            longopt!("foo"),
+            longopt!(""),
+            longopt!("bar"),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongEmptyName ]));
@@ -204,16 +204,16 @@ mod long_equals {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("=")); // Should work, no validation done
+        opts.add_existing_long(longopt!("=")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@long [
-            gong_longopt!("foo"),
-            gong_longopt!("a=b"),
-            gong_longopt!("bar"),
+        let opts = option_set!(@long [
+            longopt!("foo"),
+            longopt!("a=b"),
+            longopt!("bar"),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![ OptionFlaw::LongNameHasForbiddenChar("a=b", '=') ]));
@@ -242,7 +242,7 @@ mod long_equals {
         );
 
         // Using a custom **invalid** option set (long name contains `=`)
-        let opts = gong_option_set!(@long [ gong_longopt!("a=b") ]);
+        let opts = option_set!(@long [ longopt!("a=b") ]);
         //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
@@ -273,16 +273,16 @@ mod long_rep_char {
     #[test]
     fn add_long_existing() {
         let mut opts = OptionSetEx::new();
-        opts.add_existing_long(gong_longopt!("\u{FFFD}")); // Should work, no validation done
+        opts.add_existing_long(longopt!("\u{FFFD}")); // Should work, no validation done
     }
 
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@long [
-            gong_longopt!("foo"),
-            gong_longopt!("a\u{FFFD}b"),
-            gong_longopt!("bar"),
+        let opts = option_set!(@long [
+            longopt!("foo"),
+            longopt!("a\u{FFFD}b"),
+            longopt!("bar"),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
@@ -299,12 +299,12 @@ mod multi {
     /// Bypassing add methods, check validation fails
     #[test]
     fn invalid_set() {
-        let opts = gong_option_set!(@long [
-            gong_longopt!("foo"),
-            gong_longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws
-            gong_longopt!("w=x=y\u{FFFD}z"), // Same
-            gong_longopt!("foo\u{FFFD}bar"), // Single flaw, without the equals flaw
-            gong_longopt!("bar"),
+        let opts = option_set!(@long [
+            longopt!("foo"),
+            longopt!("a\u{FFFD}b=c=d"), // More than one unique flaw, and duplicate flaws
+            longopt!("w=x=y\u{FFFD}z"), // Same
+            longopt!("foo\u{FFFD}bar"), // Single flaw, without the equals flaw
+            longopt!("bar"),
         ]);
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![

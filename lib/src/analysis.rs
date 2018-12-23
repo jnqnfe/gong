@@ -373,7 +373,7 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// if analysis.option_used(gong_findopt!(@pair 'h', "help")) {
+    /// if analysis.option_used(findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
     /// # }
@@ -416,7 +416,7 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let count = analysis.count_instances(gong_findopt!(@short 'v'));
+    /// let count = analysis.count_instances(findopt!(@short 'v'));
     /// # }
     /// ```
     ///
@@ -466,7 +466,7 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let val = analysis.get_last_value(gong_findopt!(@long "output-format"));
+    /// let val = analysis.get_last_value(findopt!(@long "output-format"));
     /// # }
     /// ```
     ///
@@ -501,7 +501,7 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// for val in analysis.get_all_values(gong_findopt!(@pair 'f', "foo")) {
+    /// for val in analysis.get_all_values(findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
     /// # }
@@ -538,14 +538,11 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let find = [
-    ///     gong_findopt!(@pair 'c', "color"),
-    ///     gong_findopt!(@long "no-color"),
-    /// ];
+    /// let find = [ findopt!(@pair 'c', "color"), findopt!(@long "no-color") ];
     /// match analysis.get_last_used(&find) {
-    ///     Some(gong_foundopt!(@short 'c')) |
-    ///     Some(gong_foundopt!(@long "color")) => { /* positive flag used... */ },
-    ///     Some(gong_foundopt!(@long "no-color")) => { /* negative flag used... */ },
+    ///     Some(foundopt!(@short 'c')) |
+    ///     Some(foundopt!(@long "color")) => { /* positive flag used... */ },
+    ///     Some(foundopt!(@long "no-color")) => { /* negative flag used... */ },
     ///     _ => { /* None of those were used... */ },
     /// }
     /// # }
@@ -615,9 +612,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state(
-    ///         gong_findopt!(@pair 'c', "color"), // Positive (true)
-    ///         gong_findopt!(@long "no-color")    // Negative (false)
-    ///     ).unwrap_or(true);                     // Default
+    ///         findopt!(@pair 'c', "color"), // Positive (true)
+    ///         findopt!(@long "no-color")    // Negative (false)
+    ///     ).unwrap_or(true);                // Default
     /// # }
     /// ```
     ///
@@ -664,8 +661,8 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state_multi(
-    ///         &[ gong_findopt!(@pair 'c', "color") ],
-    ///         &[ gong_findopt!(@long "no-color"), gong_findopt!(@long "nocolor") ]
+    ///         &[ findopt!(@pair 'c', "color") ],
+    ///         &[ findopt!(@long "no-color"), findopt!(@long "nocolor") ]
     ///     ).unwrap_or(true);
     /// # }
     /// ```

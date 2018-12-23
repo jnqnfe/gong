@@ -24,21 +24,21 @@
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_option_set!(
-///     @long [ gong_longopt!("foo") ],
-///     @short [ gong_shortopt!('a') ]
+/// let _ = option_set!(
+///     @long [ longopt!("foo") ],
+///     @short [ shortopt!('a') ]
 /// );
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_option_set {
+macro_rules! option_set {
     ( @long $long:tt, @short $short:tt ) => {
         $crate::options::OptionSet { long: &$long, short: &$short }
     };
-    ( @short $short:tt, @long $long:tt ) => { gong_option_set!(@long $long, @short $short) };
-    ( @long $long:tt ) => { gong_option_set!(@long $long, @short []) };
-    ( @short $short:tt ) => { gong_option_set!(@long [], @short $short) };
-    () => { gong_option_set!(@long [], @short []) };
+    ( @short $short:tt, @long $long:tt ) => { $crate::option_set!(@long $long, @short $short) };
+    ( @long $long:tt ) => { $crate::option_set!(@long $long, @short []) };
+    ( @short $short:tt ) => { $crate::option_set!(@long [], @short $short) };
+    () => { $crate::option_set!(@long [], @short []) };
 }
 
 /// Constructs a [`CommandSet`](commands/struct.CommandSet.html)
@@ -51,15 +51,15 @@ macro_rules! gong_option_set {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_command_set!([ gong_command!("foo") ]);
+/// let _ = command_set!([ gong::command!("foo") ]);
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_command_set {
+macro_rules! command_set {
     ( $cmds:tt ) => {
         $crate::commands::CommandSet { commands: &$cmds }
     };
-    () => { gong_command_set!([]) };
+    () => { $crate::command_set!([]) };
 }
 
 /// Constructs a [`LongOption`](options/struct.LongOption.html)
@@ -72,12 +72,12 @@ macro_rules! gong_command_set {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_longopt!("foo");       // A flag type option
-/// let _ = gong_longopt!(@data "bar"); // One that takes data
+/// let _ = longopt!("foo");       // A flag type option
+/// let _ = longopt!(@data "bar"); // One that takes data
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_longopt {
+macro_rules! longopt {
     ( @data $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: true } };
     ( $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
 }
@@ -92,12 +92,12 @@ macro_rules! gong_longopt {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_shortopt!('a');       // A flag type option
-/// let _ = gong_shortopt!(@data 'b'); // One that takes data
+/// let _ = shortopt!('a');       // A flag type option
+/// let _ = shortopt!(@data 'b'); // One that takes data
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_shortopt {
+macro_rules! shortopt {
     ( @data $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: true } };
     ( $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
 }
@@ -110,25 +110,25 @@ macro_rules! gong_shortopt {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let opts = gong_option_set!();     // An example (empty) option set
-/// let subcmds = gong_command_set!(); // An example (empty) command set
+/// let opts = option_set!();     // An example (empty) option set
+/// let subcmds = command_set!(); // An example (empty) command set
 ///
-/// let _ = gong_command!("foo");
-/// let _ = gong_command!("foo", @opts &opts);           // With option set
-/// let _ = gong_command!("foo", @cmds subcmds.clone()); // With sub-command set
-/// let _ = gong_command!("foo", @opts &opts, @cmds subcmds.clone());
+/// let _ = command!("foo");
+/// let _ = command!("foo", @opts &opts);           // With option set
+/// let _ = command!("foo", @cmds subcmds.clone()); // With sub-command set
+/// let _ = command!("foo", @opts &opts, @cmds subcmds.clone());
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_command {
+macro_rules! command {
     ( $name:expr ) => {
-        $crate::gong_command!($name, @opts $crate::gong_option_set!(), @cmds $crate::gong_command_set!())
+        $crate::command!($name, @opts $crate::option_set!(), @cmds $crate::command_set!())
     };
     ( $name:expr, @opts $opts:expr ) => {
-        $crate::gong_command!($name, @opts $opts, @cmds $crate::gong_command_set!())
+        $crate::command!($name, @opts $opts, @cmds $crate::command_set!())
     };
     ( $name:expr, @cmds $sub_cmds:expr ) => {
-        $crate::gong_command!($name, @opts $crate::gong_option_set!(), @cmds $sub_cmds)
+        $crate::command!($name, @opts $crate::option_set!(), @cmds $sub_cmds)
     };
     ( $name:expr, @opts $opts:expr, @cmds $sub_cmds:expr ) => {
         $crate::commands::Command {
@@ -150,13 +150,13 @@ macro_rules! gong_command {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_findopt!(@long "help");      // Long option name only
-/// let _ = gong_findopt!(@short 'h');        // Short option character only
-/// let _ = gong_findopt!(@pair 'h', "help"); // Related short+long pair
+/// let _ = findopt!(@long "help");      // Long option name only
+/// let _ = findopt!(@short 'h');        // Short option character only
+/// let _ = findopt!(@pair 'h', "help"); // Related short+long pair
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_findopt {
+macro_rules! findopt {
     ( @long $name:expr ) => { $crate::analysis::FindOption::Long($name) };
     ( @short $ch:expr ) => { $crate::analysis::FindOption::Short($ch) };
     ( @pair $ch:expr, $name:expr ) => { $crate::analysis::FindOption::Pair($ch, $name) };
@@ -173,12 +173,12 @@ macro_rules! gong_findopt {
 /// # #[macro_use]
 /// # extern crate gong;
 /// # fn main() {
-/// let _ = gong_foundopt!(@long "help"); // Long option name only
-/// let _ = gong_foundopt!(@short 'h');   // Short option character only
+/// let _ = foundopt!(@long "help"); // Long option name only
+/// let _ = foundopt!(@short 'h');   // Short option character only
 /// # }
 /// ```
 #[macro_export]
-macro_rules! gong_foundopt {
+macro_rules! foundopt {
     ( @long $name:expr ) => { $crate::analysis::FoundOption::Long($name) };
     ( @short $ch:expr ) => { $crate::analysis::FoundOption::Short($ch) };
 }

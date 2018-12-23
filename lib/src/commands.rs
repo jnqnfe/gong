@@ -272,7 +272,7 @@ impl<'r, 's: 'r> Command<'r, 's> {
         sub_commands: CommandSet<'r, 's>) -> Self
     {
         debug_assert!(Self::validate(name).is_ok());
-        let opts_actual = options.unwrap_or(&gong_option_set!());
+        let opts_actual = options.unwrap_or(&option_set!());
         Self { name, options: opts_actual, sub_commands }
     }
 
@@ -386,7 +386,7 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_cmd_no_name() {
-        let _cmd = Command::new("", None, gong_command_set!()); // Should panic here in debug mode!
+        let _cmd = Command::new("", None, command_set!()); // Should panic here in debug mode!
     }
 
     /* Command names cannot contain the unicode replacement char (`\u{FFFD}`). Support for handling
@@ -398,6 +398,6 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_cmd_with_rep_char() {
-        let _cmd = Command::new("a\u{FFFD}b", None, gong_command_set!()); // Should panic here in debug mode!
+        let _cmd = Command::new("a\u{FFFD}b", None, command_set!()); // Should panic here in debug mode!
     }
 }
