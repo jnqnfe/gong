@@ -259,7 +259,7 @@ impl<'a> From<super::options::LongOption<'a>> for FindOption<'a> {
     }
 }
 
-impl<'a> From<super::options::ShortOption> for FindOption<'a> {
+impl From<super::options::ShortOption> for FindOption<'_> {
     #[inline(always)]
     fn from(o: super::options::ShortOption) -> Self {
         FindOption::Short(o.ch)
@@ -699,7 +699,7 @@ impl<'r, 's: 'r> Analysis<'s> {
     }
 }
 
-impl<'s> ItemClass<'s> {
+impl ItemClass<'_> {
     /// Returns `true` if `self` is `Ok` variant
     pub fn is_ok(&self) -> bool {
         match *self { ItemClass::Ok(_) => true, _ => false }
