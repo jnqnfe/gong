@@ -10,7 +10,6 @@
 
 //! Testing “command argument” construction
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -18,6 +17,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
+use gong::{command_set, command};
 use gong::commands::*;
 
 /// An empty string is not a valid command name property

@@ -21,14 +21,10 @@
 /// # Example
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = option_set!(
-///     @long [ longopt!("foo") ],
-///     @short [ shortopt!('a') ]
+/// let _ = gong::option_set!(
+///     @long [ gong::longopt!("foo") ],
+///     @short [ gong::shortopt!('a') ]
 /// );
-/// # }
 /// ```
 #[macro_export]
 macro_rules! option_set {
@@ -48,11 +44,7 @@ macro_rules! option_set {
 /// # Example
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = command_set!([ gong::command!("foo") ]);
-/// # }
+/// let _ = gong::command_set!([ gong::command!("foo") ]);
 /// ```
 #[macro_export]
 macro_rules! command_set {
@@ -69,12 +61,8 @@ macro_rules! command_set {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = longopt!("foo");       // A flag type option
-/// let _ = longopt!(@data "bar"); // One that takes data
-/// # }
+/// let _ = gong::longopt!("foo");       // A flag type option
+/// let _ = gong::longopt!(@data "bar"); // One that takes data
 /// ```
 #[macro_export]
 macro_rules! longopt {
@@ -89,12 +77,8 @@ macro_rules! longopt {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = shortopt!('a');       // A flag type option
-/// let _ = shortopt!(@data 'b'); // One that takes data
-/// # }
+/// let _ = gong::shortopt!('a');       // A flag type option
+/// let _ = gong::shortopt!(@data 'b'); // One that takes data
 /// ```
 #[macro_export]
 macro_rules! shortopt {
@@ -107,17 +91,13 @@ macro_rules! shortopt {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let opts = option_set!();     // An example (empty) option set
-/// let subcmds = command_set!(); // An example (empty) command set
+/// let opts = gong::option_set!();     // An example (empty) option set
+/// let subcmds = gong::command_set!(); // An example (empty) command set
 ///
-/// let _ = command!("foo");
-/// let _ = command!("foo", @opts &opts);           // With option set
-/// let _ = command!("foo", @cmds subcmds.clone()); // With sub-command set
-/// let _ = command!("foo", @opts &opts, @cmds subcmds.clone());
-/// # }
+/// let _ = gong::command!("foo");
+/// let _ = gong::command!("foo", @opts &opts);           // With option set
+/// let _ = gong::command!("foo", @cmds subcmds.clone()); // With sub-command set
+/// let _ = gong::command!("foo", @opts &opts, @cmds subcmds.clone());
 /// ```
 #[macro_export]
 macro_rules! command {
@@ -147,13 +127,9 @@ macro_rules! command {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = findopt!(@long "help");      // Long option name only
-/// let _ = findopt!(@short 'h');        // Short option character only
-/// let _ = findopt!(@pair 'h', "help"); // Related short+long pair
-/// # }
+/// let _ = gong::findopt!(@long "help");      // Long option name only
+/// let _ = gong::findopt!(@short 'h');        // Short option character only
+/// let _ = gong::findopt!(@pair 'h', "help"); // Related short+long pair
 /// ```
 #[macro_export]
 macro_rules! findopt {
@@ -170,12 +146,8 @@ macro_rules! findopt {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use]
-/// # extern crate gong;
-/// # fn main() {
-/// let _ = foundopt!(@long "help"); // Long option name only
-/// let _ = foundopt!(@short 'h');   // Short option character only
-/// # }
+/// let _ = gong::foundopt!(@long "help"); // Long option name only
+/// let _ = gong::foundopt!(@short 'h');   // Short option character only
 /// ```
 #[macro_export]
 macro_rules! foundopt {

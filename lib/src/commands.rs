@@ -23,6 +23,7 @@
 use std::ffi::OsStr;
 #[cfg(feature = "suggestions")]
 use strsim;
+use super::option_set;
 use super::options::{self, OptionSet, OptionFlaw};
 
 /// Extendible command set
@@ -381,6 +382,7 @@ mod validation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::command_set;
 
     /// Check `Command::new` rejects empty string
     #[test]

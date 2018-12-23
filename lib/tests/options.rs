@@ -10,7 +10,6 @@
 
 //! Testing “available” option construction
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -19,6 +18,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
+use gong::{option_set, longopt, shortopt};
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;

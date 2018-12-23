@@ -14,10 +14,9 @@
 //!
 //! To use this library, start by adding a dependency entry for it in your project’s `Cargo.toml`
 //! file; then make sure to declare use of the crate at the root of the module hierarchy
-//! (`src/main.rs` or `src/lib.rs`), including importing the macros if you want to use them:
+//! (`src/main.rs` or `src/lib.rs`):
 //!
 //! ```rust
-//! #[macro_use]
 //! extern crate gong;
 //! # fn main() {}
 //! ```
@@ -66,8 +65,7 @@
 //! An example of *option set* construction, “fixed” style, using macros:
 //!
 //! ```rust
-//! # #[macro_use]
-//! # extern crate gong;
+//! use gong::{longopt, shortopt, option_set};
 //! use gong::options::OptionSet;
 //! static OPTS: OptionSet = option_set!(
 //!     @long [
@@ -85,7 +83,6 @@
 //!         shortopt!(@data 'o'),  // So does this one
 //!     ]
 //! );
-//! # fn main() {}
 //! ```
 //!
 //! You are encouraged to care about efficiency and thus use the latter model wherever possible. In

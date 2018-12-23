@@ -46,6 +46,7 @@
 
 use std::convert::AsRef;
 use std::ffi::OsStr;
+use super::{option_set, command_set};
 use super::analysis::{Analysis, ItemClass};
 use super::commands::{CommandSet, CommandFlaw};
 use super::options::{OptionSet, OptionFlaw};

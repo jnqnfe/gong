@@ -320,14 +320,10 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// if let Some(problem) = analysis.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
-    /// # }
     /// ```
     ///
     /// [`get_problem_items`]: #method.get_problem_items
@@ -343,12 +339,8 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// let positionals: Vec<_> = analysis.get_positionals().collect();
-    /// # }
     /// ```
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
         self.items.iter()
@@ -369,14 +361,10 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// if analysis.option_used(findopt!(@pair 'h', "help")) {
+    /// if analysis.option_used(gong::findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
-    /// # }
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
@@ -412,12 +400,8 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let count = analysis.count_instances(findopt!(@short 'v'));
-    /// # }
+    /// let count = analysis.count_instances(gong::findopt!(@short 'v'));
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
@@ -462,12 +446,8 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let val = analysis.get_last_value(findopt!(@long "output-format"));
-    /// # }
+    /// let val = analysis.get_last_value(gong::findopt!(@long "output-format"));
     /// ```
     ///
     /// [`get_all_values`]: #method.get_all_values
@@ -497,14 +477,10 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// for val in analysis.get_all_values(findopt!(@pair 'f', "foo")) {
+    /// for val in analysis.get_all_values(gong::findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
-    /// # }
     /// ```
     pub fn get_all_values(&'r self, option: FindOption<'r>)
         -> impl Iterator<Item = &'s OsStr> + 'r
@@ -534,18 +510,14 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let find = [ findopt!(@pair 'c', "color"), findopt!(@long "no-color") ];
+    /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
     /// match analysis.get_last_used(&find) {
-    ///     Some(foundopt!(@short 'c')) |
-    ///     Some(foundopt!(@long "color")) => { /* positive flag used... */ },
-    ///     Some(foundopt!(@long "no-color")) => { /* negative flag used... */ },
+    ///     Some(gong::foundopt!(@short 'c')) |
+    ///     Some(gong::foundopt!(@long "color")) => { /* positive flag used... */ },
+    ///     Some(gong::foundopt!(@long "no-color")) => { /* negative flag used... */ },
     ///     _ => { /* None of those were used... */ },
     /// }
-    /// # }
     /// ```
     ///
     /// [`FindOption`]: enum.FindOption.html
@@ -607,15 +579,11 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state(
-    ///         findopt!(@pair 'c', "color"), // Positive (true)
-    ///         findopt!(@long "no-color")    // Negative (false)
-    ///     ).unwrap_or(true);                // Default
-    /// # }
+    ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
+    ///         gong::findopt!(@long "no-color")    // Negative (false)
+    ///     ).unwrap_or(true);                      // Default
     /// ```
     ///
     /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
@@ -656,15 +624,11 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate gong;
-    /// # fn main() {
     /// # let analysis = gong::analysis::Analysis::new(0);
     /// let val = analysis.get_bool_flag_state_multi(
-    ///         &[ findopt!(@pair 'c', "color") ],
-    ///         &[ findopt!(@long "no-color"), findopt!(@long "nocolor") ]
+    ///         &[ gong::findopt!(@pair 'c', "color") ],
+    ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
     ///     ).unwrap_or(true);
-    /// # }
     /// ```
     ///
     /// [`get_bool_flag_state`]: #method.get_bool_flag_state

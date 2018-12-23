@@ -20,12 +20,12 @@
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]
 #![doc(html_no_source)]
 
-#[macro_use]
 extern crate gong;
 extern crate term_ctrl;
 
 use std::ffi::OsStr;
 use term_ctrl::predefined::*;
+use gong::{longopt, shortopt, option_set};
 use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
 use gong::parser::{Parser, OptionsMode};
 

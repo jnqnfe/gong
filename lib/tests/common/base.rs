@@ -10,6 +10,7 @@
 
 //! Base “available” option set used by most tests
 
+use gong::{longopt, shortopt, command, command_set, option_set};
 use gong::options::OptionSet;
 use gong::commands::CommandSet;
 

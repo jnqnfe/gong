@@ -14,7 +14,6 @@
 //! style, we do not need to do much testing of “iterative” style itself, but some things should be
 //! checked, which is done here.
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -23,6 +22,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
+use gong::{longopt, command, command_set, option_set};
 use gong::analysis::*;
 use common::get_parser;
 

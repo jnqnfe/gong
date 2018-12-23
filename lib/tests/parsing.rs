@@ -8,7 +8,6 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -17,6 +16,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::{OsStr, OsString};
+use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{Parser, OptionsMode};
 use common::{get_parser, Actual, Expected, check_result};

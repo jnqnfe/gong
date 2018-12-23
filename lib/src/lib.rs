@@ -25,11 +25,10 @@
 #[cfg(feature = "suggestions")]
 extern crate strsim;
 
-pub mod docs;
-#[macro_use]
-mod macros; //Note: If we use these in the lib (e.g. internal tests) then this mod must come first!
 pub mod analysis;
 pub mod commands;
+pub mod docs;
 mod engine;
+mod macros;
 pub mod options;
 pub mod parser;

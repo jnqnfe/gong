@@ -12,7 +12,6 @@
 //!
 //! Note, construction with macros is tested separately
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -20,7 +19,10 @@ extern crate gong;
 #[macro_use]
 mod common;
 
+use gong::{longopt, shortopt, command, command_set, option_set};
+
 mod options {
+    use super::*;
     use gong::options::*;
 
     /// Check basic valid construction methods
@@ -266,6 +268,7 @@ mod options {
 }
 
 mod commands {
+    use super::*;
     use gong::commands::*;
 
     /// Check basic valid construction methods

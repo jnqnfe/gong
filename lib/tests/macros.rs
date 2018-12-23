@@ -8,13 +8,13 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
 #[allow(dead_code)] //Mod shared across test crates
 mod common;
 
+use gong::{longopt, shortopt};
 use gong::options::*;
 
 /// Tests of “available options set” construction macros

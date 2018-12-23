@@ -10,7 +10,6 @@
 
 //! Testing data-mining
 
-#[macro_use]
 extern crate gong;
 
 #[allow(unused_macros)]
@@ -19,6 +18,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
+use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
 use common::{get_parser, Actual, Expected, check_result};
 
