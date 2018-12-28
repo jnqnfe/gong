@@ -151,25 +151,36 @@ fn main() {
         },
     }
 
-    let results = parser.parse(&args[..]);
+    let results: Vec<_> = parser.parse_iter(&args[..]).collect();
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    match results.error {
+    let mut error = false;
+    let mut warning = false;
+
+    for item in &results {
+        match *item {
+            ItemClass::Err(_) => { error = true; },
+            ItemClass::Warn(_) => { warning = true; },
+            ItemClass::Ok(_) => {},
+        }
+    }
+
+    match error {
         true => { println!("Errors: {}true{}", c!(COL_E), c!(RESET)); },
         false => {
             println!("Errors: {}false{}", c!(COL_O), c!(RESET));
         },
     }
-    match results.warn {
+    match warning {
         true => { println!("Warnings: {}true{}", c!(COL_W), c!(RESET)); },
         false => {
             println!("Warnings: {}false{}", c!(COL_O), c!(RESET));
         },
     }
 
-    println!("Items: {}\n", results.items.len());
-    for result in &results.items {
+    println!("Items: {}\n", results.len());
+    for result in &results {
         let printer = match *result {
             ItemClass::Ok(_) => print_arg_ok,
             ItemClass::Err(_) => print_arg_err,
@@ -211,7 +222,7 @@ fn main() {
             ItemClass::Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
         }
     }
-    if results.items.len() != 0 {
+    if results.len() != 0 {
         println!();
     }
 }

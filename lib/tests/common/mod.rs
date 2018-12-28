@@ -17,9 +17,9 @@ use gong::analysis::Analysis;
 use gong::parser::Parser;
 
 /// Wrapper for actual analysis result
-#[derive(Debug)] pub struct Actual<'a>(pub Analysis<'a>);
+#[derive(Debug)] pub struct Actual<'a, 'b>(pub Analysis<'a, 'b>);
 /// Wrapper for expected result, for comparison
-#[derive(Debug)] pub struct Expected<'a>(pub Analysis<'a>);
+#[derive(Debug)] pub struct Expected<'a, 'b>(pub Analysis<'a, 'b>);
 
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
@@ -30,10 +30,22 @@ macro_rules! arg_list {
 
 /// Construct an `Expected`
 macro_rules! expected {
-    ( error: $e:expr, warn: $w:expr, $items:expr ) => {{
+    ( error: $e:expr, warn: $w:expr, $(@itemset $item_set:expr),*, cmd_set: $cmd_set:expr ) => {
+        Expected(Analysis {
+            cmd_set: $cmd_set,
+            error: $e,
+            warn: $w,
+            item_sets: vec![ $($item_set),* ],
+        })
+    };
+}
+
+/// Construct an `ItemSet`
+macro_rules! item_set {
+    ( cmd: $cmd:expr, opt_set: $opt_set:expr, error: $e:expr, warn: $w:expr, $items:expr ) => {{
         let mut temp_vec = Vec::new();
         temp_vec.extend_from_slice(&$items);
-        Expected(Analysis { error: $e, warn: $w, items: temp_vec, })
+        ItemSet { command: $cmd, opt_set: $opt_set, error: $e, warn: $w, items: temp_vec, }
     }};
 }
 
@@ -65,6 +77,30 @@ macro_rules! expected_item {
     ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ItemE::AmbiguousLong($i, OsStr::new($n))) };
 }
 
+/// Construct a reference to an option set within a nested structure, from a base command set
+///
+/// E.g. ```cmdset_optset_ref!(get_base_cmds(), 2, 0)``` should give:
+/// get_base_cmds().commands[2].sub_commands.commands[0].options
+macro_rules! cmdset_optset_ref {
+    ( @inner $base:expr, $index_last:expr ) => {
+        $base.commands[$index_last].options
+    };
+    ( @inner $base:expr, $index_first:expr, $($index:expr),* ) => {
+        cmdset_optset_ref!(@inner $base.commands[$index_first].sub_commands, $($index),*)
+    };
+    ( $base:expr, $($index:expr),* ) => {
+        cmdset_optset_ref!(@inner $base, $($index),*)
+    };
+}
+
+/// Construct a reference to a command set within a nested structure, from a base command set
+///
+/// E.g. ```cmdset_subcmdset_ref!(get_base_cmds(), 2, 0)``` should give:
+/// &get_base_cmds().commands[2].sub_commands.commands[0].sub_commands
+macro_rules! cmdset_subcmdset_ref {
+    ( $base:expr, $($index:expr),* ) => { &$base$(.commands[$index].sub_commands)* }
+}
+
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser() -> Parser<'static, 'static> {
     Parser::new(base::get_base_opts(), Some(base::get_base_cmds()))
@@ -94,16 +130,33 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
 /// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
 fn pretty_print_results(analysis: &Analysis) {
-    let mut items = String::new();
-    for item in &analysis.items {
-        items.push_str(&format!("\n        {:?},", item));
+    let mut item_sets = String::new();
+    for item_set in &analysis.item_sets {
+        let mut items = String::new();
+        for item in &item_set.items {
+            items.push_str(&format!("\n                {:?},", item));
+        }
+        item_sets.push_str(&format!("
+        ItemSet {{
+            command: {},
+            items: [{}
+            ],
+            error: {},
+            warn: {},
+            opt_set: {:p},
+        }}", item_set.command, items, item_set.error, item_set.warn, item_set.opt_set));
     }
+    let cmd_set = match analysis.cmd_set {
+        Some(cs) => format!("{:p}", cs),
+        None => String::from("none"),
+    };
     eprintln!("\
 Analysis {{
-    items: [{}
+    item_sets: [{}
     ],
     error: {},
     warn: {},
+    cmd_set: {},
 }}",
-    items, analysis.error, analysis.warn);
+    item_sets, analysis.error, analysis.warn, cmd_set);
 }

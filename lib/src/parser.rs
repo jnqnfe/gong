@@ -47,7 +47,7 @@
 use std::convert::AsRef;
 use std::ffi::OsStr;
 use crate::{option_set, command_set};
-use crate::analysis::{Analysis, ItemClass};
+use crate::analysis::Analysis;
 use crate::commands::{CommandSet, CommandFlaw};
 use crate::options::{OptionSet, OptionFlaw};
 
@@ -264,19 +264,10 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`is_valid`]: #method.is_valid
     /// [`validate`]: #method.validate
     /// [`parse_iter`]: #method.parse_iter
-    pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'s>
+    #[inline(always)]
+    pub fn parse<A>(&self, args: &'s [A]) -> Analysis<'r, 's>
         where A: 's + AsRef<OsStr>
     {
-        let mut analysis = Analysis::new(args.len());
-        let parse_iter = ParseIter::new(args, self);
-        let items = parse_iter.inspect(|item| {
-            match item {
-                ItemClass::Err(_) => analysis.error = true,
-                ItemClass::Warn(_) => analysis.warn = true,
-                ItemClass::Ok(_) => {},
-            }
-        }).collect();
-        analysis.items = items;
-        analysis
+        Analysis::from(ParseIter::new(args, self))
     }
 }

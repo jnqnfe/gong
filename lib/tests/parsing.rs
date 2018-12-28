@@ -19,7 +19,7 @@ use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{Parser, OptionsMode};
-use self::common::{get_parser, Actual, Expected, check_result};
+use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected, check_result};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -75,6 +75,7 @@ fn basic() {
     let expected = expected!(
         error: false,
         warn: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
             expected_item!(0, Positional, "abc"),
             expected_item!(1, Positional, "-"),
@@ -94,7 +95,8 @@ fn basic() {
             expected_item!(11, EarlyTerminator),
             expected_item!(12, Positional, "--foo"),
             expected_item!(13, Positional, "jkl"),
-        ]
+        ]),
+        cmd_set: Some(get_base_cmds())
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
@@ -106,10 +108,12 @@ fn case_sensitivity() {
     let expected = expected!(
         error: false,
         warn: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
             expected_item!(0, UnknownLong, "Foo"),
             expected_item!(1, UnknownShort, 'O'),
-        ]
+        ]),
+        cmd_set: Some(get_base_cmds())
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
@@ -130,6 +134,7 @@ fn early_term() {
     let expected = expected!(
         error: false,
         warn: false,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
         [
             expected_item!(0, Long, "foo"),
             expected_item!(1, EarlyTerminator),
@@ -146,7 +151,8 @@ fn early_term() {
             expected_item!(12, Positional, "--hah=a"),
             expected_item!(13, Positional, "-oa"),
             expected_item!(14, Positional, "-b"),
-        ]
+        ]),
+        cmd_set: Some(get_base_cmds())
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
@@ -159,10 +165,12 @@ fn long_no_name() {
     let expected = expected!(
         error: false,
         warn: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
             expected_item!(0, LongWithNoName),
             expected_item!(1, LongWithNoName),
-        ]
+        ]),
+        cmd_set: Some(get_base_cmds())
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
@@ -175,6 +183,7 @@ fn repetition() {
     let expected = expected!(
         error: false,
         warn: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
             expected_item!(0, Long, "foo"),
             expected_item!(1, Short, 'h'),
@@ -186,7 +195,8 @@ fn repetition() {
             expected_item!(7, Short, 'h'),
             expected_item!(7, Short, 'h'),
             expected_item!(7, Short, 'h'),
-        ]
+        ]),
+        cmd_set: Some(get_base_cmds())
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
@@ -224,6 +234,7 @@ mod utf8 {
         let expected = expected!(
             error: true,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
                 expected_item!(0, Positional, "🗻∈🌏"),
                 expected_item!(1, UnknownLong, "x❤x"),
@@ -245,7 +256,8 @@ mod utf8 {
                 expected_item!(16, Short, '❤'),
                 expected_item!(17, ShortWithData, 'Ɛ', "aşrg", DataLocation::SameArg),
                 expected_item!(18, ShortWithData, 'Ɛ', "argş", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -257,6 +269,7 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, "y̆"),
                 expected_item!(1, UnknownShort, 'y'),        // `y`
@@ -271,7 +284,8 @@ mod utf8 {
                 expected_item!(5, UnknownLong, "ëéy̆"),
                 expected_item!(6, UnknownLong, "ábc"),       // without combinator
                 expected_item!(7, Long, "ábc"),              // with combinator
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -287,12 +301,14 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, "❤️"),
                 expected_item!(1, Short, '\u{2764}'),        // black-heart
                 expected_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
                 expected_item!(2, UnknownLong, "❤️"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -304,12 +320,14 @@ mod utf8 {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, "\u{0306}"),
                 expected_item!(1, UnknownShort, '\u{0306}'),
                 expected_item!(2, UnknownLong, "\u{0306}"),
                 expected_item!(3, Short, '\u{030a}'),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -332,10 +350,12 @@ mod abbreviations {
         let expected = expected!(
             error: true,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
             [
                 expected_item!(0, AmbiguousLong, "f"),
                 expected_item!(1, AmbiguousLong, "fo"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -352,12 +372,14 @@ mod abbreviations {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Long, "foobar"),
                 expected_item!(2, Long, "foobar"),
                 expected_item!(3, Long, "foobar"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -369,6 +391,7 @@ mod abbreviations {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, UnknownLong, "f"),
                 expected_item!(1, UnknownLong, "fo"),
@@ -376,7 +399,8 @@ mod abbreviations {
                 expected_item!(3, UnknownLong, "foob"),
                 expected_item!(4, UnknownLong, "fooba"),
                 expected_item!(5, Long, "foobar"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_allow_abbreviations(false);
@@ -390,14 +414,6 @@ mod abbreviations {
     /// exact match, rather than ending early as ambiguous.
     #[test]
     fn exact_override() {
-        let args = arg_list!("--foo");
-        let expected = expected!(
-            error: false,
-            warn: false,
-            [
-                expected_item!(0, Long, "foo"),
-            ]
-        );
         let opts = option_set!(@long [
             // Multiple options that “foo” will match as an abbreviation for before getting to the
             // exact match.
@@ -406,6 +422,18 @@ mod abbreviations {
             longopt!("fooooo"),
             longopt!("foo"),    // Exact match for input `--foo`
         ]);
+
+        let args = arg_list!("--foo");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            [
+                expected_item!(0, Long, "foo"),
+            ]),
+            cmd_set: None
+        );
+
         let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
@@ -430,12 +458,14 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
                 expected_item!(4, Long, "help"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -452,10 +482,12 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, Positional, "g"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -473,6 +505,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
                 expected_item!(2, UnknownShort, 'b'),
@@ -483,7 +516,8 @@ mod data {
                 expected_item!(6, Short, 'x'),
                 expected_item!(6, UnknownShort, 'a'),
                 expected_item!(6, ShortWithData, 'o', "def", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -506,6 +540,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
@@ -526,7 +561,8 @@ mod data {
                 expected_item!(7, ShortWithData, 'o', "axc", DataLocation::SameArg),
                 expected_item!(8, ShortWithData, 'o', "xbc", DataLocation::SameArg),
                 expected_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -538,9 +574,11 @@ mod data {
         let expected = expected!(
             error: true,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
             [
                 expected_item!(0, LongMissingData, "hah"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -552,12 +590,14 @@ mod data {
         let expected = expected!(
             error: true,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
                 expected_item!(0, UnknownShort, 'b'),
                 expected_item!(0, Short, 'x'),
                 expected_item!(0, UnknownShort, 's'),
                 expected_item!(0, ShortMissingData, 'o'),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -584,6 +624,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, UnknownLong, "xx"),
                 expected_item!(1, UnknownLong, "tt"),
@@ -596,7 +637,8 @@ mod data {
                 expected_item!(7, UnknownShort, '='),
                 expected_item!(7, UnknownShort, 'b'),
                 expected_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -609,12 +651,14 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
                 expected_item!(3, LongWithData, "hah", "b", DataLocation::SameArg),
                 expected_item!(4, ShortWithData, 'o', "bc", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -631,12 +675,14 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(3, Positional, "help"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -653,10 +699,12 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -680,6 +728,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
@@ -690,7 +739,8 @@ mod data {
                 expected_item!(8, ShortWithData, 'o', "a=b", DataLocation::SameArg),
                 expected_item!(9, ShortWithData, 'o', "=", DataLocation::SameArg),
                 expected_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -712,6 +762,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
@@ -729,7 +780,8 @@ mod data {
                 expected_item!(19, ShortWithData, 'o', "--hah", DataLocation::NextArg),
                 expected_item!(21, ShortWithData, 'o', "--blah", DataLocation::SameArg),
                 expected_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -746,12 +798,14 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
                 expected_item!(3, ShortWithData, 'o', "--", DataLocation::NextArg),
                 expected_item!(5, ShortWithData, 'o', "--", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -764,13 +818,15 @@ mod data {
         let expected = expected!(
             error: true,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
             [
                 expected_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
                 expected_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
                 expected_item!(4, LongWithData, "ƒƒ", "❤️", DataLocation::SameArg),
                 expected_item!(5, LongMissingData, "ƒƒ"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -791,6 +847,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
@@ -812,7 +869,8 @@ mod data {
                 expected_item!(13, Short, 'x'),
                 expected_item!(13, Short, '❤'),
                 expected_item!(13, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -834,6 +892,7 @@ mod data {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Short, '❤'),
                 expected_item!(0, UnknownShort, '\u{fe0f}'),
@@ -857,7 +916,8 @@ mod data {
                 expected_item!(6, Short, '❤'),
                 expected_item!(6, UnknownShort, '\u{fe0f}'),
                 expected_item!(6, ShortWithData, 'Ɛ', "\u{030a}b❤\u{fe0f}", DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -876,9 +936,12 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
-            [
-                expected_item!(0, Command, "commit"),
-            ]
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "commit",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+                error: false, warn: false,
+            []),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -890,9 +953,11 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Positional, "Commit"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -907,10 +972,14 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "commit",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+                error: false, warn: false,
             [
-                expected_item!(0, Command, "commit"),
                 expected_item!(1, Positional, "commit"),
-            ]
+            ]),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -922,10 +991,14 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "push",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
+                error: false, warn: false,
             [
-                expected_item!(0, Command, "push"),
                 expected_item!(1, Positional, "commit"),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -937,10 +1010,12 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, EarlyTerminator),
                 expected_item!(1, Positional, "commit"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -955,11 +1030,16 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
-                expected_item!(2, Command, "commit"),
-            ]
+            ]),
+            @itemset item_set!(cmd: "commit",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+                error: false, warn: false,
+            []),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -974,10 +1054,15 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
-                expected_item!(1, Command, "foo"),
-            ]
+            ]),
+            @itemset item_set!(cmd: "foo",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 0),
+                error: false, warn: false,
+            []),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -999,10 +1084,12 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, UnknownLong, "bar"),
-            ]
+            ]),
+            cmd_set: Some(&cmds)
         );
 
         let parser = Parser::new(&opts, Some(&cmds));
@@ -1019,9 +1106,11 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "commit", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1038,11 +1127,13 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
                 expected_item!(2, Positional, "blah"),
                 expected_item!(3, Positional, "commit"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1060,14 +1151,20 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
-                expected_item!(2, Command, "commit"),
+            ]),
+            @itemset item_set!(cmd: "commit",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+                error: false, warn: true,
+            [
                 expected_item!(3, UnknownLong, "foo"),
                 expected_item!(4, UnknownShort, 'o'),
                 expected_item!(4, UnknownShort, 'q'),
-            ]
+            ]),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1089,15 +1186,21 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
-                expected_item!(2, Command, "push"),
+            ]),
+            @itemset item_set!(cmd: "push",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
+                error: false, warn: true,
+            [
                 expected_item!(3, UnknownLong, "foo"),
                 expected_item!(4, Long, "help"),
                 expected_item!(5, Long, "tags"),
                 expected_item!(6, UnknownShort, 'o'),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1126,24 +1229,36 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "branch",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
+                error: false, warn: true,
             [
-                expected_item!(0, Command, "branch"),
                 expected_item!(1, UnknownLong, "foo"),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, Long, "sorted"),
                 expected_item!(4, UnknownLong, "show-current"),
-                expected_item!(5, Command, "list"),
+            ]),
+            @itemset item_set!(cmd: "list",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2),
+                error: false, warn: true,
+            [
                 expected_item!(6, Long, "foo"),
                 expected_item!(7, Long, "help"),
                 expected_item!(8, UnknownLong, "sorted"),
                 expected_item!(9, Long, "show-current"),
-                expected_item!(10, Command, "remote"),
+            ]),
+            @itemset item_set!(cmd: "remote",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2, 1),
+                error: false, warn: true,
+            [
                 expected_item!(11, UnknownLong, "foo"),
                 expected_item!(12, UnknownLong, "help"),
                 expected_item!(13, UnknownLong, "nope"),
                 expected_item!(14, UnknownLong, "show-current"),
                 expected_item!(15, Positional, "blah"),
-            ]
+            ]),
+            cmd_set: None
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1168,20 +1283,28 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "branch",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
+                error: false, warn: true,
             [
-                expected_item!(0, Command, "branch"),
                 expected_item!(1, UnknownLong, "foo"),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, Long, "sorted"),
                 expected_item!(4, UnknownLong, "show-current"),
-                expected_item!(5, Command, "del"),
+            ]),
+            @itemset item_set!(cmd: "del",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
+                error: false, warn: true,
+            [
                 expected_item!(6, UnknownLong, "foo"),
                 expected_item!(7, EarlyTerminator),
                 expected_item!(8, Positional, "--show-current"),
                 expected_item!(9, Positional, "remotely"),
                 expected_item!(10, Positional, "--foo"),
                 expected_item!(11, Positional, "blah"),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1197,11 +1320,18 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "branch",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
+                error: false, warn: false,
+            []),
+            @itemset item_set!(cmd: "del",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
+                error: false, warn: false,
             [
-                expected_item!(0, Command, "branch"),
-                expected_item!(1, Command, "del"),
                 expected_item!(2, Positional, "list"),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1217,11 +1347,15 @@ mod commands {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            @itemset item_set!(cmd: "branch",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
+                error: false, warn: false,
             [
-                expected_item!(0, Command, "branch"),
                 expected_item!(1, Positional, "blah"),
                 expected_item!(2, Positional, "list"),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1257,6 +1391,7 @@ mod trimming {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, " --foo"),
                 expected_item!(1, UnknownLong, "foo "),
@@ -1276,7 +1411,8 @@ mod trimming {
                 expected_item!(11, ShortWithData, 'o', "   a  b\t c ", DataLocation::SameArg),
                 expected_item!(12, ShortWithData, 'o', "   a  b\t c ", DataLocation::NextArg),
                 expected_item!(14, Positional, "   a  b\t c "),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1317,6 +1453,7 @@ mod alt_mode {
         let expected = expected!(
             error: true,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
                 expected_item!(0, Positional, "abc"),
                 expected_item!(1, Positional, "-"),
@@ -1334,7 +1471,8 @@ mod alt_mode {
                 expected_item!(14, UnknownLong, "❤"),
                 expected_item!(15, EarlyTerminator),
                 expected_item!(16, Positional, "-help"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
@@ -1352,11 +1490,13 @@ mod alt_mode {
         let expected = expected!(
             error: true,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
                 expected_item!(0, LongWithUnexpectedData, "foo", "abc"),
                 expected_item!(1, Long, "foo"),
                 expected_item!(2, LongMissingData, "hah"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
@@ -1373,10 +1513,12 @@ mod alt_mode {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
@@ -1398,13 +1540,19 @@ mod alt_mode {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "foo"),
-                expected_item!(1, Command, "push"),
+            ]),
+            @itemset item_set!(cmd: "push",
+                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
+                error: false, warn: true,
+            [
                 expected_item!(2, UnknownLong, "foo"),
                 expected_item!(3, Long, "help"),
                 expected_item!(4, Long, "tags"),
-            ]
+            ]),
+            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
@@ -1432,13 +1580,15 @@ mod posixly_correct {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Positional, "abc"),
                 expected_item!(2, Positional, "--foo"),
                 expected_item!(3, Positional, "--"),
                 expected_item!(4, Positional, "bar"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
@@ -1457,12 +1607,14 @@ mod posixly_correct {
         let expected = expected!(
             error: false,
             warn: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, EarlyTerminator),
                 expected_item!(2, Positional, "abc"),
                 expected_item!(3, Positional, "--foo"),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
@@ -1582,6 +1734,7 @@ mod invalid_byte_sequences {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
@@ -1625,7 +1778,8 @@ mod invalid_byte_sequences {
                 expected_item!(17, UnknownShort, '�'),
                 expected_item!(17, UnknownShort, '�'),
                 expected_item!(17, UnknownShort, '�'),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
@@ -1687,6 +1841,7 @@ mod invalid_byte_sequences {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Positional, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
@@ -1718,7 +1873,8 @@ mod invalid_byte_sequences {
                 expected_item!(14, UnknownShort, 'm'),
                 expected_item!(14, UnknownShort, '�'),
                 expected_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
-            ]
+            ]),
+            cmd_set: Some(get_base_cmds())
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }

@@ -246,6 +246,12 @@
 //! Items are returned in both cases in the same order as respective arguments are given in the
 //! input list.
 //!
+//! If your program uses commands and one or more commands are used in an argument list, the
+//! analysis object returned by the “all in one” approach partitions the items given by the iterator
+//! into multiple sets, per use of commands and how items are matched against different option and
+//! command sets. In this case most/all of the analysis methods on the object itself should be
+//! ignored; using instead the methods available on each item set.
+//!
 //! Note that if you have nested sub-commands, you do **not** *have* to describe the full structure
 //! up front when creating the [`Parser`] if you use the iterative approach; the iterator object
 //! provides methods for changing the *option set* and *command set* for subsequent iterations, thus
@@ -260,7 +266,8 @@
 //! It is now up to you to take appropriate action in response to what was found.
 //!
 //! In the case of data-mining with respect to the “all in one” approach, go ahead and simply use
-//! the methods available on the [`Analysis`] object.
+//! the methods available on the [`Analysis`] object. Of course if using commands, you need to
+//! handle the partitioning first, and approach data-mining upon each individual [`ItemSet`].
 //!
 //! If not taking a data-mining approach, you need to grasp how *items* are described in the
 //! returned analysis types. It is pretty straight forward. The analysis items are [`ItemClass`]

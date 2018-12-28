@@ -23,16 +23,44 @@
 //! If you use the “one at a time” (iterative) parsing model, then the two just mentioned item types
 //! are the only analysis types of relevance; However, if you use the “all in one” (aka
 //! “data-mining”) model then there are some additional types that come into play, namely
-//! [`Analysis`], [`ItemSet`] and [`FindOption`].
+//! [`Analysis`], [`ItemSet`], [`FindOption`] and [`FoundOption`].
 //!
 //! The “all in one” model is basically a wrapper around the iterative model, collecting the results
 //! of running an iterator into a vector within an object ([`Analysis`]) that exposes methods for
-//! retrieving information (aka “data-mining”).
+//! retrieving information (aka “data-mining”). For programs using *command arguments*, the items
+//! are partitioned into blocks per use of commands.
 //!
 //! The [`FindOption`] type is simply one used with certain data-mining methods, for specifying an
 //! option to be searched for. Note that a pair of a related long option and short option can be
 //! specified together, which data mining methods will correctly consider. The [`FoundOption`] type
 //! is the return type equivalent, which differs only in not having a long+short pair variant.
+//!
+//! # Command arguments
+//!
+//! If your program makes use of *command arguments* then you should familiarise yourself with how
+//! the presence of such an argument changes the option and command sets used to parse subsequent
+//! arguments in an argument list, [as discussed separately][commands].
+//!
+//! When it comes to the “all in one” model, construction of an [`Analysis`] object involves
+//! partitioning (i.e. “splitting”) the set of items returned by the internally-used iterator based
+//! upon the presence of commands in the parsed argument list. The result of this is a vector of
+//! [`ItemSet`], with each representing a command name (always an empty string for the first) and
+//! the set of items up to the next use of a command. Command items themselves are consumed in the
+//! process of building this. Note that each item set contains a reference to the relevant option
+//! set used to parse that set of items, for suggestion matching purposes. Similarly the analysis
+//! object itself holds a copy of the last relevant command set reference (when applicable), for
+//! unknown-command suggestion matching.
+//!
+//! > **Tip:** If you encounter an unknown command item, you should be able to always safely unwrap
+//! > the `Option` wrapper of the analysis object’s command set reference.
+//!
+//! For the “one at a time” (iterative) parsing model, note that 1) the iterator has methods for
+//! getting a pointer to the current option/command set pointers, which you can use to perform
+//! suggestion matching, and 2) there are also methods for setting those to be used for subsequent
+//! iterations, which is useful if not wanting to describe the full command-option tree of your
+//! program up front (for instance, you may want, upon encountering a command, to pass along the
+//! iterator to a function dedicated to handling that command, which sets up the iterator with the
+//! correct sets for handling any remaining arguments).
 //!
 //! [`Item`]: struct.Item.html
 //! [`ItemW`]: struct.ItemW.html
@@ -42,21 +70,27 @@
 //! [`Analysis`]: struct.Analysis.html
 //! [`FindOption`]: enum.FindOption.html
 //! [`FoundOption`]: enum.FoundOption.html
+//! [commands]: ../docs/commands/index.html
 
 use std::ffi::OsStr;
+use crate::commands::CommandSet;
+use crate::options::OptionSet;
 
 /// Analysis of parsing arguments
 ///
 /// This type provides a set of “data-mining” methods for extracing information from the set of
 /// wrapped items. Note that most such methods ignore problem items.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Analysis<'s> {
-    /// Set of items describing what was found
-    pub items: Vec<ItemClass<'s>>,
+pub struct Analysis<'r, 's: 'r> {
+    /// Set of item sets describing what was found, partitioned into sets by commands
+    pub item_sets: Vec<ItemSet<'r, 's>>,
     /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
     pub error: bool,
     /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
     pub warn: bool,
+    /// Pointer to the final command set, for use with suggestion matching an unknown command (which
+    /// only applies to the first positional).
+    pub cmd_set: Option<&'r CommandSet<'r, 's>>,
 }
 
 /// The possible classes of items identified and extracted from command line arguments.
@@ -149,6 +183,24 @@ pub enum DataLocation {
     SameArg,
     /// Found in the next argument.
     NextArg,
+}
+
+/// A set of analysis items
+///
+/// This type provides a set of “data-mining” methods for extracing information from the set of
+/// wrapped items. Note that most such methods ignore problem items.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ItemSet<'r, 's: 'r> {
+    /// The command this set of items is associated with (always an empty string for the first)
+    pub command: &'s str,
+    /// Set of items describing what was found
+    pub items: Vec<ItemClass<'s>>,
+    /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
+    pub error: bool,
+    /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
+    pub warn: bool,
+    /// Pointer to the option set, for use with suggestion matching of unknown options
+    pub opt_set: &'r OptionSet<'r, 's>,
 }
 
 /// A *to find* option description
@@ -266,18 +318,20 @@ impl From<super::options::ShortOption> for FindOption<'_> {
     }
 }
 
-impl<'r, 's: 'r> Analysis<'s> {
+impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
-    pub fn new(size_guess: usize) -> Self {
+    pub fn new(command: &'s str, opt_set: &'r OptionSet<'r, 's>) -> Self {
         Self {
-            items: Vec::with_capacity(size_guess),
+            command: command,
+            items: Vec::new(),
             error: false,
             warn: false,
+            opt_set: opt_set,
         }
     }
 
-    /// Gives an iterator over all items
+    /// Gives an iterator over all items in the set
     #[inline]
     pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
         self.items.iter()
@@ -320,8 +374,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// if let Some(problem) = analysis.get_first_problem() {
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// if let Some(problem) = item_set.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
     /// ```
@@ -339,8 +394,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let positionals: Vec<_> = analysis.get_positionals().collect();
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// let positionals: Vec<_> = item_set.get_positionals().collect();
     /// ```
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
         self.items.iter()
@@ -361,8 +417,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// if analysis.option_used(gong::findopt!(@pair 'h', "help")) {
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// if item_set.option_used(gong::findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
     /// ```
@@ -400,8 +457,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let count = analysis.count_instances(gong::findopt!(@short 'v'));
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// let count = item_set.count_instances(gong::findopt!(@short 'v'));
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
@@ -446,8 +504,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let val = analysis.get_last_value(gong::findopt!(@long "output-format"));
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// let val = item_set.get_last_value(gong::findopt!(@long "output-format"));
     /// ```
     ///
     /// [`get_all_values`]: #method.get_all_values
@@ -477,8 +536,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// for val in analysis.get_all_values(gong::findopt!(@pair 'f', "foo")) {
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// for val in item_set.get_all_values(gong::findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
     /// ```
@@ -510,9 +570,10 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
     /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
-    /// match analysis.get_last_used(&find) {
+    /// match item_set.get_last_used(&find) {
     ///     Some(gong::foundopt!(@short 'c')) |
     ///     Some(gong::foundopt!(@long "color")) => { /* positive flag used... */ },
     ///     Some(gong::foundopt!(@long "no-color")) => { /* negative flag used... */ },
@@ -579,8 +640,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let val = analysis.get_bool_flag_state(
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// let val = item_set.get_bool_flag_state(
     ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
     ///         gong::findopt!(@long "no-color")    // Negative (false)
     ///     ).unwrap_or(true);                      // Default
@@ -624,8 +686,9 @@ impl<'r, 's: 'r> Analysis<'s> {
     /// # Example
     ///
     /// ```rust
-    /// # let analysis = gong::analysis::Analysis::new(0);
-    /// let val = analysis.get_bool_flag_state_multi(
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::new("", &opt_set);
+    /// let val = item_set.get_bool_flag_state_multi(
     ///         &[ gong::findopt!(@pair 'c', "color") ],
     ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
     ///     ).unwrap_or(true);
@@ -699,6 +762,340 @@ impl<'r, 's: 'r> Analysis<'s> {
     }
 }
 
+impl<'r, 's: 'r> Analysis<'r, 's> {
+    /// Create a new result set (mostly only useful internally and in test suite)
+    #[doc(hidden)]
+    pub fn new() -> Self {
+        Self {
+            item_sets: Vec::with_capacity(2), //Would not normally expect more than 2 or 3
+            error: false,
+            warn: false,
+            cmd_set: None,
+        }
+    }
+
+    /// Gives an iterator over any *positional* arguments
+    ///
+    /// This is a convenience function; positionals are always found only in the last item set.
+    ///
+    /// They are served in the order given by the user.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let positionals: Vec<_> = analysis.get_positionals().collect();
+    /// ```
+    #[inline]
+    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
+        // NB. With the way commands are processed, only the last item set can contain positionals!
+        self.item_sets.last().unwrap().get_positionals()
+    }
+
+    /// Gives an iterator over all items
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    #[inline]
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_items()
+    }
+
+    /// Gives an iterator over any good (non-error/warn) items
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    #[inline]
+    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_good_items()
+    }
+
+    /// Gives an iterator over any problem (error/warn) items
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// Note, since certain problems could cause subsequent arguments to be mis-interpretted, it may
+    /// be preferable to ignore all but the first problem (and of course terminate the program after
+    /// outputting a suitable error message for that problem). Note that the alternate
+    /// [`get_first_problem`] method offers a cleaner way to get at only the first problem. Of
+    /// course if the [`stop_on_problem`] setting is enabled, then only the first problem will have
+    /// been captured anyway.
+    ///
+    /// [`get_first_problem`]: #method.get_first_problem
+    /// [`stop_on_problem`]: ../parser/struct.Settings.html#structfield.stop_on_problem
+    #[inline]
+    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_problem_items()
+    }
+
+    /// Gets the first problem item, if any
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// This gives you the first problematic item, if any. It may be more preferable than the
+    /// [`get_problem_items`] method since certain problems could cause later arguments to be
+    /// mis-interpretted.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// if let Some(problem) = analysis.get_first_problem() {
+    ///     // Deal with it (print error and end program)
+    /// }
+    /// ```
+    ///
+    /// [`get_problem_items`]: #method.get_problem_items
+    #[inline]
+    pub fn get_first_problem(&'r self) -> Option<&'r ItemClass<'s>> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_first_problem()
+    }
+
+    /// Discover if a specified option was used
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// This is useful for instance to ask if a *flag* type option (e.g. `--help`) was used, though
+    /// it is not restricted to *flag* type options.
+    ///
+    /// Note that problematic items are ignored. [`LongWithUnexpectedData`] is an exception.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// if analysis.option_used(gong::findopt!(@pair 'h', "help")) {
+    ///     // Print help output and exit...
+    /// }
+    /// ```
+    ///
+    /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[inline]
+    pub fn option_used(&self, option: FindOption<'_>) -> bool {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].option_used(option)
+    }
+
+    /// Count the number of times a specified option was used
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// Useful for instance in the common use of short option `v` for specifing the verbosity level
+    /// of a program’s output, where common behaviour is that the more times this short option is
+    /// used, the greater the verbosity (up to a limit), hence the need to count how many times it
+    /// occurred.
+    ///
+    /// Note that problematic items are ignored. [`LongWithUnexpectedData`] is an exception.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let count = analysis.count_instances(gong::findopt!(@short 'v'));
+    /// ```
+    ///
+    /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[inline]
+    pub fn count_instances(&self, option: FindOption<'_>) -> usize {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].count_instances(option)
+    }
+
+    /// Gets the last value provided for the specified option
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// An option could appear more than once within an argument list; This function allows you to
+    /// get the *data value* of the last instance, ignoring those that appear earlier in the list
+    /// (obviously this is only applicable to options that actually take a data value). In other
+    /// words, this is useful for *single use* type options, i.e. where the value provided replaces
+    /// any value provided earlier in the argument list, and thus you are only interested in the
+    /// final (last) value. Contrast this with [`get_all_values`].
+    ///
+    /// This is a faster and more efficient option than calling `last()` on the iterator returned by
+    /// the [`get_all_values`] method, since this hunts in reverse for the last instance then stops.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let val = analysis.get_last_value(gong::findopt!(@long "output-format"));
+    /// ```
+    ///
+    /// [`get_all_values`]: #method.get_all_values
+    #[inline]
+    pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s OsStr> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_last_value(option)
+    }
+
+    /// Gives an iterator over any and all values for the specified option
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// An option could appear more than once within an argument list; This function allows you to
+    /// collect the *data values* of all instances. In other words, this is to be used for options
+    /// that are *multi-use*. Contrast this with [`get_last_value`](#method.get_last_value).
+    ///
+    /// Values are returned in the order given by the user.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// for val in analysis.get_all_values(gong::findopt!(@pair 'f', "foo")) {
+    ///     // Do something with it...
+    /// }
+    /// ```
+    #[inline]
+    pub fn get_all_values(&'r self, option: FindOption<'r>)
+        -> impl Iterator<Item = &'s OsStr> + 'r
+    {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_all_values(option)
+    }
+
+    /// Determines which of the specified options was used last
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// This is similar to the [`get_bool_flag_state_multi`] method, but instead of providing
+    /// separate positive and negative lists, only one list is given, and instead of returning a
+    /// `bool`, the option name/character is given. This method also differs in not being limited to
+    /// any particular kinds of options.
+    ///
+    /// Note that if a pair of a short and a long option are described together within a single
+    /// `FindOption`, and one of these are matched, only the one actually matched will be returned.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
+    /// match analysis.get_last_used(&find) {
+    ///     Some(gong::foundopt!(@short 'c')) |
+    ///     Some(gong::foundopt!(@long "color")) => { /* positive flag used... */ },
+    ///     Some(gong::foundopt!(@long "no-color")) => { /* negative flag used... */ },
+    ///     _ => { /* None of those were used... */ },
+    /// }
+    /// ```
+    ///
+    /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
+    #[inline]
+    pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_last_used(options)
+    }
+
+    /// Gets a boolean flag state per last instance used of the specified options
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// This is useful for *boolean flag* style options, i.e. where you have a pair of *flag* type
+    /// options (those that do not take a data value), where one represents a *positive* form and
+    /// the other a *negative* form, e.g. `--foo` and `--no-foo`, or `--enable-foo` and
+    /// `--disable-foo`. Within an argument list one or more instance of either form could exist and
+    /// in any order, with the last instance being the one of importance, ultimately determining
+    /// the state. This function allows you to get an answer as to which form (positive or negative)
+    /// of an option was used last, if either, and thus determine the state for an option.
+    ///
+    /// The return value is `None` if neither of the specified options were used (in which case you
+    /// must use a default value best suited to your application); `Some(true)` if the last used of
+    /// those specified was of the *positive* form; and `Some(false)` if it was of the negative
+    /// form.
+    ///
+    /// Notes:
+    ///
+    ///  - Typically a program may only ever offer a single flag option for each form (or one long
+    ///    option for each and a short option that toggles the default state), as expected by this
+    ///    function; however if you need more flexibility, see [`get_bool_flag_state_multi`].
+    ///  - There is no restriction on naming, since you are in full control of the names searched
+    ///    for, i.e. you could use `foo` for positive and `no-foo` for negative, or `with-foo` and
+    ///    `without-foo`; and you can obviously change the style used per search.
+    ///  - Only flag type options are searchable, data taking ones are ignored.
+    ///  - With the potential [`LongWithUnexpectedData`] problematic item variant, the problem is
+    ///    ignored, considering it a clean match.
+    ///  - It is *undefined behaviour* for the positive and negative forms to specify the same short
+    ///    option character or long option name. This function *may* **panic** in such situations
+    ///    (currently only with a debug assertion and only in certain cases).
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let val = analysis.get_bool_flag_state(
+    ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
+    ///         gong::findopt!(@long "no-color")    // Negative (false)
+    ///     ).unwrap_or(true);
+    /// ```
+    ///
+    /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
+    /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[inline]
+    pub fn get_bool_flag_state(&self, positive: FindOption<'_>, negative: FindOption<'_>)
+        -> Option<bool>
+    {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_bool_flag_state(positive, negative)
+    }
+
+    /// Gets a boolean flag state per last instance used of the specified options
+    ///
+    /// Note: This method uses the first contained item set only; it is intended for programs that
+    /// do **not** use command arguments. For programs that do use them, you must instead iterate
+    /// over the item sets and use the methods on each item set.
+    ///
+    /// This is an alternative to [`get_bool_flag_state`], taking slices of positive and negative
+    /// options. It is intended for situations where there may be more than one long option name, or
+    /// short option `char` available for one or both boolean forms. For instance, if you offer both
+    /// `--no-foo` and `--nofoo` as negative forms of an option.
+    ///
+    /// See the documentation of [`get_bool_flag_state`] for further details.
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let mut analysis = gong::analysis::Analysis::new();
+    /// # analysis.item_sets.push(gong::analysis::ItemSet::new("", &opt_set));
+    /// let val = analysis.get_bool_flag_state_multi(
+    ///         &[ gong::findopt!(@pair 'c', "color") ],
+    ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
+    ///     ).unwrap_or(true);
+    /// ```
+    ///
+    /// [`get_bool_flag_state`]: #method.get_bool_flag_state
+    #[inline]
+    pub fn get_bool_flag_state_multi(&self, positive: &[FindOption<'_>], negative: &[FindOption<'_>])
+        -> Option<bool>
+    {
+        debug_assert_eq!(1, self.item_sets.len());
+        self.item_sets[0].get_bool_flag_state_multi(positive, negative)
+    }
+}
+
 impl ItemClass<'_> {
     /// Returns `true` if `self` is `Ok` variant
     pub fn is_ok(&self) -> bool {
@@ -713,5 +1110,41 @@ impl ItemClass<'_> {
     /// Returns `true` if `self` is `Warn` variant
     pub fn is_warn(&self) -> bool {
         match *self { ItemClass::Warn(_) => true, _ => false }
+    }
+}
+
+impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
+    where A: 's + AsRef<OsStr>, 's: 'r
+{
+    fn from(mut iter: crate::engine::ParseIter<'r, 's, A>) -> Self {
+        let mut analysis = Analysis::new();
+        let mut cmd = "";
+        let mut more = true;
+        while more {
+            let mut item_set = ItemSet::new(cmd, iter.get_option_set());
+            more = false;
+            while let Some(item) = iter.next() {
+                match item {
+                    ItemClass::Err(_) => item_set.error = true,
+                    ItemClass::Warn(_) => item_set.warn = true,
+                    ItemClass::Ok(Item::Command(_, name)) => {
+                        cmd = name;
+                        more = true;
+                        break;
+                    },
+                    ItemClass::Ok(_) => {},
+                }
+                item_set.items.push(item);
+            }
+            analysis.error |= item_set.error;
+            analysis.warn |= item_set.warn;
+            analysis.item_sets.push(item_set);
+        }
+        let cmd_set = iter.get_command_set();
+        analysis.cmd_set = match cmd_set.is_empty() {
+            false => Some(cmd_set),
+            true => None,
+        };
+        analysis
     }
 }

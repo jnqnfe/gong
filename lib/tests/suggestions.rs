@@ -25,17 +25,6 @@ mod options {
 
     #[test]
     fn basic() {
-        let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
-        let expected = expected!(
-            error: false,
-            warn: true,
-            [
-                expected_item!(0, UnknownLong, "a"),
-                expected_item!(1, UnknownLong, "foo"),
-                expected_item!(2, UnknownLong, "hellp"),
-                expected_item!(3, UnknownLong, "but_i_digest"),
-            ]
-        );
         let opts = option_set!(@long [
             longopt!("b"),
             longopt!("bar"),
@@ -43,15 +32,30 @@ mod options {
             longopt!("but_i_digress"),
         ]);
         assert!(opts.is_valid());
+
+        let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
+        let expected = expected!(
+            error: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            [
+                expected_item!(0, UnknownLong, "a"),
+                expected_item!(1, UnknownLong, "foo"),
+                expected_item!(2, UnknownLong, "hellp"),
+                expected_item!(3, UnknownLong, "but_i_digest"),
+            ]),
+            cmd_set: None
+        );
+
         let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Warn(ItemW::UnknownLong(_, name)) => {
-                    suggestions.push((*name, opts.suggest(name)));
+                    suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
             }
@@ -67,16 +71,6 @@ mod options {
     /// Check searching respects best match, i.e. keeping track works in algorithm
     #[test]
     fn best() {
-        let args = arg_list!("--hellp", "--bard", "--fooa");
-        let expected = expected!(
-            error: false,
-            warn: true,
-            [
-                expected_item!(0, UnknownLong, "hellp"),
-                expected_item!(1, UnknownLong, "bard"),
-                expected_item!(2, UnknownLong, "fooa"),
-            ]
-        );
         let opts = option_set!(@long [
             // Putting best match for `bard` first
             longopt!("bar"),   //bart gets metric of 0.9416666666666667
@@ -89,15 +83,29 @@ mod options {
             longopt!("fooc"),  //fooa gets metric of 0.8833333333333333
         ]);
         assert!(opts.is_valid());
+
+        let args = arg_list!("--hellp", "--bard", "--fooa");
+        let expected = expected!(
+            error: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            [
+                expected_item!(0, UnknownLong, "hellp"),
+                expected_item!(1, UnknownLong, "bard"),
+                expected_item!(2, UnknownLong, "fooa"),
+            ]),
+            cmd_set: None
+        );
+
         let parser = Parser::new(&opts, None);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Warn(ItemW::UnknownLong(_, name)) => {
-                    suggestions.push((*name, opts.suggest(name)));
+                    suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
             }
@@ -120,14 +128,6 @@ mod commands {
 
     #[test]
     fn basic() {
-        let args = arg_list!("but_i_digest");
-        let expected = expected!(
-            error: false,
-            warn: false,
-            [
-                expected_item!(0, Positional, "but_i_digest"),
-            ]
-        );
         let opts = option_set!();
         let cmds = command_set!([
             command!("b"),
@@ -136,15 +136,29 @@ mod commands {
             command!("help"),
         ]);
         assert!(cmds.is_valid());
+
+        let args = arg_list!("but_i_digest");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            [
+                expected_item!(0, Positional, "but_i_digest"),
+            ]),
+            cmd_set: Some(&cmds)
+        );
+
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Ok(Item::Positional(_, s)) => {
-                    suggestions.push((*s, cmds.suggest(s)));
+                    if let Some(cmd_set) = actual_results.0.cmd_set {
+                        suggestions.push((*s, cmd_set.suggest(s)));
+                    }
                 },
                 _ => unreachable!(),
             }
@@ -157,14 +171,6 @@ mod commands {
     /// Check searching respects best match, i.e. keeping track works in algorithm
     #[test]
     fn best_first() {
-        let args = arg_list!("bard");
-        let expected = expected!(
-            error: false,
-            warn: false,
-            [
-                expected_item!(0, Positional, "bard"),
-            ]
-        );
         let opts = option_set!();
         let cmds = command_set!([
             // Putting best match for `bard` first
@@ -172,15 +178,29 @@ mod commands {
             command!("bart"),  //bart gets metric of 0.8833333333333333
         ]);
         assert!(cmds.is_valid());
+
+        let args = arg_list!("bard");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            [
+                expected_item!(0, Positional, "bard"),
+            ]),
+            cmd_set: Some(&cmds)
+        );
+
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Ok(Item::Positional(_, s)) => {
-                    suggestions.push((*s, cmds.suggest(s)));
+                    if let Some(cmd_set) = actual_results.0.cmd_set {
+                        suggestions.push((*s, cmd_set.suggest(s)));
+                    }
                 },
                 _ => unreachable!(),
             }
@@ -193,14 +213,6 @@ mod commands {
     /// Check searching respects best match, i.e. keeping track works in algorithm
     #[test]
     fn best_last() {
-        let args = arg_list!("hellp");
-        let expected = expected!(
-            error: false,
-            warn: false,
-            [
-                expected_item!(0, Positional, "hellp"),
-            ]
-        );
         let opts = option_set!();
         let cmds = command_set!([
             // Putting best match for `hellp` last
@@ -208,15 +220,29 @@ mod commands {
             command!("help"),  //hellp gets metric of 0.9533333333333333
         ]);
         assert!(cmds.is_valid());
+
+        let args = arg_list!("hellp");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            [
+                expected_item!(0, Positional, "hellp"),
+            ]),
+            cmd_set: Some(&cmds)
+        );
+
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Ok(Item::Positional(_, s)) => {
-                    suggestions.push((*s, cmds.suggest(s)));
+                    if let Some(cmd_set) = actual_results.0.cmd_set {
+                        suggestions.push((*s, cmd_set.suggest(s)));
+                    }
                 },
                 _ => unreachable!(),
             }
@@ -229,14 +255,6 @@ mod commands {
     /// Check searching respects best match, i.e. keeping track works in algorithm
     #[test]
     fn best_equal() {
-        let args = arg_list!("fooa");
-        let expected = expected!(
-            error: false,
-            warn: false,
-            [
-                expected_item!(0, Positional, "fooa"),
-            ]
-        );
         let opts = option_set!();
         let cmds = command_set!([
             // Equal matches for `fooa`
@@ -244,15 +262,29 @@ mod commands {
             command!("fooc"), //fooa gets metric of 0.8833333333333333
         ]);
         assert!(cmds.is_valid());
+
+        let args = arg_list!("fooa");
+        let expected = expected!(
+            error: false,
+            warn: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            [
+                expected_item!(0, Positional, "fooa"),
+            ]),
+            cmd_set: Some(&cmds)
+        );
+
         let parser = Parser::new(&opts, Some(&cmds));
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
-        let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
-        for item in &actual_results.0.items {
+        let mut suggestions = Vec::new();
+        for item in &actual_results.0.item_sets[0].items {
             match item {
                 ItemClass::Ok(Item::Positional(_, s)) => {
-                    suggestions.push((*s, cmds.suggest(s)));
+                    if let Some(cmd_set) = actual_results.0.cmd_set {
+                        suggestions.push((*s, cmd_set.suggest(s)));
+                    }
                 },
                 _ => unreachable!(),
             }

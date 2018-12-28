@@ -76,6 +76,10 @@ mod short_dash {
     /// option.
     #[test]
     fn bypassed_parsing() {
+        // Using a custom **invalid** option set (short is '-')
+        let opts = option_set!(@short [ shortopt!('-') ]);
+        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
+
         let args = arg_list!(
             "--abc",    // Can’t use as a shortopt like this, will be interpreted as long opt
             "-a-bc",    // Can use like this
@@ -84,6 +88,7 @@ mod short_dash {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
                 expected_item!(0, UnknownLong, "abc"),
                 expected_item!(1, UnknownShort, 'a'),
@@ -91,12 +96,9 @@ mod short_dash {
                 expected_item!(1, UnknownShort, 'b'),
                 expected_item!(1, UnknownShort, 'c'),
                 expected_item!(2, EarlyTerminator),
-            ]
+            ]),
+            cmd_set: None
         );
-
-        // Using a custom **invalid** option set (short is '-')
-        let opts = option_set!(@short [ shortopt!('-') ]);
-        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
@@ -226,6 +228,10 @@ mod long_equals {
     /// long with an equals (`=`).
     #[test]
     fn bypassed_parsing() {
+        // Using a custom **invalid** option set (long name contains `=`)
+        let opts = option_set!(@long [ longopt!("a=b") ]);
+        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
+
         let args = arg_list!(
             "--a",      // This should match against the “a=b” invalid option as an abbreviation
             "--a=b",    // Here, this is a long option with “in-arg” data, thus the name is “a”,
@@ -235,15 +241,13 @@ mod long_equals {
         let expected = expected!(
             error: false,
             warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
                 expected_item!(0, Long, "a=b"),
                 expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
-            ]
+            ]),
+            cmd_set: None
         );
-
-        // Using a custom **invalid** option set (long name contains `=`)
-        let opts = option_set!(@long [ longopt!("a=b") ]);
-        //assert!(opts.validate().is_ok()); DISABLED! WHAT HAPPENS NEXT? LET’S SEE...
 
         let parser = Parser::new(&opts, None);
         check_result(&Actual(parser.parse(&args)), &expected);
