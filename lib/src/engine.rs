@@ -152,6 +152,14 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         }
     }
 
+    /// Get the *option set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of unknown options
+    #[inline(always)]
+    pub fn get_option_set(&self) -> &'r OptionSet<'r, 's> {
+        self.parser_data.options
+    }
+
     /// Change the *option set* used for parsing by subsequent iterations
     ///
     /// This is typically only applicable where you are using the iterative parsing style with a
@@ -165,6 +173,14 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         if let Some(ref mut short_set_iter) = self.short_set_iter {
             short_set_iter.parser_data.options = opt_set;
         }
+    }
+
+    /// Get the *command set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of an unknown command
+    #[inline(always)]
+    pub fn get_command_set(&self) -> &'r CommandSet<'r, 's> {
+        self.parser_data.commands
     }
 
     /// Change the *command set* used for parsing by subsequent iterations
