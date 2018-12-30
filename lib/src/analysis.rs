@@ -164,6 +164,8 @@ pub enum ItemW<'a> {
     UnknownLong(usize, &'a OsStr),
     /// Unknown short option `char` [WARN]
     UnknownShort(usize, char),
+    /// Unknown command [WARN]
+    UnknownCommand(usize, &'a OsStr),
     /// Looked like a long option, but a name was not actually specified. This only occurs for
     /// arguments starting with `--=` (in standard mode, `-=` in alternate mode). Because the first
     /// `=` in a long option argument is interpreted as indication that any subsequent characters

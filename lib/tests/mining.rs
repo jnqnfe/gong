@@ -301,7 +301,7 @@ mod iter {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
-                expected_item!(0, Positional, "abc"),
+                expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, UnknownLong, "why"),
                 expected_item!(2, AmbiguousLong, "fo"),
                 expected_item!(3, Long, "foo"),
@@ -317,7 +317,7 @@ mod iter {
 
         // All items
         let mut iter = item_set.get_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
+        assert_eq!(iter.next(), Some(&expected_item!(0, UnknownCommand, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
         assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
         assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
@@ -326,12 +326,12 @@ mod iter {
 
         // Good items
         let mut iter = item_set.get_good_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
         assert_eq!(iter.next(), None);
 
         // Problem items
         let mut iter = item_set.get_problem_items();
+        assert_eq!(iter.next(), Some(&expected_item!(0, UnknownCommand, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
         assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
         assert_eq!(iter.next(), Some(&expected_item!(4, LongWithUnexpectedData, "help", "blah")));
@@ -342,7 +342,7 @@ mod iter {
     #[test]
     fn positionals() {
         let args = arg_list!(
-            "abc",          // Positional
+            "abc",          // Unknown command
             "--help",       // Known option
             "def",          // Positional
             "hij",          // Positional
@@ -357,7 +357,7 @@ mod iter {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, "abc"),
+                expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, Positional, "def"),
                 expected_item!(3, Positional, "hij"),
@@ -377,10 +377,9 @@ mod iter {
 
         let item_set = &analysis.item_sets[0];
 
-        assert_eq!(6, item_set.get_positionals().count());
+        assert_eq!(5, item_set.get_positionals().count());
 
         let mut iter = item_set.get_positionals();
-        assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
         assert_eq!(iter.next(), Some(OsStr::new("klm")));
@@ -390,10 +389,9 @@ mod iter {
 
         // Via analysis convenience function
 
-        assert_eq!(6, analysis.get_positionals().count());
+        assert_eq!(5, analysis.get_positionals().count());
 
         let mut iter = analysis.get_positionals();
-        assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
         assert_eq!(iter.next(), Some(OsStr::new("klm")));

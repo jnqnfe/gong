@@ -140,10 +140,10 @@ mod commands {
         let args = arg_list!("but_i_digest");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
-                expected_item!(0, Positional, "but_i_digest"),
+                expected_item!(0, UnknownCommand, "but_i_digest"),
             ]),
             cmd_set: Some(&cmds)
         );
@@ -155,9 +155,9 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Ok(Item::Positional(_, s)) => {
+                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*s, cmd_set.suggest(s)));
+                        suggestions.push((*name, cmd_set.suggest(name)));
                     }
                 },
                 _ => unreachable!(),
@@ -182,10 +182,10 @@ mod commands {
         let args = arg_list!("bard");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
-                expected_item!(0, Positional, "bard"),
+                expected_item!(0, UnknownCommand, "bard"),
             ]),
             cmd_set: Some(&cmds)
         );
@@ -197,9 +197,9 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Ok(Item::Positional(_, s)) => {
+                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*s, cmd_set.suggest(s)));
+                        suggestions.push((*name, cmd_set.suggest(name)));
                     }
                 },
                 _ => unreachable!(),
@@ -224,10 +224,10 @@ mod commands {
         let args = arg_list!("hellp");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
-                expected_item!(0, Positional, "hellp"),
+                expected_item!(0, UnknownCommand, "hellp"),
             ]),
             cmd_set: Some(&cmds)
         );
@@ -239,9 +239,9 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Ok(Item::Positional(_, s)) => {
+                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*s, cmd_set.suggest(s)));
+                        suggestions.push((*name, cmd_set.suggest(name)));
                     }
                 },
                 _ => unreachable!(),
@@ -266,10 +266,10 @@ mod commands {
         let args = arg_list!("fooa");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
             [
-                expected_item!(0, Positional, "fooa"),
+                expected_item!(0, UnknownCommand, "fooa"),
             ]),
             cmd_set: Some(&cmds)
         );
@@ -281,9 +281,9 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Ok(Item::Positional(_, s)) => {
+                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*s, cmd_set.suggest(s)));
+                        suggestions.push((*name, cmd_set.suggest(name)));
                     }
                 },
                 _ => unreachable!(),

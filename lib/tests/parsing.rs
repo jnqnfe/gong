@@ -56,7 +56,8 @@ fn arg_list_owned_set() {
 #[test]
 fn basic() {
     let args = arg_list!(
-        "abc", "-", "z",    // Positionals
+        "abc",              // Unknown command
+        "-", "z",           // Positionals
         "--help",           // Known long option
         "--xxx",            // Unknown long option
         "---yy",            // Extra dash should be taken as part of long option name
@@ -77,7 +78,7 @@ fn basic() {
         warn: true,
         @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
-            expected_item!(0, Positional, "abc"),
+            expected_item!(0, UnknownCommand, "abc"),
             expected_item!(1, Positional, "-"),
             expected_item!(2, Positional, "z"),
             expected_item!(3, Long, "help"),
@@ -212,7 +213,7 @@ mod utf8 {
     #[test]
     fn basic() {
         let args = arg_list!(
-            "🗻∈🌏",              // Positional
+            "🗻∈🌏",              // Unknown command
             "--x❤x",            // Unknown long option
             "--🗻∈🌏",            // Another unknown long option
             "--ƒoo",            // Yet another
@@ -230,13 +231,14 @@ mod utf8 {
             "-❤",               // Known short option
             "-Ɛaşrg",           // Known short option, with in-same-arg data
             "-Ɛ", "argş",       // Known short option, with in-next-arg data
+            "🌏∈🗻",              // Positional
         );
         let expected = expected!(
             error: true,
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
-                expected_item!(0, Positional, "🗻∈🌏"),
+                expected_item!(0, UnknownCommand, "🗻∈🌏"),
                 expected_item!(1, UnknownLong, "x❤x"),
                 expected_item!(2, UnknownLong, "🗻∈🌏"),
                 expected_item!(3, UnknownLong, "ƒoo"),
@@ -256,6 +258,7 @@ mod utf8 {
                 expected_item!(16, Short, '❤'),
                 expected_item!(17, ShortWithData, 'Ɛ', "aşrg", DataLocation::SameArg),
                 expected_item!(18, ShortWithData, 'Ɛ', "argş", DataLocation::NextArg),
+                expected_item!(20, Positional, "🌏∈🗻"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -271,7 +274,7 @@ mod utf8 {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, "y̆"),
+                expected_item!(0, UnknownCommand, "y̆"),
                 expected_item!(1, UnknownShort, 'y'),        // `y`
                 expected_item!(1, UnknownShort, '\u{0306}'), // breve
                 expected_item!(2, UnknownLong, "y̆"),
@@ -303,7 +306,7 @@ mod utf8 {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, "❤️"),
+                expected_item!(0, UnknownCommand, "❤️"),
                 expected_item!(1, Short, '\u{2764}'),        // black-heart
                 expected_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
                 expected_item!(2, UnknownLong, "❤️"),
@@ -322,7 +325,7 @@ mod utf8 {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, "\u{0306}"),
+                expected_item!(0, UnknownCommand, "\u{0306}"),
                 expected_item!(1, UnknownShort, '\u{0306}'),
                 expected_item!(2, UnknownLong, "\u{0306}"),
                 expected_item!(3, Short, '\u{030a}'),
@@ -481,11 +484,11 @@ mod data {
         let args = arg_list!("-oa", "g");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
-                expected_item!(1, Positional, "g"),
+                expected_item!(1, UnknownCommand, "g"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -670,17 +673,17 @@ mod data {
             "--hah=",   // Known option, takes data, not given, should be empty string
             "--help",   // Random known option, should not be take as data for previous
             "--hah=",   // Same again...
-            "help",     // Positional this time, also should not be taken as data
+            "help",     // Unknown command this time, also should not be taken as data
         );
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
-                expected_item!(3, Positional, "help"),
+                expected_item!(3, UnknownCommand, "help"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -952,10 +955,10 @@ mod commands {
         let args = arg_list!("Commit");
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, "Commit"),
+                expected_item!(0, UnknownCommand, "Commit"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -990,13 +993,13 @@ mod commands {
         let args = arg_list!("push", "commit");
         let expected = expected!(
             error: false,
-            warn: false,
+            warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
             @itemset item_set!(cmd: "push",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
-                error: false, warn: false,
+                error: false, warn: true,
             [
-                expected_item!(1, Positional, "commit"),
+                expected_item!(1, UnknownCommand, "commit"),
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
@@ -1115,22 +1118,22 @@ mod commands {
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
-    /// Check not recognised as command in secondary non-option position, and first is reported as a
-    /// positional, not as an unrecognised command (n/a to current design).
+    /// Check not recognised as command in secondary non-option position, and first is reported as
+    /// an unrecognised command.
     #[test]
     fn following_unknown() {
         let args = arg_list!(
             "--hah", "foo",     // Option taking data
-            "blah",             // Positional, not matching any command
-            "commit"            // A command, but one or more positionals already given
+            "blah",             // Unknown command
+            "commit"            // A known command, but one or more non-options already given
         );
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
-                expected_item!(2, Positional, "blah"),
+                expected_item!(2, UnknownCommand, "blah"),
                 expected_item!(3, Positional, "commit"),
             ]),
             cmd_set: Some(get_base_cmds())
@@ -1319,7 +1322,7 @@ mod commands {
         );
         let expected = expected!(
             error: false,
-            warn: false,
+            warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
@@ -1327,9 +1330,9 @@ mod commands {
             []),
             @itemset item_set!(cmd: "del",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
-                error: false, warn: false,
+                error: false, warn: true,
             [
-                expected_item!(2, Positional, "list"),
+                expected_item!(2, UnknownCommand, "list"),
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
@@ -1338,21 +1341,21 @@ mod commands {
 
     /// Check known sub-command, given after a non-option that is not a known sub-command
     #[test]
-    fn nested_following_positional() {
+    fn nested_following_unknown() {
         let args = arg_list!(
             "branch",   // Primary command
-            "blah",     // Positional
-            "list",     // Sub-command, but follows positional, so not taken as a command
+            "blah",     // Unknown sub-command
+            "list",     // Known, sub-command, but following unknown, so only positional
         );
         let expected = expected!(
             error: false,
-            warn: false,
+            warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
-                error: false, warn: false,
+                error: false, warn: true,
             [
-                expected_item!(1, Positional, "blah"),
+                expected_item!(1, UnknownCommand, "blah"),
                 expected_item!(2, Positional, "list"),
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
@@ -1373,7 +1376,7 @@ mod trimming {
     fn basic() {
         let args = arg_list!(
             // In all of these cases the whitespace is expected to be preserved, which thus might
-            // cause arguments to be seen as positionals, or cause option match failure.
+            // cause arguments to be seen as positionals, or cause option/command match failure.
             " --foo",                   // Whitespace at start of long option style argument
             "--foo ",                   // Whitespace at end of long option name
             "-- foo",                   // Whitespace at start of long option name
@@ -1393,7 +1396,7 @@ mod trimming {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, " --foo"),
+                expected_item!(0, UnknownCommand, " --foo"),
                 expected_item!(1, UnknownLong, "foo "),
                 expected_item!(2, UnknownLong, " foo"),
                 expected_item!(3, UnknownLong, "f o\to"),
@@ -1432,7 +1435,7 @@ mod alt_mode {
     #[test]
     fn basic() {
         let args = arg_list!(
-            "abc",          // Positional
+            "abc",          // Unknown command
             "-",            // Should be positional
             "-help",        // Known option, via alt-mode single dash
             "-hah=abc",     // Data-taking variant, in-arg
@@ -1455,7 +1458,7 @@ mod alt_mode {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
             [
-                expected_item!(0, Positional, "abc"),
+                expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, Positional, "-"),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
@@ -1572,21 +1575,23 @@ mod posixly_correct {
     fn basic() {
         let args = arg_list!(
             "--help",   // Option
-            "abc",      // Positional
+            "abc",      // Unknown command
+            "def",      // Positional
             "--foo",    // Option, to be taken as positional
             "--",       // Early terminator, to be taken as positional
             "bar",      // Option, to be taken as positional
         );
         let expected = expected!(
             error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            warn: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
                 expected_item!(0, Long, "help"),
-                expected_item!(1, Positional, "abc"),
-                expected_item!(2, Positional, "--foo"),
-                expected_item!(3, Positional, "--"),
-                expected_item!(4, Positional, "bar"),
+                expected_item!(1, UnknownCommand, "abc"),
+                expected_item!(2, Positional, "def"),
+                expected_item!(3, Positional, "--foo"),
+                expected_item!(4, Positional, "--"),
+                expected_item!(5, Positional, "bar"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -1677,7 +1682,7 @@ mod invalid_byte_sequences {
         use std::os::unix::ffi::OsStrExt;
 
         let args = [
-            OsStr::from_bytes(b"a\x80bc"),       // Positional
+            OsStr::from_bytes(b"a\x80bc"),       // Unknown command
             OsStr::from_bytes(b"--\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\x80bc"), // Known long, with in-same-arg data
             OsStr::from_bytes(b"--hah"),         // Known long, with in-next-arg data
@@ -1736,7 +1741,7 @@ mod invalid_byte_sequences {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, expected_strings[0]),
+                expected_item!(0, UnknownCommand, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
@@ -1796,7 +1801,7 @@ mod invalid_byte_sequences {
         }
 
         let args = [
-            OsStr::from_bytes(b"a\xed\xa0\x80bc"),       // Positional
+            OsStr::from_bytes(b"a\xed\xa0\x80bc"),       // Unknown command
             OsStr::from_bytes(b"--\xed\xa0\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\xed\xa0\x80bc"), // Known long, with in-same-arg data
             OsStr::from_bytes(b"--hah"),                 // Known long, with in-next-arg data
@@ -1843,7 +1848,7 @@ mod invalid_byte_sequences {
             warn: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
             [
-                expected_item!(0, Positional, expected_strings[0]),
+                expected_item!(0, UnknownCommand, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),

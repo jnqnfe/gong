@@ -234,19 +234,25 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
 
         match arg_type {
             ArgTypeBasic::NonOption => {
-                if self.try_command_matching && !self.rest_are_positionals {
-                    for candidate in self.parser_data.commands.commands {
-                        if candidate.name == arg {
-                            self.parser_data.options = candidate.options;
-                            self.parser_data.commands = &candidate.sub_commands;
-                            return Some(ItemClass::Ok(Item::Command(arg_index, candidate.name)));
+                // This may be a positional or a command
+                if !self.rest_are_positionals {
+                    if self.try_command_matching {
+                        for candidate in self.parser_data.commands.commands {
+                            if candidate.name == arg {
+                                self.parser_data.options = candidate.options;
+                                self.parser_data.commands = &candidate.sub_commands;
+                                return Some(ItemClass::Ok(Item::Command(arg_index, candidate.name)));
+                            }
+                        }
+                        self.try_command_matching = false;
+                        if !self.parser_data.commands.commands.is_empty() {
+                            return Some(ItemClass::Warn(ItemW::UnknownCommand(arg_index, arg)));
                         }
                     }
+                    if self.parser_data.settings.posixly_correct {
+                        self.rest_are_positionals = true;
+                    }
                 }
-                if self.parser_data.settings.posixly_correct {
-                    self.rest_are_positionals = true;
-                }
-                self.try_command_matching = false;
                 Some(ItemClass::Ok(Item::Positional(arg_index, arg)))
             },
             ArgTypeBasic::EarlyTerminator => {

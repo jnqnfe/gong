@@ -220,6 +220,7 @@ fn main() {
                 printer(*i, "UnknownShort", OsStr::new(&desc));
             },
             ItemClass::Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
+            ItemClass::Warn(ItemW::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
         }
     }
     if results.len() != 0 {

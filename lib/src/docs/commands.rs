@@ -32,11 +32,18 @@
 //! When parsing a given set of arguments, initially arguments are parsed against the “main”
 //! (“top-level”) options in the *option set* given directly to the parser. If a *non-option* is
 //! encountered, and it is the first *non-option*, it is compared to the “main” (“top-level”) set of
-//! *commands*, if there are any. If it does not match any *command* in the set, it is considered to
-//! be a *positional* argument, but if it does, then it is promoted to *command*, and all subsequent
-//! arguments will be parsed against the *option set* and *sub-command set* of that command. If the
-//! first *non-option* following that command matches one of its *sub-commands*, then it is promoted
-//! to a *command* in exactly the same way.
+//! *commands*, if there are any. If there are no commands, then it would simply be considered to be
+//! a *positional*, but if there are commands, then a match will be looked for, and it will either
+//! thus be recognised as a known command, or otherwise reported as an unknown command. In the case
+//! of a known command, all subsequent arguments from that point forward will be parsed against the
+//! *option set* and *sub-command set* of that command. If a command has no sub-command set, then
+//! all *non-options* will be taken to be *positionals*. In the case of an unknown command, parsing
+//! of remaining arguments will continue with the same option/command sets, but naturally the
+//! results will be incorrect if it genuinely was intended as a command (you are free to reinterpret
+//! the unknown command argument to be a positional instead if applicable to your program, in which
+//! case ignore that). Upon encountering an unknown command, no further attempt will be made to
+//! interpret *non-options* as *commands* in subsequent arguments, they will be taken to be
+//! *positionals*.
 //!
 //! Note, *command name* matching, like *option* matching, is case-sensitive. However, unlike
 //! *option* matching, abbreviated matching is not (currently) supported for *command names*.
@@ -47,8 +54,15 @@
 //!
 //! Per the above description, *positional* arguments cannot come before *command* arguments, they
 //! must always only appear after the last command, mixed with any remaining *option* arguments. Any
-//! attempt to use a *positional* before a command would result in the command being interpretted as
-//! a *positional*.
+//! attempt to use a *positional* before a command would result in it being interpretted as an
+//! unknown command. (Unless of course the positional happens to unintentially match a command).
+//!
+//! Thus, where a *command set* (or *sub-command set*) is active, i.e. one or more commands are
+//! available for use, but you also accept one or more *positionals*, understand that the first
+//! *positional* will come out as an unknown command item. You would have to reinterpret this as a
+//! *positional* (by retrieiving a copy of the original argument, via the given index). Also to be
+//! considered in such a situation is the issue of the unknown command interpretation with respect
+//! to the stop-on-problem parser setting.
 //!
 //! ## Example
 //!
@@ -77,8 +91,8 @@
 //! <prog-name> --verbose build --action
 //!
 //! # Here, `blah` is a non-option that does not match a recognised command, and
-//! # thus is a positional. Since `build` is not the first non-option, it too is
-//! # simply interpreted as a positional.
+//! # thus is an unknown command. The `build` argument then ends up being simply
+//! # interpreted as a positional.
 //! <prog-name> blah build
 //!
 //! # Here the `build` command is used, followed by its `help` option, which

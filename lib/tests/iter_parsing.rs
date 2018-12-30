@@ -30,7 +30,7 @@ use self::common::get_parser;
 #[test]
 fn basic() {
     let args = arg_list!(
-        "abc",          // Positional
+        "abc",          // Unknown command
         "--help",       // Long option
         "-bxs",         // Short option set, two unknown, one known (`x`)
         "--hah=xyz",    // Data taking option, in-same-arg
@@ -40,7 +40,7 @@ fn basic() {
     );
     let parser = get_parser();
     let mut parse_iter = parser.parse_iter(&args);
-    assert_eq!(parse_iter.next(), Some(expected_item!(0, Positional, "abc")));
+    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownCommand, "abc")));
     assert_eq!(parse_iter.next(), Some(expected_item!(1, Long, "help")));
     assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 'b')));
     assert_eq!(parse_iter.next(), Some(expected_item!(2, Short, 'x')));
