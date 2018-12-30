@@ -49,19 +49,19 @@ fn arg_list_owned_set() {
 fn basic() {
     let args = arg_list!(
         "abc", "-", "z",    // Non-options
-        "--help",           // Real long option
-        "--xxx",            // Non-real long option
+        "--help",           // Known long option
+        "--xxx",            // Unknown long option
         "---yy",            // Extra dash should be taken as part of long option name
-        "version",          // Real long option, but no prefix, thus non-option
-        "-bxs",             // Short option set, two non-real, one real (`x`)
-        "ghi",              // Non-option, containing real short option (`h`)
+        "version",          // Known long option, but no prefix, thus non-option
+        "-bxs",             // Short option set, two unknown, one known (`x`)
+        "ghi",              // Non-option, containing known short option (`h`)
         "-a-",              // Dash in short opt set should come out as unknown short opt (can not
-                            // be a real one as not allowed), so long as not the first in set, as
+                            // be a known one as not allowed), so long as not the first in set, as
                             // would then arg would then be interpreted as long option or early
                             // terminator.
-        "-h-",              // Same, but with real short opt in set, which should not matter.
+        "-h-",              // Same, but with known short opt in set, which should not matter.
         "--",               // Early terminator
-        "--foo",            // Real option, taken as non-option due to early terminator
+        "--foo",            // Known option, taken as non-option due to early terminator
         "jkl",              // Non-option either way
     );
     let expected = expected!(
@@ -535,7 +535,7 @@ mod data {
             "--xx=yy",   // Unrecognised long option, with data, name component is "xx"
             "--tt=",     // Unrecognised long option, with data, but data is empty string
             "-x",        // Random
-            "--foo=bar", // Real long option, but does **not** take data, thus unexpected
+            "--foo=bar", // Known long option, but does **not** take data, thus unexpected
             "--foo=",    // Same, but empty string, so data component should be ignored
             "-x",        // Random, ensures next-arg not taken as data for last one
             "-=",        // Equals char valid in short opt set, long opt name/value component
@@ -585,8 +585,8 @@ mod data {
     #[test]
     fn same_arg_empty() {
         let args = arg_list!(
-            "--hah=",   // Real option, takes data, not given, should be empty string
-            "--help",   // Random real option, should not be take as data for previous
+            "--hah=",   // Known option, takes data, not given, should be empty string
+            "--help",   // Random known option, should not be take as data for previous
             "--hah=",   // Same again...
             "help",     // Non-option this time, also should not be taken as data
         );
@@ -641,15 +641,15 @@ mod data {
     #[test]
     fn looking_like_options() {
         let args = arg_list!(
-            "--hah=--foo", "--hah", "--foo",   // With real long option, in-arg/next-arg
-            "--hah=--blah", "--hah", "--blah", // Not real
-            "--hah=-h", "--hah", "-h",         // With real short option
-            "--hah=-n", "--hah", "-n",         // Not real
-            "-o-h", "-o", "-h",                // Using short-opt, with real short opt
-            "-o-n", "-o", "-n",                // Same, but not real
-            "-o--foo",                         // Short using real long lookalike
+            "--hah=--foo", "--hah", "--foo",   // With known long option, in-arg/next-arg
+            "--hah=--blah", "--hah", "--blah", // Unknown
+            "--hah=-h", "--hah", "-h",         // With known short option
+            "--hah=-n", "--hah", "-n",         // Unknown
+            "-o-h", "-o", "-h",                // Using short-opt, with known short opt
+            "-o-n", "-o", "-n",                // Same, but unknown
+            "-o--foo",                         // Short using known long lookalike
             "-o", "--hah",                     // Same, but long that take data
-            "-o--blah", "-o", "--blah",        // With not real
+            "-o--blah", "-o", "--blah",        // With unknown
         );
         let expected = expected!(
             error: false,
@@ -821,21 +821,21 @@ mod alt_mode {
         let args = arg_list!(
             "abc",          // Non-opt
             "-",            // Should be non-opt
-            "-help",        // Real option, via alt-mode single dash
+            "-help",        // Known option, via alt-mode single dash
             "-hah=abc",     // Data-taking variant, in-arg
             "-hah", "cba",  // Same, next-arg
             "-hah=",        // Same, in-arg, data is empty string
             "-=",           // Option with data arg, which is empty, also empty name
             "-=abc",        // Similar, empty name, data provided though, which should be ignored
-            "-bxs",         // `x` is a real short opt, but they should be ignored
-            "--foo",        // Real option, “standard” mode syntax, the second dash should be taken
+            "-bxs",         // `x` is a known short opt, but they should be ignored
+            "--foo",        // Known option, “standard” mode syntax, the second dash should be taken
                             // as being a part of the name.
             "-f",           // Ambiguous long option, matches both `foo` and `foobar`
             "-foo",         // Matches both `foo` and `foobar`, but matches `foo` exactly
             "-foob",        // Unique abbreviation to `foobar`
-            "-❤",           // Check real short opt not taken as such
+            "-❤",           // Check known short opt not taken as such
             "--",           // Early term
-            "-help",        // Real option, should be non-opt though due to early terminator
+            "-help",        // Known option, should be non-opt though due to early terminator
         );
         let expected = expected!(
             error: true,
@@ -868,9 +868,9 @@ mod alt_mode {
     #[test]
     fn data_basic() {
         let args = arg_list!(
-            "-foo=abc", // Real option, takes no data
+            "-foo=abc", // Known option, takes no data
             "-foo=",    // Same, data is empty though so should just be ignored
-            "-hah",     // Real option, takes data, none provided
+            "-hah",     // Known option, takes data, none provided
         );
         let expected = expected!(
             error: true,
@@ -890,7 +890,7 @@ mod alt_mode {
     #[test]
     fn data_looking_like_early_term() {
         let args = arg_list!(
-            "-hah=--",      // Real option, takes data, in-arg
+            "-hah=--",      // Known option, takes data, in-arg
             "-hah", "--",   // Same, next-arg
         );
         let expected = expected!(
