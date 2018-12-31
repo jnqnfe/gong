@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.2.0 (December 31st, 2018)
 
  * Tidied up config output
 

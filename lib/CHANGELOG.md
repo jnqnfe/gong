@@ -1,4 +1,4 @@
-# <unreleased>
+# 1.4.0 (December 31st, 2018)
 
  * Improved efficiency of `is_valid` for option sets
  * Improved the efficiency of the test suite further
