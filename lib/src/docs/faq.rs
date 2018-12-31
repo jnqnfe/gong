@@ -83,6 +83,23 @@
 //!
 //! [`Settings::set_posixly_correct`]: ../../parser/struct.Settings.html#method.set_posixly_correct
 //!
+//! # Can supplying a command be optional?
+//!
+//! If your program uses command arguments, then a user can legitimately neglect to use them, for
+//! instance consider ```<prog-name> --help```. However, with respect to positionals, it is another
+//! story. The first non-option given in the arguments list, and similarly following each command
+//! that has a sub-command set, is expected to be a command, and thus will either end up as a
+//! matched (known) or an unmatched (unknown) command item. Thus a user cannot provide a non-option
+//! argument in such a situation and expect it to come out as a positional item on the basis of it
+//! not matching a known command; it will come out as an unknown command item.
+//!
+//! If this is not what you want then you can simply treat the unknown command item as a positional
+//! (the string returned is the original `&OsStr` just as with positionals).
+//!
+//! This may change in future, as it would not be difficult to build in an option to control this
+//! behaviour, but currently this is not so, and it is not known that such an option is desirable
+//! or even wanted.
+//!
 //! # What exactly is “mismatch suggestions”?
 //!
 //! This is a feature that assists in generating more helpful error messages when a user supplies an
