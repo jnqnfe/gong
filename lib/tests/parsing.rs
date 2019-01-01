@@ -669,6 +669,28 @@ mod data {
     /// Test option with expected data arg, declared to be in same argument, but empty
     #[test]
     fn same_arg_empty() {
+        /* The design decision for this scenario is that the data value be taken as an empty string,
+         * not ignored and the next argument consumed. Rational below.
+         *
+         * Consider the following possible situations:
+         *   1) `<prog-name> --hah=`
+         *   2) `<prog-name> --hah=""`
+         *   3) `<prog-name> --hah ""`
+         *   4) `<prog-name> --hah= abc`
+         *
+         * An argument could be made that it is easy for a user (or script that fails to wrap a
+         * value in quotes) to end up with an unwanted space between the equals (`=`) and the value,
+         * as in #4, thus taking an empty string, with `abc` taken as a positional (possibly even
+         * matching a command), and it thus makes sense to consume the next argument as a way of
+         * trying to correct the users’ (presumed) mistake.
+         *
+         * However, we cannot tell the difference between the usage of #1 and #2, they are both
+         * presented to program code as the same, thus if that were the behaviour, the only way to
+         * provide an empty string would be via in-next-arg style (#3). In fact trying to do so
+         * in-same-arg style like #2 might surprise the user by the fact that it would consume the
+         * next argument. This arguably is much worse.
+         */
+
         let args = arg_list!(
             "--hah=",   // Known option, takes data, not given, should be empty string
             "--help",   // Random known option, should not be take as data for previous
