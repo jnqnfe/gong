@@ -166,12 +166,6 @@ pub enum ItemW<'a> {
     UnknownShort(usize, char),
     /// Unknown command [WARN]
     UnknownCommand(usize, &'a OsStr),
-    /// Looked like a long option, but a name was not actually specified. This only occurs for
-    /// arguments starting with `--=` (in standard mode, `-=` in alternate mode). Because the first
-    /// `=` in a long option argument is interpreted as indication that any subsequent characters
-    /// are a data sub-argument, an `=` immediately following the long option prefix thus gives an
-    /// empty option name. The data (if any) is ignored. [WARN]
-    LongWithNoName(usize),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. [WARN]
     LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a OsStr },

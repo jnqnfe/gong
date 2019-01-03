@@ -29,6 +29,7 @@
    *command non-options* and *positional non-options*.
  * Added an `add_shorts_from_str` method to `OptionSetEx`, which allows adding multiple short
    options in one go using a string.
+ * Removed the `LongWithNoName` item type, now `UnknownLong` is used, with an empty name string
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.

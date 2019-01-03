@@ -168,8 +168,8 @@ fn long_no_name() {
         warn: true,
         @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
         [
-            expected_item!(0, LongWithNoName),
-            expected_item!(1, LongWithNoName),
+            expected_item!(0, UnknownLong, ""),
+            expected_item!(1, UnknownLong, ""),
         ]),
         cmd_set: Some(get_base_cmds())
     );
@@ -249,8 +249,8 @@ mod utf8 {
                 expected_item!(9, Long, "ábc"),
                 expected_item!(10, LongWithUnexpectedData, "ábc", "x💖z"),
                 expected_item!(11, AmbiguousLong, "ƒ"),
-                expected_item!(12, LongWithNoName),
-                expected_item!(13, LongWithNoName),
+                expected_item!(12, UnknownLong, ""),
+                expected_item!(13, UnknownLong, ""),
                 expected_item!(14, UnknownShort, 'ă'),
                 expected_item!(15, UnknownShort, '🗻'),
                 expected_item!(15, UnknownShort, '∈'),
@@ -1486,8 +1486,8 @@ mod alt_mode {
                 expected_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
                 expected_item!(4, LongWithData, "hah", "cba", DataLocation::NextArg),
                 expected_item!(6, LongWithData, "hah", "", DataLocation::SameArg),
-                expected_item!(7, LongWithNoName),
-                expected_item!(8, LongWithNoName),
+                expected_item!(7, UnknownLong, ""),
+                expected_item!(8, UnknownLong, ""),
                 expected_item!(9, UnknownLong, "bxs"),
                 expected_item!(10, UnknownLong, "-foo"),
                 expected_item!(11, AmbiguousLong, "f"),
@@ -1768,7 +1768,7 @@ mod invalid_byte_sequences {
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
                 expected_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
-                expected_item!(6, LongWithNoName),
+                expected_item!(6, UnknownLong, ""),
                 expected_item!(7, UnknownShort, 'm'),
                 // Note, here, it is right that we do not receive the original invalid byte(s) as
                 // the unrecognised short option, since it would be a pain to determine exactly what
@@ -1875,7 +1875,7 @@ mod invalid_byte_sequences {
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
                 expected_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
-                expected_item!(6, LongWithNoName),
+                expected_item!(6, UnknownLong, ""),
                 expected_item!(7, UnknownShort, 'm'),
                 expected_item!(7, UnknownShort, '�'),
                 expected_item!(7, Short, 'h'),

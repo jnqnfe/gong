@@ -200,7 +200,6 @@ fn main() {
                 println!("    data: {:?}", d)
             },
             ItemClass::Err(ItemE::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
-            ItemClass::Warn(ItemW::LongWithNoName(i)) => printer(*i, "LongWithNoName", OsStr::new("")),
             ItemClass::Warn(ItemW::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
             ItemClass::Ok(Item::Short(i, c)) => {
                 let desc = desc_char(*c);

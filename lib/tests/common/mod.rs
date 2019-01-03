@@ -69,7 +69,6 @@ macro_rules! expected_item {
     ( $i:expr, UnknownLong, $n:expr ) => { ItemClass::Warn(ItemW::UnknownLong($i, OsStr::new($n))) };
     ( $i:expr, UnknownShort, $c:expr ) => { ItemClass::Warn(ItemW::UnknownShort($i, $c)) };
     ( $i:expr, UnknownCommand, $n:expr ) => { ItemClass::Warn(ItemW::UnknownCommand($i, OsStr::new($n))) };
-    ( $i:expr, LongWithNoName ) => { ItemClass::Warn(ItemW::LongWithNoName($i)) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr ) => {
         ItemClass::Warn(ItemW::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
     };

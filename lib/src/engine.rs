@@ -282,7 +282,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(ItemClass::Warn(ItemW::LongWithNoName(arg_index)));
+                    return Some(ItemClass::Warn(ItemW::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
                 let mut matched: Option<&LongOption> = None;
