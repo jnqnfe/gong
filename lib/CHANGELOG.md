@@ -33,7 +33,7 @@
  * Simplified problematic item reporting:
     - Merged the `ItemE` and `ItemW` enums into one `ProblemItem` enum
     - Combined the pair of `error` and `warn` indicator booleans within `Analysis` as `problems`
-    - Removed `ItemClass`, using `Result` instead
+    - Removed `ItemClass`, using `Result` instead, with a convenience alias of `ItemResult`
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.

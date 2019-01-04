@@ -271,8 +271,8 @@
 //!
 //! If not taking a data-mining approach, you need to grasp how *items* are described in the
 //! returned analysis types. It is pretty straight forward. The analysis items are of the type
-//! `Result<Item, ProblemItem>` where [`Item`] represents a good item and [`ProblemItem`] represents
-//! a problematic one.
+//! [`ItemResult`] which is just simply a type alias of `Result<Item, ProblemItem>` where [`Item`]
+//! represents a good item and [`ProblemItem`] represents a problematic one.
 //!
 //! All variants of each item hold a `usize` value used to indicate the index of the argument in
 //! which the item was found, should you want to know that. Similarly, information is returned where
@@ -317,6 +317,7 @@
 //! [`CommandSet`]: ../../commands/struct.CommandSet.html
 //! [`CommandSetEx`]: ../../commands/struct.CommandSetEx.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`ItemResult`]: ../../analysis/type.ItemResult.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html
 //! [commands_doc]: ../commands/index.html

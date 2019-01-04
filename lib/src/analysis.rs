@@ -74,6 +74,8 @@ use std::ffi::OsStr;
 use crate::commands::CommandSet;
 use crate::options::OptionSet;
 
+pub type ItemResult<'s> = Result<Item<'s>, ProblemItem<'s>>;
+
 /// Analysis of parsing arguments
 ///
 /// This type provides a set of “data-mining” methods for extracing information from the set of
@@ -170,7 +172,7 @@ pub struct ItemSet<'r, 's: 'r> {
     /// The command this set of items is associated with (always an empty string for the first)
     pub command: &'s str,
     /// Set of items describing what was found
-    pub items: Vec<Result<Item<'s>, ProblemItem<'s>>>,
+    pub items: Vec<ItemResult<'s>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
@@ -312,7 +314,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
 
     /// Gives an iterator over all items in the set
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r Result<Item<'s>, ProblemItem<'s>>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResult<'s>> {
         self.items.iter()
     }
 
@@ -790,7 +792,7 @@ impl<'r, 's: 'r> Analysis<'r, 's> {
     /// do **not** use command arguments. For programs that do use them, you must instead iterate
     /// over the item sets and use the methods on each item set.
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r Result<Item<'s>, ProblemItem<'s>>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResult<'s>> {
         debug_assert_eq!(1, self.item_sets.len());
         self.item_sets[0].get_items()
     }

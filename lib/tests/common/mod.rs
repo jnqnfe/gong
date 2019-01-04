@@ -48,7 +48,7 @@ macro_rules! item_set {
     }};
 }
 
-/// Construct an `Result<Item, ProblemItem>` result item, for an `Expected`.
+/// Construct an `ItemResult` result item, for an `Expected`.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
 /// be found at in the analysis. The second param is the label of the unique type. The final params

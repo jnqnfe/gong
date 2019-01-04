@@ -94,7 +94,7 @@ enum ArgTypeBasic<'a> {
 impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = Result<Item<'s>, ProblemItem<'s>>;
+    type Item = ItemResult<'s>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Continue from where we left off for a short option set?
@@ -120,7 +120,7 @@ impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
 impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = Result<Item<'s>, ProblemItem<'s>>;
+    type Item = ItemResult<'s>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
@@ -223,7 +223,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     }
 
     /// Parse next argument, if any
-    fn get_next(&mut self) -> Option<Result<Item<'s>, ProblemItem<'s>>> {
+    fn get_next(&mut self) -> Option<ItemResult<'s>> {
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
@@ -384,7 +384,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
     }
 
     /// Get next item, if any
-    fn get_next(&mut self) -> Option<Result<Item<'s>, ProblemItem<'s>>> {
+    fn get_next(&mut self) -> Option<ItemResult<'s>> {
         if self.consumed {
             return None;
         }
