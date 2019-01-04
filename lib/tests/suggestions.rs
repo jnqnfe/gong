@@ -35,9 +35,8 @@ mod options {
 
         let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownLong, "a"),
                 expected_item!(1, UnknownLong, "foo"),
@@ -54,7 +53,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownLong(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownLong(_, name)) => {
                     suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -86,9 +85,8 @@ mod options {
 
         let args = arg_list!("--hellp", "--bard", "--fooa");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownLong, "hellp"),
                 expected_item!(1, UnknownLong, "bard"),
@@ -104,7 +102,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownLong(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownLong(_, name)) => {
                     suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -139,9 +137,8 @@ mod commands {
 
         let args = arg_list!("but_i_digest");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownCommand, "but_i_digest"),
             ]),
@@ -155,7 +152,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -181,9 +178,8 @@ mod commands {
 
         let args = arg_list!("bard");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownCommand, "bard"),
             ]),
@@ -197,7 +193,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -223,9 +219,8 @@ mod commands {
 
         let args = arg_list!("hellp");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownCommand, "hellp"),
             ]),
@@ -239,7 +234,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -265,9 +260,8 @@ mod commands {
 
         let args = arg_list!("fooa");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownCommand, "fooa"),
             ]),
@@ -281,7 +275,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Warn(ItemW::UnknownCommand(_, name)) => {
+                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }

@@ -271,8 +271,8 @@
 //!
 //! If not taking a data-mining approach, you need to grasp how *items* are described in the
 //! returned analysis types. It is pretty straight forward. The analysis items are [`ItemClass`]
-//! variants which wrap variants of [`Item`], [`ItemW`] or [`ItemE`] \(okay/warn/error), thus making
-//! it simple to match by class.
+//! variants which wrap variants of [`Item`] or [`ProblemItem`] \(okay/problem), thus making it
+//! simple to match by class.
 //!
 //! All variants of each item class hold a `usize` value used to indicate the index of the argument
 //! in which the item was found, should you want to know that. Similarly, information is returned
@@ -281,8 +281,8 @@
 //! positionals and data values are returned in `&OsStr` form.
 //!
 //! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
-//! `error` and `warn` booleans which give a quick indication of problems, alongside the list of
-//! items, describing in detail what was found.
+//! a `problems` boolean which gives a quick indication of problems, alongside the list of items,
+//! describing in detail what was found.
 //!
 //! As just mentioned, strings representing *positional arguments* and *option data values* are
 //! given in `&OsStr` form. This is ideal for those that represent filenames/paths, and can for
@@ -319,8 +319,7 @@
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
 //! [`ItemClass`]: ../../analysis/enum.ItemClass.html
 //! [`Item`]: ../../analysis/enum.Item.html
-//! [`ItemW`]: ../../analysis/enum.ItemW.html
-//! [`ItemE`]: ../../analysis/enum.ItemE.html
+//! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html
 //! [commands_doc]: ../commands/index.html
 //! [options_doc]: ../options/index.html
 //! [unicode_doc]: ../unicode/index.html

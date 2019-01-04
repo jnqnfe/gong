@@ -30,11 +30,10 @@ macro_rules! arg_list {
 
 /// Construct an `Expected`
 macro_rules! expected {
-    ( error: $e:expr, warn: $w:expr, $(@itemset $item_set:expr),*, cmd_set: $cmd_set:expr ) => {
+    ( problems: $problems:expr, $(@itemset $item_set:expr),*, cmd_set: $cmd_set:expr ) => {
         Expected(Analysis {
             cmd_set: $cmd_set,
-            error: $e,
-            warn: $w,
+            problems: $problems,
             item_sets: vec![ $($item_set),* ],
         })
     };
@@ -42,10 +41,10 @@ macro_rules! expected {
 
 /// Construct an `ItemSet`
 macro_rules! item_set {
-    ( cmd: $cmd:expr, opt_set: $opt_set:expr, error: $e:expr, warn: $w:expr, $items:expr ) => {{
+    ( cmd: $cmd:expr, opt_set: $opt_set:expr, problems: $problems:expr, $items:expr ) => {{
         let mut temp_vec = Vec::new();
         temp_vec.extend_from_slice(&$items);
-        ItemSet { command: $cmd, opt_set: $opt_set, error: $e, warn: $w, items: temp_vec, }
+        ItemSet { command: $cmd, opt_set: $opt_set, problems: $problems, items: temp_vec, }
     }};
 }
 
@@ -66,15 +65,15 @@ macro_rules! expected_item {
         ItemClass::Ok(Item::ShortWithData { i: $i, c: $c, d: OsStr::new($d), l: $l })
     };
     ( $i:expr, Command, $n:expr ) => { ItemClass::Ok(Item::Command($i, $n)) };
-    ( $i:expr, UnknownLong, $n:expr ) => { ItemClass::Warn(ItemW::UnknownLong($i, OsStr::new($n))) };
-    ( $i:expr, UnknownShort, $c:expr ) => { ItemClass::Warn(ItemW::UnknownShort($i, $c)) };
-    ( $i:expr, UnknownCommand, $n:expr ) => { ItemClass::Warn(ItemW::UnknownCommand($i, OsStr::new($n))) };
+    ( $i:expr, UnknownLong, $n:expr ) => { ItemClass::Err(ProblemItem::UnknownLong($i, OsStr::new($n))) };
+    ( $i:expr, UnknownShort, $c:expr ) => { ItemClass::Err(ProblemItem::UnknownShort($i, $c)) };
+    ( $i:expr, UnknownCommand, $n:expr ) => { ItemClass::Err(ProblemItem::UnknownCommand($i, OsStr::new($n))) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr ) => {
-        ItemClass::Warn(ItemW::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
+        ItemClass::Err(ProblemItem::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
     };
-    ( $i:expr, LongMissingData, $n:expr ) => { ItemClass::Err(ItemE::LongMissingData($i, $n)) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { ItemClass::Err(ItemE::ShortMissingData($i, $c)) };
-    ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ItemE::AmbiguousLong($i, OsStr::new($n))) };
+    ( $i:expr, LongMissingData, $n:expr ) => { ItemClass::Err(ProblemItem::LongMissingData($i, $n)) };
+    ( $i:expr, ShortMissingData, $c:expr ) => { ItemClass::Err(ProblemItem::ShortMissingData($i, $c)) };
+    ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ProblemItem::AmbiguousLong($i, OsStr::new($n))) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set
@@ -141,10 +140,9 @@ fn pretty_print_results(analysis: &Analysis) {
             command: {},
             items: [{}
             ],
-            error: {},
-            warn: {},
+            problems: {},
             opt_set: {:p},
-        }}", item_set.command, items, item_set.error, item_set.warn, item_set.opt_set));
+        }}", item_set.command, items, item_set.problems, item_set.opt_set));
     }
     let cmd_set = match analysis.cmd_set {
         Some(cs) => format!("{:p}", cs),
@@ -154,9 +152,8 @@ fn pretty_print_results(analysis: &Analysis) {
 Analysis {{
     item_sets: [{}
     ],
-    error: {},
-    warn: {},
+    problems: {},
     cmd_set: {},
 }}",
-    item_sets, analysis.error, analysis.warn, cmd_set);
+    item_sets, analysis.problems, cmd_set);
 }

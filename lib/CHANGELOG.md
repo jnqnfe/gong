@@ -30,6 +30,10 @@
  * Added an `add_shorts_from_str` method to `OptionSetEx`, which allows adding multiple short
    options in one go using a string.
  * Removed the `LongWithNoName` item type, now `UnknownLong` is used, with an empty name string
+ * Simplified problematic item reporting:
+    - Merged the `ItemE` and `ItemW` enums into one `ProblemItem` enum
+    - Removed the `Warn` variant of `ItemClass`, now using its `Err` variant for all problems
+    - Combined the pair of `error` and `warn` indicator booleans within `Analysis` as `problems`
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very
    little point to it, with virtually no difference to creating a raw object. It was a legacy
    hangover.
@@ -49,7 +53,7 @@
    additional forbidden `char`s.
  * Removed the `Analysis::add` method - not used internally anymore and doubtful anyone really
    wants it kept around.
- * Added `is_ok`, `is_warn` and `is_err` methods to `ItemClass`
+ * Added `is_ok` and `is_err` methods to `ItemClass`
  * Derived `Copy` for `ShortOption`, `LongOption` and `OptionSet`
  * Derived `Copy` and `Clone` for `OptionFlaw`
  * Purged old deprecated stuff

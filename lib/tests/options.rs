@@ -86,9 +86,8 @@ mod short_dash {
             "--",       // Can’t use as a shortopt like this, will be interpreted as early terminator
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, UnknownLong, "abc"),
                 expected_item!(1, UnknownShort, 'a'),
@@ -239,9 +238,8 @@ mod long_equals {
                         // abbreviation, but carrying “b” as data.
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, Long, "a=b"),
                 expected_item!(1, LongWithUnexpectedData, "a=b", "b"),

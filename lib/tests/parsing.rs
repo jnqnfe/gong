@@ -74,9 +74,8 @@ fn basic() {
         "jkl",              // Positional either way
     );
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, UnknownCommand, "abc"),
             expected_item!(1, Positional, "-"),
@@ -107,9 +106,8 @@ fn basic() {
 fn case_sensitivity() {
     let args = arg_list!("--Foo", "-O");
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, UnknownLong, "Foo"),
             expected_item!(1, UnknownShort, 'O'),
@@ -133,9 +131,8 @@ fn early_term() {
         "-o", "--foo", "blah", "--bb", "-h", "--hah", "--hah=", "--", "--hah=a", "-oa", "-b",
     );
     let expected = expected!(
-        error: false,
-        warn: false,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+        problems: false,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
         [
             expected_item!(0, Long, "foo"),
             expected_item!(1, EarlyTerminator),
@@ -164,9 +161,8 @@ fn early_term() {
 fn long_no_name() {
     let args = arg_list!("--=a", "--=");
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, UnknownLong, ""),
             expected_item!(1, UnknownLong, ""),
@@ -182,9 +178,8 @@ fn long_no_name() {
 fn repetition() {
     let args = arg_list!("--foo", "-h", "--version", "-h", "-x", "--blah", "--version", "-hhh");
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, Long, "foo"),
             expected_item!(1, Short, 'h'),
@@ -234,9 +229,8 @@ mod utf8 {
             "🌏∈🗻",              // Positional
         );
         let expected = expected!(
-            error: true,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "🗻∈🌏"),
                 expected_item!(1, UnknownLong, "x❤x"),
@@ -270,9 +264,8 @@ mod utf8 {
     fn combinators() {
         let args = arg_list!("y̆", "-y̆", "--y̆", "ëéy̆", "-ëéy̆", "--ëéy̆", "--ábc", "--ábc");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "y̆"),
                 expected_item!(1, UnknownShort, 'y'),        // `y`
@@ -302,9 +295,8 @@ mod utf8 {
         // #16 (emoji) character.
         let args = arg_list!("❤️", "-❤️", "--❤️");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "❤️"),
                 expected_item!(1, Short, '\u{2764}'),        // black-heart
@@ -321,9 +313,8 @@ mod utf8 {
     fn lone_combinators() {
         let args = arg_list!("\u{0306}", "-\u{0306}", "--\u{0306}", "-\u{030a}");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "\u{0306}"),
                 expected_item!(1, UnknownShort, '\u{0306}'),
@@ -351,9 +342,8 @@ mod abbreviations {
             "--fo", // Same
         );
         let expected = expected!(
-            error: true,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, AmbiguousLong, "f"),
                 expected_item!(1, AmbiguousLong, "fo"),
@@ -373,9 +363,8 @@ mod abbreviations {
             "--foobar", // Exact match for `foobar`
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Long, "foobar"),
@@ -392,9 +381,8 @@ mod abbreviations {
     fn disabled() {
         let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownLong, "f"),
                 expected_item!(1, UnknownLong, "fo"),
@@ -428,9 +416,8 @@ mod abbreviations {
 
         let args = arg_list!("--foo");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: false,
             [
                 expected_item!(0, Long, "foo"),
             ]),
@@ -459,9 +446,8 @@ mod data {
             "--help",       // Random
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
                 expected_item!(2, Long, "help"),
@@ -483,9 +469,8 @@ mod data {
     fn arg_placement_short_calc() {
         let args = arg_list!("-oa", "g");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, UnknownCommand, "g"),
@@ -506,9 +491,8 @@ mod data {
             "-xao", "def",  // Different variation
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
                 expected_item!(2, UnknownShort, 'b'),
@@ -541,9 +525,8 @@ mod data {
             "-oabx",
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
@@ -575,9 +558,8 @@ mod data {
     fn missing_long() {
         let args = arg_list!("--hah");
         let expected = expected!(
-            error: true,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongMissingData, "hah"),
             ]),
@@ -591,9 +573,8 @@ mod data {
     fn missing_short() {
         let args = arg_list!("-bxso");
         let expected = expected!(
-            error: true,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownShort, 'b'),
                 expected_item!(0, Short, 'x'),
@@ -625,9 +606,8 @@ mod data {
             "-o=b",      // Try with short option that takes data, which should consume it
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownLong, "xx"),
                 expected_item!(1, UnknownLong, "tt"),
@@ -652,9 +632,8 @@ mod data {
     fn repetition() {
         let args = arg_list!("--hah=a", "-o", "s", "--hah=b", "-obc");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
                 expected_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
@@ -698,9 +677,8 @@ mod data {
             "help",     // Unknown command this time, also should not be taken as data
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(1, Long, "help"),
@@ -722,9 +700,8 @@ mod data {
             "-o", "",       // Short
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
@@ -751,9 +728,8 @@ mod data {
             "-o===o",           // Same
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
@@ -785,9 +761,8 @@ mod data {
             "-o--blah", "-o", "--blah",        // With unknown
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
@@ -821,9 +796,8 @@ mod data {
             "-o--",         // Same, next-arg
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
@@ -841,9 +815,8 @@ mod data {
     fn multibyte_long() {
         let args = arg_list!("--ƒƒ", "abc", "--ƒƒ=", "--ƒƒ=abc", "--ƒƒ=❤️", "--ƒƒ");
         let expected = expected!(
-            error: true,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
                 expected_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
@@ -870,9 +843,8 @@ mod data {
             "-❤Ɛa", "-❤Ɛ❤", "-❤Ɛa❤", "-x❤Ɛb❤",
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
@@ -915,9 +887,8 @@ mod data {
             "-x\u{030a}❤\u{fe0f}Ɛ\u{030a}b❤\u{fe0f}",
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Short, '❤'),
                 expected_item!(0, UnknownShort, '\u{fe0f}'),
@@ -959,12 +930,11 @@ mod commands {
     fn basic() {
         let args = arg_list!("commit");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "commit",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
-                error: false, warn: false,
+                problems: false,
             []),
             cmd_set: None
         );
@@ -976,9 +946,8 @@ mod commands {
     fn case_sensitivity() {
         let args = arg_list!("Commit");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "Commit"),
             ]),
@@ -995,12 +964,11 @@ mod commands {
     fn repeated_same() {
         let args = arg_list!("commit", "commit");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "commit",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
-                error: false, warn: false,
+                problems: false,
             [
                 expected_item!(1, Positional, "commit"),
             ]),
@@ -1014,12 +982,11 @@ mod commands {
     fn repeated_different() {
         let args = arg_list!("push", "commit");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "push",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(1, UnknownCommand, "commit"),
             ]),
@@ -1033,9 +1000,8 @@ mod commands {
     fn after_early_term() {
         let args = arg_list!("--", "commit");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, EarlyTerminator),
                 expected_item!(1, Positional, "commit"),
@@ -1053,16 +1019,15 @@ mod commands {
             "commit"        // Our command
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
             ]),
             @itemset item_set!(cmd: "commit",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
-                error: false, warn: false,
+                problems: false,
             []),
             cmd_set: None
         );
@@ -1077,15 +1042,14 @@ mod commands {
             "foo"    // As command
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
             ]),
             @itemset item_set!(cmd: "foo",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 0),
-                error: false, warn: false,
+                problems: false,
             []),
             cmd_set: None
         );
@@ -1107,9 +1071,8 @@ mod commands {
 
         let args = arg_list!("--foo", "--bar");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, UnknownLong, "bar"),
@@ -1129,9 +1092,8 @@ mod commands {
             "commit"    // Available command, but should be consumed as option data
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "commit", DataLocation::NextArg),
             ]),
@@ -1150,9 +1112,8 @@ mod commands {
             "commit"            // A known command, but one or more non-options already given
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
                 expected_item!(2, UnknownCommand, "blah"),
@@ -1174,16 +1135,15 @@ mod commands {
                                 // changed, resulting in them not being recognised.
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
             ]),
             @itemset item_set!(cmd: "commit",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(3, UnknownLong, "foo"),
                 expected_item!(4, UnknownShort, 'o'),
@@ -1209,16 +1169,15 @@ mod commands {
             "-o"                // Option unknown to command, but exists in main set
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
                 expected_item!(1, Short, 'h'),
             ]),
             @itemset item_set!(cmd: "push",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(3, UnknownLong, "foo"),
                 expected_item!(4, Long, "help"),
@@ -1252,12 +1211,11 @@ mod commands {
             "blah"              // Positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(1, UnknownLong, "foo"),
                 expected_item!(2, Long, "help"),
@@ -1266,7 +1224,7 @@ mod commands {
             ]),
             @itemset item_set!(cmd: "list",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(6, Long, "foo"),
                 expected_item!(7, Long, "help"),
@@ -1275,7 +1233,7 @@ mod commands {
             ]),
             @itemset item_set!(cmd: "remote",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2, 1),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(11, UnknownLong, "foo"),
                 expected_item!(12, UnknownLong, "help"),
@@ -1306,12 +1264,11 @@ mod commands {
             "blah"              // Positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(1, UnknownLong, "foo"),
                 expected_item!(2, Long, "help"),
@@ -1320,7 +1277,7 @@ mod commands {
             ]),
             @itemset item_set!(cmd: "del",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(6, UnknownLong, "foo"),
                 expected_item!(7, EarlyTerminator),
@@ -1343,16 +1300,15 @@ mod commands {
             "list",     // Sub-command from level 1, used at level 2, thus unrecognised
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
-                error: false, warn: false,
+                problems: false,
             []),
             @itemset item_set!(cmd: "del",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(2, UnknownCommand, "list"),
             ]),
@@ -1370,12 +1326,11 @@ mod commands {
             "list",     // Known, sub-command, but following unknown, so only positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             @itemset item_set!(cmd: "branch",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(1, UnknownCommand, "blah"),
                 expected_item!(2, Positional, "list"),
@@ -1414,9 +1369,8 @@ mod trimming {
             "   a  b\t c ",             // Whitespace in positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, " --foo"),
                 expected_item!(1, UnknownLong, "foo "),
@@ -1476,9 +1430,8 @@ mod alt_mode {
             "-help",        // Known option, should be positional though due to early terminator
         );
         let expected = expected!(
-            error: true,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, Positional, "-"),
@@ -1513,9 +1466,8 @@ mod alt_mode {
             "-hah",     // Known option, takes data, none provided
         );
         let expected = expected!(
-            error: true,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithUnexpectedData, "foo", "abc"),
                 expected_item!(1, Long, "foo"),
@@ -1536,9 +1488,8 @@ mod alt_mode {
             "-hah", "--",   // Same, next-arg
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
@@ -1563,15 +1514,14 @@ mod alt_mode {
             "-tags"     // Option applicable to command
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "foo"),
             ]),
             @itemset item_set!(cmd: "push",
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
-                error: false, warn: true,
+                problems: true,
             [
                 expected_item!(2, UnknownLong, "foo"),
                 expected_item!(3, Long, "help"),
@@ -1604,9 +1554,8 @@ mod posixly_correct {
             "bar",      // Option, to be taken as positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, UnknownCommand, "abc"),
@@ -1632,9 +1581,8 @@ mod posixly_correct {
             "--foo",    // Option, to be taken as positional
         );
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, EarlyTerminator),
@@ -1759,9 +1707,8 @@ mod invalid_byte_sequences {
         ];
 
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
@@ -1866,9 +1813,8 @@ mod invalid_byte_sequences {
         ];
 
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),

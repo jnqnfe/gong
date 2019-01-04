@@ -26,13 +26,12 @@ extern crate term_ctrl;
 use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
-use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
+use gong::analysis::{ItemClass, Item, ProblemItem, DataLocation};
 use gong::parser::{Parser, OptionsMode};
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
 const COL_O: &str = colours::fg::GREEN;  //okay
 const COL_E: &str = colours::fg::RED;    //error
-const COL_W: &str = colours::fg::YELLOW; //warning
 const COL_CHAR: &str = colours::fg::bright::BLUE;
 const COL_MODE: &str = colours::fg::bright::BLUE;
 const COL_DATA: &str = colours::fg::bright::YELLOW;
@@ -155,27 +154,19 @@ fn main() {
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    let mut error = false;
-    let mut warning = false;
+    let mut problems = false;
 
     for item in &results {
         match *item {
-            ItemClass::Err(_) => { error = true; },
-            ItemClass::Warn(_) => { warning = true; },
+            ItemClass::Err(_) => { problems = true; },
             ItemClass::Ok(_) => {},
         }
     }
 
-    match error {
-        true => { println!("Errors: {}true{}", c!(COL_E), c!(RESET)); },
+    match problems {
+        true => { println!("Problems: {}true{}", c!(COL_E), c!(RESET)); },
         false => {
-            println!("Errors: {}false{}", c!(COL_O), c!(RESET));
-        },
-    }
-    match warning {
-        true => { println!("Warnings: {}true{}", c!(COL_W), c!(RESET)); },
-        false => {
-            println!("Warnings: {}false{}", c!(COL_O), c!(RESET));
+            println!("Problems: {}false{}", c!(COL_O), c!(RESET));
         },
     }
 
@@ -184,7 +175,6 @@ fn main() {
         let printer = match *result {
             ItemClass::Ok(_) => print_arg_ok,
             ItemClass::Err(_) => print_arg_err,
-            ItemClass::Warn(_) => print_arg_warn,
         };
         match result {
             ItemClass::Ok(Item::Positional(i, s)) => printer(*i, "Positional", s),
@@ -194,13 +184,13 @@ fn main() {
                 printer(*i, "LongWithData", OsStr::new(&n));
                 print_data(*l, d);
             },
-            ItemClass::Err(ItemE::LongMissingData(i, n)) => printer(*i, "LongMissingData", OsStr::new(&n)),
-            ItemClass::Warn(ItemW::LongWithUnexpectedData { i, n, d }) => {
+            ItemClass::Err(ProblemItem::LongMissingData(i, n)) => printer(*i, "LongMissingData", OsStr::new(&n)),
+            ItemClass::Err(ProblemItem::LongWithUnexpectedData { i, n, d }) => {
                 printer(*i, "LongWithUnexpectedData", OsStr::new(&n));
                 println!("    data: {:?}", d)
             },
-            ItemClass::Err(ItemE::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
-            ItemClass::Warn(ItemW::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
+            ItemClass::Err(ProblemItem::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
+            ItemClass::Err(ProblemItem::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
             ItemClass::Ok(Item::Short(i, c)) => {
                 let desc = desc_char(*c);
                 printer(*i, "Short", OsStr::new(&desc));
@@ -210,16 +200,16 @@ fn main() {
                 printer(*i, "ShortWithData", OsStr::new(&desc));
                 print_data(*l, d);
             },
-            ItemClass::Err(ItemE::ShortMissingData(i, c)) =>{
+            ItemClass::Err(ProblemItem::ShortMissingData(i, c)) =>{
                 let desc = desc_char(*c);
                 printer(*i, "ShortMissingData", OsStr::new(&desc));
             },
-            ItemClass::Warn(ItemW::UnknownShort(i, c)) =>{
+            ItemClass::Err(ProblemItem::UnknownShort(i, c)) =>{
                 let desc = desc_char(*c);
                 printer(*i, "UnknownShort", OsStr::new(&desc));
             },
             ItemClass::Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
-            ItemClass::Warn(ItemW::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
+            ItemClass::Err(ProblemItem::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
         }
     }
     if results.len() != 0 {
@@ -237,10 +227,6 @@ fn print_arg_ok(index: usize, ty: &str, desc: &OsStr) {
 
 fn print_arg_err(index: usize, ty: &str, desc: &OsStr) {
     print_arg(c!(COL_E), index, ty, &desc.to_string_lossy());
-}
-
-fn print_arg_warn(index: usize, ty: &str, desc: &OsStr) {
-    print_arg(c!(COL_W), index, ty, &desc.to_string_lossy());
 }
 
 fn desc_char(ch: char) -> String {

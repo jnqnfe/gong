@@ -13,10 +13,10 @@
 //! This module contains components to do with the analysis that results from parsing an argument
 //! list.
 //!
-//! The most fundamental components are the [`Item`], [`ItemW`], [`ItemE`] and [`ItemClass`] enums,
-//! with the first three representing different types of items and item conditions that might be
-//! found, and [`ItemClass`] being a wrapper, giving a quick okay/warning/error status indicator,
-//! and allowing instances to co-exist within a single list.
+//! The most fundamental components are the [`Item`], [`ProblemItem`] and [`ItemClass`] enums, with
+//! the first three representing different types of items and item conditions that might be found,
+//! and [`ItemClass`] being a wrapper, giving a quick okay/error status indicator, and allowing
+//! instances to co-exist within a single list.
 //!
 //! # “All in one” based analysis
 //!
@@ -63,8 +63,7 @@
 //! correct sets for handling any remaining arguments).
 //!
 //! [`Item`]: struct.Item.html
-//! [`ItemW`]: struct.ItemW.html
-//! [`ItemE`]: struct.ItemE.html
+//! [`ProblemItem`]: struct.ProblemItem.html
 //! [`ItemClass`]: struct.ItemClass.html
 //! [`ItemSet`]: struct.ItemSet.html
 //! [`Analysis`]: struct.Analysis.html
@@ -84,10 +83,8 @@ use crate::options::OptionSet;
 pub struct Analysis<'r, 's: 'r> {
     /// Set of item sets describing what was found, partitioned into sets by commands
     pub item_sets: Vec<ItemSet<'r, 's>>,
-    /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
-    pub error: bool,
-    /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
-    pub warn: bool,
+    /// Quick indication of problems (e.g. unknown option, or missing arg data)
+    pub problems: bool,
     /// Pointer to the final command set, for use with suggestion matching an unknown command (which
     /// only applies to the first positional).
     pub cmd_set: Option<&'r CommandSet<'r, 's>>,
@@ -95,8 +92,8 @@ pub struct Analysis<'r, 's: 'r> {
 
 /// The possible classes of items identified and extracted from command line arguments.
 ///
-/// This breaks down items to three classes - okay/warn/error - with each variant holding an
-/// [`Item`], [`ItemW`] or [`ItemE`] variant which more specifically represents what was found.
+/// This breaks down items to two classes - okay/problem - with each variant holding an [`Item`] or
+/// [`ProblemItem`] variant which more specifically represents what was found.
 ///
 /// We use a class wrapper rather than grouping items into separate vectors because a single vector
 /// preserves order more simply. We wrap items with this class indicator for the advantages in
@@ -112,18 +109,15 @@ pub struct Analysis<'r, 's: 'r> {
 /// reference to the matched string.
 ///
 /// [`Item`]: enum.Item.html
-/// [`ItemW`]: enum.ItemW.html
-/// [`ItemE`]: enum.ItemE.html
+/// [`ProblemItem`]: enum.ProblemItem.html
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`Positional`]: enum.Item.html#variant.Positional
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ItemClass<'s> {
     /// Non-problematic item
     Ok(Item<'s>),
-    /// Warn-level item
-    Warn(ItemW<'s>),
-    /// Error-level item
-    Err(ItemE<'s>),
+    /// Problematic item
+    Err(ProblemItem<'s>),
 }
 
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
@@ -145,29 +139,24 @@ pub enum Item<'a> {
     Command(usize, &'a str),
 }
 
-/// Error-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
+/// Problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum ItemE<'a> {
-    /// Long option match, but data argument missing [ERROR]
-    LongMissingData(usize, &'a str),
-    /// Short option match, but data argument missing [ERROR]
-    ShortMissingData(usize, char),
-    /// Ambiguous match with multiple long options. This only occurs when an exact match was not
-    /// found, but multiple  abbreviated possible matches were found. [ERROR]
-    AmbiguousLong(usize, &'a OsStr),
-}
-
-/// Warn-level items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum ItemW<'a> {
-    /// Looked like a long option, but no match [WARN]
+pub enum ProblemItem<'a> {
+    /// Looked like a long option, but no match
     UnknownLong(usize, &'a OsStr),
-    /// Unknown short option `char` [WARN]
+    /// Unknown short option `char`
     UnknownShort(usize, char),
-    /// Unknown command [WARN]
+    /// Unknown command
     UnknownCommand(usize, &'a OsStr),
+    /// Ambiguous match with multiple long options. This only occurs when an exact match was not
+    /// found, but multiple  abbreviated possible matches were found.
+    AmbiguousLong(usize, &'a OsStr),
+    /// Long option match, but data argument missing
+    LongMissingData(usize, &'a str),
+    /// Short option match, but data argument missing
+    ShortMissingData(usize, char),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
-    /// no data. [WARN]
+    /// no data.
     LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a OsStr },
 }
 
@@ -191,10 +180,8 @@ pub struct ItemSet<'r, 's: 'r> {
     pub command: &'s str,
     /// Set of items describing what was found
     pub items: Vec<ItemClass<'s>>,
-    /// Quick indication of error level issues (e.g. ambiguous match, or missing arg data)
-    pub error: bool,
-    /// Quick indication of warning level issues (e.g. unknown option, or unexpected data)
-    pub warn: bool,
+    /// Quick indication of problems (e.g. unknown options, or missing arg data)
+    pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
     pub opt_set: &'r OptionSet<'r, 's>,
 }
@@ -321,10 +308,15 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
         Self {
             command: command,
             items: Vec::new(),
-            error: false,
-            warn: false,
+            problems: false,
             opt_set: opt_set,
         }
+    }
+
+    /// Is the problems indicator attribute `true`?
+    #[inline(always)]
+    pub fn has_problems(&self) -> bool {
+        self.problems
     }
 
     /// Gives an iterator over all items in the set
@@ -333,16 +325,20 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
         self.items.iter()
     }
 
-    /// Gives an iterator over any good (non-error/warn) items
-    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+    /// Gives an iterator over any good (non-problematic) items
+    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'s>> {
         self.items.iter()
             .filter(|i| match i {
                 ItemClass::Ok(_) => true,
                 _ => false,
             })
+            .map(|i| match i {
+                ItemClass::Ok(inner) => inner,
+                _ => unreachable!(),
+            })
     }
 
-    /// Gives an iterator over any problem (error/warn) items
+    /// Gives an iterator over any problem items
     ///
     /// Note, since certain problems could cause subsequent arguments to be mis-interpretted, it may
     /// be preferable to ignore all but the first problem (and of course terminate the program after
@@ -353,11 +349,15 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_first_problem`]: #method.get_first_problem
     /// [`stop_on_problem`]: ../parser/struct.Settings.html#structfield.stop_on_problem
-    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'s>> {
         self.items.iter()
             .filter(|i| match i {
-                ItemClass::Err(_) | ItemClass::Warn(_) => true,
+                ItemClass::Err(_) => true,
                 _ => false,
+            })
+            .map(|i| match i {
+                ItemClass::Err(inner) => inner,
+                _ => unreachable!(),
             })
     }
 
@@ -379,7 +379,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_problem_items`]: #method.get_problem_items
     #[inline]
-    pub fn get_first_problem(&'r self) -> Option<&'r ItemClass<'s>> {
+    pub fn get_first_problem(&'r self) -> Option<&'r ProblemItem<'s>> {
         self.get_problem_items().next()
     }
 
@@ -427,7 +427,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 ItemClass::Ok(Item::Long(_, n)) |
                 ItemClass::Ok(Item::LongWithData { n, .. }) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                ItemClass::Warn(ItemW::LongWithUnexpectedData { n, .. }) => {
+                ItemClass::Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     if option.matches_long(n) { return true; }
                 },
                 ItemClass::Ok(Item::Short(_, c)) |
@@ -472,7 +472,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 ItemClass::Ok(Item::Long(_, n)) |
                 ItemClass::Ok(Item::LongWithData { n, .. }) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                ItemClass::Warn(ItemW::LongWithUnexpectedData { n, .. }) => {
+                ItemClass::Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     if option.matches_long(n) { count += 1; }
                 },
                 ItemClass::Ok(Item::Short(_, c)) |
@@ -585,7 +585,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 ItemClass::Ok(Item::Long(_, n)) |
                 ItemClass::Ok(Item::LongWithData{ n, .. }) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                ItemClass::Warn(ItemW::LongWithUnexpectedData { n, .. }) => {
+                ItemClass::Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
@@ -741,7 +741,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
             match *item {
                 ItemClass::Ok(Item::Long(_, n)) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                ItemClass::Warn(ItemW::LongWithUnexpectedData { n, .. }) => {
+                ItemClass::Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }
@@ -764,10 +764,15 @@ impl<'r, 's: 'r> Analysis<'r, 's> {
     pub fn new() -> Self {
         Self {
             item_sets: Vec::with_capacity(2), //Would not normally expect more than 2 or 3
-            error: false,
-            warn: false,
+            problems: false,
             cmd_set: None,
         }
+    }
+
+    /// Is the problems indicator attribute `true`?
+    #[inline(always)]
+    pub fn has_problems(&self) -> bool {
+        self.problems
     }
 
     /// Gives an iterator over any *positional* arguments
@@ -799,18 +804,18 @@ impl<'r, 's: 'r> Analysis<'r, 's> {
         self.item_sets[0].get_items()
     }
 
-    /// Gives an iterator over any good (non-error/warn) items
+    /// Gives an iterator over any good (non-problematic) items
     ///
     /// Note: This method uses the first contained item set only; it is intended for programs that
     /// do **not** use command arguments. For programs that do use them, you must instead iterate
     /// over the item sets and use the methods on each item set.
     #[inline]
-    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'s>> {
         debug_assert_eq!(1, self.item_sets.len());
         self.item_sets[0].get_good_items()
     }
 
-    /// Gives an iterator over any problem (error/warn) items
+    /// Gives an iterator over any problem items
     ///
     /// Note: This method uses the first contained item set only; it is intended for programs that
     /// do **not** use command arguments. For programs that do use them, you must instead iterate
@@ -826,7 +831,7 @@ impl<'r, 's: 'r> Analysis<'r, 's> {
     /// [`get_first_problem`]: #method.get_first_problem
     /// [`stop_on_problem`]: ../parser/struct.Settings.html#structfield.stop_on_problem
     #[inline]
-    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ItemClass<'s>> {
+    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'s>> {
         debug_assert_eq!(1, self.item_sets.len());
         self.item_sets[0].get_problem_items()
     }
@@ -854,7 +859,7 @@ impl<'r, 's: 'r> Analysis<'r, 's> {
     ///
     /// [`get_problem_items`]: #method.get_problem_items
     #[inline]
-    pub fn get_first_problem(&'r self) -> Option<&'r ItemClass<'s>> {
+    pub fn get_first_problem(&'r self) -> Option<&'r ProblemItem<'s>> {
         debug_assert_eq!(1, self.item_sets.len());
         self.item_sets[0].get_first_problem()
     }
@@ -1102,11 +1107,6 @@ impl ItemClass<'_> {
     pub fn is_err(&self) -> bool {
         match *self { ItemClass::Err(_) => true, _ => false }
     }
-
-    /// Returns `true` if `self` is `Warn` variant
-    pub fn is_warn(&self) -> bool {
-        match *self { ItemClass::Warn(_) => true, _ => false }
-    }
 }
 
 impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
@@ -1121,8 +1121,7 @@ impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
             more = false;
             while let Some(item) = iter.next() {
                 match item {
-                    ItemClass::Err(_) => item_set.error = true,
-                    ItemClass::Warn(_) => item_set.warn = true,
+                    ItemClass::Err(_) => item_set.problems = true,
                     ItemClass::Ok(Item::Command(_, name)) => {
                         cmd = name;
                         more = true;
@@ -1132,8 +1131,7 @@ impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
                 }
                 item_set.items.push(item);
             }
-            analysis.error |= item_set.error;
-            analysis.warn |= item_set.warn;
+            analysis.problems |= item_set.problems;
             analysis.item_sets.push(item_set);
         }
         let cmd_set = iter.get_command_set();

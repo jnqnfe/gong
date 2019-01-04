@@ -36,13 +36,10 @@ fn env() {
 #[test]
 fn itemclass_type_shortcuts() {
     let item = expected_item!(0, Long, "help");
-    assert!(item.is_ok() && !item.is_err() && !item.is_warn());
+    assert!(item.is_ok() && !item.is_err());
 
     let item = expected_item!(0, UnknownLong, "help");
-    assert!(!item.is_ok() && !item.is_err() && item.is_warn());
-
-    let item = expected_item!(0, LongMissingData, "help");
-    assert!(!item.is_ok() && item.is_err() && !item.is_warn());
+    assert!(!item.is_ok() && item.is_err());
 }
 
 mod findopt {
@@ -100,9 +97,8 @@ fn used() {
         "--version=a",  // Known option, with unexpected data
     );
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -157,9 +153,8 @@ fn count() {
         "--version=a",  // Known option, with unexpected data
     );
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -215,9 +210,8 @@ mod missing_data {
             "--hah",    // Known option with missing data
         );
         let expected = expected!(
-            error: true,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongMissingData, "hah"),
             ]),
@@ -239,9 +233,8 @@ mod missing_data {
             "-o",    // Known option with missing data
         );
         let expected = expected!(
-            error: true,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, ShortMissingData, 'o'),
             ]),
@@ -265,9 +258,8 @@ fn first_problem() {
         "--fo",        // Ambiguous option
     );
     let expected = expected!(
-        error: true,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, UnknownLong, "why"),
             expected_item!(1, AmbiguousLong, "fo"),
@@ -279,7 +271,7 @@ fn first_problem() {
 
     assert_eq!(2, analysis.get_problem_items().count());
 
-    assert_eq!(analysis.get_first_problem(), Some(&expected_item!(0, UnknownLong, "why")));
+    assert_eq!(analysis.get_first_problem(), Some(&ProblemItem::UnknownLong(0, OsStr::new("why"))));
 }
 
 /// Testing iterators over collections of item types
@@ -297,9 +289,8 @@ mod iter {
             "--help=blah", // Known option with unexpected data
         );
         let expected = expected!(
-            error: true,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: true, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, UnknownLong, "why"),
@@ -326,15 +317,15 @@ mod iter {
 
         // Good items
         let mut iter = item_set.get_good_items();
-        assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
+        assert_eq!(iter.next(), Some(&Item::Long(3, "foo")));
         assert_eq!(iter.next(), None);
 
         // Problem items
         let mut iter = item_set.get_problem_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, UnknownCommand, "abc")));
-        assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
-        assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
-        assert_eq!(iter.next(), Some(&expected_item!(4, LongWithUnexpectedData, "help", "blah")));
+        assert_eq!(iter.next(), Some(&ProblemItem::UnknownCommand(0, OsStr::new("abc"))));
+        assert_eq!(iter.next(), Some(&ProblemItem::UnknownLong(1, OsStr::new("why"))));
+        assert_eq!(iter.next(), Some(&ProblemItem::AmbiguousLong(2, OsStr::new("fo"))));
+        assert_eq!(iter.next(), Some(&ProblemItem::LongWithUnexpectedData { i: 4, n: "help", d: OsStr::new("blah") }));
         assert_eq!(iter.next(), None);
     }
 
@@ -353,9 +344,8 @@ mod iter {
             "--help",       // Positional
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, UnknownCommand, "abc"),
                 expected_item!(1, Long, "help"),
@@ -416,9 +406,8 @@ fn last_value() {
         "-o654",        // Known option with data
     );
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -478,9 +467,8 @@ fn all_values() {
         "-o987",        // Known option with data
     );
     let expected = expected!(
-        error: false,
-        warn: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -549,9 +537,8 @@ mod last_used {
             "--version=a",
         );
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Long, "color"),
                 expected_item!(1, Long, "help"),
@@ -599,9 +586,8 @@ mod last_used {
     fn long_pos_is_last() {
         let args = arg_list!("--help", "-C", "--no-color", "--color", "-d");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
@@ -642,9 +628,8 @@ mod last_used {
     fn long_neg_is_last() {
         let args = arg_list!("--help", "-C", "--color", "--no-color", "-d");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
@@ -680,9 +665,8 @@ mod last_used {
     fn long_with_unexpected_data_is_last() {
         let args = arg_list!("--help", "-C", "--no-color", "--color=data", "-d");
         let expected = expected!(
-            error: false,
-            warn: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: true,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
@@ -718,9 +702,8 @@ mod last_used {
     fn not_present() {
         let args = arg_list!("--help");
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false,
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
             [
                 expected_item!(0, Long, "help"),
             ]),
@@ -752,9 +735,8 @@ mod last_used {
     fn no_args() {
         let args: Vec<&OsStr> = Vec::new();
         let expected = expected!(
-            error: false,
-            warn: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), error: false, warn: false, []),
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
             cmd_set: Some(get_base_cmds())
         );
         let parser = get_parser();

@@ -246,7 +246,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         }
                         self.try_command_matching = false;
                         if !self.parser_data.commands.commands.is_empty() {
-                            return Some(ItemClass::Warn(ItemW::UnknownCommand(arg_index, arg)));
+                            return Some(ItemClass::Err(ProblemItem::UnknownCommand(arg_index, arg)));
                         }
                     }
                     if self.parser_data.settings.posixly_correct {
@@ -282,7 +282,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(ItemClass::Warn(ItemW::UnknownLong(arg_index, OsStr::new(""))));
+                    return Some(ItemClass::Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
                 let mut matched: Option<&LongOption> = None;
@@ -311,7 +311,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 }
 
                 if ambiguity {
-                    Some(ItemClass::Err(ItemE::AmbiguousLong(arg_index, name)))
+                    Some(ItemClass::Err(ProblemItem::AmbiguousLong(arg_index, name)))
                 }
                 else if let Some(matched) = matched {
                     // Use option’s full name, not the possibly abbreviated user provided one
@@ -332,7 +332,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         }
                         // Data missing
                         else {
-                            Some(ItemClass::Err(ItemE::LongMissingData(arg_index, opt_name)))
+                            Some(ItemClass::Err(ProblemItem::LongMissingData(arg_index, opt_name)))
                         }
                     }
                     // Ignore unexpected data if empty string
@@ -341,13 +341,13 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     }
                     else {
                         let data = data_included.unwrap();
-                        Some(ItemClass::Warn(ItemW::LongWithUnexpectedData {
+                        Some(ItemClass::Err(ProblemItem::LongWithUnexpectedData {
                             i: arg_index, n: opt_name, d: data }))
                     }
                 }
                 else {
                     // Again, we ignore any possibly included data in the argument
-                    Some(ItemClass::Warn(ItemW::UnknownLong(arg_index, name)))
+                    Some(ItemClass::Err(ProblemItem::UnknownLong(arg_index, name)))
                 }
             },
         }
@@ -442,7 +442,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
         }
 
         if !match_found {
-            Some(ItemClass::Warn(ItemW::UnknownShort(self.arg_index, ch)))
+            Some(ItemClass::Err(ProblemItem::UnknownShort(self.arg_index, ch)))
         }
         else if !expects_data {
             Some(ItemClass::Ok(Item::Short(self.arg_index, ch)))
@@ -468,7 +468,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             }
             // Data missing
             else {
-                Some(ItemClass::Err(ItemE::ShortMissingData(self.arg_index, ch)))
+                Some(ItemClass::Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
             }
         }
     }
