@@ -53,7 +53,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownLong(_, name)) => {
+                Err(ProblemItem::UnknownLong(_, name)) => {
                     suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -102,7 +102,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownLong(_, name)) => {
+                Err(ProblemItem::UnknownLong(_, name)) => {
                     suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -152,7 +152,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
+                Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -193,7 +193,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
+                Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -234,7 +234,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
+                Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }
@@ -275,7 +275,7 @@ mod commands {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
             match item {
-                ItemClass::Err(ProblemItem::UnknownCommand(_, name)) => {
+                Err(ProblemItem::UnknownCommand(_, name)) => {
                     if let Some(cmd_set) = actual_results.0.cmd_set {
                         suggestions.push((*name, cmd_set.suggest(name)));
                     }

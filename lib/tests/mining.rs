@@ -32,16 +32,6 @@ fn env() {
     assert!(parser.options.short.contains(&shortopt!('x')));
 }
 
-/// Check `ItemClass` type checking shortcuts
-#[test]
-fn itemclass_type_shortcuts() {
-    let item = expected_item!(0, Long, "help");
-    assert!(item.is_ok() && !item.is_err());
-
-    let item = expected_item!(0, UnknownLong, "help");
-    assert!(!item.is_ok() && item.is_err());
-}
-
 mod findopt {
     use super::*;
 

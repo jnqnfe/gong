@@ -270,14 +270,14 @@
 //! handle the partitioning first, and approach data-mining upon each individual [`ItemSet`].
 //!
 //! If not taking a data-mining approach, you need to grasp how *items* are described in the
-//! returned analysis types. It is pretty straight forward. The analysis items are [`ItemClass`]
-//! variants which wrap variants of [`Item`] or [`ProblemItem`] \(okay/problem), thus making it
-//! simple to match by class.
+//! returned analysis types. It is pretty straight forward. The analysis items are of the type
+//! `Result<Item, ProblemItem>` where [`Item`] represents a good item and [`ProblemItem`] represents
+//! a problematic one.
 //!
-//! All variants of each item class hold a `usize` value used to indicate the index of the argument
-//! in which the item was found, should you want to know that. Similarly, information is returned
-//! where applicable with *data values* as to whether the data arg was located in the same argument
-//! or the next. Matched and unmatched long-option/command names are returned in `&str` form, whilst
+//! All variants of each item hold a `usize` value used to indicate the index of the argument in
+//! which the item was found, should you want to know that. Similarly, information is returned where
+//! applicable with *data values* as to whether the data arg was located in the same argument or the
+//! next. Matched and unmatched long-option/command names are returned in `&str` form, whilst
 //! positionals and data values are returned in `&OsStr` form.
 //!
 //! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
@@ -317,7 +317,6 @@
 //! [`CommandSet`]: ../../commands/struct.CommandSet.html
 //! [`CommandSetEx`]: ../../commands/struct.CommandSetEx.html
 //! [`Analysis`]: ../../analysis/struct.Analysis.html
-//! [`ItemClass`]: ../../analysis/enum.ItemClass.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html
 //! [commands_doc]: ../commands/index.html

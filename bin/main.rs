@@ -26,7 +26,7 @@ extern crate term_ctrl;
 use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
-use gong::analysis::{ItemClass, Item, ProblemItem, DataLocation};
+use gong::analysis::{Item, ProblemItem, DataLocation};
 use gong::parser::{Parser, OptionsMode};
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
@@ -158,8 +158,8 @@ fn main() {
 
     for item in &results {
         match *item {
-            ItemClass::Err(_) => { problems = true; },
-            ItemClass::Ok(_) => {},
+            Err(_) => { problems = true; },
+            Ok(_) => {},
         }
     }
 
@@ -173,43 +173,43 @@ fn main() {
     println!("Items: {}\n", results.len());
     for result in &results {
         let printer = match *result {
-            ItemClass::Ok(_) => print_arg_ok,
-            ItemClass::Err(_) => print_arg_err,
+            Ok(_) => print_arg_ok,
+            Err(_) => print_arg_err,
         };
         match result {
-            ItemClass::Ok(Item::Positional(i, s)) => printer(*i, "Positional", s),
-            ItemClass::Ok(Item::EarlyTerminator(i)) => printer(*i, "EarlyTerminator", OsStr::new("")),
-            ItemClass::Ok(Item::Long(i, n)) => printer(*i, "Long", OsStr::new(&n)),
-            ItemClass::Ok(Item::LongWithData { i, n, d, ref l }) => {
+            Ok(Item::Positional(i, s)) => printer(*i, "Positional", s),
+            Ok(Item::EarlyTerminator(i)) => printer(*i, "EarlyTerminator", OsStr::new("")),
+            Ok(Item::Long(i, n)) => printer(*i, "Long", OsStr::new(&n)),
+            Ok(Item::LongWithData { i, n, d, ref l }) => {
                 printer(*i, "LongWithData", OsStr::new(&n));
                 print_data(*l, d);
             },
-            ItemClass::Err(ProblemItem::LongMissingData(i, n)) => printer(*i, "LongMissingData", OsStr::new(&n)),
-            ItemClass::Err(ProblemItem::LongWithUnexpectedData { i, n, d }) => {
+            Err(ProblemItem::LongMissingData(i, n)) => printer(*i, "LongMissingData", OsStr::new(&n)),
+            Err(ProblemItem::LongWithUnexpectedData { i, n, d }) => {
                 printer(*i, "LongWithUnexpectedData", OsStr::new(&n));
                 println!("    data: {:?}", d)
             },
-            ItemClass::Err(ProblemItem::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
-            ItemClass::Err(ProblemItem::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
-            ItemClass::Ok(Item::Short(i, c)) => {
+            Err(ProblemItem::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
+            Err(ProblemItem::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
+            Ok(Item::Short(i, c)) => {
                 let desc = desc_char(*c);
                 printer(*i, "Short", OsStr::new(&desc));
             },
-            ItemClass::Ok(Item::ShortWithData { i, c, d, ref l }) => {
+            Ok(Item::ShortWithData { i, c, d, ref l }) => {
                 let desc = desc_char(*c);
                 printer(*i, "ShortWithData", OsStr::new(&desc));
                 print_data(*l, d);
             },
-            ItemClass::Err(ProblemItem::ShortMissingData(i, c)) =>{
+            Err(ProblemItem::ShortMissingData(i, c)) =>{
                 let desc = desc_char(*c);
                 printer(*i, "ShortMissingData", OsStr::new(&desc));
             },
-            ItemClass::Err(ProblemItem::UnknownShort(i, c)) =>{
+            Err(ProblemItem::UnknownShort(i, c)) =>{
                 let desc = desc_char(*c);
                 printer(*i, "UnknownShort", OsStr::new(&desc));
             },
-            ItemClass::Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
-            ItemClass::Err(ProblemItem::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
+            Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
+            Err(ProblemItem::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
         }
     }
     if results.len() != 0 {

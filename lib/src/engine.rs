@@ -94,7 +94,7 @@ enum ArgTypeBasic<'a> {
 impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = ItemClass<'s>;
+    type Item = Result<Item<'s>, ProblemItem<'s>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Continue from where we left off for a short option set?
@@ -120,7 +120,7 @@ impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
 impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
-    type Item = ItemClass<'s>;
+    type Item = Result<Item<'s>, ProblemItem<'s>>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
@@ -223,7 +223,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     }
 
     /// Parse next argument, if any
-    fn get_next(&mut self) -> Option<ItemClass<'s>> {
+    fn get_next(&mut self) -> Option<Result<Item<'s>, ProblemItem<'s>>> {
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
@@ -241,25 +241,25 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                             if candidate.name == arg {
                                 self.parser_data.options = candidate.options;
                                 self.parser_data.commands = &candidate.sub_commands;
-                                return Some(ItemClass::Ok(Item::Command(arg_index, candidate.name)));
+                                return Some(Ok(Item::Command(arg_index, candidate.name)));
                             }
                         }
                         self.try_command_matching = false;
                         if !self.parser_data.commands.commands.is_empty() {
-                            return Some(ItemClass::Err(ProblemItem::UnknownCommand(arg_index, arg)));
+                            return Some(Err(ProblemItem::UnknownCommand(arg_index, arg)));
                         }
                     }
                     if self.parser_data.settings.posixly_correct {
                         self.rest_are_positionals = true;
                     }
                 }
-                Some(ItemClass::Ok(Item::Positional(arg_index, arg)))
+                Some(Ok(Item::Positional(arg_index, arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
                 self.rest_are_positionals = true;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
                 // where, so let’s not leave it out of the results.
-                Some(ItemClass::Ok(Item::EarlyTerminator(arg_index)))
+                Some(Ok(Item::EarlyTerminator(arg_index)))
             },
             ArgTypeBasic::ShortOptionSet(optset_string) => {
                 // Here we defer to an iterator specific to iterating over the short option set in
@@ -282,7 +282,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(ItemClass::Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
+                    return Some(Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
                 let mut matched: Option<&LongOption> = None;
@@ -311,7 +311,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 }
 
                 if ambiguity {
-                    Some(ItemClass::Err(ProblemItem::AmbiguousLong(arg_index, name)))
+                    Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))
                 }
                 else if let Some(matched) = matched {
                     // Use option’s full name, not the possibly abbreviated user provided one
@@ -321,33 +321,36 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         // Data included in same argument
                         // We accept it even if it’s an empty string
                         if let Some(data) = data_included {
-                            Some(ItemClass::Ok(Item::LongWithData {
-                                i: arg_index, n: opt_name, d: data, l: DataLocation::SameArg }))
+                            Some(Ok(Item::LongWithData {
+                                i: arg_index, n: opt_name, d: data, l: DataLocation::SameArg
+                            }))
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            Some(ItemClass::Ok(Item::LongWithData {
+                            Some(Ok(Item::LongWithData {
                                 i: arg_index, n: opt_name, d: next_arg.as_ref(),
-                                l: DataLocation::NextArg }))
+                                l: DataLocation::NextArg
+                            }))
                         }
                         // Data missing
                         else {
-                            Some(ItemClass::Err(ProblemItem::LongMissingData(arg_index, opt_name)))
+                            Some(Err(ProblemItem::LongMissingData(arg_index, opt_name)))
                         }
                     }
                     // Ignore unexpected data if empty string
                     else if data_included.is_none() || data_included == Some(OsStr::new("")) {
-                        Some(ItemClass::Ok(Item::Long(arg_index, opt_name)))
+                        Some(Ok(Item::Long(arg_index, opt_name)))
                     }
                     else {
                         let data = data_included.unwrap();
-                        Some(ItemClass::Err(ProblemItem::LongWithUnexpectedData {
-                            i: arg_index, n: opt_name, d: data }))
+                        Some(Err(ProblemItem::LongWithUnexpectedData {
+                            i: arg_index, n: opt_name, d: data
+                        }))
                     }
                 }
                 else {
                     // Again, we ignore any possibly included data in the argument
-                    Some(ItemClass::Err(ProblemItem::UnknownLong(arg_index, name)))
+                    Some(Err(ProblemItem::UnknownLong(arg_index, name)))
                 }
             },
         }
@@ -381,7 +384,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
     }
 
     /// Get next item, if any
-    fn get_next(&mut self) -> Option<ItemClass<'s>> {
+    fn get_next(&mut self) -> Option<Result<Item<'s>, ProblemItem<'s>>> {
         if self.consumed {
             return None;
         }
@@ -442,10 +445,10 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
         }
 
         if !match_found {
-            Some(ItemClass::Err(ProblemItem::UnknownShort(self.arg_index, ch)))
+            Some(Err(ProblemItem::UnknownShort(self.arg_index, ch)))
         }
         else if !expects_data {
-            Some(ItemClass::Ok(Item::Short(self.arg_index, ch)))
+            Some(Ok(Item::Short(self.arg_index, ch)))
         }
         else {
             let bytes_consumed_updated = byte_pos + ch.len_utf8();
@@ -457,18 +460,19 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
                     self.bytes_consumed = bytes_consumed_updated;
                 }
                 let data = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
-                Some(ItemClass::Ok(Item::ShortWithData {
-                    i: self.arg_index, c: ch, d: data, l: DataLocation::SameArg }))
+                Some(Ok(Item::ShortWithData {
+                    i: self.arg_index, c: ch, d: data, l: DataLocation::SameArg
+                }))
             }
             // Data included in next argument
             else if let Some((_, next_arg)) = self.arg_iter.next() {
-                Some(ItemClass::Ok(Item::ShortWithData {
-                    i: self.arg_index, c: ch, d: next_arg.as_ref(),
-                    l: DataLocation::NextArg }))
+                Some(Ok(Item::ShortWithData {
+                    i: self.arg_index, c: ch, d: next_arg.as_ref(), l: DataLocation::NextArg
+                }))
             }
             // Data missing
             else {
-                Some(ItemClass::Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
+                Some(Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
             }
         }
     }

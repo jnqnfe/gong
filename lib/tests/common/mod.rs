@@ -48,32 +48,32 @@ macro_rules! item_set {
     }};
 }
 
-/// Construct an `ItemClass` result item, for an `Expected`.
+/// Construct an `Result<Item, ProblemItem>` result item, for an `Expected`.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
 /// be found at in the analysis. The second param is the label of the unique type. The final params
 /// as necessary allow for: [<name/char>[, <data-value>, <data-location>]]
 macro_rules! expected_item {
-    ( $i:expr, Positional, $s:expr ) => { ItemClass::Ok(Item::Positional($i, OsStr::new($s))) };
-    ( $i:expr, EarlyTerminator ) => { ItemClass::Ok(Item::EarlyTerminator($i)) };
-    ( $i:expr, Long, $n:expr ) => { ItemClass::Ok(Item::Long($i, $n)) };
-    ( $i:expr, Short, $c:expr ) => { ItemClass::Ok(Item::Short($i, $c)) };
+    ( $i:expr, Positional, $s:expr ) => { Ok(Item::Positional($i, OsStr::new($s))) };
+    ( $i:expr, EarlyTerminator ) => { Ok(Item::EarlyTerminator($i)) };
+    ( $i:expr, Long, $n:expr ) => { Ok(Item::Long($i, $n)) };
+    ( $i:expr, Short, $c:expr ) => { Ok(Item::Short($i, $c)) };
     ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr ) => {
-        ItemClass::Ok(Item::LongWithData { i: $i, n: $n, d: OsStr::new($d), l: $l })
+        Ok(Item::LongWithData { i: $i, n: $n, d: OsStr::new($d), l: $l })
     };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr ) => {
-        ItemClass::Ok(Item::ShortWithData { i: $i, c: $c, d: OsStr::new($d), l: $l })
+        Ok(Item::ShortWithData { i: $i, c: $c, d: OsStr::new($d), l: $l })
     };
-    ( $i:expr, Command, $n:expr ) => { ItemClass::Ok(Item::Command($i, $n)) };
-    ( $i:expr, UnknownLong, $n:expr ) => { ItemClass::Err(ProblemItem::UnknownLong($i, OsStr::new($n))) };
-    ( $i:expr, UnknownShort, $c:expr ) => { ItemClass::Err(ProblemItem::UnknownShort($i, $c)) };
-    ( $i:expr, UnknownCommand, $n:expr ) => { ItemClass::Err(ProblemItem::UnknownCommand($i, OsStr::new($n))) };
+    ( $i:expr, Command, $n:expr ) => { Ok(Item::Command($i, $n)) };
+    ( $i:expr, UnknownLong, $n:expr ) => { Err(ProblemItem::UnknownLong($i, OsStr::new($n))) };
+    ( $i:expr, UnknownShort, $c:expr ) => { Err(ProblemItem::UnknownShort($i, $c)) };
+    ( $i:expr, UnknownCommand, $n:expr ) => { Err(ProblemItem::UnknownCommand($i, OsStr::new($n))) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr ) => {
-        ItemClass::Err(ProblemItem::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
+        Err(ProblemItem::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
     };
-    ( $i:expr, LongMissingData, $n:expr ) => { ItemClass::Err(ProblemItem::LongMissingData($i, $n)) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { ItemClass::Err(ProblemItem::ShortMissingData($i, $c)) };
-    ( $i:expr, AmbiguousLong, $n:expr ) => { ItemClass::Err(ProblemItem::AmbiguousLong($i, OsStr::new($n))) };
+    ( $i:expr, LongMissingData, $n:expr ) => { Err(ProblemItem::LongMissingData($i, $n)) };
+    ( $i:expr, ShortMissingData, $c:expr ) => { Err(ProblemItem::ShortMissingData($i, $c)) };
+    ( $i:expr, AmbiguousLong, $n:expr ) => { Err(ProblemItem::AmbiguousLong($i, OsStr::new($n))) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set
