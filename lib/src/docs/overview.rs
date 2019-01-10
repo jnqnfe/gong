@@ -74,7 +74,8 @@
 //!         <tr><td>“Posixly correct” parsing</td><td>Yes, available as a parser setting</td></tr>
 //!         <tr><td>Traditional style options (‘long’ and ‘short’)</td><td>Yes</td></tr>
 //!         <tr><td>Alternate style options (‘long’ only, with single dash)</td><td>Yes</td></tr>
-//!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
+//!         <tr><td>Mandatory data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
+//!         <tr><td>Optional data-value taking options</td><td>Yes, ‘in-same-arg’</td></tr>
 //!         <tr><td>‘Positional’ arguments</td><td>Yes</td></tr>
 //!         <tr><td>‘Early terminator’</td><td>Yes</td></tr>
 //!         <tr><td>‘Command’ options</td><td>Yes, including nested</td></tr>

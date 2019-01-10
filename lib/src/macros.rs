@@ -59,20 +59,29 @@ macro_rules! command_set {
 /// Takes an option name after one of the following annotations:
 ///
 ///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
-///  * `@data` to indicate a data-taking option.
+///  * `@data` to indicate a data-taking option, which requires a value.
+///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
 ///
 /// See the [options documentation](docs/options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::longopt!(@flag "foo"); // A flag type option
-/// let _ = gong::longopt!(@data "bar"); // One that takes data
+/// let _ = gong::longopt!(@flag "foo");     // A flag type option
+/// let _ = gong::longopt!(@data "bar");     // One that takes mandatory data
+/// let _ = gong::longopt!(@opt_data "cat"); // One that takes optional data
 /// ```
 #[macro_export]
 macro_rules! longopt {
-    ( @data $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: true } };
-    ( @flag $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
+    ( @data $name:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Data }
+    };
+    ( @opt_data $name:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::OptionalData }
+    };
+    ( @flag $name:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Flag }
+    };
 }
 
 /// Constructs a [`ShortOption`](options/struct.ShortOption.html)
@@ -80,20 +89,29 @@ macro_rules! longopt {
 /// Takes a `char` after one of the following annotations:
 ///
 ///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
-///  * `@data` to indicate a data-taking option.
+///  * `@data` to indicate a data-taking option, which requires a value.
+///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
 ///
 /// See the [options documentation](docs/options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::shortopt!(@flag 'a'); // A flag type option
-/// let _ = gong::shortopt!(@data 'b'); // One that takes data
+/// let _ = gong::shortopt!(@flag 'a');     // A flag type option
+/// let _ = gong::shortopt!(@data 'b');     // One that takes mandatory data
+/// let _ = gong::shortopt!(@opt_data 'c'); // One that takes optional data
 /// ```
 #[macro_export]
 macro_rules! shortopt {
-    ( @data $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: true } };
-    ( @flag $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
+    ( @data $ch:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Data }
+    };
+    ( @opt_data $ch:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::OptionalData }
+    };
+    ( @flag $ch:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Flag }
+    };
 }
 
 /// Constructs a [`Command`](commands/struct.Command.html)

@@ -56,6 +56,7 @@
 //!     .add_long("foobar")
 //!     .add_long("ábc")
 //!     .add_long_data("hah") // This one expects a data arg
+//!     .add_long_data_optional("delay")
 //!     .add_short('❤')
 //!     .add_short('x')
 //!     .add_short_data('o')  // So does this one
@@ -74,13 +75,14 @@
 //!         longopt!(@flag "version"),
 //!         longopt!(@flag "foobar"),
 //!         longopt!(@flag "ábc"),
-//!         longopt!(@data "hah"), // This one expects a data arg
+//!         longopt!(@data "hah"),       // This one expects a mandatory data arg
+//!         longopt!(@opt_data "delay"), // This one expects an optional data arg
 //!     ],
 //!     @short [
 //!         shortopt!(@flag 'h'),
 //!         shortopt!(@flag '❤'),
 //!         shortopt!(@flag 'x'),
-//!         shortopt!(@data 'o'),  // So does this one
+//!         shortopt!(@data 'o'),
 //!     ]
 //! );
 //! ```
@@ -164,8 +166,8 @@
 //! checking the *parser*.
 //!
 //! **Note**: With respect to what is or is not a duplicate, only the name/`char` of the *option* or
-//! *command* matters; the `expects_data` attribute of *options* and *option set* and *sub-command
-//! set* of *commands* make no difference.
+//! *command* matters; the [`OptionType`] of *options*, and *option set* and *sub-command set* of
+//! *commands*, make no difference.
 //!
 //! # Step #2: Gather arguments to be parsed
 //!
@@ -309,6 +311,7 @@
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
 //! [`Settings`]: ../../parser/struct.Settings.html
+//! [`OptionType`]: ../../options/enum.OptionType.html
 //! [`OptionSet`]: ../../options/struct.OptionSet.html
 //! [`OptionSetEx`]: ../../options/struct.OptionSetEx.html
 //! [`OptionSet::to_extendible`]: ../../options/struct.OptionSet.html#method.to_extendible

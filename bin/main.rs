@@ -27,6 +27,7 @@ use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
 use gong::analysis::{Item, ProblemItem, DataLocation};
+use gong::options::OptionType;
 use gong::parser::{Parser, OptionsMode};
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
@@ -74,12 +75,16 @@ fn main() {
             longopt!(@flag "foobar"),
             longopt!(@data "hah"),
             longopt!(@flag "ábc"),
+            longopt!(@opt_data "delay"),
         ],
         @short [
             shortopt!(@flag 'h'),
             shortopt!(@flag '❤'),
             shortopt!(@flag 'x'),
             shortopt!(@data 'o'),
+            shortopt!(@opt_data 'p'),
+            shortopt!(@opt_data '💧'),
+            shortopt!(@data 'Ɛ'),
         ]
     );
     let mut parser = Parser::new(&opts, None);
@@ -120,15 +125,17 @@ fn main() {
     println!("[ {}Available options for test{} ]\n", c!(COL_HEADER), c!(RESET));
 
     for item in opts.long {
-        match item.expects_data {
-            true => println!("LONG {} {}[expects data!]{}", item.name, c!(COL_DATA), c!(RESET)),
-            false => println!("LONG {}", item.name),
+        match item.opt_type {
+            OptionType::Flag => println!("LONG {}", item.name),
+            OptionType::Data => println!("LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::OptionalData => println!("LONG {} {}[Optional-data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
         }
     }
     for item in opts.short {
-        match item.expects_data {
-            true => println!("SHORT {} {}[expects data!]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-            false => println!("SHORT {}", desc_char(item.ch)),
+        match item.opt_type {
+            OptionType::Flag => println!("SHORT {}", desc_char(item.ch)),
+            OptionType::Data => println!("SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+            OptionType::OptionalData => println!("SHORT {} {}[Optional-data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
         }
     }
 

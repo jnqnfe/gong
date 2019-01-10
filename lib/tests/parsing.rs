@@ -440,19 +440,28 @@ mod data {
     #[test]
     fn arg_placement_long() {
         let args = arg_list!(
-            "--hah", "def", // In-next-arg
-            "--help",       // Random
-            "--hah=def",    // In-same-arg
-            "--help",       // Random
+            "--hah", "def",   // In-next-arg
+            "--help",         // Random
+            "--hah=def",      // In-same-arg
+            "--help",         // Random
+            "--delay", "def", // In-next-arg for optional type (not allowed)
+            "--help",         // Random
+            "--delay=def",    // In-same-arg for optional type
+            "--help",         // Random
         );
         let expected = expected!(
-            problems: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
                 expected_item!(4, Long, "help"),
+                expected_item!(5, LongWithData, "delay", "", DataLocation::SameArg),
+                expected_item!(6, UnknownCommand, "def"),
+                expected_item!(7, Long, "help"),
+                expected_item!(8, LongWithData, "delay", "def", DataLocation::SameArg),
+                expected_item!(9, Long, "help"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -467,13 +476,15 @@ mod data {
     /// Note: calculation checks involving multi-byte chars is done separately below.
     #[test]
     fn arg_placement_short_calc() {
-        let args = arg_list!("-oa", "g");
+        let args = arg_list!("-oa", "g", "-pa", "g");
         let expected = expected!(
             problems: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
                 expected_item!(1, UnknownCommand, "g"),
+                expected_item!(2, ShortWithData, 'p', "a", DataLocation::SameArg),
+                expected_item!(3, Positional, "g"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -513,6 +524,7 @@ mod data {
     #[test]
     fn arg_placement_short_same() {
         let args = arg_list!(
+            // Mandatory data-taking
             "-oa",         // `o` here takes data; trying here various combinations of
             "-oabc",       // different length, either side, with known and unknown other
             "-aob",        // (non-data-taking) short options.
@@ -523,6 +535,17 @@ mod data {
             "-oaxc",
             "-oxbc",
             "-oabx",
+            // Optional data-taking
+            "-pa",
+            "-pabc",
+            "-apb",
+            "-apbcd",
+            "-abcpd",
+            "-abcpdef",
+            "-xpabc",
+            "-paxc",
+            "-pxbc",
+            "-pabx",
         );
         let expected = expected!(
             problems: true,
@@ -547,6 +570,25 @@ mod data {
                 expected_item!(7, ShortWithData, 'o', "axc", DataLocation::SameArg),
                 expected_item!(8, ShortWithData, 'o', "xbc", DataLocation::SameArg),
                 expected_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
+                expected_item!(10, ShortWithData, 'p', "a", DataLocation::SameArg),
+                expected_item!(11, ShortWithData, 'p', "abc", DataLocation::SameArg),
+                expected_item!(12, UnknownShort, 'a'),
+                expected_item!(12, ShortWithData, 'p', "b", DataLocation::SameArg),
+                expected_item!(13, UnknownShort, 'a'),
+                expected_item!(13, ShortWithData, 'p', "bcd", DataLocation::SameArg),
+                expected_item!(14, UnknownShort, 'a'),
+                expected_item!(14, UnknownShort, 'b'),
+                expected_item!(14, UnknownShort, 'c'),
+                expected_item!(14, ShortWithData, 'p', "d", DataLocation::SameArg),
+                expected_item!(15, UnknownShort, 'a'),
+                expected_item!(15, UnknownShort, 'b'),
+                expected_item!(15, UnknownShort, 'c'),
+                expected_item!(15, ShortWithData, 'p', "def", DataLocation::SameArg),
+                expected_item!(16, Short, 'x'),
+                expected_item!(16, ShortWithData, 'p', "abc", DataLocation::SameArg),
+                expected_item!(17, ShortWithData, 'p', "axc", DataLocation::SameArg),
+                expected_item!(18, ShortWithData, 'p', "xbc", DataLocation::SameArg),
+                expected_item!(19, ShortWithData, 'p', "abx", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -586,6 +628,41 @@ mod data {
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
+    /// Test missing argument data for long option with the value being being optional, thus no
+    /// problem should be reported
+    #[test]
+    fn missing_long_optional() {
+        let args = arg_list!("--delay");
+        let expected = expected!(
+            problems: false,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
+            [
+                expected_item!(0, LongWithData, "delay", "", DataLocation::SameArg),
+            ]),
+            cmd_set: Some(get_base_cmds())
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
+    /// Test missing argument data for short option with the value being being optional, thus no
+    /// problem should be reported
+    #[test]
+    fn missing_short_optional() {
+        let args = arg_list!("-bxsp");
+        let expected = expected!(
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            [
+                expected_item!(0, UnknownShort, 'b'),
+                expected_item!(0, Short, 'x'),
+                expected_item!(0, UnknownShort, 's'),
+                expected_item!(0, ShortWithData, 'p', "", DataLocation::SameArg),
+            ]),
+            cmd_set: Some(get_base_cmds())
+        );
+        check_result(&Actual(get_parser().parse(&args)), &expected);
+    }
+
     /// Test some misc. data handling.
     ///
     /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
@@ -604,6 +681,7 @@ mod data {
                          // splitting functionality should have no effect.
             "-a=b",      // Try with other chars
             "-o=b",      // Try with short option that takes data, which should consume it
+            "-p=b",      // Same again but with optional data-taking option
         );
         let expected = expected!(
             problems: true,
@@ -620,6 +698,7 @@ mod data {
                 expected_item!(7, UnknownShort, '='),
                 expected_item!(7, UnknownShort, 'b'),
                 expected_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
+                expected_item!(9, ShortWithData, 'p', "=b", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -671,10 +750,16 @@ mod data {
          */
 
         let args = arg_list!(
+            // Mandatory data-taking options
             "--hah=",   // Known option, takes data, not given, should be empty string
             "--help",   // Random known option, should not be take as data for previous
             "--hah=",   // Same again...
             "help",     // Unknown command this time, also should not be taken as data
+            // Optional data-taking options
+            "--delay=",
+            "--help",
+            "--delay=",
+            "help",
         );
         let expected = expected!(
             problems: true,
@@ -684,6 +769,10 @@ mod data {
                 expected_item!(1, Long, "help"),
                 expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(3, UnknownCommand, "help"),
+                expected_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
+                expected_item!(5, Long, "help"),
+                expected_item!(6, LongWithData, "delay", "", DataLocation::SameArg),
+                expected_item!(7, Positional, "help"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -696,15 +785,23 @@ mod data {
     #[test]
     fn next_arg_empty() {
         let args = arg_list!(
+            // Mandatory data-taking options
             "--hah", "",    // Long
             "-o", "",       // Short
+            // Optional data-taking options, which cannot take from next args
+            "--delay", "",
+            "-p", "",
         );
         let expected = expected!(
-            problems: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
                 expected_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
                 expected_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
+                expected_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
+                expected_item!(5, UnknownCommand, ""),
+                expected_item!(6, ShortWithData, 'p', "", DataLocation::SameArg),
+                expected_item!(7, Positional, ""),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -717,6 +814,7 @@ mod data {
     #[test]
     fn containing_equals() {
         let args = arg_list!(
+            // Mandatory data-taking options
             "--hah", "d=ef",    // Should just be treated as part of the data
             "--hah", "=",       // Should just be treated as data
             "--hah=d=ef",       // First `=` separates name and data, other is just part of the data
@@ -726,6 +824,13 @@ mod data {
             "-oa=b",            // Short option, should be part of `o` option’s data
             "-o=",              // Same
             "-o===o",           // Same
+            // Optional data-taking options, some skipped from above where not applicable
+            "--delay=d=ef",
+            "--delay==ef",
+            "--help",
+            "-pa=b",
+            "-p=",
+            "-p===p",
         );
         let expected = expected!(
             problems: true,
@@ -740,6 +845,12 @@ mod data {
                 expected_item!(8, ShortWithData, 'o', "a=b", DataLocation::SameArg),
                 expected_item!(9, ShortWithData, 'o', "=", DataLocation::SameArg),
                 expected_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
+                expected_item!(11, LongWithData, "delay", "d=ef", DataLocation::SameArg),
+                expected_item!(12, LongWithData, "delay", "=ef", DataLocation::SameArg),
+                expected_item!(13, Long, "help"),
+                expected_item!(14, ShortWithData, 'p', "a=b", DataLocation::SameArg),
+                expected_item!(15, ShortWithData, 'p', "=", DataLocation::SameArg),
+                expected_item!(16, ShortWithData, 'p', "===p", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -750,6 +861,7 @@ mod data {
     #[test]
     fn looking_like_options() {
         let args = arg_list!(
+            // Mandatory data-taking options
             "--hah=--foo", "--hah", "--foo",   // With known long option, in-arg/next-arg
             "--hah=--blah", "--hah", "--blah", // Unknown
             "--hah=-h", "--hah", "-h",         // With known short option
@@ -759,6 +871,15 @@ mod data {
             "-o--foo",                         // Short using known long lookalike
             "-o", "--hah",                     // Same, but long that take data
             "-o--blah", "-o", "--blah",        // With unknown
+            // Optional data-taking options, some skipped from above where not applicable
+            "--delay=--foo",
+            "--delay=--blah",
+            "--delay=-h",
+            "--delay=-n",
+            "-p-h",
+            "-p-n",
+            "-p--foo",
+            "-p--blah",
         );
         let expected = expected!(
             problems: false,
@@ -780,6 +901,14 @@ mod data {
                 expected_item!(19, ShortWithData, 'o', "--hah", DataLocation::NextArg),
                 expected_item!(21, ShortWithData, 'o', "--blah", DataLocation::SameArg),
                 expected_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
+                expected_item!(24, LongWithData, "delay", "--foo", DataLocation::SameArg),
+                expected_item!(25, LongWithData, "delay", "--blah", DataLocation::SameArg),
+                expected_item!(26, LongWithData, "delay", "-h", DataLocation::SameArg),
+                expected_item!(27, LongWithData, "delay", "-n", DataLocation::SameArg),
+                expected_item!(28, ShortWithData, 'p', "-h", DataLocation::SameArg),
+                expected_item!(29, ShortWithData, 'p', "-n", DataLocation::SameArg),
+                expected_item!(30, ShortWithData, 'p', "--foo", DataLocation::SameArg),
+                expected_item!(31, ShortWithData, 'p', "--blah", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -790,10 +919,14 @@ mod data {
     #[test]
     fn looking_like_early_term() {
         let args = arg_list!(
+            // Mandatory data-taking options
             "--hah=--",     // In long option’s data, in-arg
             "--hah", "--",  // Same, next-arg
-            "-o", "--",     // In short option’s data, in-arg
-            "-o--",         // Same, next-arg
+            "-o--",     // In short option’s data, in-arg
+            "-o", "--",         // Same, next-arg
+            // Optional data-taking options
+            "--delay=--",
+            "-p--",
         );
         let expected = expected!(
             problems: false,
@@ -801,8 +934,10 @@ mod data {
             [
                 expected_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
                 expected_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
-                expected_item!(3, ShortWithData, 'o', "--", DataLocation::NextArg),
-                expected_item!(5, ShortWithData, 'o', "--", DataLocation::SameArg),
+                expected_item!(3, ShortWithData, 'o', "--", DataLocation::SameArg),
+                expected_item!(4, ShortWithData, 'o', "--", DataLocation::NextArg),
+                expected_item!(6, LongWithData, "delay", "--", DataLocation::SameArg),
+                expected_item!(7, ShortWithData, 'p', "--", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -813,7 +948,14 @@ mod data {
     /// instance.
     #[test]
     fn multibyte_long() {
-        let args = arg_list!("--ƒƒ", "abc", "--ƒƒ=", "--ƒƒ=abc", "--ƒƒ=❤️", "--ƒƒ");
+        let args = arg_list!(
+            // Mandatory data-taking options
+            "--ƒƒ", "abc", "--ƒƒ=", "--ƒƒ=abc", "--ƒƒ=❤️",
+            // Optional data-taking options, some skipped from above where not applicable
+            "--ǝƃ=", "--ǝƃ=abc", "--ǝƃ=❤️", "--ǝƃ",
+            // Manadtory, missing data
+             "--ƒƒ",
+        );
         let expected = expected!(
             problems: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
@@ -822,7 +964,11 @@ mod data {
                 expected_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
                 expected_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
                 expected_item!(4, LongWithData, "ƒƒ", "❤️", DataLocation::SameArg),
-                expected_item!(5, LongMissingData, "ƒƒ"),
+                expected_item!(5, LongWithData, "ǝƃ", "", DataLocation::SameArg),
+                expected_item!(6, LongWithData, "ǝƃ", "abc", DataLocation::SameArg),
+                expected_item!(7, LongWithData, "ǝƃ", "❤️", DataLocation::SameArg),
+                expected_item!(8, LongWithData, "ǝƃ", "", DataLocation::SameArg),
+                expected_item!(9, LongMissingData, "ƒƒ"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
@@ -834,13 +980,19 @@ mod data {
     #[test]
     fn multibyte_short() {
         let args = arg_list!(
+            // Mandatory data-taking options
             "-o", "❤",                // Single-byte option, multi-byte data char, next-arg
             "-Ɛ", "❤",                // Multi-byte short options, otherwise same
             "-o❤",                    // Single-byte option, multi-byte data char, same-arg
             "-❤oa", "-❤o❤", "-❤o❤Ɛ",  // Variations of multi-byte chars around single-byte option
             "-Ɛa", "-Ɛ❤",             // Multi-byte option, data same-arg
+            // Optional data-taking options, some skipped from above where not applicable
+            "-p❤",
+            "-❤pa", "-❤p❤", "-❤p❤💧",
+            "-💧a", "-💧❤",
             // Misc. additional combinations
             "-❤Ɛa", "-❤Ɛ❤", "-❤Ɛa❤", "-x❤Ɛb❤",
+            "-❤💧a", "-❤💧❤", "-❤💧a❤", "-x❤💧b❤",
         );
         let expected = expected!(
             problems: false,
@@ -857,15 +1009,33 @@ mod data {
                 expected_item!(7, ShortWithData, 'o', "❤Ɛ", DataLocation::SameArg),
                 expected_item!(8, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
                 expected_item!(9, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
-                expected_item!(10, Short, '❤'),
-                expected_item!(10, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+                expected_item!(10, ShortWithData, 'p', "❤", DataLocation::SameArg),
                 expected_item!(11, Short, '❤'),
-                expected_item!(11, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+                expected_item!(11, ShortWithData, 'p', "a", DataLocation::SameArg),
                 expected_item!(12, Short, '❤'),
-                expected_item!(12, ShortWithData, 'Ɛ', "a❤", DataLocation::SameArg),
-                expected_item!(13, Short, 'x'),
+                expected_item!(12, ShortWithData, 'p', "❤", DataLocation::SameArg),
                 expected_item!(13, Short, '❤'),
-                expected_item!(13, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
+                expected_item!(13, ShortWithData, 'p', "❤💧", DataLocation::SameArg),
+                expected_item!(14, ShortWithData, '💧', "a", DataLocation::SameArg),
+                expected_item!(15, ShortWithData, '💧', "❤", DataLocation::SameArg),
+                expected_item!(16, Short, '❤'),
+                expected_item!(16, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+                expected_item!(17, Short, '❤'),
+                expected_item!(17, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+                expected_item!(18, Short, '❤'),
+                expected_item!(18, ShortWithData, 'Ɛ', "a❤", DataLocation::SameArg),
+                expected_item!(19, Short, 'x'),
+                expected_item!(19, Short, '❤'),
+                expected_item!(19, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
+                expected_item!(20, Short, '❤'),
+                expected_item!(20, ShortWithData, '💧', "a", DataLocation::SameArg),
+                expected_item!(21, Short, '❤'),
+                expected_item!(21, ShortWithData, '💧', "❤", DataLocation::SameArg),
+                expected_item!(22, Short, '❤'),
+                expected_item!(22, ShortWithData, '💧', "a❤", DataLocation::SameArg),
+                expected_item!(23, Short, 'x'),
+                expected_item!(23, Short, '❤'),
+                expected_item!(23, ShortWithData, '💧', "b❤", DataLocation::SameArg),
             ]),
             cmd_set: Some(get_base_cmds())
         );

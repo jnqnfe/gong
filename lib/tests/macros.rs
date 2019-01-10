@@ -38,6 +38,8 @@ mod available_options {
                 longopt!(@flag "ábc"),
                 longopt!(@data "ƒƒ"),
                 longopt!(@flag "ƒo"),
+                longopt!(@opt_data "delay"),
+                longopt!(@opt_data "ǝƃ"),
                 longopt!(@flag "color"),
                 longopt!(@flag "no-color"),
             ],
@@ -50,6 +52,8 @@ mod available_options {
                 shortopt!(@flag '\u{030a}'),
                 shortopt!(@data 'Ɛ'),
                 shortopt!(@flag 'C'),
+                shortopt!(@opt_data '💧'),
+                shortopt!(@opt_data 'p'),
             ]
         };
         assert_eq!(*fixed, non_fixed);
@@ -64,26 +68,30 @@ mod available_options {
         // Re-build it by hand for comparison
         let hand_built = OptionSet {
             long: &[
-                LongOption { name: "help", expects_data: false },
-                LongOption { name: "foo", expects_data: false },
-                LongOption { name: "version", expects_data: false },
-                LongOption { name: "foobar", expects_data: false },
-                LongOption { name: "hah", expects_data: true },
-                LongOption { name: "ábc", expects_data: false },
-                LongOption { name: "ƒƒ", expects_data: true },
-                LongOption { name: "ƒo", expects_data: false },
-                LongOption { name: "color", expects_data: false },
-                LongOption { name: "no-color", expects_data: false },
+                LongOption { name: "help", opt_type: OptionType::Flag },
+                LongOption { name: "foo", opt_type: OptionType::Flag },
+                LongOption { name: "version", opt_type: OptionType::Flag },
+                LongOption { name: "foobar", opt_type: OptionType::Flag },
+                LongOption { name: "hah", opt_type: OptionType::Data },
+                LongOption { name: "ábc", opt_type: OptionType::Flag },
+                LongOption { name: "ƒƒ", opt_type: OptionType::Data },
+                LongOption { name: "ƒo", opt_type: OptionType::Flag },
+                LongOption { name: "delay", opt_type: OptionType::OptionalData },
+                LongOption { name: "ǝƃ", opt_type: OptionType::OptionalData },
+                LongOption { name: "color", opt_type: OptionType::Flag },
+                LongOption { name: "no-color", opt_type: OptionType::Flag },
             ],
             short: &[
-                ShortOption { ch: 'h', expects_data: false },
-                ShortOption { ch: 'v', expects_data: false },
-                ShortOption { ch: '❤', expects_data: false },
-                ShortOption { ch: 'x', expects_data: false },
-                ShortOption { ch: 'o', expects_data: true },
-                ShortOption { ch: '\u{030A}', expects_data: false },
-                ShortOption { ch: 'Ɛ', expects_data: true },
-                ShortOption { ch: 'C', expects_data: false },
+                ShortOption { ch: 'h', opt_type: OptionType::Flag },
+                ShortOption { ch: 'v', opt_type: OptionType::Flag },
+                ShortOption { ch: '❤', opt_type: OptionType::Flag },
+                ShortOption { ch: 'x', opt_type: OptionType::Flag },
+                ShortOption { ch: 'o', opt_type: OptionType::Data },
+                ShortOption { ch: '\u{030A}', opt_type: OptionType::Flag },
+                ShortOption { ch: 'Ɛ', opt_type: OptionType::Data },
+                ShortOption { ch: 'C', opt_type: OptionType::Flag },
+                ShortOption { ch: '💧', opt_type: OptionType::OptionalData },
+                ShortOption { ch: 'p', opt_type: OptionType::OptionalData },
             ]
         };
 
@@ -114,9 +122,13 @@ mod available_options {
             .add_long_data("ƒƒ")
             .add_long("ƒo")
             .add_short_data('Ɛ')
+            .add_long_data_optional("delay")
+            .add_long_data_optional("ǝƃ")
             .add_long("color")
             .add_long("no-color")
-            .add_short('C');
+            .add_short('C')
+            .add_short_data_optional('💧')
+            .add_short_data_optional('p');
 
         assert_eq!(*macro_built, method_built);
     }

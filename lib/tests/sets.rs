@@ -64,7 +64,7 @@ mod options {
             .add_short_data('o')
             .add_long_data("bar");
 
-        opts.add_shorts_from_str("ab:cde:f");
+        opts.add_shorts_from_str("ab:cde::f");
 
         let mut expected = OptionSetEx {
             long: vec![
@@ -78,7 +78,7 @@ mod options {
                 shortopt!(@data 'b'),
                 shortopt!(@flag 'c'),
                 shortopt!(@flag 'd'),
-                shortopt!(@data 'e'),
+                shortopt!(@opt_data 'e'),
                 shortopt!(@flag 'f'),
             ],
         };
@@ -109,7 +109,7 @@ mod options {
 
         opts.add_shorts_from_str("mn:::op");
         expected.add_short('m')
-                .add_short_data('n')
+                .add_short_data_optional('n')
                 .add_short('o')
                 .add_short('p');
         assert_eq!(opts, expected);
@@ -127,7 +127,7 @@ mod options {
                 shortopt!(@data 'b'),
                 shortopt!(@flag 'c'),
                 shortopt!(@flag 'd'),
-                shortopt!(@data 'e'),
+                shortopt!(@opt_data 'e'),
                 shortopt!(@flag 'f'),
                 shortopt!(@flag ' '),
                 shortopt!(@data ' '),
@@ -135,7 +135,7 @@ mod options {
                 shortopt!(@flag 'k'),
                 shortopt!(@flag 'l'),
                 shortopt!(@flag 'm'),
-                shortopt!(@data 'n'),
+                shortopt!(@opt_data 'n'),
                 shortopt!(@flag 'o'),
                 shortopt!(@flag 'p'),
             ],

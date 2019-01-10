@@ -72,8 +72,8 @@ pub struct LongOption<'a> {
     /* NOTE: these have been left public to allow efficient static creation of options */
     /// Long option name, excluding the `--` prefix
     pub name: &'a str,
-    /// Whether option expects a data argument
-    pub expects_data: bool,
+    /// Option type
+    pub opt_type: OptionType,
 }
 
 /// Description of an available short option
@@ -82,8 +82,26 @@ pub struct ShortOption {
     /* NOTE: these have been left public to allow efficient static creation of options */
     /// Short option character
     pub ch: char,
-    /// Whether option expects a data argument
-    pub expects_data: bool,
+    /// Option type
+    pub opt_type: OptionType,
+}
+
+/// Type of option (flag or data-value taking)
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum OptionType {
+    /// A simple flag style option (takes no data value)
+    Flag,
+    /// A data-value taking option, where providing a value is mandatory
+    ///
+    /// The data value can be provided within the same argument, but if not provided there then the
+    /// next argument is consumed as the data value. In the latter scenario, if no next argument
+    /// exists, then a missing-data-value problem is reported.
+    Data,
+    /// A data-value taking option, where providing the data value is optional
+    ///
+    /// With the data value being optional, it is only ever taken, when provided, from within the
+    /// same argument. The next argument is never consumed.
+    OptionalData,
 }
 
 /// Description of a validation issue within an option in an [`OptionSet`](struct.OptionSet.html) or
@@ -144,7 +162,7 @@ impl<'s> OptionSetEx<'s> {
     /// Panics (debug only) on invalid name.
     #[inline]
     pub fn add_long(&mut self, name: &'s str) -> &mut Self {
-        self.long.push(LongOption::new(name, false));
+        self.long.push(LongOption::new(name, OptionType::Flag));
         self
     }
 
@@ -153,7 +171,7 @@ impl<'s> OptionSetEx<'s> {
     /// Panics (debug only) on invalid `char` choice.
     #[inline]
     pub fn add_short(&mut self, ch: char) -> &mut Self {
-        self.short.push(ShortOption::new(ch, false));
+        self.short.push(ShortOption::new(ch, OptionType::Flag));
         self
     }
 
@@ -162,7 +180,7 @@ impl<'s> OptionSetEx<'s> {
     /// Panics (debug only) on invalid name.
     #[inline]
     pub fn add_long_data(&mut self, name: &'s str) -> &mut Self {
-        self.long.push(LongOption::new(name, true));
+        self.long.push(LongOption::new(name, OptionType::Data));
         self
     }
 
@@ -171,7 +189,25 @@ impl<'s> OptionSetEx<'s> {
     /// Panics (debug only) on invalid `char` choice.
     #[inline]
     pub fn add_short_data(&mut self, ch: char) -> &mut Self {
-        self.short.push(ShortOption::new(ch, true));
+        self.short.push(ShortOption::new(ch, OptionType::Data));
+        self
+    }
+
+    /// Add a long option that takes optional data
+    ///
+    /// Panics (debug only) on invalid name.
+    #[inline]
+    pub fn add_long_data_optional(&mut self, name: &'s str) -> &mut Self {
+        self.long.push(LongOption::new(name, OptionType::OptionalData));
+        self
+    }
+
+    /// Add a short option that takes optional data
+    ///
+    /// Panics (debug only) on invalid `char` choice.
+    #[inline]
+    pub fn add_short_data_optional(&mut self, ch: char) -> &mut Self {
+        self.short.push(ShortOption::new(ch, OptionType::OptionalData));
         self
     }
 
@@ -197,8 +233,10 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Note that the colon (`:`) character has special meaning when used in the provided string;
     /// each `char` may optionally be followed by a colon (`:`) which if present indicates that the
-    /// option is a data-taking short option. Unexpected colons (first `char` or after another
-    /// colon) are ignored.
+    /// option is a data-taking short option; or two colons, which indicates that providing a data
+    /// argument is optional. (This is the behaviour offered by *getopt*). Unexpected colons (at the
+    /// beginning of the string), are simply ignored. Using more than two is treated as if only two
+    /// were given.
     ///
     /// Also, note that this does nothing to avoid duplicates being added, and white space
     /// characters in the provided string are **not** ignored (not that it is sensible or even makes
@@ -210,7 +248,8 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// ```rust
     /// # let mut set = gong::options::OptionSetEx::new();
-    /// set.add_shorts_from_str("ab:cde:f"); // Six short options, `b` and `e` take data
+    /// // The following adds six short options; `b` and `e` take data, `e` optionally.
+    /// set.add_shorts_from_str("ab:cde::f");
     /// ```
     pub fn add_shorts_from_str(&mut self, set: &str) -> &mut Self {
         let mut iter = set.chars().peekable();
@@ -218,12 +257,21 @@ impl<'s> OptionSetEx<'s> {
             let _ = iter.next();
         }
         while let Some(ch) = iter.next() {
-            let data = match iter.peek() {
-                Some(':') => true,
-                _ => false,
+            let opt_type = match iter.peek() {
+                Some(':') => {
+                    let _ = iter.next();
+                    match iter.peek() {
+                        Some(':') => {
+                            let _ = iter.next();
+                            OptionType::OptionalData
+                        },
+                        _ => OptionType::Data,
+                    }
+                },
+                _ => OptionType::Flag,
             };
             // Note, we deliberately use a method known to panic on invalid `char` here!
-            self.short.push(ShortOption::new(ch, data));
+            self.short.push(ShortOption::new(ch, opt_type));
             while let Some(':') = iter.peek() {
                 let _ = iter.next();
             }
@@ -345,9 +393,9 @@ impl<'a> LongOption<'a> {
     ///
     /// Panics (debug only) if the given name is invalid.
     #[inline]
-    fn new(name: &'a str, expects_data: bool) -> Self {
+    fn new(name: &'a str, opt_type: OptionType) -> Self {
         debug_assert!(Self::validate(name).is_ok());
-        Self { name, expects_data, }
+        Self { name, opt_type, }
     }
 
     /// Validate a given name as a possible long option
@@ -379,9 +427,9 @@ impl ShortOption {
     ///
     /// Panics (debug only) if the given `char` is invalid.
     #[inline]
-    fn new(ch: char, expects_data: bool) -> Self {
+    fn new(ch: char, opt_type: OptionType) -> Self {
         debug_assert!(Self::validate(ch).is_ok());
-        Self { ch, expects_data, }
+        Self { ch, opt_type, }
     }
 
     /// Validate a given character as a possible short option
@@ -512,7 +560,7 @@ pub(crate) mod validation {
 
 #[cfg(test)]
 mod tests {
-    use super::{LongOption, ShortOption};
+    use super::{LongOption, ShortOption, OptionType};
 
     /* Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its
      * own (`--`), and would be misinterpreted as a long option if given as the first in a short
@@ -522,7 +570,7 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_short_dash() {
-        let _opt = ShortOption::new('-', false); // Should panic here in debug mode!
+        let _opt = ShortOption::new('-', OptionType::Flag); // Should panic here in debug mode!
     }
 
     /* A short option cannot be represented by the unicode replacement char (`\u{FFFD}`). Support
@@ -534,14 +582,14 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_short_rep_char() {
-        let _opt = ShortOption::new('\u{FFFD}', false); // Should panic here in debug mode!
+        let _opt = ShortOption::new('\u{FFFD}', OptionType::Flag); // Should panic here in debug mode!
     }
 
     /// Check `LongOption::new` rejects empty string
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_long_no_name() {
-        let _opt = LongOption::new("", false); // Should panic here in debug mode!
+        let _opt = LongOption::new("", OptionType::Flag); // Should panic here in debug mode!
     }
 
     /* Long option names cannot contain an `=` (used for declaring a data sub-argument in the same
@@ -553,7 +601,7 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_long_with_equals() {
-        let _opt = LongOption::new("a=b", false); // Should panic here in debug mode!
+        let _opt = LongOption::new("a=b", OptionType::Flag); // Should panic here in debug mode!
     }
 
     /* Long option names cannot contain the unicode replacement char (`\u{FFFD}`). Support for
@@ -565,6 +613,6 @@ mod tests {
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn create_long_with_rep_char() {
-        let _opt = LongOption::new("a\u{FFFD}b", false); // Should panic here in debug mode!
+        let _opt = LongOption::new("a\u{FFFD}b", OptionType::Flag); // Should panic here in debug mode!
     }
 }

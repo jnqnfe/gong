@@ -317,12 +317,18 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     // Use option’s full name, not the possibly abbreviated user provided one
                     let opt_name = matched.name;
 
-                    if matched.expects_data {
+                    if matched.opt_type != OptionType::Flag {
                         // Data included in same argument
                         // We accept it even if it’s an empty string
                         if let Some(data) = data_included {
                             Some(Ok(Item::LongWithData {
                                 i: arg_index, n: opt_name, d: data, l: DataLocation::SameArg
+                            }))
+                        }
+                        // Data consumption is optional
+                        else if matched.opt_type == OptionType::OptionalData {
+                            Some(Ok(Item::LongWithData {
+                                i: arg_index, n: opt_name, d: OsStr::new(""), l: DataLocation::SameArg
                             }))
                         }
                         // Data included in next argument
@@ -392,7 +398,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
         let (byte_pos, ch) = self.iter.next()?;
 
         let mut match_found = false;
-        let mut expects_data = false;
+        let mut opt_type = OptionType::Flag;
 
         match ch {
             // If we encounter the Unicode replacement character (U+FFFD) then we must beware that
@@ -432,7 +438,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
                 for candidate in self.parser_data.options.short {
                     if candidate.ch == ch {
                         match_found = true;
-                        expects_data = candidate.expects_data;
+                        opt_type = candidate.opt_type;
                         break;
                     }
                 }
@@ -447,7 +453,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
         if !match_found {
             Some(Err(ProblemItem::UnknownShort(self.arg_index, ch)))
         }
-        else if !expects_data {
+        else if opt_type == OptionType::Flag {
             Some(Ok(Item::Short(self.arg_index, ch)))
         }
         else {
@@ -462,6 +468,12 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
                 let data = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
                 Some(Ok(Item::ShortWithData {
                     i: self.arg_index, c: ch, d: data, l: DataLocation::SameArg
+                }))
+            }
+            // Data consumption is optional
+            else if opt_type == OptionType::OptionalData {
+                Some(Ok(Item::ShortWithData {
+                    i: self.arg_index, c: ch, d: OsStr::new(""), l: DataLocation::SameArg
                 }))
             }
             // Data included in next argument
