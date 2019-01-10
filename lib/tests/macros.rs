@@ -30,26 +30,26 @@ mod available_options {
         // Re-build with “non-fixed” (`OptionSetEx` based) macro
         let non_fixed = OptionSetEx {
             long: vec![
-                longopt!("help"),
-                longopt!("foo"),
-                longopt!("version"),
-                longopt!("foobar"),
+                longopt!(@flag "help"),
+                longopt!(@flag "foo"),
+                longopt!(@flag "version"),
+                longopt!(@flag "foobar"),
                 longopt!(@data "hah"),
-                longopt!("ábc"),
+                longopt!(@flag "ábc"),
                 longopt!(@data "ƒƒ"),
-                longopt!("ƒo"),
-                longopt!("color"),
-                longopt!("no-color"),
+                longopt!(@flag "ƒo"),
+                longopt!(@flag "color"),
+                longopt!(@flag "no-color"),
             ],
             short: vec![
-                shortopt!('h'),
-                shortopt!('v'),
-                shortopt!('❤'),
-                shortopt!('x'),
+                shortopt!(@flag 'h'),
+                shortopt!(@flag 'v'),
+                shortopt!(@flag '❤'),
+                shortopt!(@flag 'x'),
                 shortopt!(@data 'o'),
-                shortopt!('\u{030a}'),
+                shortopt!(@flag '\u{030a}'),
                 shortopt!(@data 'Ɛ'),
-                shortopt!('C'),
+                shortopt!(@flag 'C'),
             ]
         };
         assert_eq!(*fixed, non_fixed);

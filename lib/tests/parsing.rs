@@ -408,10 +408,10 @@ mod abbreviations {
         let opts = option_set!(@long [
             // Multiple options that “foo” will match as an abbreviation for before getting to the
             // exact match.
-            longopt!("fooo"),
-            longopt!("foooo"),
-            longopt!("fooooo"),
-            longopt!("foo"),    // Exact match for input `--foo`
+            longopt!(@flag "fooo"),
+            longopt!(@flag "foooo"),
+            longopt!(@flag "fooooo"),
+            longopt!(@flag "foo"),    // Exact match for input `--foo`
         ]);
 
         let args = arg_list!("--foo");
@@ -1062,7 +1062,7 @@ mod commands {
     #[test]
     fn name_like_option() {
         let opts = option_set!(@long [
-            longopt!("foo"),
+            longopt!(@flag "foo"),
         ]);
         let cmds = command_set!([
             command!("--foo"),

@@ -22,8 +22,8 @@
 ///
 /// ```rust
 /// let _ = gong::option_set!(
-///     @long [ gong::longopt!("foo") ],
-///     @short [ gong::shortopt!('a') ]
+///     @long [ gong::longopt!(@flag "foo") ],
+///     @short [ gong::shortopt!(@flag 'a') ]
 /// );
 /// ```
 #[macro_export]
@@ -56,34 +56,44 @@ macro_rules! command_set {
 
 /// Constructs a [`LongOption`](options/struct.LongOption.html)
 ///
-/// Takes an option name, optionally annotated with `@data` to indicate a data-taking option.
+/// Takes an option name after one of the following annotations:
+///
+///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
+///  * `@data` to indicate a data-taking option.
+///
+/// See the [options documentation](docs/options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::longopt!("foo");       // A flag type option
+/// let _ = gong::longopt!(@flag "foo"); // A flag type option
 /// let _ = gong::longopt!(@data "bar"); // One that takes data
 /// ```
 #[macro_export]
 macro_rules! longopt {
     ( @data $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: true } };
-    ( $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
+    ( @flag $name:expr ) => { $crate::options::LongOption { name: $name, expects_data: false } };
 }
 
 /// Constructs a [`ShortOption`](options/struct.ShortOption.html)
 ///
-/// Takes a `char`, optionally annotated with `@data` to indicate a data-taking option.
+/// Takes a `char` after one of the following annotations:
+///
+///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
+///  * `@data` to indicate a data-taking option.
+///
+/// See the [options documentation](docs/options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::shortopt!('a');       // A flag type option
+/// let _ = gong::shortopt!(@flag 'a'); // A flag type option
 /// let _ = gong::shortopt!(@data 'b'); // One that takes data
 /// ```
 #[macro_export]
 macro_rules! shortopt {
     ( @data $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: true } };
-    ( $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
+    ( @flag $ch:expr ) => { $crate::options::ShortOption { ch: $ch, expects_data: false } };
 }
 
 /// Constructs a [`Command`](commands/struct.Command.html)

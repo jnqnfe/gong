@@ -69,17 +69,17 @@
 //! use gong::options::OptionSet;
 //! static OPTS: OptionSet = option_set!(
 //!     @long [
-//!         longopt!("help"),
-//!         longopt!("foo"),
-//!         longopt!("version"),
-//!         longopt!("foobar"),
-//!         longopt!("ábc"),
+//!         longopt!(@flag "help"),
+//!         longopt!(@flag "foo"),
+//!         longopt!(@flag "version"),
+//!         longopt!(@flag "foobar"),
+//!         longopt!(@flag "ábc"),
 //!         longopt!(@data "hah"), // This one expects a data arg
 //!     ],
 //!     @short [
-//!         shortopt!('h'),
-//!         shortopt!('❤'),
-//!         shortopt!('x'),
+//!         shortopt!(@flag 'h'),
+//!         shortopt!(@flag '❤'),
+//!         shortopt!(@flag 'x'),
 //!         shortopt!(@data 'o'),  // So does this one
 //!     ]
 //! );

@@ -71,7 +71,7 @@ mod change_data {
         // Here, we describe only the top level configuration of the application only, where there
         // is one option (`foo`), and one command (`c1`), where we do not specify any option set or
         // sub-command set for the `c1` command.
-        let main_opt_set = option_set!(@long [ longopt!("foo") ]);
+        let main_opt_set = option_set!(@long [ longopt!(@flag "foo") ]);
         let main_cmd_set = command_set!([ command!("c1") ]);
 
         let mut parser = Parser::new(&main_opt_set, Some(&main_cmd_set));
@@ -89,7 +89,7 @@ mod change_data {
     }
 
     fn c1(parse_iter: &ParseIter<&OsStr>) {
-        let c1_opt_set = option_set!(@long [ longopt!("bar") ]);
+        let c1_opt_set = option_set!(@long [ longopt!(@flag "bar") ]);
         let c1_cmd_set = command_set!([ command!("c2") ]);
 
         let mut parse_iter = parse_iter.clone(); //Necessary to get around borrow checker

@@ -17,26 +17,26 @@ use gong::commands::CommandSet;
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = option_set!(
     @long [
-        longopt!("help"),
-        longopt!("foo"),
-        longopt!("version"),
-        longopt!("foobar"),
+        longopt!(@flag "help"),
+        longopt!(@flag "foo"),
+        longopt!(@flag "version"),
+        longopt!(@flag "foobar"),
         longopt!(@data "hah"),
-        longopt!("ábc"),       // Using a combinator char (accent)
+        longopt!(@flag "ábc"), // Using a combinator char (accent)
         longopt!(@data "ƒƒ"),  // For multi-byte with-data long option component split checking
-        longopt!("ƒo"),        // For multi-byte abbreviation/ambiguity
-        longopt!("color"),
-        longopt!("no-color"),
+        longopt!(@flag "ƒo"),  // For multi-byte abbreviation/ambiguity
+        longopt!(@flag "color"),
+        longopt!(@flag "no-color"),
     ],
     @short [
-        shortopt!('h'),
-        shortopt!('v'),
-        shortopt!('❤'),
-        shortopt!('x'),
+        shortopt!(@flag 'h'),
+        shortopt!(@flag 'v'),
+        shortopt!(@flag '❤'),
+        shortopt!(@flag 'x'),
         shortopt!(@data 'o'),
-        shortopt!('\u{030a}'), // A lone combinator (“ring above”)
-        shortopt!(@data 'Ɛ'),  // For multi-byte with-data calculation checking
-        shortopt!('C'),        // For analysis data mining, using capital to avoid test conflicts
+        shortopt!(@flag '\u{030a}'), // A lone combinator (“ring above”)
+        shortopt!(@data 'Ɛ'),        // For multi-byte with-data calculation checking
+        shortopt!(@flag 'C'),        // For analysis data mining, using capital to avoid test conflicts
     ]
 );
 
@@ -48,20 +48,20 @@ static BASE_CMDS: CommandSet = command_set!([
     command!("push",
         @opts &option_set!(
             @long [
-                longopt!("help"),
-                longopt!("tags"),
+                longopt!(@flag "help"),
+                longopt!(@flag "tags"),
             ],
             @short [
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
             ]
         ),
         @cmds command_set!([
             command!("origin",
                 @opts &option_set!(
                     @long [
-                        longopt!("help"),
-                        longopt!("force"),
-                        longopt!("foo"),
+                        longopt!(@flag "help"),
+                        longopt!(@flag "force"),
+                        longopt!(@flag "foo"),
                     ]
                 )
             ),
@@ -71,11 +71,11 @@ static BASE_CMDS: CommandSet = command_set!([
     command!("branch",
         @opts &option_set!(
             @long [
-                longopt!("help"),
-                longopt!("sorted"),
+                longopt!(@flag "help"),
+                longopt!(@flag "sorted"),
             ],
             @short [
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
             ]
         ),
         @cmds command_set!([
@@ -92,9 +92,9 @@ static BASE_CMDS: CommandSet = command_set!([
             command!("list",
                 @opts &option_set!(
                     @long [
-                        longopt!("help"),
-                        longopt!("show-current"),
-                        longopt!("foo"),
+                        longopt!(@flag "help"),
+                        longopt!(@flag "show-current"),
+                        longopt!(@flag "foo"),
                     ]
                 ),
                 @cmds command_set!([

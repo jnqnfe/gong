@@ -26,10 +26,10 @@ mod options {
     #[test]
     fn basic() {
         let opts = option_set!(@long [
-            longopt!("b"),
-            longopt!("bar"),
-            longopt!("help"),
-            longopt!("but_i_digress"),
+            longopt!(@flag "b"),
+            longopt!(@flag "bar"),
+            longopt!(@flag "help"),
+            longopt!(@flag "but_i_digress"),
         ]);
         assert!(opts.is_valid());
 
@@ -72,14 +72,14 @@ mod options {
     fn best() {
         let opts = option_set!(@long [
             // Putting best match for `bard` first
-            longopt!("bar"),   //bart gets metric of 0.9416666666666667
-            longopt!("bart"),  //bart gets metric of 0.8833333333333333
+            longopt!(@flag "bar"),   //bart gets metric of 0.9416666666666667
+            longopt!(@flag "bart"),  //bart gets metric of 0.8833333333333333
             // Putting best match for `hellp` last
-            longopt!("hello"), //hellp gets metric of 0.92
-            longopt!("help"),  //hellp gets metric of 0.9533333333333333
+            longopt!(@flag "hello"), //hellp gets metric of 0.92
+            longopt!(@flag "help"),  //hellp gets metric of 0.9533333333333333
             // Equal matches for `fooa`
-            longopt!("foob"),  //fooa gets metric of 0.8833333333333333
-            longopt!("fooc"),  //fooa gets metric of 0.8833333333333333
+            longopt!(@flag "foob"),  //fooa gets metric of 0.8833333333333333
+            longopt!(@flag "fooc"),  //fooa gets metric of 0.8833333333333333
         ]);
         assert!(opts.is_valid());
 

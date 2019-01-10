@@ -28,8 +28,8 @@ use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected, c
 #[test]
 fn env() {
     let parser = get_parser();
-    assert!(parser.options.long.contains(&longopt!("foo")));
-    assert!(parser.options.short.contains(&shortopt!('x')));
+    assert!(parser.options.long.contains(&longopt!(@flag "foo")));
+    assert!(parser.options.short.contains(&shortopt!(@flag 'x')));
 }
 
 mod findopt {
@@ -43,8 +43,8 @@ mod findopt {
         assert_eq!(findopt!(@pair 'h', "help"), FindOption::Pair('h', "help"));
 
         // Conversion from option descriptors
-        assert_eq!(FindOption::from(longopt!("help")), findopt!(@long "help"));
-        assert_eq!(FindOption::from(shortopt!('h')), findopt!(@short 'h'));
+        assert_eq!(FindOption::from(longopt!(@flag "help")), findopt!(@long "help"));
+        assert_eq!(FindOption::from(shortopt!(@flag 'h')), findopt!(@short 'h'));
     }
 
     /// Test invalid forms of specifying search parameters

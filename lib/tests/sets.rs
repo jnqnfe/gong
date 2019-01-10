@@ -31,21 +31,21 @@ mod options {
         let mut opts = OptionSetEx::new();
         opts.add_short('h')
             .add_short_data('o')
-            .add_existing_short(shortopt!('a'))
+            .add_existing_short(shortopt!(@flag 'a'))
             .add_long("foo")
             .add_long_data("bar")
-            .add_existing_long(longopt!("foobar"));
+            .add_existing_long(longopt!(@flag "foobar"));
 
         let expected = OptionSetEx {
             long: vec![
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
-                longopt!("foobar"),
+                longopt!(@flag "foobar"),
             ],
             short: vec![
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
             ],
         };
 
@@ -68,18 +68,18 @@ mod options {
 
         let mut expected = OptionSetEx {
             long: vec![
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
             ],
             short: vec![
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
                 shortopt!(@data 'b'),
-                shortopt!('c'),
-                shortopt!('d'),
+                shortopt!(@flag 'c'),
+                shortopt!(@flag 'd'),
                 shortopt!(@data 'e'),
-                shortopt!('f'),
+                shortopt!(@flag 'f'),
             ],
         };
         assert_eq!(opts, expected);
@@ -117,27 +117,27 @@ mod options {
         // Double check
         let expected = OptionSetEx {
             long: vec![
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
             ],
             short: vec![
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
                 shortopt!(@data 'b'),
-                shortopt!('c'),
-                shortopt!('d'),
+                shortopt!(@flag 'c'),
+                shortopt!(@flag 'd'),
                 shortopt!(@data 'e'),
-                shortopt!('f'),
-                shortopt!(' '),
+                shortopt!(@flag 'f'),
+                shortopt!(@flag ' '),
                 shortopt!(@data ' '),
-                shortopt!('j'),
-                shortopt!('k'),
-                shortopt!('l'),
-                shortopt!('m'),
+                shortopt!(@flag 'j'),
+                shortopt!(@flag 'k'),
+                shortopt!(@flag 'l'),
+                shortopt!(@flag 'm'),
                 shortopt!(@data 'n'),
-                shortopt!('o'),
-                shortopt!('p'),
+                shortopt!(@flag 'o'),
+                shortopt!(@flag 'p'),
             ],
         };
         assert_eq!(opts, expected);
@@ -162,15 +162,15 @@ mod options {
         let opt_set = option_set!(@short []);
         assert!(opt_set.is_empty());
 
-        let opt_set = option_set!(@long [ longopt!("foo") ]);
+        let opt_set = option_set!(@long [ longopt!(@flag "foo") ]);
         assert!(!opt_set.is_empty());
 
-        let opt_set = option_set!(@short [ shortopt!('h') ]);
+        let opt_set = option_set!(@short [ shortopt!(@flag 'h') ]);
         assert!(!opt_set.is_empty());
 
         let opt_set = option_set!(
-            @long [ longopt!("foo") ],
-            @short [ shortopt!('h') ]
+            @long [ longopt!(@flag "foo") ],
+            @short [ shortopt!(@flag 'h') ]
         );
         assert!(!opt_set.is_empty());
     }
@@ -181,28 +181,28 @@ mod options {
         // Test set - fixed
         let opts_fixed = OptionSet {
             long: &[
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
-                longopt!("foobar"),
+                longopt!(@flag "foobar"),
             ],
             short: &[
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
             ],
         };
 
         // Test set - extendible
         let opts_extendible = OptionSetEx {
             long: vec![
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
-                longopt!("foobar"),
+                longopt!(@flag "foobar"),
             ],
             short: vec![
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
             ],
         };
 
@@ -226,14 +226,14 @@ mod options {
 
         let opts_fixed_2 = OptionSet {
             long: &[
-                longopt!("blah"),
+                longopt!(@flag "blah"),
             ],
             short: &[],
         };
 
         let opts_extendible_2 = OptionSetEx {
             long: vec![
-                longopt!("blah"),
+                longopt!(@flag "blah"),
             ],
             short: vec![],
         };
@@ -248,20 +248,20 @@ mod options {
     /// Check re-use of descriptors
     #[test]
     fn reuse() {
-        const SHORT_OPT_H: ShortOption = shortopt!('h');
-        const LONG_OPT_HELP: LongOption = longopt!("help");
+        const SHORT_OPT_H: ShortOption = shortopt!(@flag 'h');
+        const LONG_OPT_HELP: LongOption = longopt!(@flag "help");
 
         let _ = option_set!(
             @long [
                 LONG_OPT_HELP,
-                longopt!("foo"),
+                longopt!(@flag "foo"),
                 longopt!(@data "bar"),
-                longopt!("foobar"),
+                longopt!(@flag "foobar"),
             ],
             @short [
                 SHORT_OPT_H,
                 shortopt!(@data 'o'),
-                shortopt!('a'),
+                shortopt!(@flag 'a'),
             ]
         );
     }
@@ -311,19 +311,19 @@ mod commands {
         // Construction of commands/sub-commands to be used in test set
         let subcmd_opts = option_set!(
             @long [
-                longopt!("manic"),
+                longopt!(@flag "manic"),
             ],
             @short [
-                shortopt!('m'),
+                shortopt!(@flag 'm'),
             ]
         );
         let cmd_opts = option_set!(
             @long [
-                longopt!("hammer"),
-                longopt!("saw"),
+                longopt!(@flag "hammer"),
+                longopt!(@flag "saw"),
             ],
             @short [
-                shortopt!('h'),
+                shortopt!(@flag 'h'),
             ]
         );
         let cmd_subcmds = command_set!(

@@ -68,17 +68,17 @@ fn main() {
     // Set up valid option descriptions
     let opts = option_set!(
         @long [
-            longopt!("help"),
-            longopt!("foo"),
-            longopt!("version"),
-            longopt!("foobar"),
+            longopt!(@flag "help"),
+            longopt!(@flag "foo"),
+            longopt!(@flag "version"),
+            longopt!(@flag "foobar"),
             longopt!(@data "hah"),
-            longopt!("ábc"),
+            longopt!(@flag "ábc"),
         ],
         @short [
-            shortopt!('h'),
-            shortopt!('❤'),
-            shortopt!('x'),
+            shortopt!(@flag 'h'),
+            shortopt!(@flag '❤'),
+            shortopt!(@flag 'x'),
             shortopt!(@data 'o'),
         ]
     );
