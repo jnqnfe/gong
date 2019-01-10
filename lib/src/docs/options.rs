@@ -81,54 +81,56 @@
 //! argument as the *option* itself (“in-same-argument”), or as the next argument, in which case
 //! that will thus be consumed as the *option*’s *data value* and otherwise ignored.
 //!
-//!  - For *long options*, “in-next-argument” style looks like `--foo bar`, while “in-same-argument”
-//!    style uses an equals (`=`) character between the *option name* and *value* components, e.g.
-//!    `--foo=bar`. Note that a program’s “available” *long options* are forbidden from containing
-//!    an equals (`=`) character in their name as this would otherwise introduce significant
-//!    problems.
+//! ## With long options
 //!
-//!    When parsing a *long option* argument, if the argument contains one or more equals (`=`)
-//!    characters then it is considered to have an “in-same-argument” *data value* (since names are
-//!    not permitted to contain them), and is split into two components upon the first. The left
-//!    hand portion (without the double-dash prefix) is taken as the name, and the right as the
-//!    “in-same-argument” *data value* (e.g. `--foo=bar` → name: “foo”, value: “bar”), with the
-//!    equals (`=`) separator being discarded. This naturally occurs **before** checking for a
-//!    matching “available” program *option*.
+//! For *long options*, “in-next-argument” style looks like `--foo bar`, while “in-same-argument”
+//! style uses an equals (`=`) character between the *option name* and *value* components, e.g.
+//! `--foo=bar`. Note that a program’s “available” *long options* are forbidden from containing an
+//! equals (`=`) character in their name as this would otherwise introduce significant problems.
 //!
-//!     - If the name component does not match any “available” *long option*, then it is reported as
-//!       unknown, with any “in-same-argument” *data value* component ignored.
-//!     - If a match is found which **does not** take a *data value*, then if an “in-same-argument”
-//!       *data value* component was supplied, its presence is reported as unexpected, otherwise all
-//!       is good.
-//!     - If a match is found that **does** take a *data value*, then if an “in-same-argument” *data
-//!       value* component was present, this is consumed as such, otherwise the next argument is
-//!       consumed. If an “in-same-argument” *data value* component was present, but the actual
-//!       value is missing (e.g. as in `--foo=`), this does not matter, the *data value* is accepted
-//!       as being an empty string (it does not consume the next argument). If in an
-//!       “in-next-argument” situation, the next argument is an empty string (e.g. as in
-//!       `--foo ""`), the *data value* is accepted as an empty string. If in an “in-next-argument”
-//!       situation there is no next argument, then the *data value* is reported as missing.
+//! When parsing a *long option* argument, if the argument contains one or more equals (`=`)
+//! characters then it is considered to have an “in-same-argument” *data value* (since names are not
+//! permitted to contain them), and is split into two components upon the first. The left hand
+//! portion (without the double-dash prefix) is taken as the name, and the right as the
+//! “in-same-argument” *data value* (e.g. `--foo=bar` → name: “foo”, value: “bar”), with the equals
+//! (`=`) separator being discarded. This naturally occurs **before** checking for a matching
+//! “available” program *option*.
 //!
-//!  - For *short options*, “in-next-argument” style looks like `-o arg`, while “in-same-argument”
-//!    style looks like `-oarg`.
+//!  - If the name component does not match any “available” *long option*, then it is reported as
+//!    unknown, with any “in-same-argument” *data value* component ignored.
+//!  - If a match is found which **does not** take a *data value*, then if an “in-same-argument”
+//!    *data value* component was supplied, its presence is reported as unexpected, otherwise all is
+//!    good.
+//!  - If a match is found that **does** take a *data value*, then if an “in-same-argument” *data
+//!    value* component was present, this is consumed as such, otherwise the next argument is
+//!    consumed. If an “in-same-argument” *data value* component was present, but the actual value
+//!    is missing (e.g. as in `--foo=`), this does not matter, the *data value* is accepted as being
+//!    an empty string (it does not consume the next argument). If in an “in-next-argument”
+//!    situation, the next argument is an empty string (e.g. as in `--foo ""`), the *data value* is
+//!    accepted as an empty string. If in an “in-next-argument” situation there is no next argument,
+//!    then the *data value* is reported as missing.
 //!
-//!    When a *short option set* is encountered (remember, more than one *short option* can be
-//!    grouped together in the same argument), the characters are gone through in sequence, looking
-//!    for a matching program *short option* for each.
+//! ## With short options
 //!
-//!     - If no match is found then it is reported as unknown.
-//!     - If a match is found that **does not** take a *data value*, then the match is simply
-//!       reported.
-//!     - If a match is found that **does** take a *data value*, then one needs to be found. If this
-//!       character is **not** the last in the set, then the remaining portion of the argument is
-//!       consumed as this *option*’s *data value* (e.g. if `o` is such an *option* then in `-oarg`,
-//!       `arg` is it’s *data value*). If it is the last character in the set, then the next
-//!       argument is consumed (e.g. `-o arg` → `arg`). If it is the last in the set and there is no
-//!       next argument, then the *data value* is reported as missing.
+//! For *short options*, “in-next-argument” style looks like `-o arg`, while “in-same-argument”
+//! style looks like `-oarg`.
 //!
-//!    Naturally when multiple *short options* are grouped together in the same argument, only the
-//!    last in that group can be one that takes a *data value*, and users must be careful when
-//!    constructing such groups.
+//! When a *short option set* is encountered (remember, more than one *short option* can be grouped
+//! together in the same argument), the characters are gone through in sequence, looking for a
+//! matching program *short option* for each.
+//!
+//!  - If no match is found then it is reported as unknown.
+//!  - If a match is found that **does not** take a *data value*, then the match is simply reported.
+//!  - If a match is found that **does** take a *data value*, then one needs to be found. If this
+//!    character is **not** the last in the set, then the remaining portion of the argument is
+//!    consumed as this *option*’s *data value* (e.g. if `o` is such an *option* then in `-oarg`,
+//!    `arg` is it’s *data value*). If it is the last character in the set, then the next
+//!    argument is consumed (e.g. `-o arg` → `arg`). If it is the last in the set and there is no
+//!    next argument, then the *data value* is reported as missing.
+//!
+//! Naturally when multiple *short options* are grouped together in the same argument, only the last
+//! in that group can be one that takes a *data value*, and users must be careful when constructing
+//! such groups.
 //!
 //! # Early terminator
 //!
