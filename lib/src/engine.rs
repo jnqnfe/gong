@@ -285,35 +285,13 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     return Some(Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
-                let mut matched: Option<&LongOption> = None;
-                let mut ambiguity = false;
-                'l_candidates: for candidate in self.parser_data.options.long {
-                    // Exact
-                    if candidate.name == name {
-                        // An exact match overrules a previously found partial match and
-                        // ambiguity found with multiple partial matches.
-                        matched = Some(candidate);
-                        ambiguity = false;
-                        break 'l_candidates;
-                    }
-                    // Abbreviated
-                    else if self.parser_data.settings.allow_abbreviations && !ambiguity {
-                        let cand_name_osstr = OsStr::new(candidate.name);
-                        if name.len() < cand_name_osstr.len() {
-                            if &cand_name_osstr.as_bytes()[..name.len()] == name.as_bytes() {
-                                match matched {
-                                    Some(_) => { ambiguity = true; },
-                                    None => { matched = Some(candidate); },
-                                }
-                            }
-                        }
-                    }
-                }
+                let match_result = find_name_match(name, self.parser_data.options.long.iter(),
+                    |&o| { o.name }, self.parser_data.settings.allow_abbreviations);
 
-                if ambiguity {
+                if match_result.is_err() {
                     Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))
                 }
-                else if let Some(matched) = matched {
+                else if let Ok(Some(matched)) = match_result {
                     // Use option’s full name, not the possibly abbreviated user provided one
                     let opt_name = matched.name;
 
@@ -608,5 +586,41 @@ impl OsStrExt for OsStr {
     #[inline(always)]
     fn as_bytes(&self) -> &[u8] {
         unsafe { mem::transmute(self) }
+    }
+}
+
+/// Find a match for something with a name (long option or command), optionally allowing for
+/// abbreviations
+fn find_name_match<'a, T>(needle: &OsStr, haystack: impl Iterator<Item = &'a T>,
+    get_name: fn(&'a T) -> &'a str, abbreviations: bool) -> Result<Option<&'a T>, ()>
+{
+    let mut matched: Option<&T> = None;
+    let mut ambiguity = false;
+    for candidate in haystack {
+        let cand_name = get_name(candidate);
+        // Exact
+        if cand_name == needle {
+            // An exact match overrules a previously found partial match and ambiguity found with
+            // multiple partial matches.
+            matched = Some(candidate);
+            ambiguity = false;
+            break;
+        }
+        // Abbreviated
+        else if abbreviations && !ambiguity {
+            let cand_name_osstr = OsStr::new(cand_name);
+            if needle.len() < cand_name_osstr.len() {
+                if &cand_name_osstr.as_bytes()[..needle.len()] == needle.as_bytes() {
+                    match matched {
+                        Some(_) => { ambiguity = true; },
+                        None => { matched = Some(candidate); },
+                    }
+                }
+            }
+        }
+    }
+    match ambiguity {
+        true => Err(()),
+        false => Ok(matched),
     }
 }
