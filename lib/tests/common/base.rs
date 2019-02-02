@@ -108,6 +108,15 @@ static BASE_CMDS: CommandSet = command_set!([
             ),
         ])
     ),
+    // For abbreviation ambiguity
+    command!("put",
+        @opts &option_set!(),
+        @cmds command_set!([
+            command!("beep"),
+            command!("boop"),
+        ])
+    ),
+    command!("pull"),
 ]);
 
 /// Provides a base set of options for common usage in tests

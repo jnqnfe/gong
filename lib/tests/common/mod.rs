@@ -74,6 +74,7 @@ macro_rules! expected_item {
     ( $i:expr, LongMissingData, $n:expr ) => { Err(ProblemItem::LongMissingData($i, $n)) };
     ( $i:expr, ShortMissingData, $c:expr ) => { Err(ProblemItem::ShortMissingData($i, $c)) };
     ( $i:expr, AmbiguousLong, $n:expr ) => { Err(ProblemItem::AmbiguousLong($i, OsStr::new($n))) };
+    ( $i:expr, AmbiguousCmd, $n:expr ) => { Err(ProblemItem::AmbiguousCmd($i, OsStr::new($n))) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set

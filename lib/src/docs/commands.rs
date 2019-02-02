@@ -45,8 +45,8 @@
 //! interpret *non-options* as *commands* in subsequent arguments, they will be taken to be
 //! *positionals*.
 //!
-//! Note, *command name* matching, like *option* matching, is case-sensitive. However, unlike
-//! *option* matching, abbreviated matching is not (currently) supported for *command names*.
+//! Note, *command name* matching, like *option* matching, is case-sensitive. Similarly, abbreviated
+//! matching is supported, though is disabled by default (you can enable it with a parser setting).
 //!
 //! Visually, the usage model for a program with *command arguments* looks like this:
 //!

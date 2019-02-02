@@ -24,7 +24,8 @@ use self::common::{get_parser, get_base_opts, get_base_cmds};
 fn check_default_settings() {
     let mut expected = Settings::default();
     expected.set_mode(OptionsMode::Standard);
-    expected.set_allow_abbreviations(true);
+    expected.set_allow_opt_abbreviations(true);
+    expected.set_allow_cmd_abbreviations(false);
     assert_eq!(expected, Default::default());
 }
 

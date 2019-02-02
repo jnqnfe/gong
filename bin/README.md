@@ -41,16 +41,17 @@ The test program has the following features that can be enabled/disabled when co
  - `alt_mode` enables use of `gong`’s “alt mode”.
  - `posixly_correct` enables “posixly correct” parsing mode, where all arguments after the first
     positional argument are also taken to be positionals, per the POSIX standard.
- - `no_abbreviations` disables `gong`’s abbreviated matching feature.
+ - `no_opt_abbreviations` disables `gong`’s abbreviated long option name matching feature.
+ - `no_cmd_abbreviations` disables `gong`’s abbreviated command name matching feature.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.
  - `color` enables formatted (color/bold/etc) analysis output
 
 To use these features, use Cargo’s `features` option. You can enable a single feature, such as
 `alt_mode` as `--features alt_mode` or `--features=alt_mode`. You can enable multiple features by
-enclosing them in quotes, such as `--features "alt_mode no_abbreviations"` or
-`--features="alt_mode no_abbreviations"`. You can enable all features simply with `--all-features`.
-You can disable default-enabled features with `--no-default-features`.
+enclosing them in quotes, such as `--features "alt_mode no_opt_abbreviations"` or
+`--features="alt_mode no_opt_abbreviations"`. You can enable all features simply with
+`--all-features`. You can disable default-enabled features with `--no-default-features`.
 
 Remember, you must supply this Cargo option before supplying the *early terminator* which separates
 Cargo’s options from those to supply to the to-be-run program.

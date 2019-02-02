@@ -144,6 +144,9 @@ pub enum ProblemItem<'a> {
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found.
     AmbiguousLong(usize, &'a OsStr),
+    /// Ambiguous match with multiple commands. This only occurs when an exact match was not found,
+    /// but multiple  abbreviated possible matches were found.
+    AmbiguousCmd(usize, &'a OsStr),
     /// Long option match, but data argument missing
     LongMissingData(usize, &'a str),
     /// Short option match, but data argument missing

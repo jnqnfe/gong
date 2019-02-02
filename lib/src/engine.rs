@@ -237,12 +237,18 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 // This may be a positional or a command
                 if !self.rest_are_positionals {
                     if self.try_command_matching {
-                        for candidate in self.parser_data.commands.commands {
-                            if candidate.name == arg {
-                                self.parser_data.options = candidate.options;
-                                self.parser_data.commands = &candidate.sub_commands;
-                                return Some(Ok(Item::Command(arg_index, candidate.name)));
-                            }
+                        match find_name_match(arg, self.parser_data.commands.commands.iter(),
+                            |&c| { c.name }, self.parser_data.settings.allow_cmd_abbreviations)
+                        {
+                            Err(_) => {
+                                return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
+                            },
+                            Ok(Some(matched)) => {
+                                self.parser_data.options = matched.options;
+                                self.parser_data.commands = &matched.sub_commands;
+                                return Some(Ok(Item::Command(arg_index, matched.name)));
+                            },
+                            Ok(None) => { /* fall through */ },
                         }
                         self.try_command_matching = false;
                         if !self.parser_data.commands.commands.is_empty() {
@@ -286,7 +292,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 }
 
                 let match_result = find_name_match(name, self.parser_data.options.long.iter(),
-                    |&o| { o.name }, self.parser_data.settings.allow_abbreviations);
+                    |&o| { o.name }, self.parser_data.settings.allow_opt_abbreviations);
 
                 if match_result.is_err() {
                     Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))

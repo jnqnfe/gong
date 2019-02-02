@@ -85,7 +85,9 @@ pub struct Settings {
     /// Option parsing mode to use
     pub mode: OptionsMode,
     /// Whether or not to allow abbreviated long option name matching
-    pub allow_abbreviations: bool,
+    pub allow_opt_abbreviations: bool,
+    /// Whether or not to allow abbreviated command name matching
+    pub allow_cmd_abbreviations: bool,
     /// Whether or not to stop interpretation of arguments as possible options/commands upon
     /// encountering a positional argument, similar to encountering an early terminator, i.e.
     /// “posixly correct” behaviour. See [the respective setter method][set_posixly_correct]
@@ -99,7 +101,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             mode: OptionsMode::Standard,
-            allow_abbreviations: true,
+            allow_opt_abbreviations: true,
+            allow_cmd_abbreviations: false,
             posixly_correct: false,
         }
     }
@@ -131,8 +134,15 @@ impl Settings {
 
     /// Control matching of abbreviated long option names (set to `true` to allow)
     #[inline(always)]
-    pub fn set_allow_abbreviations(&mut self, allow: bool) -> &mut Self {
-        self.allow_abbreviations = allow;
+    pub fn set_allow_opt_abbreviations(&mut self, allow: bool) -> &mut Self {
+        self.allow_opt_abbreviations = allow;
+        self
+    }
+
+    /// Control matching of abbreviated command names (set to `true` to allow)
+    #[inline(always)]
+    pub fn set_allow_cmd_abbreviations(&mut self, allow: bool) -> &mut Self {
+        self.allow_cmd_abbreviations = allow;
         self
     }
 

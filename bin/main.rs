@@ -93,7 +93,8 @@ fn main() {
         true => { parser.settings.set_mode(OptionsMode::Alternate); },
         false => { parser.settings.set_mode(OptionsMode::Standard); },
     }
-    parser.settings.set_allow_abbreviations(!cfg!(feature = "no_abbreviations"))
+    parser.settings.set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
+                   .set_allow_cmd_abbreviations(!cfg!(feature = "no_cmd_abbreviations"))
                    .set_posixly_correct(cfg!(feature = "posixly_correct"));
 
     debug_assert!(parser.is_valid());
@@ -115,10 +116,15 @@ fn main() {
     #[cfg(feature = "keep_prog_name")]
     println!("Skip first argument (program name): {}false{}", c!(COL_MODE), c!(RESET));
 
-    #[cfg(not(feature = "no_abbreviations"))]
+    #[cfg(not(feature = "no_opt_abbreviations"))]
     println!("Abbreviated option name matching: {}on{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "no_abbreviations")]
+    #[cfg(feature = "no_opt_abbreviations")]
     println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "no_cmd_abbreviations"))]
+    println!("Abbreviated command name matching: {}on{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "no_cmd_abbreviations")]
+    println!("Abbreviated command name matching: {}off{}", c!(COL_MODE), c!(RESET));
 
     println!("\nCompile with different features to change the config!\n");
 
@@ -197,6 +203,7 @@ fn main() {
                 println!("    data: {:?}", d)
             },
             Err(ProblemItem::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
+            Err(ProblemItem::AmbiguousCmd(i, n)) => printer(*i, "AmbiguousCmd", n),
             Err(ProblemItem::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
             Ok(Item::Short(i, c)) => {
                 let desc = desc_char(*c);

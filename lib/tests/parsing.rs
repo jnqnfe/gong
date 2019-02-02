@@ -340,6 +340,7 @@ mod abbreviations {
         let args = arg_list!(
             "--f",  // Abbreviation of both `foo` and `foobar`
             "--fo", // Same
+            "pu",   // Abbreviation of `put`, `pull` and `push` commands
         );
         let expected = expected!(
             problems: true,
@@ -347,10 +348,13 @@ mod abbreviations {
             [
                 expected_item!(0, AmbiguousLong, "f"),
                 expected_item!(1, AmbiguousLong, "fo"),
+                expected_item!(2, AmbiguousCmd, "pu"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_allow_cmd_abbreviations(true);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test handling of abbreviated long options, without ambiguity
@@ -361,6 +365,8 @@ mod abbreviations {
             "--foob",   // Abbreviation of `foobar` only
             "--fooba",  // Abbreviation of `foobar` only
             "--foobar", // Exact match for `foobar`
+            "put",      // Exact match for command
+            "be",       // Abbreviation of `beep` command only
         );
         let expected = expected!(
             problems: false,
@@ -371,15 +377,23 @@ mod abbreviations {
                 expected_item!(2, Long, "foobar"),
                 expected_item!(3, Long, "foobar"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            @itemset item_set!(cmd: "put", opt_set: cmdset_optset_ref!(get_base_cmds(), 5),
+                problems: false,
+            []),
+            @itemset item_set!(cmd: "beep", opt_set: cmdset_optset_ref!(get_base_cmds(), 5, 0),
+                problems: false,
+            []),
+            cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        let mut parser = get_parser();
+        parser.settings.set_allow_cmd_abbreviations(true);
+        check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test handling when abbreviated matching is disabled
     #[test]
     fn disabled() {
-        let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar");
+        let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar", "pul");
         let expected = expected!(
             problems: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
@@ -390,19 +404,20 @@ mod abbreviations {
                 expected_item!(3, UnknownLong, "foob"),
                 expected_item!(4, UnknownLong, "fooba"),
                 expected_item!(5, Long, "foobar"),
+                expected_item!(6, UnknownCommand, "pul"),
             ]),
             cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser();
-        parser.settings.set_allow_abbreviations(false);
+        parser.settings.set_allow_opt_abbreviations(false);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test that an exact match overrides ambiguity
     ///
-    /// I.e. if it finds multiple abbreviated matches before the exact match (which can depends upon
-    /// the order options are inserted into the set), that it keeps going to eventually find the
-    /// exact match, rather than ending early as ambiguous.
+    /// I.e. if it finds two abbreviated matches before the exact match (which can depends upon the
+    /// order options are inserted into the set), that it keeps going to eventually find the exact
+    /// match, rather than ending early as ambiguous.
     #[test]
     fn exact_override() {
         let opts = option_set!(@long [
@@ -413,19 +428,64 @@ mod abbreviations {
             longopt!(@flag "fooooo"),
             longopt!(@flag "foo"),    // Exact match for input `--foo`
         ]);
+        let cmds = command_set!([
+            command!("pull"),
+            command!("push"),
+            command!("put"),
+        ]);
 
-        let args = arg_list!("--foo");
+        let args = arg_list!("--foo", "put");
         let expected = expected!(
             problems: false,
             @itemset item_set!(cmd: "", opt_set: &opts, problems: false,
             [
                 expected_item!(0, Long, "foo"),
             ]),
+            @itemset item_set!(cmd: "put", opt_set: cmdset_optset_ref!(&cmds, 2),
+                problems: false,
+            []),
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, None);
+        let parser = Parser::new(&opts, Some(&cmds));
         check_result(&Actual(parser.parse(&args)), &expected);
+    }
+
+    /// Test that controls for options/commands work independently
+    #[test]
+    fn independence() {
+        let opts = option_set!(@long [ longopt!(@flag "foo") ]);
+        let cmds = command_set!([ command!("pull") ]);
+
+        let args = arg_list!("--fo", "pu");
+        let expected1 = expected!(
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
+            [
+                expected_item!(0, Long, "foo"),
+                expected_item!(1, UnknownCommand, "pu"),
+            ]),
+            cmd_set: Some(&cmds)
+        );
+        let expected2 = expected!(
+            problems: true,
+            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
+            [
+                expected_item!(0, UnknownLong, "fo"),
+            ]),
+            @itemset item_set!(cmd: "pull", opt_set: cmdset_optset_ref!(get_base_cmds(), 6),
+                problems: false,
+            []),
+            cmd_set: None
+        );
+
+        let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_allow_opt_abbreviations(true);
+        parser.settings.set_allow_cmd_abbreviations(false);
+        check_result(&Actual(parser.parse(&args)), &expected1);
+        parser.settings.set_allow_opt_abbreviations(false);
+        parser.settings.set_allow_cmd_abbreviations(true);
+        check_result(&Actual(parser.parse(&args)), &expected2);
     }
 }
 

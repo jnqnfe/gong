@@ -80,6 +80,7 @@
 //!         <tr><td>‘Early terminator’</td><td>Yes</td></tr>
 //!         <tr><td>‘Command’ options</td><td>Yes, including nested</td></tr>
 //!         <tr><td>Abbreviated long option name matching</td><td>Yes (optional)</td></tr>
+//!         <tr><td>Abbreviated command name matching</td><td>Yes (optional, off by default)</td></tr>
 //!         <tr><td>Mismatch suggestions</td><td>Yes*, for both (long) options and commands</td></tr>
 //!         <tr><td>Dynamic ‘builder’ style option set construction</td><td>Yes</td></tr>
 //!         <tr><td>Efficient ‘static’ option sets</td><td>Yes</td></tr>

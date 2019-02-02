@@ -5,7 +5,8 @@
  * Updated per addition of understanding of command arguments (though not using any yet)
  * Updated per refactor upon `OsStr` based parsing
  * Updated per merge of `ItemE` and `ItemW`
- * Added `posixly_correct` feature
+ * Added `posixly_correct` and `no_cmd_abbreviations` features
+ * Renamed the `no_abbreviations` feature to `no_opt_abbreviations`
 
 # 1.2.1 (November 25th, 2020)
 
