@@ -13,21 +13,6 @@
 //! A common requirement of a program is the need to parse command line arguments supplied to it.
 //! This library was designed to *assist* Rust based programs in this area.
 //!
-//! # Motivation
-//!
-//! While other solutions already existed for Rust programs, they arguably tried to do too much;
-//! their designs were geared towards completely taking over *every* aspect of argument handling.
-//! While removing as much of the burden from the application programmer as possible is a desirable
-//! goal, these existing solutions in attempting to do this imposed significant restrictions on
-//! compatible program designs.
-//!
-//! Some/all of these solutions also forced a “builder” type pattern of describing options through
-//! successive method calls, lacking a more efficient option of directly defining the data
-//! structure. This includes preventing efficient declaration of a `static`/`const` set.
-//!
-//! It appeared that the Rust crate ecosystem was missing a more fundamental and broadly applicable
-//! solution, and one which favoured efficiency.
-//!
 //! # Design
 //!
 //! In C programming, the common `getopt` and `getopt_long` functions have, for a long time, served
