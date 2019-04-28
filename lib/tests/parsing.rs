@@ -19,7 +19,7 @@ use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{Parser, OptionsMode};
-use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected, check_result};
+use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -67,7 +67,7 @@ fn stop_on_problems_off() {
     );
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(false);
-    check_result(&Actual(parser.parse(&args)), &expected);
+    check_result!(&Actual(parser.parse(&args)), &expected);
 }
 
 /// Check with feature on
@@ -84,7 +84,7 @@ fn stop_on_problems_on() {
     );
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(true);
-    check_result(&Actual(parser.parse(&args)), &expected);
+    check_result!(&Actual(parser.parse(&args)), &expected);
 }
 
 /// Check with feature off, after a command (command related item partitioning could trip things up
@@ -106,7 +106,7 @@ fn stop_on_problems_off_cmd() {
     );
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(false);
-    check_result(&Actual(parser.parse(&args)), &expected);
+    check_result!(&Actual(parser.parse(&args)), &expected);
 }
 
 /// Check with feature on, after a command (command related item partitioning could trip things up
@@ -127,7 +127,7 @@ fn stop_on_problems_on_cmd() {
     );
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(true);
-    check_result(&Actual(parser.parse(&args)), &expected);
+    check_result!(&Actual(parser.parse(&args)), &expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,7 +180,7 @@ fn basic() {
         ]),
         cmd_set: Some(get_base_cmds())
     );
-    check_result(&Actual(get_parser().parse(&args)), &expected);
+    check_result!(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Verify that option matching is case sensitive
@@ -196,7 +196,7 @@ fn case_sensitivity() {
         ]),
         cmd_set: Some(get_base_cmds())
     );
-    check_result(&Actual(get_parser().parse(&args)), &expected);
+    check_result!(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test that everything after an early terminator is taken to be a positional, including any
@@ -234,7 +234,7 @@ fn early_term() {
         ]),
         cmd_set: Some(get_base_cmds())
     );
-    check_result(&Actual(get_parser().parse(&args)), &expected);
+    check_result!(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test empty long option names with data param (-- on it’s own is obviously picked up as early
@@ -251,7 +251,7 @@ fn long_no_name() {
         ]),
         cmd_set: Some(get_base_cmds())
     );
-    check_result(&Actual(get_parser().parse(&args)), &expected);
+    check_result!(&Actual(get_parser().parse(&args)), &expected);
 }
 
 /// Test repetition - each instance should exist in the results in its own right. Note, data arg
@@ -276,7 +276,7 @@ fn repetition() {
         ]),
         cmd_set: Some(get_base_cmds())
     );
-    check_result(&Actual(get_parser().parse(&args)), &expected);
+    check_result!(&Actual(get_parser().parse(&args)), &expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,7 +338,7 @@ mod utf8 {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Chars with combinator chars (e.g. accent)
@@ -365,7 +365,7 @@ mod utf8 {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Chars with variation selector
@@ -387,7 +387,7 @@ mod utf8 {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Lone combinator chars
@@ -405,7 +405,7 @@ mod utf8 {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -436,7 +436,7 @@ mod abbreviations {
         );
         let mut parser = get_parser();
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test handling of abbreviated long options, without ambiguity
@@ -469,7 +469,7 @@ mod abbreviations {
         );
         let mut parser = get_parser();
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test handling when abbreviated matching is disabled
@@ -492,7 +492,7 @@ mod abbreviations {
         );
         let mut parser = get_parser();
         parser.settings.set_allow_opt_abbreviations(false);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test that an exact match overrides ambiguity
@@ -530,7 +530,7 @@ mod abbreviations {
         );
 
         let parser = Parser::new(&opts, Some(&cmds));
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test that controls for options/commands work independently
@@ -565,10 +565,10 @@ mod abbreviations {
         parser.settings.set_stop_on_problem(false);
         parser.settings.set_allow_opt_abbreviations(true);
         parser.settings.set_allow_cmd_abbreviations(false);
-        check_result(&Actual(parser.parse(&args)), &expected1);
+        check_result!(&Actual(parser.parse(&args)), &expected1);
         parser.settings.set_allow_opt_abbreviations(false);
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result(&Actual(parser.parse(&args)), &expected2);
+        check_result!(&Actual(parser.parse(&args)), &expected2);
     }
 }
 
@@ -608,7 +608,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test calculation of whether or not short-opt taking data is the last character in the short
@@ -631,7 +631,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, provided in next argument for short options
@@ -660,7 +660,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, provided in same argument for short options
@@ -735,7 +735,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for long option
@@ -750,7 +750,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for short option
@@ -768,7 +768,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for long option with the value being being optional, thus no
@@ -784,7 +784,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test missing argument data for short option with the value being being optional, thus no
@@ -803,7 +803,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test some misc. data handling.
@@ -845,7 +845,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test repetition - each instance should exist in the results in its own right. Note, basic
@@ -864,7 +864,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, declared to be in same argument, but empty
@@ -919,7 +919,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, provided in next argument, but empty. Note that users
@@ -948,7 +948,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
@@ -997,7 +997,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test argument data that looks like options
@@ -1055,7 +1055,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -1084,7 +1084,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test long option involving multi-byte chars, to ensure "in-arg" component splitting for
@@ -1115,7 +1115,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test short options involving multi-byte chars to check offset calculations in iterating
@@ -1182,7 +1182,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
@@ -1228,7 +1228,7 @@ mod data {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -1251,7 +1251,7 @@ mod commands {
             []),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// We do not support case-insensitive matching
@@ -1266,7 +1266,7 @@ mod commands {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check repeated use correctly fails, where same command is used
@@ -1287,7 +1287,7 @@ mod commands {
             ]),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check repeated use correctly fails, where different commands are used
@@ -1305,7 +1305,7 @@ mod commands {
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check early terminator forces command to be treated as positional
@@ -1321,7 +1321,7 @@ mod commands {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check works alongside option arguments
@@ -1344,7 +1344,7 @@ mod commands {
             []),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check name clash with option
@@ -1366,7 +1366,7 @@ mod commands {
             []),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check names that look like options, take preference as options
@@ -1394,7 +1394,7 @@ mod commands {
         );
 
         let parser = Parser::new(&opts, Some(&cmds));
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Check consumed as option argument data
@@ -1412,7 +1412,7 @@ mod commands {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check not recognised as command in secondary non-option position, and first is reported as
@@ -1434,7 +1434,7 @@ mod commands {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check that the option set is changed following the command, with command that has no option
@@ -1464,7 +1464,7 @@ mod commands {
             ]),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check that the option set is changed following the command, with command that has an option
@@ -1499,7 +1499,7 @@ mod commands {
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check nested sub-commands
@@ -1556,7 +1556,7 @@ mod commands {
             ]),
             cmd_set: None
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check early terminator works in nested sub-command usage
@@ -1601,7 +1601,7 @@ mod commands {
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check known command from wrong set
@@ -1627,7 +1627,7 @@ mod commands {
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     /// Check known sub-command, given after a non-option that is not a known sub-command
@@ -1650,7 +1650,7 @@ mod commands {
             ]),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -1706,7 +1706,7 @@ mod trimming {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 }
 
@@ -1767,7 +1767,7 @@ mod alt_mode {
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Check unexpected and missing data
@@ -1790,7 +1790,7 @@ mod alt_mode {
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -1811,7 +1811,7 @@ mod alt_mode {
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Check command use
@@ -1844,7 +1844,7 @@ mod alt_mode {
         );
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 }
 
@@ -1881,7 +1881,7 @@ mod posixly_correct {
         );
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 
     /// Check works with early terminator use, where it should not make any difference
@@ -1906,7 +1906,7 @@ mod posixly_correct {
         );
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 }
 
@@ -2068,7 +2068,7 @@ mod invalid_byte_sequences {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
     #[cfg(windows)]
@@ -2162,6 +2162,6 @@ mod invalid_byte_sequences {
             ]),
             cmd_set: Some(get_base_cmds())
         );
-        check_result(&Actual(get_parser().parse(&args)), &expected);
+        check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 }

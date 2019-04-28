@@ -22,7 +22,7 @@ use gong::{option_set, longopt, shortopt};
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;
-use self::common::{Actual, Expected, check_result};
+use self::common::{Actual, Expected};
 
 /// Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its own
 /// (`--`), and would be misinterpreted as a long option if given as the first in a short option set
@@ -101,7 +101,7 @@ mod short_dash {
 
         let mut parser = Parser::new(&opts, None);
         parser.settings.set_stop_on_problem(false);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 }
 
@@ -250,7 +250,7 @@ mod long_equals {
 
         let mut parser = Parser::new(&opts, None);
         parser.settings.set_stop_on_problem(false);
-        check_result(&Actual(parser.parse(&args)), &expected);
+        check_result!(&Actual(parser.parse(&args)), &expected);
     }
 }
 

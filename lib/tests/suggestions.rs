@@ -21,7 +21,7 @@ mod options {
     use gong::{longopt, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use self::super::common::{Actual, Expected, check_result};
+    use self::super::common::{self, Actual, Expected};
 
     #[test]
     fn basic() {
@@ -49,7 +49,7 @@ mod options {
         let mut parser = Parser::new(&opts, None);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
@@ -99,7 +99,7 @@ mod options {
         let mut parser = Parser::new(&opts, None);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
@@ -124,7 +124,7 @@ mod commands {
     use gong::{command, command_set, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use self::super::common::{Actual, Expected, check_result};
+    use self::super::common::{self, Actual, Expected};
 
     #[test]
     fn basic() {
@@ -150,7 +150,7 @@ mod commands {
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
@@ -192,7 +192,7 @@ mod commands {
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
@@ -234,7 +234,7 @@ mod commands {
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {
@@ -276,7 +276,7 @@ mod commands {
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
-        check_result(&actual_results, &expected);
+        check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
         for item in &actual_results.0.item_sets[0].items {

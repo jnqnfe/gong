@@ -115,15 +115,22 @@ pub fn get_parser() -> Parser<'static, 'static> {
 /// - Fewer uses of `assert_eq`, less likely to make a typo, putting `assert_ne` by mistake
 /// - `Actual` and `Expected` wrappers help ensure correct comparison
 /// - Central place where `pretty_print_results` can be enabled and called when desired in debugging
-pub fn check_result(actual: &Actual, expected: &Expected) {
-    if actual.0 != expected.0 {
-        eprintln!("Actual:");
-        pretty_print_results(&actual.0);
-        eprintln!("Expected:");
-        pretty_print_results(&expected.0);
+macro_rules! check_result {
+    ( $actual:expr, $expected:expr) => {{
+        // type enforcement!
+        let actual: &Actual = $actual;
+        let expected: &Expected = $expected;
+        if actual.0 != expected.0 {
+            eprintln!("Actual:");
+            common::pretty_print_results(&actual.0);
+            eprintln!("Expected:");
+            common::pretty_print_results(&expected.0);
 
-        assert!(false, "analysis does not match what was expected!");
-    }
+            assert!(false, "analysis does not match what was expected!");
+        }
+        std::mem::drop(actual);
+        std::mem::drop(expected);
+    }}
 }
 
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
@@ -131,7 +138,7 @@ pub fn check_result(actual: &Actual, expected: &Expected) {
 ///
 /// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
-fn pretty_print_results(analysis: &Analysis) {
+pub fn pretty_print_results(analysis: &Analysis) {
     let mut item_sets = String::new();
     for item_set in &analysis.item_sets {
         let mut items = String::new();

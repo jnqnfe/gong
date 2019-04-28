@@ -20,7 +20,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
-use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected, check_result};
+use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected};
 
 /// Some of the tests here expect certain options to exist in the common options set, where such
 /// options are **not** being used in the test arguments, so we need to assert that they definitely
@@ -102,7 +102,7 @@ fn used() {
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
-    check_result(&Actual(analysis.clone()), &expected);
+    check_result!(&Actual(analysis.clone()), &expected);
 
     let item_set = &analysis.item_sets[0];
 
@@ -164,7 +164,7 @@ fn count() {
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
-    check_result(&Actual(analysis.clone()), &expected);
+    check_result!(&Actual(analysis.clone()), &expected);
 
     let item_set = &analysis.item_sets[0];
 
@@ -209,7 +209,7 @@ mod missing_data {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -232,7 +232,7 @@ mod missing_data {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -257,7 +257,7 @@ fn first_problem() {
         cmd_set: Some(get_base_cmds())
     );
     let analysis = get_parser().parse(&args);
-    check_result(&Actual(analysis.clone()), &expected);
+    check_result!(&Actual(analysis.clone()), &expected);
 
     assert_eq!(2, analysis.get_problem_items().count());
 
@@ -292,7 +292,7 @@ mod iter {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -351,7 +351,7 @@ mod iter {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         // Via item set
 
@@ -416,7 +416,7 @@ fn last_value() {
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
-    check_result(&Actual(analysis.clone()), &expected);
+    check_result!(&Actual(analysis.clone()), &expected);
 
     let item_set = &analysis.item_sets[0];
 
@@ -478,7 +478,7 @@ fn all_values() {
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
-    check_result(&Actual(analysis.clone()), &expected);
+    check_result!(&Actual(analysis.clone()), &expected);
 
     let item_set = &analysis.item_sets[0];
 
@@ -547,7 +547,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -589,7 +589,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -631,7 +631,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -668,7 +668,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -701,7 +701,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
@@ -731,7 +731,7 @@ mod last_used {
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
-        check_result(&Actual(analysis.clone()), &expected);
+        check_result!(&Actual(analysis.clone()), &expected);
 
         let item_set = &analysis.item_sets[0];
 
