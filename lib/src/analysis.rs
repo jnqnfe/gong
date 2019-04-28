@@ -1097,15 +1097,20 @@ impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
     where A: 's + AsRef<OsStr>, 's: 'r
 {
     fn from(mut iter: crate::engine::ParseIter<'r, 's, A>) -> Self {
+        let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut analysis = Analysis::new();
         let mut cmd = "";
         let mut more = true;
-        while more {
+        let mut stop = false;
+        while !stop && more {
             let mut item_set = ItemSet::new(cmd, iter.get_option_set());
             more = false;
             while let Some(item) = iter.next() {
                 match item {
-                    Err(_) => item_set.problems = true,
+                    Err(_) => {
+                        item_set.problems = true;
+                        if stop_on_problem { stop = true; }
+                    },
                     Ok(Item::Command(_, name)) => {
                         cmd = name;
                         more = true;
@@ -1114,6 +1119,7 @@ impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for Analysis<'r, 's>
                     Ok(_) => {},
                 }
                 item_set.items.push(item);
+                if stop { break; }
             }
             analysis.problems |= item_set.problems;
             analysis.item_sets.push(item_set);

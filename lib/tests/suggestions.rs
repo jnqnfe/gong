@@ -46,7 +46,8 @@ mod options {
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, None);
+        let mut parser = Parser::new(&opts, None);
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -95,7 +96,8 @@ mod options {
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, None);
+        let mut parser = Parser::new(&opts, None);
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -145,7 +147,8 @@ mod commands {
             cmd_set: Some(&cmds)
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -186,7 +189,8 @@ mod commands {
             cmd_set: Some(&cmds)
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -227,7 +231,8 @@ mod commands {
             cmd_set: Some(&cmds)
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 
@@ -268,7 +273,8 @@ mod commands {
             cmd_set: Some(&cmds)
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result(&actual_results, &expected);
 

@@ -49,6 +49,88 @@ fn arg_list_owned_set() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stopping on problems handling
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Check with feature off
+#[test]
+fn stop_on_problems_off() {
+    let args = arg_list!("--fake1", "--fake2");
+    let expected = expected!(
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        [
+            expected_item!(0, UnknownLong, "fake1"),
+            expected_item!(1, UnknownLong, "fake2"),
+        ]),
+        cmd_set: Some(get_base_cmds())
+    );
+    let mut parser = get_parser();
+    parser.settings.set_stop_on_problem(false);
+    check_result(&Actual(parser.parse(&args)), &expected);
+}
+
+/// Check with feature on
+#[test]
+fn stop_on_problems_on() {
+    let args = arg_list!("--fake1", "--fake2");
+    let expected = expected!(
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        [
+            expected_item!(0, UnknownLong, "fake1"),
+        ]),
+        cmd_set: Some(get_base_cmds())
+    );
+    let mut parser = get_parser();
+    parser.settings.set_stop_on_problem(true);
+    check_result(&Actual(parser.parse(&args)), &expected);
+}
+
+/// Check with feature off, after a command (command related item partitioning could trip things up
+/// if done wrong)
+#[test]
+fn stop_on_problems_off_cmd() {
+    let args = arg_list!("commit", "--fake1", "--fake2");
+    let expected = expected!(
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
+        @itemset item_set!(cmd: "commit",
+            opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+            problems: true,
+        [
+            expected_item!(1, UnknownLong, "fake1"),
+            expected_item!(2, UnknownLong, "fake2"),
+        ]),
+        cmd_set: None
+    );
+    let mut parser = get_parser();
+    parser.settings.set_stop_on_problem(false);
+    check_result(&Actual(parser.parse(&args)), &expected);
+}
+
+/// Check with feature on, after a command (command related item partitioning could trip things up
+/// if done wrong)
+#[test]
+fn stop_on_problems_on_cmd() {
+    let args = arg_list!("commit", "--fake1", "--fake2");
+    let expected = expected!(
+        problems: true,
+        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
+        @itemset item_set!(cmd: "commit",
+            opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
+            problems: true,
+        [
+            expected_item!(1, UnknownLong, "fake1"),
+        ]),
+        cmd_set: None
+    );
+    let mut parser = get_parser();
+    parser.settings.set_stop_on_problem(true);
+    check_result(&Actual(parser.parse(&args)), &expected);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // Basic option handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -480,6 +562,7 @@ mod abbreviations {
         );
 
         let mut parser = Parser::new(&opts, Some(&cmds));
+        parser.settings.set_stop_on_problem(false);
         parser.settings.set_allow_opt_abbreviations(true);
         parser.settings.set_allow_cmd_abbreviations(false);
         check_result(&Actual(parser.parse(&args)), &expected1);

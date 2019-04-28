@@ -111,3 +111,15 @@ mod change_data {
         assert_eq!(parse_iter.next(), None);
     }
 }
+
+/// Verify that the stop-on-error setting has no effect on iterative parsing
+#[test]
+fn stop_on_error() {
+    let args = arg_list!("--fake1", "--fake2");
+    let mut parser = get_parser();
+    parser.settings.set_stop_on_problem(true);
+    let mut parse_iter = parser.parse_iter(&args);
+    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownLong, "fake1")));
+    assert_eq!(parse_iter.next(), Some(expected_item!(1, UnknownLong, "fake2")));
+    assert_eq!(parse_iter.next(), None);
+}

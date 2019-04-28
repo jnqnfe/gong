@@ -99,7 +99,8 @@ mod short_dash {
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, None);
+        let mut parser = Parser::new(&opts, None);
+        parser.settings.set_stop_on_problem(false);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }
@@ -247,7 +248,8 @@ mod long_equals {
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, None);
+        let mut parser = Parser::new(&opts, None);
+        parser.settings.set_stop_on_problem(false);
         check_result(&Actual(parser.parse(&args)), &expected);
     }
 }

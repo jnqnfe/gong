@@ -103,7 +103,9 @@ macro_rules! cmdset_subcmdset_ref {
 
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser() -> Parser<'static, 'static> {
-    Parser::new(base::get_base_opts(), Some(base::get_base_cmds()))
+    let mut parser = Parser::new(base::get_base_opts(), Some(base::get_base_cmds()));
+    parser.settings.set_stop_on_problem(false);
+    parser
 }
 
 /// Common central function for comparing actual analysis result with expected.

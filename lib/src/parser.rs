@@ -95,6 +95,13 @@ pub struct Settings {
     ///
     /// [set_posixly_correct]: #method.set_posixly_correct
     pub posixly_correct: bool,
+    /// Whether or not to stop parsing when a problem is encountered.
+    ///
+    /// This only applies to the non-iterative form of parsing (with iterative you can just stop
+    /// iterating). When a problem is encountered, there typically is no guarantee that remaining
+    /// arguments will be interpreted correctly; this, when `true`, allows parsing to immediately
+    /// stop, allowing you to avoid potentially wasted effort.
+    pub stop_on_problem: bool,
 }
 
 impl Default for Settings {
@@ -104,6 +111,7 @@ impl Default for Settings {
             allow_opt_abbreviations: true,
             allow_cmd_abbreviations: false,
             posixly_correct: false,
+            stop_on_problem: true,
         }
     }
 }
@@ -179,6 +187,13 @@ impl Settings {
     #[inline(always)]
     pub fn set_posixly_correct(&mut self, enable: bool) -> &mut Self {
         self.posixly_correct = enable;
+        self
+    }
+
+    /// Control whether or not non-iterative parsing stops on finding a problem
+    #[inline(always)]
+    pub fn set_stop_on_problem(&mut self, enable: bool) -> &mut Self {
+        self.stop_on_problem = enable;
         self
     }
 }
