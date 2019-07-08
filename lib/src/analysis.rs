@@ -76,21 +76,6 @@ use crate::options::OptionSet;
 
 pub type ItemResult<'s> = Result<Item<'s>, ProblemItem<'s>>;
 
-/// Analysis of parsing arguments
-///
-/// This type provides a set of “data-mining” methods for extracing information from the set of
-/// wrapped items. Note that most such methods ignore problem items.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Analysis<'r, 's: 'r> {
-    /// Set of item sets describing what was found, partitioned into sets by commands
-    pub item_sets: Vec<ItemSet<'r, 's>>,
-    /// Quick indication of problems (e.g. unknown option, or missing arg data)
-    pub problems: bool,
-    /// Pointer to the final command set, for use with suggestion matching an unknown command (which
-    /// only applies to the first positional).
-    pub cmd_set: Option<&'r CommandSet<'r, 's>>,
-}
-
 /// Non-problematic items
 ///
 /// All variants hold a `usize` value to be used for indicating the index of the argument at which
@@ -180,6 +165,21 @@ pub struct ItemSet<'r, 's: 'r> {
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
     pub opt_set: &'r OptionSet<'r, 's>,
+}
+
+/// Analysis of parsing arguments
+///
+/// This type provides a set of “data-mining” methods for extracing information from the set of
+/// wrapped items. Note that most such methods ignore problem items.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Analysis<'r, 's: 'r> {
+    /// Set of item sets describing what was found, partitioned into sets by commands
+    pub item_sets: Vec<ItemSet<'r, 's>>,
+    /// Quick indication of problems (e.g. unknown option, or missing arg data)
+    pub problems: bool,
+    /// Pointer to the final command set, for use with suggestion matching an unknown command (which
+    /// only applies to the first positional).
+    pub cmd_set: Option<&'r CommandSet<'r, 's>>,
 }
 
 /// A *to find* option description

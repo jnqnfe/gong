@@ -22,6 +22,44 @@
 #[cfg(feature = "suggestions")]
 use std::ffi::OsStr;
 
+/// Description of an available long option
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct LongOption<'a> {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    /// Long option name, excluding the `--` prefix
+    pub name: &'a str,
+    /// Option type
+    pub opt_type: OptionType,
+}
+
+/// Description of an available short option
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct ShortOption {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    /// Short option character
+    pub ch: char,
+    /// Option type
+    pub opt_type: OptionType,
+}
+
+/// Type of option (flag or data-value taking)
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum OptionType {
+    /// A simple flag style option (takes no data value)
+    Flag,
+    /// A data-value taking option, where providing a value is mandatory
+    ///
+    /// The data value can be provided within the same argument, but if not provided there then the
+    /// next argument is consumed as the data value. In the latter scenario, if no next argument
+    /// exists, then a missing-data-value problem is reported.
+    Data,
+    /// A data-value taking option, where providing the data value is optional
+    ///
+    /// With the data value being optional, it is only ever taken, when provided, from within the
+    /// same argument. The next argument is never consumed.
+    OptionalData,
+}
+
 /// Extendible option set
 ///
 /// Used to supply the set of information about available options to match against
@@ -66,44 +104,6 @@ impl<'r, 's: 'r> PartialEq<OptionSetEx<'s>> for OptionSet<'r, 's> {
     }
 }
 
-/// Description of an available long option
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct LongOption<'a> {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Long option name, excluding the `--` prefix
-    pub name: &'a str,
-    /// Option type
-    pub opt_type: OptionType,
-}
-
-/// Description of an available short option
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ShortOption {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Short option character
-    pub ch: char,
-    /// Option type
-    pub opt_type: OptionType,
-}
-
-/// Type of option (flag or data-value taking)
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum OptionType {
-    /// A simple flag style option (takes no data value)
-    Flag,
-    /// A data-value taking option, where providing a value is mandatory
-    ///
-    /// The data value can be provided within the same argument, but if not provided there then the
-    /// next argument is consumed as the data value. In the latter scenario, if no next argument
-    /// exists, then a missing-data-value problem is reported.
-    Data,
-    /// A data-value taking option, where providing the data value is optional
-    ///
-    /// With the data value being optional, it is only ever taken, when provided, from within the
-    /// same argument. The next argument is never consumed.
-    OptionalData,
-}
-
 /// Description of a validation issue within an option in an [`OptionSet`](struct.OptionSet.html) or
 /// [`OptionSetEx`](struct.OptionSetEx.html) set.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -118,6 +118,71 @@ pub enum OptionFlaw<'a> {
     ShortDuplicated(char),
     /// Duplicate long option found
     LongDuplicated(&'a str),
+}
+
+impl<'a> LongOption<'a> {
+    /// Create a new long option descriptor
+    ///
+    /// Panics (debug only) if the given name is invalid.
+    #[inline]
+    fn new(name: &'a str, opt_type: OptionType) -> Self {
+        debug_assert!(Self::validate(name).is_ok());
+        Self { name, opt_type, }
+    }
+
+    /// Validate a given name as a possible long option
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate(name: &str) -> Result<(), OptionFlaw> {
+        static FORBIDDEN: &[char] = &[
+            '=',        // Would clash with “in-same-arg” data value extraction
+            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
+        ];
+        if name.is_empty() {
+            return Err(OptionFlaw::LongEmptyName);
+        }
+        for c in FORBIDDEN {
+            if name.contains(*c) {
+                return Err(OptionFlaw::LongNameHasForbiddenChar(name, *c));
+            }
+        }
+        Ok(())
+    }
+}
+
+impl ShortOption {
+    /// Create a new short option descriptor
+    ///
+    /// Panics (debug only) if the given `char` is invalid.
+    #[inline]
+    fn new(ch: char, opt_type: OptionType) -> Self {
+        debug_assert!(Self::validate(ch).is_ok());
+        Self { ch, opt_type, }
+    }
+
+    /// Validate a given character as a possible short option
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate<'a>(ch: char) -> Result<(), OptionFlaw<'a>> {
+        static FORBIDDEN: &[char] = &[
+            '-',        // Would clash with correct identification of short option sets in some cases
+            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
+        ];
+        for c in FORBIDDEN {
+            if ch == *c {
+                return Err(OptionFlaw::ShortIsForbiddenChar(*c));
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'s> OptionSetEx<'s> {
@@ -385,71 +450,6 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
             }
         }
         best
-    }
-}
-
-impl<'a> LongOption<'a> {
-    /// Create a new long option descriptor
-    ///
-    /// Panics (debug only) if the given name is invalid.
-    #[inline]
-    fn new(name: &'a str, opt_type: OptionType) -> Self {
-        debug_assert!(Self::validate(name).is_ok());
-        Self { name, opt_type, }
-    }
-
-    /// Validate a given name as a possible long option
-    ///
-    /// Returns the first flaw identified, if any
-    ///
-    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
-    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
-    /// free of issues.
-    fn validate(name: &str) -> Result<(), OptionFlaw> {
-        static FORBIDDEN: &[char] = &[
-            '=',        // Would clash with “in-same-arg” data value extraction
-            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
-        ];
-        if name.is_empty() {
-            return Err(OptionFlaw::LongEmptyName);
-        }
-        for c in FORBIDDEN {
-            if name.contains(*c) {
-                return Err(OptionFlaw::LongNameHasForbiddenChar(name, *c));
-            }
-        }
-        Ok(())
-    }
-}
-
-impl ShortOption {
-    /// Create a new short option descriptor
-    ///
-    /// Panics (debug only) if the given `char` is invalid.
-    #[inline]
-    fn new(ch: char, opt_type: OptionType) -> Self {
-        debug_assert!(Self::validate(ch).is_ok());
-        Self { ch, opt_type, }
-    }
-
-    /// Validate a given character as a possible short option
-    ///
-    /// Returns the first flaw identified, if any
-    ///
-    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
-    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
-    /// free of issues.
-    fn validate<'a>(ch: char) -> Result<(), OptionFlaw<'a>> {
-        static FORBIDDEN: &[char] = &[
-            '-',        // Would clash with correct identification of short option sets in some cases
-            '\u{FFFD}', // Would cause problems with correct `OsStr` based parsing
-        ];
-        for c in FORBIDDEN {
-            if ch == *c {
-                return Err(OptionFlaw::ShortIsForbiddenChar(*c));
-            }
-        }
-        Ok(())
     }
 }
 

@@ -24,6 +24,21 @@ use std::ffi::OsStr;
 use crate::option_set;
 use crate::options::{self, OptionSet, OptionFlaw};
 
+/// Description of an available command
+///
+/// The `options` and `sub_commands` attributes are used to specify the sets to be used for parsing
+/// arguments that follow use of a specific command in an argument list.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Command<'r, 's: 'r> {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    /// Command name
+    pub name: &'s str,
+    /// Options
+    pub options: &'r OptionSet<'r, 's>,
+    /// Sub-commands
+    pub sub_commands: CommandSet<'r, 's>,
+}
+
 /// Extendible command set
 ///
 /// Used to supply the set of information about available commands to match against
@@ -73,21 +88,6 @@ impl<'r, 's: 'r> PartialEq<CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
     }
 }
 
-/// Description of an available command
-///
-/// The `options` and `sub_commands` attributes are used to specify the sets to be used for parsing
-/// arguments that follow use of a specific command in an argument list.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Command<'r, 's: 'r> {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Command name
-    pub name: &'s str,
-    /// Options
-    pub options: &'r OptionSet<'r, 's>,
-    /// Sub-commands
-    pub sub_commands: CommandSet<'r, 's>,
-}
-
 /// Description of a validation issue within a command in a [`CommandSet`](struct.CommandSet.html)
 /// or [`CommandSetEx`](struct.CommandSetEx.html) set.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -102,6 +102,37 @@ pub enum CommandFlaw<'a> {
     NestedOptSetFlaws(&'a str, Vec<OptionFlaw<'a>>),
     /// Flaws for the sub-command set belonging to a command
     NestedSubCmdFlaws(&'a str, Vec<CommandFlaw<'a>>),
+}
+
+impl<'r, 's: 'r> Command<'r, 's> {
+    /// Create a new command descriptor
+    ///
+    /// Panics (debug only) if the given name is invalid.
+    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
+        sub_commands: CommandSet<'r, 's>) -> Self
+    {
+        debug_assert!(Self::validate(name).is_ok());
+        let opts_actual = options.unwrap_or(&option_set!());
+        Self { name, options: opts_actual, sub_commands }
+    }
+
+    /// Validate a given name as a possible command
+    ///
+    /// Returns the first flaw identified, if any
+    ///
+    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
+    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
+    /// free of issues.
+    fn validate(name: &str) -> Result<(), CommandFlaw> {
+        if name.is_empty() {
+            return Err(CommandFlaw::EmptyName);
+        }
+        // Would cause problems with correct `OsStr` based parsing
+        if name.contains('\u{FFFD}') {
+            return Err(CommandFlaw::NameHasForbiddenChar(name, '\u{FFFD}'));
+        }
+        Ok(())
+    }
 }
 
 impl<'r, 's: 'r> CommandSetEx<'r, 's> {
@@ -260,37 +291,6 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
             }
         }
         best
-    }
-}
-
-impl<'r, 's: 'r> Command<'r, 's> {
-    /// Create a new command descriptor
-    ///
-    /// Panics (debug only) if the given name is invalid.
-    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
-        sub_commands: CommandSet<'r, 's>) -> Self
-    {
-        debug_assert!(Self::validate(name).is_ok());
-        let opts_actual = options.unwrap_or(&option_set!());
-        Self { name, options: opts_actual, sub_commands }
-    }
-
-    /// Validate a given name as a possible command
-    ///
-    /// Returns the first flaw identified, if any
-    ///
-    /// Note, only the most crucial problems that could cause issues when parsing are checked for.
-    /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
-    /// free of issues.
-    fn validate(name: &str) -> Result<(), CommandFlaw> {
-        if name.is_empty() {
-            return Err(CommandFlaw::EmptyName);
-        }
-        // Would cause problems with correct `OsStr` based parsing
-        if name.contains('\u{FFFD}') {
-            return Err(CommandFlaw::NameHasForbiddenChar(name, '\u{FFFD}'));
-        }
-        Ok(())
     }
 }
 
