@@ -219,7 +219,8 @@
 //! iterator, allowing arguments to be parsed and responded to one at a time. The latter is done
 //! with the [`parse`][`Parser::parse`] method; internally it uses the iterator method, collecting
 //! the results into an object that it returns, which has methods suitable for performing “data
-//! mining” on them.
+//! mining” on them. There is also the [`parse_cmd`][`Parser::parse_cmd`] method, an alternate to
+//! the latter, for use with programs with command arguments.
 //!
 //! An example of “one at a time” (iterative) analysis:
 //!
@@ -244,7 +245,7 @@
 //! // now react to it...
 //! ```
 //!
-//! One benefit of the “all in one” approach is that the [`Analysis`] object provides a collection
+//! One benefit of the “all in one” approach is that the [`ItemSet`] type provides a collection
 //! of data-mining methods for extracting information, whereas the iterative approach involves a
 //! large match block. However the iterative approach has its advantages also, with less overhead,
 //! being more efficient, and as discussed below, not requiring up-front construction of an entire
@@ -254,10 +255,9 @@
 //! input list.
 //!
 //! If your program uses commands and one or more commands are used in an argument list, the
-//! analysis object returned by the “all in one” approach partitions the items given by the iterator
-//! into multiple sets, per use of commands and how items are matched against different option and
-//! command sets. In this case most/all of the analysis methods on the object itself should be
-//! ignored; using instead the methods available on each item set.
+//! analysis object returned by the “all in one” approach ([`CommandAnalysis`]) partitions the items
+//! given by the iterator into multiple sets, per use of commands and how items are matched against
+//! different option and command sets.
 //!
 //! Note that if you have nested sub-commands, you do **not** *have* to describe the full structure
 //! up front when creating the [`Parser`] if you use the iterative approach; the iterator object
@@ -273,7 +273,7 @@
 //! It is now up to you to take appropriate action in response to what was found.
 //!
 //! In the case of data-mining with respect to the “all in one” approach, go ahead and simply use
-//! the methods available on the [`Analysis`] object. Of course if using commands, you need to
+//! the methods available on the [`ItemSet`] object. Of course if using commands, you need to
 //! handle the partitioning first, and approach data-mining upon each individual [`ItemSet`].
 //!
 //! If not taking a data-mining approach, you need to grasp how *items* are described in the
@@ -287,9 +287,8 @@
 //! next. Matched and unmatched long-option/command names are returned in `&str` form, whilst
 //! positionals and data values are returned in `&OsStr` form.
 //!
-//! Note that the [`Analysis`] object returned by the [`parse`][`Parser::parse`] method contains
-//! a `problems` boolean which gives a quick indication of problems, alongside the list of items,
-//! describing in detail what was found.
+//! Note that the [`ItemSet`] and [`CommandAnalysis`] objects both contain a `problems` boolean
+//! which gives a quick indication of problems (of course).
 //!
 //! As just mentioned, strings representing *positional arguments* and *option data values* are
 //! given in `&OsStr` form. This is ideal for those that represent filenames/paths, and can for
@@ -313,6 +312,7 @@
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
 //! [`Parser::parse_iter`]: ../../parser/struct.Parser.html#method.parse_iter
+//! [`Parser::parse_cmd`]: ../../parser/struct.Parser.html#method.parse_cmd
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
 //! [`Settings`]: ../../parser/struct.Settings.html
@@ -324,7 +324,8 @@
 //! [`Command`]: ../../commands/struct.Command.html
 //! [`CommandSet`]: ../../commands/struct.CommandSet.html
 //! [`CommandSetEx`]: ../../commands/struct.CommandSetEx.html
-//! [`Analysis`]: ../../analysis/struct.Analysis.html
+//! [`CommandAnalysis`]: ../../analysis/struct.CommandAnalysis.html
+//! [`ItemSet`]: ../../analysis/struct.ItemSet.html
 //! [`ItemResult`]: ../../analysis/type.ItemResult.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html

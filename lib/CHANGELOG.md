@@ -16,7 +16,8 @@
       Previously there was just the option set type(s), which directly included settings.
     - The `process` methods on the option set objects have been replaced with “parse” methods on
       this new wrapping `Parser` object. There is a `parse_iter` method for iterative based parsing,
-      and a `parse` method for the “all in one” style.
+      a `parse` method for the “all in one” style, and a `parse_cmd` method providing a suitable
+      alternative to `parse` for command-based programs.
  * Added support for “optional” data-values.
    This means greater flexibility for data-taking options; you can now choose whether providing a
    value to each of them is mandatory or optional. For those mandatory, the behaviour is the same as
@@ -24,7 +25,7 @@
    from the next argument. This is a significant limitation compared to those mandatory, however it
    is necessary to avoid ambiguous situations and this behaviour matches the support in legacy C
    `getopt`.
- * Added data-mining methods to `Analysis`.
+ * Added data-mining methods to `Analysis`, and renamed to `ItemSet`.
    This means that you can now, for instance, ask if an option was used, how many times it was used,
    retrieve the value from the last instance, or get the set of values of all instances, or get an
    iterator over positionals.

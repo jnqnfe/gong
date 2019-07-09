@@ -88,7 +88,7 @@ fn used() {
     );
     let expected = expected!(
         problems: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        opt_set: get_base_opts(),
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -97,14 +97,11 @@ fn used() {
             expected_item!(4, UnknownShort, 'd'),
             expected_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
             expected_item!(6, LongWithUnexpectedData, "version", "a"),
-        ]),
-        cmd_set: None
+        ]
     );
     let parser = get_parser();
-    let analysis = parser.parse(&args);
-    check_result!(&Actual(analysis.clone()), &expected);
-
-    let item_set = &analysis.item_sets[0];
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
 
     // Check known and used
     assert_eq!(true, item_set.option_used(FindOption::Long("help")));
@@ -144,7 +141,7 @@ fn count() {
     );
     let expected = expected!(
         problems: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        opt_set: get_base_opts(),
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -159,14 +156,11 @@ fn count() {
             expected_item!(8, Long, "help"),
             expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
             expected_item!(10, LongWithUnexpectedData, "version", "a"),
-        ]),
-        cmd_set: None
+        ]
     );
     let parser = get_parser();
-    let analysis = parser.parse(&args);
-    check_result!(&Actual(analysis.clone()), &expected);
-
-    let item_set = &analysis.item_sets[0];
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
 
     // Check known and used
     assert_eq!(2, item_set.count_instances(FindOption::Long("help")));
@@ -201,17 +195,14 @@ mod missing_data {
         );
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, LongMissingData, "hah"),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         assert_eq!(false, item_set.option_used(FindOption::Long("hah")));
     }
@@ -224,17 +215,14 @@ mod missing_data {
         );
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, ShortMissingData, 'o'),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         assert_eq!(false, item_set.option_used(FindOption::Short('o')));
     }
@@ -249,19 +237,19 @@ fn first_problem() {
     );
     let expected = expected!(
         problems: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        opt_set: get_base_opts(),
         [
             expected_item!(0, UnknownLong, "why"),
             expected_item!(1, AmbiguousLong, "fo"),
-        ]),
-        cmd_set: None
+        ]
     );
-    let analysis = get_parser().parse(&args);
-    check_result!(&Actual(analysis.clone()), &expected);
+    let parser = get_parser();
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
 
-    assert_eq!(2, analysis.get_problem_items().count());
+    assert_eq!(2, item_set.get_problem_items().count());
 
-    assert_eq!(analysis.get_first_problem(), Some(&ProblemItem::UnknownLong(0, OsStr::new("why"))));
+    assert_eq!(item_set.get_first_problem(), Some(&ProblemItem::UnknownLong(0, OsStr::new("why"))));
 }
 
 /// Testing iterators over collections of item types
@@ -280,21 +268,18 @@ mod iter {
         );
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Positional, "abc"),
                 expected_item!(1, UnknownLong, "why"),
                 expected_item!(2, AmbiguousLong, "fo"),
                 expected_item!(3, Long, "foo"),
                 expected_item!(4, LongWithUnexpectedData, "help", "blah"),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         // All items
         let mut iter = item_set.get_items();
@@ -335,7 +320,7 @@ mod iter {
         );
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Positional, "abc"),
                 expected_item!(1, Long, "help"),
@@ -346,33 +331,15 @@ mod iter {
                 expected_item!(6, EarlyTerminator),
                 expected_item!(7, Positional, "nop"),
                 expected_item!(8, Positional, "--help"),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        // Via item set
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         assert_eq!(6, item_set.get_positionals().count());
 
         let mut iter = item_set.get_positionals();
-        assert_eq!(iter.next(), Some(OsStr::new("abc")));
-        assert_eq!(iter.next(), Some(OsStr::new("def")));
-        assert_eq!(iter.next(), Some(OsStr::new("hij")));
-        assert_eq!(iter.next(), Some(OsStr::new("klm")));
-        assert_eq!(iter.next(), Some(OsStr::new("nop")));
-        assert_eq!(iter.next(), Some(OsStr::new("--help")));
-        assert_eq!(iter.next(), None);
-
-        // Via analysis convenience function
-
-        assert_eq!(6, analysis.get_positionals().count());
-
-        let mut iter = analysis.get_positionals();
         assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
@@ -399,7 +366,7 @@ fn last_value() {
     );
     let expected = expected!(
         problems: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        opt_set: get_base_opts(),
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -413,14 +380,11 @@ fn last_value() {
             expected_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
             expected_item!(8, Long, "help"),
             expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
-        ]),
-        cmd_set: None
+        ]
     );
     let parser = get_parser();
-    let analysis = parser.parse(&args);
-    check_result!(&Actual(analysis.clone()), &expected);
-
-    let item_set = &analysis.item_sets[0];
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
 
     // Check known and used
     assert_eq!(None, item_set.get_last_value(FindOption::Long("help")));
@@ -460,7 +424,7 @@ fn all_values() {
     );
     let expected = expected!(
         problems: true,
-        @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+        opt_set: get_base_opts(),
         [
             expected_item!(0, Long, "help"),
             expected_item!(1, UnknownLong, "ooo"),
@@ -475,14 +439,11 @@ fn all_values() {
             expected_item!(8, LongWithData, "hah", "456", DataLocation::SameArg),
             expected_item!(9, Long, "help"),
             expected_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
-        ]),
-        cmd_set: None
+        ]
     );
     let parser = get_parser();
-    let analysis = parser.parse(&args);
-    check_result!(&Actual(analysis.clone()), &expected);
-
-    let item_set = &analysis.item_sets[0];
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
 
     let empty_vec: Vec<&OsStr> = Vec::new();
 
@@ -530,7 +491,7 @@ mod last_used {
         );
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Long, "color"),
                 expected_item!(1, Long, "help"),
@@ -544,14 +505,11 @@ mod last_used {
                 expected_item!(8, UnknownShort, 'd'),
                 expected_item!(8, Short, 'C'),
                 expected_item!(9, LongWithUnexpectedData, "version", "a"),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),
@@ -579,21 +537,18 @@ mod last_used {
         let args = arg_list!("--help", "-C", "--no-color", "--color", "-d");
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
                 expected_item!(2, Long, "no-color"),
                 expected_item!(3, Long, "color"),
                 expected_item!(4, UnknownShort, 'd'),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),
@@ -621,21 +576,18 @@ mod last_used {
         let args = arg_list!("--help", "-C", "--color", "--no-color", "-d");
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
                 expected_item!(2, Long, "color"),
                 expected_item!(3, Long, "no-color"),
                 expected_item!(4, UnknownShort, 'd'),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),
@@ -658,21 +610,18 @@ mod last_used {
         let args = arg_list!("--help", "-C", "--no-color", "--color=data", "-d");
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, Short, 'C'),
                 expected_item!(2, Long, "no-color"),
                 expected_item!(3, LongWithUnexpectedData, "color", "data"),
                 expected_item!(4, UnknownShort, 'd'),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),
@@ -695,17 +644,14 @@ mod last_used {
         let args = arg_list!("--help");
         let expected = expected!(
             problems: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false,
+            opt_set: get_base_opts(),
             [
                 expected_item!(0, Long, "help"),
-            ]),
-            cmd_set: None
+            ]
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),
@@ -728,14 +674,12 @@ mod last_used {
         let args: Vec<&OsStr> = Vec::new();
         let expected = expected!(
             problems: false,
-            @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
-            cmd_set: None
+            opt_set: get_base_opts(),
+            []
         );
         let parser = get_parser();
-        let analysis = parser.parse(&args);
-        check_result!(&Actual(analysis.clone()), &expected);
-
-        let item_set = &analysis.item_sets[0];
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
 
         let find = [
             FindOption::Long("color"),

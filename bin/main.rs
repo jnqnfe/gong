@@ -163,28 +163,19 @@ fn main() {
         },
     }
 
-    let results: Vec<_> = parser.parse_iter(&args[..]).collect();
+    let results = parser.parse(&args[..]);
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    let mut problems = false;
-
-    for item in &results {
-        match *item {
-            Err(_) => { problems = true; },
-            Ok(_) => {},
-        }
-    }
-
-    match problems {
+    match results.problems {
         true => { println!("Problems: {}true{}", c!(COL_E), c!(RESET)); },
         false => {
             println!("Problems: {}false{}", c!(COL_O), c!(RESET));
         },
     }
 
-    println!("Items: {}\n", results.len());
-    for result in &results {
+    println!("Items: {}\n", results.items.len());
+    for result in &results.items {
         let printer = match *result {
             Ok(_) => print_arg_ok,
             Err(_) => print_arg_err,
@@ -226,7 +217,7 @@ fn main() {
             Err(ProblemItem::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
         }
     }
-    if results.len() != 0 {
+    if results.items.len() != 0 {
         println!();
     }
 }

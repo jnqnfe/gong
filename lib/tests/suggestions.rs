@@ -21,7 +21,7 @@ mod options {
     use gong::{longopt, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use self::super::common::{self, Actual, Expected};
+    use self::super::common::{Actual, Expected};
 
     #[test]
     fn basic() {
@@ -36,14 +36,13 @@ mod options {
         let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
+            opt_set: &opts,
             [
                 expected_item!(0, UnknownLong, "a"),
                 expected_item!(1, UnknownLong, "foo"),
                 expected_item!(2, UnknownLong, "hellp"),
                 expected_item!(3, UnknownLong, "but_i_digest"),
-            ]),
-            cmd_set: None
+            ]
         );
 
         let mut parser = Parser::new(&opts, None);
@@ -52,10 +51,10 @@ mod options {
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
+        for item in &actual_results.0.items {
             match item {
                 Err(ProblemItem::UnknownLong(_, name)) => {
-                    suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
+                    suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
             }
@@ -87,13 +86,12 @@ mod options {
         let args = arg_list!("--hellp", "--bard", "--fooa");
         let expected = expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
+            opt_set: &opts,
             [
                 expected_item!(0, UnknownLong, "hellp"),
                 expected_item!(1, UnknownLong, "bard"),
                 expected_item!(2, UnknownLong, "fooa"),
-            ]),
-            cmd_set: None
+            ]
         );
 
         let mut parser = Parser::new(&opts, None);
@@ -102,10 +100,10 @@ mod options {
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
+        for item in &actual_results.0.items {
             match item {
                 Err(ProblemItem::UnknownLong(_, name)) => {
-                    suggestions.push((*name, actual_results.0.item_sets[0].opt_set.suggest(name)));
+                    suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
             }
@@ -124,7 +122,7 @@ mod commands {
     use gong::{command, command_set, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use self::super::common::{self, Actual, Expected};
+    use self::super::common::{CmdActual, CmdExpected};
 
     #[test]
     fn basic() {
@@ -138,29 +136,33 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("but_i_digest");
-        let expected = expected!(
+        let expected = cmd_expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
-            [
-                expected_item!(0, UnknownCommand, "but_i_digest"),
-            ]),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    expected_item!(0, UnknownCommand, "but_i_digest"),
+                ])
+            ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
+        let actual_results = CmdActual(parser.parse_cmd(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
-            match item {
-                Err(ProblemItem::UnknownCommand(_, name)) => {
-                    if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*name, cmd_set.suggest(name)));
+        for part in &actual_results.0.parts {
+            if let CommandBlockPart::ItemSet(is) = part {
+                for item in &is.items {
+                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                        if let Some(cmd_set) = actual_results.0.cmd_set {
+                            suggestions.push((*name, cmd_set.suggest(name)));
+                        }
                     }
-                },
-                _ => unreachable!(),
+                }
             }
         }
         assert_eq!(suggestions, vec!(
@@ -180,29 +182,33 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("bard");
-        let expected = expected!(
+        let expected = cmd_expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
-            [
-                expected_item!(0, UnknownCommand, "bard"),
-            ]),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    expected_item!(0, UnknownCommand, "bard"),
+                ])
+            ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
+        let actual_results = CmdActual(parser.parse_cmd(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
-            match item {
-                Err(ProblemItem::UnknownCommand(_, name)) => {
-                    if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*name, cmd_set.suggest(name)));
+        for part in &actual_results.0.parts {
+            if let CommandBlockPart::ItemSet(is) = part {
+                for item in &is.items {
+                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                        if let Some(cmd_set) = actual_results.0.cmd_set {
+                            suggestions.push((*name, cmd_set.suggest(name)));
+                        }
                     }
-                },
-                _ => unreachable!(),
+                }
             }
         }
         assert_eq!(suggestions, vec!(
@@ -222,29 +228,33 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("hellp");
-        let expected = expected!(
+        let expected = cmd_expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
-            [
-                expected_item!(0, UnknownCommand, "hellp"),
-            ]),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    expected_item!(0, UnknownCommand, "hellp"),
+                ])
+            ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
+        let actual_results = CmdActual(parser.parse_cmd(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
-            match item {
-                Err(ProblemItem::UnknownCommand(_, name)) => {
-                    if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*name, cmd_set.suggest(name)));
+        for part in &actual_results.0.parts {
+            if let CommandBlockPart::ItemSet(is) = part {
+                for item in &is.items {
+                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                        if let Some(cmd_set) = actual_results.0.cmd_set {
+                            suggestions.push((*name, cmd_set.suggest(name)));
+                        }
                     }
-                },
-                _ => unreachable!(),
+                }
             }
         }
         assert_eq!(suggestions, vec!(
@@ -264,29 +274,33 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("fooa");
-        let expected = expected!(
+        let expected = cmd_expected!(
             problems: true,
-            @itemset item_set!(cmd: "", opt_set: &opts, problems: true,
-            [
-                expected_item!(0, UnknownCommand, "fooa"),
-            ]),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    expected_item!(0, UnknownCommand, "fooa"),
+                ])
+            ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = Parser::new(&opts, Some(&cmds));
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
+        let actual_results = CmdActual(parser.parse_cmd(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.item_sets[0].items {
-            match item {
-                Err(ProblemItem::UnknownCommand(_, name)) => {
-                    if let Some(cmd_set) = actual_results.0.cmd_set {
-                        suggestions.push((*name, cmd_set.suggest(name)));
+        for part in &actual_results.0.parts {
+            if let CommandBlockPart::ItemSet(is) = part {
+                for item in &is.items {
+                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                        if let Some(cmd_set) = actual_results.0.cmd_set {
+                            suggestions.push((*name, cmd_set.suggest(name)));
+                        }
                     }
-                },
-                _ => unreachable!(),
+                }
             }
         }
         assert_eq!(suggestions, vec!(

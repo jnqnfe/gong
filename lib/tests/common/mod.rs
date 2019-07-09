@@ -13,14 +13,18 @@
 pub mod base;
 pub use self::base::{get_base_opts, get_base_cmds};
 
-use gong::analysis::Analysis;
+use gong::analysis::{ItemSet, CommandAnalysis, CommandBlockPart};
 use gong::commands::CommandSet;
 use gong::parser::Parser;
 
 /// Wrapper for actual analysis result
-#[derive(Debug)] pub struct Actual<'a, 'b>(pub Analysis<'a, 'b>);
+#[derive(Debug)] pub struct Actual<'a, 'b>(pub ItemSet<'a, 'b>);
 /// Wrapper for expected result, for comparison
-#[derive(Debug)] pub struct Expected<'a, 'b>(pub Analysis<'a, 'b>);
+#[derive(Debug)] pub struct Expected<'a, 'b>(pub ItemSet<'a, 'b>);
+/// Wrapper for actual analysis result (command partitioned)
+#[derive(Debug)] pub struct CmdActual<'a, 'b>(pub CommandAnalysis<'a, 'b>);
+/// Wrapper for expected result, for comparison (command partitioned)
+#[derive(Debug)] pub struct CmdExpected<'a, 'b>(pub CommandAnalysis<'a, 'b>);
 
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
@@ -31,22 +35,35 @@ macro_rules! arg_list {
 
 /// Construct an `Expected`
 macro_rules! expected {
-    ( problems: $problems:expr, $(@itemset $item_set:expr),*, cmd_set: $cmd_set:expr ) => {
-        Expected(Analysis {
-            cmd_set: $cmd_set,
+    ( problems: $problems:expr, opt_set: $opt_set:expr, $items:expr ) => {
+        Expected(item_set!(problems: $problems, opt_set: $opt_set, $items))
+    };
+}
+
+/// Construct an `CmdExpected`
+macro_rules! cmd_expected {
+    ( problems: $problems:expr, $(@part $part:expr),*, cmd_set: $cmd_set:expr ) => {
+        CmdExpected(CommandAnalysis {
+            parts: vec![ $($part),* ],
             problems: $problems,
-            item_sets: vec![ $($item_set),* ],
+            cmd_set: $cmd_set,
         })
     };
 }
 
 /// Construct an `ItemSet`
 macro_rules! item_set {
-    ( cmd: $cmd:expr, opt_set: $opt_set:expr, problems: $problems:expr, $items:expr ) => {{
+    ( problems: $problems:expr, opt_set: $opt_set:expr, $items:expr ) => {{
         let mut temp_vec = Vec::new();
         temp_vec.extend_from_slice(&$items);
-        ItemSet { command: $cmd, opt_set: $opt_set, problems: $problems, items: temp_vec, }
+        ItemSet { items: temp_vec, problems: $problems, opt_set: $opt_set }
     }};
+}
+
+/// Construct a `CommandBlockPart`
+macro_rules! cmd_part {
+    ( command: $i:expr, $c:expr ) => { CommandBlockPart::Command($i, $c) };
+    ( item_set: $is:expr ) => { CommandBlockPart::ItemSet($is) };
 }
 
 /// Construct an `ItemResult` result item, for an `Expected`.
@@ -119,29 +136,42 @@ fn get_parser_common(commands: Option<&'static CommandSet<'static, 'static>>) ->
     parser
 }
 
-/// Common central function for comparing actual analysis result with expected.
+/// Check actual result matches expected
 ///
-/// Benefits:
-///
-/// - Fewer uses of `assert_eq`, less likely to make a typo, putting `assert_ne` by mistake
-/// - `Actual` and `Expected` wrappers help ensure correct comparison
-/// - Central place where `pretty_print_results` can be enabled and called when desired in debugging
+/// On failure, has details printed, and test failed via assert failure (with this being a macro the
+/// source file and line number of where this was used will be printed, which is very helpful!)
 macro_rules! check_result {
     ( $actual:expr, $expected:expr) => {{
-        // type enforcement!
-        let actual: &Actual = $actual;
-        let expected: &Expected = $expected;
-        if actual.0 != expected.0 {
-            eprintln!("Actual:");
-            common::pretty_print_results(&actual.0);
-            eprintln!("Expected:");
-            common::pretty_print_results(&expected.0);
-
+        if $actual.as_expected($expected) == false {
             assert!(false, "analysis does not match what was expected!");
         }
-        std::mem::drop(actual);
-        std::mem::drop(expected);
     }}
+}
+
+impl<'a, 'b> Actual<'a, 'b> {
+    pub fn as_expected(&self, expected: &Expected) -> bool {
+        let equal = self.0 == expected.0;
+        if !equal {
+            eprintln!("Actual:");
+            pretty_print_results(&self.0);
+            eprintln!("Expected:");
+            pretty_print_results(&expected.0);
+        }
+        equal
+    }
+}
+
+impl<'a, 'b> CmdActual<'a, 'b> {
+    pub fn as_expected(&self, expected: &CmdExpected) -> bool {
+        let equal = self.0 == expected.0;
+        if !equal {
+            eprintln!("Actual:");
+            pretty_print_cmd_results(&self.0);
+            eprintln!("Expected:");
+            pretty_print_cmd_results(&expected.0);
+        }
+        equal
+    }
 }
 
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
@@ -149,32 +179,58 @@ macro_rules! check_result {
 ///
 /// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
 /// an output, so we custom build a more compact version here.
-pub fn pretty_print_results(analysis: &Analysis) {
-    let mut item_sets = String::new();
-    for item_set in &analysis.item_sets {
-        let mut items = String::new();
-        for item in &item_set.items {
-            items.push_str(&format!("\n                {:?},", item));
-        }
-        item_sets.push_str(&format!("
+fn pretty_print_results(analysis: &ItemSet) {
+    let mut items = String::new();
+    for item in &analysis.items {
+        items.push_str(&format!("\n            {:?},", item));
+    }
+    eprintln!("\
+ItemSet {{
+    items: [{}
+    ],
+    problems: {},
+    opt_set: {:p},
+}}",
+    items, analysis.problems, analysis.opt_set);
+}
+
+/// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
+/// than with the raw output dumped by the test env.
+///
+/// Note, the `:#?` formatter is available as the “pretty” version of `:?`, but this is too sparse
+/// an output, so we custom build a more compact version here.
+fn pretty_print_cmd_results(analysis: &CommandAnalysis) {
+    let mut parts = String::new();
+    for part in &analysis.parts {
+        match part {
+            CommandBlockPart::Command(i, c) => {
+                parts.push_str(&format!("\n        Command: ({}, {}),", i, c));
+            },
+            CommandBlockPart::ItemSet(s) => {
+                let mut items = String::new();
+                for item in &s.items {
+                    items.push_str(&format!("\n                {:?},", item));
+                }
+                parts.push_str(&format!("
         ItemSet {{
-            command: {},
             items: [{}
             ],
             problems: {},
             opt_set: {:p},
-        }}", item_set.command, items, item_set.problems, item_set.opt_set));
+        }}",
+                    items, s.problems, s.opt_set));
+            },
+        }
     }
     let cmd_set = match analysis.cmd_set {
         Some(cs) => format!("{:p}", cs),
         None => String::from("none"),
     };
     eprintln!("\
-Analysis {{
-    item_sets: [{}
+CommandAnalysis {{
+    parts: [{}
     ],
     problems: {},
     cmd_set: {},
-}}",
-    item_sets, analysis.problems, cmd_set);
+}}", parts, analysis.problems, cmd_set);
 }
