@@ -103,7 +103,7 @@ mod change_data {
         let mut new_settings = parse_iter.get_parse_settings(); // Get current settings
         new_settings.set_mode(OptionsMode::Alternate);          // Change them
         parse_iter.set_parse_settings(new_settings);            // Apply them
-        // NB: We confirm change of settings took place successfully by the fact that we're matching
+        // NB: We confirm change of settings took place successfully by the fact that we’re matching
         // the next option in alternate mode.
 
         assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar")));

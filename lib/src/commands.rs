@@ -43,7 +43,7 @@ pub struct Command<'r, 's: 'r> {
 ///
 /// Used to supply the set of information about available commands to match against
 ///
-/// This is the "extendible" variant which uses `Vec`s to hold the command lists and thus is
+/// This is the “extendible” variant which uses `Vec`s to hold the command lists and thus is
 /// flexible in allowing addition of commands, and may re-allocate as necessary.
 ///
 /// Note, certain add option methods panic with invalid identifiers, as documented, however you must

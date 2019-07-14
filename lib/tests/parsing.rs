@@ -361,7 +361,7 @@ mod utf8 {
 
     /// Chars with variation selector
     ///
-    /// Here we use the "heavy black heart" char with variation selector #16 (emoji).
+    /// Here we use the “heavy black heart” char with variation selector #16 (emoji).
     #[test]
     fn variation_selectors() {
         // Note: the following is the “black heart” character, followed by the variation selector
@@ -800,12 +800,12 @@ mod data {
     /// Test some misc. data handling.
     ///
     /// Unrecognised option with data; unrecognised with empty data; recognised with unexpected
-    /// data; recognised with empty unexpected data; and that long option "component" splitting
+    /// data; recognised with empty unexpected data; and that long option “component” splitting
     /// based on the first equals character (`=`) has no effect on short option set parsing.
     #[test]
     fn misc() {
         let args = arg_list!(
-            "--xx=yy",   // Unrecognised long option, with data, name component is "xx"
+            "--xx=yy",   // Unrecognised long option, with data, name component is “xx”
             "--tt=",     // Unrecognised long option, with data, but data is empty string
             "-x",        // Random
             "--foo=bar", // Known long option, but does **not** take data, thus unexpected
@@ -939,7 +939,7 @@ mod data {
     }
 
     /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
-    /// denotes an "in-arg" data value and thus it is broken up into name and data components. Here
+    /// denotes an “in-arg” data value and thus it is broken up into name and data components. Here
     /// we check that an `=` does not result in unwanted behaviour in order positions.
     #[test]
     fn containing_equals() {
@@ -1071,7 +1071,7 @@ mod data {
         check_result!(&Actual(get_parser().parse(&args)), &expected);
     }
 
-    /// Test long option involving multi-byte chars, to ensure "in-arg" component splitting for
+    /// Test long option involving multi-byte chars, to ensure “in-arg” component splitting for
     /// instance.
     #[test]
     fn multibyte_long() {
@@ -1102,7 +1102,7 @@ mod data {
     }
 
     /// Test short options involving multi-byte chars to check offset calculations in iterating
-    /// through a short option set and extracting "in-arg" data.
+    /// through a short option set and extracting “in-arg” data.
     #[test]
     fn multibyte_short() {
         let args = arg_list!(

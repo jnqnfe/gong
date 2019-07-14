@@ -146,7 +146,7 @@ mod options {
     /// Check `is_empty`
     #[test]
     fn is_empty() {
-        // Here, let's double-check that the derive of `Default` for fixed option sets is really an
+        // Here, let’s double-check that the derive of `Default` for fixed option sets is really an
         // empty set
         let opt_set = OptionSet::default();
         assert!(opt_set.is_empty());
@@ -292,7 +292,7 @@ mod commands {
     /// Check `is_empty`
     #[test]
     fn is_empty() {
-        // Here, let's double-check that the derive of `Default` for fixed command sets is an empty set
+        // Here, let’s double-check that the derive of `Default` for fixed command sets is an empty set
         let cmd_set = CommandSet::default();
         assert!(cmd_set.is_empty());
 

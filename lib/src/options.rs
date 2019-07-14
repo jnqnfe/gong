@@ -64,7 +64,7 @@ pub enum OptionType {
 ///
 /// Used to supply the set of information about available options to match against
 ///
-/// This is the "extendible" variant which uses `Vec`s to hold the option lists and thus is flexible
+/// This is the “extendible” variant which uses `Vec`s to hold the option lists and thus is flexible
 /// in allowing addition of options, and may re-allocate as necessary.
 ///
 /// Note, certain add option methods panic with invalid identifiers, as documented, however you must
