@@ -14,10 +14,11 @@
 //!
 //! > What are “positional” arguments? They are *generic* arguments, basically any argument which is
 //! > not interpreted as an *option* argument, a *command* argument, or an *early terminator*. The
-//! > term “positional” relates to the fact that the position in the argument list determines the
-//! > purpose of each one. Contrast this with a data-taking option argument, where the option
-//! > name/character gives purpose to the data value (and allows greater flexibility, for instance
-//! > in terms of order).
+//! > term “positional” relates to the fact that the position (index number) in the argument list is
+//! > the only thing available to determine the association between the argument and what it is to
+//! > be used for (i.e. the first positional is for X, the second for Y). Contrast this with an
+//! > *option* argument, where the option name/character gives meaning and allows extra flexibility
+//! > in terms of the order in which such arguments can be given.
 //!
 //! You don’t. *Describing* positional arguments would only be useful if something would be done
 //! with that information, which is not the case with this library. If a positional argument is
