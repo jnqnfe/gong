@@ -24,7 +24,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{longopt, command, command_set, option_set};
 use gong::analysis::*;
-use self::common::get_parser;
+use self::common::{get_parser, get_parser_cmd};
 
 /// Some general, basic argument handling
 #[test]
@@ -38,7 +38,7 @@ fn basic() {
         "-o123",        // Data taking short option, in-same-arg
         "-Ɛ", "456",    // Data taking short option, in-next-arg
     );
-    let parser = get_parser();
+    let parser = get_parser_cmd();
     let mut parse_iter = parser.parse_iter(&args);
     assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownCommand, "abc")));
     assert_eq!(parse_iter.next(), Some(expected_item!(1, Long, "help")));

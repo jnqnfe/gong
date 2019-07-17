@@ -20,7 +20,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
-use self::common::{get_parser, get_base_opts, get_base_cmds, Actual, Expected};
+use self::common::{get_parser, get_base_opts, Actual, Expected};
 
 /// Some of the tests here expect certain options to exist in the common options set, where such
 /// options are **not** being used in the test arguments, so we need to assert that they definitely
@@ -98,7 +98,7 @@ fn used() {
             expected_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
             expected_item!(6, LongWithUnexpectedData, "version", "a"),
         ]),
-        cmd_set: Some(get_base_cmds())
+        cmd_set: None
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
@@ -160,7 +160,7 @@ fn count() {
             expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
             expected_item!(10, LongWithUnexpectedData, "version", "a"),
         ]),
-        cmd_set: Some(get_base_cmds())
+        cmd_set: None
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
@@ -205,7 +205,7 @@ mod missing_data {
             [
                 expected_item!(0, LongMissingData, "hah"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -228,7 +228,7 @@ mod missing_data {
             [
                 expected_item!(0, ShortMissingData, 'o'),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -254,7 +254,7 @@ fn first_problem() {
             expected_item!(0, UnknownLong, "why"),
             expected_item!(1, AmbiguousLong, "fo"),
         ]),
-        cmd_set: Some(get_base_cmds())
+        cmd_set: None
     );
     let analysis = get_parser().parse(&args);
     check_result!(&Actual(analysis.clone()), &expected);
@@ -282,13 +282,13 @@ mod iter {
             problems: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
-                expected_item!(0, UnknownCommand, "abc"),
+                expected_item!(0, Positional, "abc"),
                 expected_item!(1, UnknownLong, "why"),
                 expected_item!(2, AmbiguousLong, "fo"),
                 expected_item!(3, Long, "foo"),
                 expected_item!(4, LongWithUnexpectedData, "help", "blah"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -298,7 +298,7 @@ mod iter {
 
         // All items
         let mut iter = item_set.get_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, UnknownCommand, "abc")));
+        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
         assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
         assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
@@ -307,12 +307,12 @@ mod iter {
 
         // Good items
         let mut iter = item_set.get_good_items();
+        assert_eq!(iter.next(), Some(&Item::Positional(0, OsStr::new("abc"))));
         assert_eq!(iter.next(), Some(&Item::Long(3, "foo")));
         assert_eq!(iter.next(), None);
 
         // Problem items
         let mut iter = item_set.get_problem_items();
-        assert_eq!(iter.next(), Some(&ProblemItem::UnknownCommand(0, OsStr::new("abc"))));
         assert_eq!(iter.next(), Some(&ProblemItem::UnknownLong(1, OsStr::new("why"))));
         assert_eq!(iter.next(), Some(&ProblemItem::AmbiguousLong(2, OsStr::new("fo"))));
         assert_eq!(iter.next(), Some(&ProblemItem::LongWithUnexpectedData { i: 4, n: "help", d: OsStr::new("blah") }));
@@ -323,7 +323,7 @@ mod iter {
     #[test]
     fn positionals() {
         let args = arg_list!(
-            "abc",          // Unknown command
+            "abc",          // Positional
             "--help",       // Known option
             "def",          // Positional
             "hij",          // Positional
@@ -337,7 +337,7 @@ mod iter {
             problems: true,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: true,
             [
-                expected_item!(0, UnknownCommand, "abc"),
+                expected_item!(0, Positional, "abc"),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, Positional, "def"),
                 expected_item!(3, Positional, "hij"),
@@ -347,7 +347,7 @@ mod iter {
                 expected_item!(7, Positional, "nop"),
                 expected_item!(8, Positional, "--help"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -357,9 +357,10 @@ mod iter {
 
         let item_set = &analysis.item_sets[0];
 
-        assert_eq!(5, item_set.get_positionals().count());
+        assert_eq!(6, item_set.get_positionals().count());
 
         let mut iter = item_set.get_positionals();
+        assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
         assert_eq!(iter.next(), Some(OsStr::new("klm")));
@@ -369,9 +370,10 @@ mod iter {
 
         // Via analysis convenience function
 
-        assert_eq!(5, analysis.get_positionals().count());
+        assert_eq!(6, analysis.get_positionals().count());
 
         let mut iter = analysis.get_positionals();
+        assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
         assert_eq!(iter.next(), Some(OsStr::new("klm")));
@@ -412,7 +414,7 @@ fn last_value() {
             expected_item!(8, Long, "help"),
             expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
         ]),
-        cmd_set: Some(get_base_cmds())
+        cmd_set: None
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
@@ -474,7 +476,7 @@ fn all_values() {
             expected_item!(9, Long, "help"),
             expected_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
         ]),
-        cmd_set: Some(get_base_cmds())
+        cmd_set: None
     );
     let parser = get_parser();
     let analysis = parser.parse(&args);
@@ -543,7 +545,7 @@ mod last_used {
                 expected_item!(8, Short, 'C'),
                 expected_item!(9, LongWithUnexpectedData, "version", "a"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -585,7 +587,7 @@ mod last_used {
                 expected_item!(3, Long, "color"),
                 expected_item!(4, UnknownShort, 'd'),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -627,7 +629,7 @@ mod last_used {
                 expected_item!(3, Long, "no-color"),
                 expected_item!(4, UnknownShort, 'd'),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -664,7 +666,7 @@ mod last_used {
                 expected_item!(3, LongWithUnexpectedData, "color", "data"),
                 expected_item!(4, UnknownShort, 'd'),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -697,7 +699,7 @@ mod last_used {
             [
                 expected_item!(0, Long, "help"),
             ]),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);
@@ -727,7 +729,7 @@ mod last_used {
         let expected = expected!(
             problems: false,
             @itemset item_set!(cmd: "", opt_set: get_base_opts(), problems: false, []),
-            cmd_set: Some(get_base_cmds())
+            cmd_set: None
         );
         let parser = get_parser();
         let analysis = parser.parse(&args);

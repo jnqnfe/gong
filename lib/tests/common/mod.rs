@@ -14,6 +14,7 @@ pub mod base;
 pub use self::base::{get_base_opts, get_base_cmds};
 
 use gong::analysis::Analysis;
+use gong::commands::CommandSet;
 use gong::parser::Parser;
 
 /// Wrapper for actual analysis result
@@ -101,9 +102,19 @@ macro_rules! cmdset_subcmdset_ref {
     ( $base:expr, $($index:expr),* ) => { &$base$(.commands[$index].sub_commands)* }
 }
 
-/// Get common base `Parser` set with common base option and command sets
+/// Get common base `Parser` set with common base option set and an empty command set
 pub fn get_parser() -> Parser<'static, 'static> {
-    let mut parser = Parser::new(base::get_base_opts(), Some(base::get_base_cmds()));
+    get_parser_common(None)
+}
+
+/// Get common base `Parser` set with common base option and command sets
+pub fn get_parser_cmd() -> Parser<'static, 'static> {
+    get_parser_common(Some(base::get_base_cmds()))
+}
+
+#[inline]
+fn get_parser_common(commands: Option<&'static CommandSet<'static, 'static>>) -> Parser<'static, 'static> {
+    let mut parser = Parser::new(base::get_base_opts(), commands);
     parser.settings.set_stop_on_problem(false);
     parser
 }
