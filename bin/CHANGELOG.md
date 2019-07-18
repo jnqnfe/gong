@@ -5,7 +5,8 @@
  * Updated per addition of understanding of command arguments (though not using any yet)
  * Updated per refactor upon `OsStr` based parsing
  * Updated per merge of `ItemE` and `ItemW`
- * Updated per merge of with-data long/short item types into non-data variants
+ * Updated per merge of with-data long/short item types into non-data variants and simplification
+   of `LongWithUnexpectedData`
  * Added `posixly_correct`, `no_stop_on_problem` and `no_cmd_abbreviations` features
  * Renamed the `no_abbreviations` feature to `no_opt_abbreviations`
 

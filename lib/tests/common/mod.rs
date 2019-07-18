@@ -87,7 +87,7 @@ macro_rules! expected_item {
     ( $i:expr, UnknownShort, $c:expr ) => { Err(ProblemItem::UnknownShort($i, $c)) };
     ( $i:expr, UnknownCommand, $n:expr ) => { Err(ProblemItem::UnknownCommand($i, OsStr::new($n))) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr ) => {
-        Err(ProblemItem::LongWithUnexpectedData { i: $i, n: $n, d: OsStr::new($d) })
+        Err(ProblemItem::LongWithUnexpectedData($i, $n, OsStr::new($d)))
     };
     ( $i:expr, LongMissingData, $n:expr ) => { Err(ProblemItem::LongMissingData($i, $n)) };
     ( $i:expr, ShortMissingData, $c:expr ) => { Err(ProblemItem::ShortMissingData($i, $c)) };

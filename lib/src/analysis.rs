@@ -153,8 +153,8 @@ pub enum ProblemItem<'a> {
     /// Short option match, but data argument missing
     ShortMissingData(usize, char),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
-    /// no data.
-    LongWithUnexpectedData{ i: usize, n: &'a str, d: &'a OsStr },
+    /// no data. (The first string is the option name, the second the data).
+    LongWithUnexpectedData(usize, &'a str, &'a OsStr),
 }
 
 /// Used to describe where data was located, for options that require data
@@ -449,7 +449,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
             match *item {
                 Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
+                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
                     if option.matches_long(n) { return true; }
                 },
                 Ok(Item::Short(_, c, _)) => {
@@ -492,7 +492,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 // non-data-taking options and just taking the last value provided otherwise.
                 Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
+                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
                     if option.matches_long(n) { count += 1; }
                 },
                 Ok(Item::Short(_, c, _)) => {
@@ -603,7 +603,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
             match *item {
                 Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
+                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
@@ -767,7 +767,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 // stored in the data-mining objects and we cared to check it.
                 Ok(Item::Long(_, n, None)) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
+                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }

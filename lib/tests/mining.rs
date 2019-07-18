@@ -300,7 +300,7 @@ mod iter {
         let mut iter = item_set.get_problem_items();
         assert_eq!(iter.next(), Some(&ProblemItem::UnknownLong(1, OsStr::new("why"))));
         assert_eq!(iter.next(), Some(&ProblemItem::AmbiguousLong(2, OsStr::new("fo"))));
-        assert_eq!(iter.next(), Some(&ProblemItem::LongWithUnexpectedData { i: 4, n: "help", d: OsStr::new("blah") }));
+        assert_eq!(iter.next(), Some(&ProblemItem::LongWithUnexpectedData(4, "help", OsStr::new("blah"))));
         assert_eq!(iter.next(), None);
     }
 

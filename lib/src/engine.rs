@@ -332,9 +332,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     }
                     else {
                         let data = data_included.unwrap();
-                        Some(Err(ProblemItem::LongWithUnexpectedData {
-                            i: arg_index, n: opt_name, d: data
-                        }))
+                        Some(Err(ProblemItem::LongWithUnexpectedData(arg_index, opt_name, data)))
                     }
                 }
                 else {

@@ -195,7 +195,7 @@ fn main() {
                 print_data(*l, d);
             },
             Err(ProblemItem::LongMissingData(i, n)) => printer(*i, "LongMissingData", OsStr::new(&n)),
-            Err(ProblemItem::LongWithUnexpectedData { i, n, d }) => {
+            Err(ProblemItem::LongWithUnexpectedData(i, n, d)) => {
                 printer(*i, "LongWithUnexpectedData", OsStr::new(&n));
                 println!("    data: {:?}", d)
             },
