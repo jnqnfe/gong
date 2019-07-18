@@ -37,6 +37,7 @@
    *command non-options* and *positional non-options*.
  * Added an `add_shorts_from_str` method to `OptionSetEx`, which allows adding multiple short
    options in one go using a string.
+ * Merged `LongWithData` and `ShortWithData` item types into `Long` and `Short` respectively
  * Removed the `LongWithNoName` item type, now `UnknownLong` is used, with an empty name string
  * Simplified problematic item reporting:
     - Merged the `ItemE` and `ItemW` enums into one `ProblemItem` enum

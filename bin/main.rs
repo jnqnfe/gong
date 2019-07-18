@@ -189,8 +189,8 @@ fn main() {
         match result {
             Ok(Item::Positional(i, s)) => printer(*i, "Positional", s),
             Ok(Item::EarlyTerminator(i)) => printer(*i, "EarlyTerminator", OsStr::new("")),
-            Ok(Item::Long(i, n)) => printer(*i, "Long", OsStr::new(&n)),
-            Ok(Item::LongWithData { i, n, d, ref l }) => {
+            Ok(Item::Long(i, n, None)) => printer(*i, "Long", OsStr::new(&n)),
+            Ok(Item::Long(i, n, Some((d, ref l)))) => {
                 printer(*i, "LongWithData", OsStr::new(&n));
                 print_data(*l, d);
             },
@@ -202,11 +202,11 @@ fn main() {
             Err(ProblemItem::AmbiguousLong(i, n)) => printer(*i, "AmbiguousLong", n),
             Err(ProblemItem::AmbiguousCmd(i, n)) => printer(*i, "AmbiguousCmd", n),
             Err(ProblemItem::UnknownLong(i, n)) => printer(*i, "UnknownLong", OsStr::new(&n)),
-            Ok(Item::Short(i, c)) => {
+            Ok(Item::Short(i, c, None)) => {
                 let desc = desc_char(*c);
                 printer(*i, "Short", OsStr::new(&desc));
             },
-            Ok(Item::ShortWithData { i, c, d, ref l }) => {
+            Ok(Item::Short(i, c, Some((d, ref l)))) => {
                 let desc = desc_char(*c);
                 printer(*i, "ShortWithData", OsStr::new(&desc));
                 print_data(*l, d);

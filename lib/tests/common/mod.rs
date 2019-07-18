@@ -74,13 +74,13 @@ macro_rules! cmd_part {
 macro_rules! expected_item {
     ( $i:expr, Positional, $s:expr ) => { Ok(Item::Positional($i, OsStr::new($s))) };
     ( $i:expr, EarlyTerminator ) => { Ok(Item::EarlyTerminator($i)) };
-    ( $i:expr, Long, $n:expr ) => { Ok(Item::Long($i, $n)) };
-    ( $i:expr, Short, $c:expr ) => { Ok(Item::Short($i, $c)) };
+    ( $i:expr, Long, $n:expr ) => { Ok(Item::Long($i, $n, None)) };
+    ( $i:expr, Short, $c:expr ) => { Ok(Item::Short($i, $c, None)) };
     ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr ) => {
-        Ok(Item::LongWithData { i: $i, n: $n, d: OsStr::new($d), l: $l })
+        Ok(Item::Long($i, $n, Some((OsStr::new($d), $l))))
     };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr ) => {
-        Ok(Item::ShortWithData { i: $i, c: $c, d: OsStr::new($d), l: $l })
+        Ok(Item::Short($i, $c, Some((OsStr::new($d), $l))))
     };
     ( $i:expr, Command, $n:expr ) => { Ok(Item::Command($i, $n)) };
     ( $i:expr, UnknownLong, $n:expr ) => { Err(ProblemItem::UnknownLong($i, OsStr::new($n))) };

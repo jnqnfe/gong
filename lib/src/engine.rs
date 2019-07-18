@@ -305,22 +305,21 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                         // Data included in same argument
                         // We accept it even if it’s an empty string
                         if let Some(data) = data_included {
-                            Some(Ok(Item::LongWithData {
-                                i: arg_index, n: opt_name, d: data, l: DataLocation::SameArg
-                            }))
+                            Some(Ok(Item::Long(
+                                arg_index, opt_name, Some((data, DataLocation::SameArg))
+                            )))
                         }
                         // Data consumption is optional
                         else if matched.opt_type == OptionType::OptionalData {
-                            Some(Ok(Item::LongWithData {
-                                i: arg_index, n: opt_name, d: OsStr::new(""), l: DataLocation::SameArg
-                            }))
+                            Some(Ok(Item::Long(
+                                arg_index, opt_name, Some((OsStr::new(""), DataLocation::SameArg))
+                            )))
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            Some(Ok(Item::LongWithData {
-                                i: arg_index, n: opt_name, d: next_arg.as_ref(),
-                                l: DataLocation::NextArg
-                            }))
+                            Some(Ok(Item::Long(
+                                arg_index, opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
+                            )))
                         }
                         // Data missing
                         else {
@@ -329,7 +328,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     }
                     // Ignore unexpected data if empty string
                     else if data_included.is_none() || data_included == Some(OsStr::new("")) {
-                        Some(Ok(Item::Long(arg_index, opt_name)))
+                        Some(Ok(Item::Long(arg_index, opt_name, None)))
                     }
                     else {
                         let data = data_included.unwrap();
@@ -438,7 +437,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             Some(Err(ProblemItem::UnknownShort(self.arg_index, ch)))
         }
         else if opt_type == OptionType::Flag {
-            Some(Ok(Item::Short(self.arg_index, ch)))
+            Some(Ok(Item::Short(self.arg_index, ch, None)))
         }
         else {
             let bytes_consumed_updated = byte_pos + ch.len_utf8();
@@ -450,21 +449,21 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
                     self.bytes_consumed = bytes_consumed_updated;
                 }
                 let data = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
-                Some(Ok(Item::ShortWithData {
-                    i: self.arg_index, c: ch, d: data, l: DataLocation::SameArg
-                }))
+                Some(Ok(Item::Short(
+                    self.arg_index, ch, Some((data, DataLocation::SameArg))
+                )))
             }
             // Data consumption is optional
             else if opt_type == OptionType::OptionalData {
-                Some(Ok(Item::ShortWithData {
-                    i: self.arg_index, c: ch, d: OsStr::new(""), l: DataLocation::SameArg
-                }))
+                Some(Ok(Item::Short(
+                    self.arg_index, ch, Some((OsStr::new(""), DataLocation::SameArg))
+                )))
             }
             // Data included in next argument
             else if let Some((_, next_arg)) = self.arg_iter.next() {
-                Some(Ok(Item::ShortWithData {
-                    i: self.arg_index, c: ch, d: next_arg.as_ref(), l: DataLocation::NextArg
-                }))
+                Some(Ok(Item::Short(
+                    self.arg_index, ch, Some((next_arg.as_ref(), DataLocation::NextArg))
+                )))
             }
             // Data missing
             else {

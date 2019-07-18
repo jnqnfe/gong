@@ -115,14 +115,10 @@ pub enum Item<'a> {
     Positional(usize, &'a OsStr),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
-    /// Long option match.
-    Long(usize, &'a str),
-    /// Long option match, with expected data argument.
-    LongWithData{ i: usize, n: &'a str, d: &'a OsStr, l: DataLocation },
-    /// Short option match.
-    Short(usize, char),
-    /// Short option match, with expected data argument.
-    ShortWithData{ i: usize, c: char, d: &'a OsStr, l: DataLocation },
+    /// Long option match, possibly with a data argument.
+    Long(usize, &'a str, Option<(&'a OsStr, DataLocation)>),
+    /// Short option match, possibly with a data argument.
+    Short(usize, char, Option<(&'a OsStr, DataLocation)>),
     /// Command match.
     Command(usize, &'a str),
 }
@@ -451,14 +447,12 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
-                Ok(Item::Long(_, n)) |
-                Ok(Item::LongWithData { n, .. }) |
+                Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
                 Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     if option.matches_long(n) { return true; }
                 },
-                Ok(Item::Short(_, c)) |
-                Ok(Item::ShortWithData { c, .. }) => {
+                Ok(Item::Short(_, c, _)) => {
                     if option.matches_short(c) { return true; }
                 },
                 _ => {},
@@ -496,14 +490,12 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Long(_, n)) |
-                Ok(Item::LongWithData { n, .. }) |
+                Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
                 Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     if option.matches_long(n) { count += 1; }
                 },
-                Ok(Item::Short(_, c)) |
-                Ok(Item::ShortWithData { c, .. }) => {
+                Ok(Item::Short(_, c, _)) => {
                     if option.matches_short(c) { count += 1; }
                 },
                 _ => {},
@@ -536,10 +528,10 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s OsStr> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::LongWithData { n, ref d, .. }) => {
+                Ok(Item::Long(_, n, Some((ref d, _)))) => {
                     if option.matches_long(n) { return Some(d.clone()); }
                 },
-                Ok(Item::ShortWithData { c, ref d, .. }) => {
+                Ok(Item::Short(_, c, Some((ref d, _)))) => {
                     if option.matches_short(c) { return Some(d.clone()); }
                 },
                 _ => {},
@@ -570,10 +562,10 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     {
         self.items.iter()
             .filter_map(move |i| match i {
-                Ok(Item::LongWithData { n, d, .. }) => {
+                Ok(Item::Long(_, n, Some((d, _)))) => {
                     if option.matches_long(n) { Some(*d) } else { None }
                 },
-                Ok(Item::ShortWithData { c, d, .. }) => {
+                Ok(Item::Short(_, c, Some((d, _)))) => {
                     if option.matches_short(*c) { Some(*d) } else { None }
                 },
                 _ => None,
@@ -609,16 +601,14 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(_, n)) |
-                Ok(Item::LongWithData{ n, .. }) |
+                Ok(Item::Long(_, n, _)) |
 //TODO: possibly remove, if we take a strict stance against all problems
                 Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
                 },
-                Ok(Item::Short(_, c)) |
-                Ok(Item::ShortWithData{ c, .. }) => {
+                Ok(Item::Short(_, c, _)) => {
                     for o in options.clone() {
                         if o.matches_short(c) { return Some(FoundOption::Short(c)); }
                     }
@@ -652,7 +642,8 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///  - There is no restriction on naming, since you are in full control of the names searched
     ///    for, i.e. you could use `foo` for positive and `no-foo` for negative, or `with-foo` and
     ///    `without-foo`; and you can obviously change the style used per search.
-    ///  - Only flag type options are searchable, data taking ones are ignored.
+    ///  - Only flag type options should be used with this. Use with other option types is undefined
+    ///    behaviour.
 //TODO: update if changing the corresponding functionality
     ///  - With the potential [`LongWithUnexpectedData`] problematic item variant, the problem is
     ///    ignored, considering it a clean match.
@@ -766,14 +757,22 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
         for item in self.items.iter().rev() {
             // Note, we deliberately ignore data-taking option variants here.
             match *item {
-                Ok(Item::Long(_, n)) |
+                // Note, we attempt to restrict to flag style items only by specifying that the data
+                // attribute must be `None`, but this also actually covers mixed type options when
+                // no data provided. It is not possible to distinguish between the two (without the
+                // data-location attribute, which the engine sets for mixed options despite always
+                // being same-arg, specifically to help with this sort of situation, but unavailable
+                // since not stored in the data-mining objects). We just have to put this down to
+                // being a quirk of this function. Nothing can be done unless the extra data were
+                // stored in the data-mining objects and we cared to check it.
+                Ok(Item::Long(_, n, None)) |
 //TODO: possibly remove, if we take a strict stance against all problems
                 Err(ProblemItem::LongWithUnexpectedData { n, .. }) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }
                 },
-                Ok(Item::Short(_, c)) => {
+                Ok(Item::Short(_, c, None)) => {
                     for (o, tag) in options.clone() {
                         if o.matches_short(c) { return Some((FoundOption::Short(c), tag)); }
                     }

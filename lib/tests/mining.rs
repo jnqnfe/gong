@@ -293,7 +293,7 @@ mod iter {
         // Good items
         let mut iter = item_set.get_good_items();
         assert_eq!(iter.next(), Some(&Item::Positional(0, OsStr::new("abc"))));
-        assert_eq!(iter.next(), Some(&Item::Long(3, "foo")));
+        assert_eq!(iter.next(), Some(&Item::Long(3, "foo", None)));
         assert_eq!(iter.next(), None);
 
         // Problem items
