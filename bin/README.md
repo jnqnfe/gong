@@ -43,9 +43,10 @@ The test program has the following features that can be enabled/disabled when co
     positional argument are also taken to be positionals, per the POSIX standard.
  - `no_opt_abbreviations` disables `gong`’s abbreviated long option name matching feature.
  - `no_cmd_abbreviations` disables `gong`’s abbreviated command name matching feature.
+ - `no_stop_on_problem` disables stopping parsing upon encountering a problem.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.
- - `color` enables formatted (color/bold/etc) analysis output
+ - `color` enables formatted (color/bold/etc) analysis output.
 
 To use these features, use Cargo’s `features` option. You can enable a single feature, such as
 `alt_mode` as `--features alt_mode` or `--features=alt_mode`. You can enable multiple features by

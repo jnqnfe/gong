@@ -95,7 +95,8 @@ fn main() {
     }
     parser.settings.set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
                    .set_allow_cmd_abbreviations(!cfg!(feature = "no_cmd_abbreviations"))
-                   .set_posixly_correct(cfg!(feature = "posixly_correct"));
+                   .set_posixly_correct(cfg!(feature = "posixly_correct"))
+                   .set_stop_on_problem(!cfg!(feature = "no_stop_on_problem"));
 
     debug_assert!(parser.is_valid());
 
@@ -125,6 +126,11 @@ fn main() {
     println!("Abbreviated command name matching: {}on{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "no_cmd_abbreviations")]
     println!("Abbreviated command name matching: {}off{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "no_stop_on_problem"))]
+    println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "no_stop_on_problem")]
+    println!("Stop parsing upon problem: {}off{}", c!(COL_MODE), c!(RESET));
 
     println!("\nCompile with different features to change the config!\n");
 
@@ -215,6 +221,11 @@ fn main() {
             },
             Ok(Item::Command(i, n)) => printer(*i, "Command", OsStr::new(&n)),
             Err(ProblemItem::UnknownCommand(i, n)) => printer(*i, "UnknownCommand", OsStr::new(&n)),
+        }
+    }
+    #[cfg(not(feature = "no_stop_on_problem"))] {
+        if results.problems {
+            println!("\nProblem found, stopped early!");
         }
     }
     if results.items.len() != 0 {
