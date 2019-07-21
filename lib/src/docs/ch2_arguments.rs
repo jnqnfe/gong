@@ -133,7 +133,7 @@
 //! Without the *early terminator* `cargo` would have seen `--foo` and `--bar` to be *options* and
 //! thus tried to consume them for itself (resulting in unrecognised *option* errors).
 //!
-//! [overview]: ../overview/index.html
-//! [options]: ../options/index.html
-//! [commands]: ../commands/index.html
-//! [unicode]: ../unicode/index.html
+//! [overview]: ../ch1_overview/index.html
+//! [options]: ../ch2_options/index.html
+//! [commands]: ../ch4_commands/index.html
+//! [unicode]: ../ch5_unicode/index.html

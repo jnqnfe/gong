@@ -329,6 +329,6 @@
 //! [`ItemResult`]: ../../analysis/type.ItemResult.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html
-//! [commands_doc]: ../commands/index.html
-//! [options_doc]: ../options/index.html
-//! [unicode_doc]: ../unicode/index.html
+//! [options_doc]: ../ch3_options/index.html
+//! [commands_doc]: ../ch4_commands/index.html
+//! [unicode_doc]: ../ch5_unicode/index.html

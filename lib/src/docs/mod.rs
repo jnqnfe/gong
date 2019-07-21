@@ -10,10 +10,10 @@
 
 //! Documentation
 
-pub mod arguments;
-pub mod commands;
-pub mod overview;
-pub mod options;
-pub mod unicode;
-pub mod usage;
-pub mod faq;
+pub mod ch1_overview;
+pub mod ch2_arguments;
+pub mod ch3_options;
+pub mod ch4_commands;
+pub mod ch5_unicode;
+pub mod ch6_usage;
+pub mod ch7_faq;

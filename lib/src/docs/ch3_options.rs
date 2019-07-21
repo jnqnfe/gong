@@ -12,7 +12,7 @@
 //!
 //! This crate has been designed around standard *option* conventions.
 //!
-//! Basic feature support is on par with the C `getopt_long` function. (See the [overview] section
+//! Basic feature support is on par with the C `getopt_long` function. (See the [overview] chapter
 //! for mention of the small differences).
 //!
 //! # Option styles
@@ -155,6 +155,6 @@
 //!
 //! Note that an exact match always takes precedence.
 //!
-//! [overview]: ../overview/index.html
-//! [commands]: ../commands/index.html
-//! [unicode]: ../unicode/index.html
+//! [overview]: ../ch1_overview/index.html
+//! [commands]: ../ch4_commands/index.html
+//! [unicode]: ../ch5_unicode/index.html

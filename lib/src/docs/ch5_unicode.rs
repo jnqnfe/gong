@@ -122,6 +122,6 @@
 //!
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
 //! [`Parser::parse_os`]: ../../parser/struct.Parser.html#method.parse_os
-//! [overview]: ../overview/index.html
-//! [commands]: ../commands/index.html
-//! [options]: ../options/index.html
+//! [overview]: ../ch1_overview/index.html
+//! [options]: ../ch3_options/index.html
+//! [commands]: ../ch4_commands/index.html

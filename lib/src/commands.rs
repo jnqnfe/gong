@@ -17,7 +17,7 @@
 //! See the separate [*commands* support discussion][commands] for details on what *command
 //! arguments* are, and the details on how parsing works with respect to them.
 //!
-//! [commands]: ../docs/commands/index.html
+//! [commands]: ../docs/ch4_commands/index.html
 
 #[cfg(feature = "suggestions")]
 use std::ffi::OsStr;

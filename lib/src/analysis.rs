@@ -88,7 +88,7 @@
 //! [`CommandBlockPart::Command`]: enum.CommandBlockPart.html#variant.Command
 //! [`FindOption`]: enum.FindOption.html
 //! [`FoundOption`]: enum.FoundOption.html
-//! [commands]: ../docs/commands/index.html
+//! [commands]: ../docs/ch4_commands/index.html
 
 use std::ffi::OsStr;
 use crate::commands::CommandSet;

@@ -17,7 +17,7 @@
 //! See the separate [*options* support discussion][options] for details on the types of *options*
 //! supported by this parsing library.
 //!
-//! [options]: ../docs/options/index.html
+//! [options]: ../docs/ch3_options/index.html
 
 #[cfg(feature = "suggestions")]
 use std::ffi::OsStr;

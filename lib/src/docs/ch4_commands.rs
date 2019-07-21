@@ -103,5 +103,5 @@
 //! <prog-name> build foo --help
 //! ```
 //!
-//! [arguments]: ../arguments/index.html
-//! [option support]: ../options/index.html
+//! [arguments]: ../ch2_arguments/index.html
+//! [option support]: ../ch3_options/index.html

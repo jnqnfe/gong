@@ -62,7 +62,7 @@ macro_rules! command_set {
 ///  * `@data` to indicate a data-taking option, which requires a value.
 ///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
 ///
-/// See the [options documentation](docs/options/index.html) for discussion of the differences.
+/// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
@@ -92,7 +92,7 @@ macro_rules! longopt {
 ///  * `@data` to indicate a data-taking option, which requires a value.
 ///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
 ///
-/// See the [options documentation](docs/options/index.html) for discussion of the differences.
+/// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///

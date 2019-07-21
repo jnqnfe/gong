@@ -45,8 +45,8 @@
 //! [`parse`]: struct.Parser.html#method.parse
 //! [`parse_cmd`]: struct.Parser.html#method.parse_cmd
 //! [`parse_iter`]: struct.Parser.html#method.parse_iter
-//! [commands]: ../docs/commands/index.html
-//! [options]: ../docs/options/index.html
+//! [commands]: ../docs/ch4_commands/index.html
+//! [options]: ../docs/ch3_options/index.html
 
 use std::convert::AsRef;
 use std::ffi::OsStr;
