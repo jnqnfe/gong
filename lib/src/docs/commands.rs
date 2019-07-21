@@ -13,16 +13,9 @@
 //! This crate has built-in understanding of *command arguments*, thus simplifying argument parsing
 //! for applications that use them.
 //!
-//! *Command arguments* are *non-option* arguments (see [option support]), which are given special
-//! meaning by an application, used to select its execution mode (e.g. specify an “action” that it
-//! should perform). They also affect argument parsing by changing the set of *options* that
-//! subsequent arguments are matched against, to a potentially different set, i.e. an *option set*
-//! specific to the given *command*.
-//!
-//! `Cargo` and `Git` are two examples of programs that use *command arguments*.
-//!
-//!  - `Cargo`’s include: `build`, `test`, and `run`
-//!  - `Git`’s include: `clone`, `branch`, `add`, and `push`
+//! See the [arguments overview][arguments] for an introductory explanation of what *command*
+//! arguments are. The following gives additional details of how they work (at least with respect to
+//! this parsing library).
 //!
 //! *Command arguments* have a command *name*, an associated *option set* (which may be empty), and
 //! a set of *sub-commands* (which also may be empty). Each *sub-command* has its own *name*,
@@ -110,4 +103,5 @@
 //! <prog-name> build foo --help
 //! ```
 //!
+//! [arguments]: ../arguments/index.html
 //! [option support]: ../options/index.html

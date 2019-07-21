@@ -10,6 +10,7 @@
 
 //! Documentation
 
+pub mod arguments;
 pub mod commands;
 pub mod overview;
 pub mod options;
