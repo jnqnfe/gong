@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation: Option support
+//! Documentation: Option argument support
 //!
 //! This crate has been designed around standard *option* conventions.
 //!
@@ -21,17 +21,15 @@
 //! library as the *option* parsing “mode”:
 //!
 //! - Standard mode (default) supports traditional *long* and *short* *options*, where *long
-//!   options* use a “double-dash” (`--`) prefix (e.g. `--help`), and *short option sets* use a
-//!   single dash (e.g. `-h`).
+//!   options* use a “double-dash” prefix (e.g. `--help`), and *short options* use a single dash
+//!   (e.g. `-h`).
 //! - Alternate mode supports *long options* only (no *short options*), with a single dash prefix
-//!   (i.e. `-help` rather than `--help`). Some people simply prefer this style, and support for it
-//!   was both trivial to add and involves very little overhead.
+//!   (i.e. `-help` rather than `--help`). Some people simply prefer this style.
 //!
 //! > **Note:** *Short options* can still be added to an *option set* when using this mode, it will
 //! > still pass as valid; they will simply be ignored when performing matching.
 //!
-//! Which style an argument list will be parsed with must be specified in the parser settings, at
-//! some point prior to parsing.
+//! Which style an argument list will be parsed with must be specified in the parser’s settings.
 //!
 //! Note, from this point on, the below discussion is written towards *standard* mode conventions,
 //! though everything applies equally to *alternate* mode, only with a few obvious details adjusted
@@ -42,10 +40,9 @@
 //! The fundamental argument parsing logic follows this model:
 //!
 //!  - An argument either **not** starting with a dash (`-`), or consisting only of a single dash,
-//!    is not an *option*, it is a *non-option* argument. A *non-option* argument is either a
-//!    *positional* argument, or possibly a *[command argument][commands]*.
-//!  - An argument of exactly two dashes (`--`) only is called an *early terminator*. This has
-//!    special meaning, as described separately.
+//!    is **not** an *option* argument.
+//!  - An argument of exactly two dashes (`--`) only is **not** an *option* argument, it is an
+//!    *early terminator*.
 //!  - An argument starting with two dashes (`--`) followed by additional characters is a *long
 //!    option*. The portion after the double-dash prefix is the *long option name* (or possibly the
 //!    name combined with an “in-same-argument” *data value*, as discussed below).
@@ -61,21 +58,25 @@
 //! Naturally, for *alternate* mode *option* style, ignore the discussion of *short options*, and
 //! remember that only a single dash is used as the prefix for *long options*.
 //!
-//! Parsing of each argument may alter how one or more subsequent arguments are interpreted,
-//! deviating from the above. Specifically this applies to the *early terminator* and where an
-//! *option* is recognised as an *option* that takes a *data value*, as discussed below.
+//! Arguments are parsed in sequence, one at a time; Parsing of each argument may alter how one or
+//! more subsequent arguments are interpreted, deviating from the above. For instance, consider the
+//! effect of the *early terminator* and of *options* with “in-next-argument” data values, as
+//! discussed below.
 //!
 //! Note, *option* matching is case-sensitive.
 //!
 //! # Data values
 //!
-//! *Long* and *short* *options* can be configured as either “flag” style (used to signal a
-//! condition) or as “data taking” style, accepting an accompanying single *data value*.
+//! *Long* and *short* *options* can be configured as either of “flag” type or of “data taking”
+//! type, with the latter taking a single accompanying *data value*. This value can be configured as
+//! either mandatory, or optional, per option. In the latter case certain restrictions apply on
+//! their use.
 //!
-//! *Data values* for both *long* and *short* *options* can either be supplied within the same
-//! argument as the *option* itself (“in-same-argument”), or as the next argument, in which case
-//! that will thus be consumed as the *option*’s *data value* and otherwise ignored. A data value
-//! can be made optional, in which case it is only ever consumed from within the same argument.
+//! Mandatory *data values* for both *long* and *short* *options* can either be supplied within the
+//! same argument as the *option* itself (“in-same-argument”), or as the next argument
+//! (“in-next-argument”), in which case that will thus be consumed as the *option*’s *data value*
+//! and otherwise ignored. In the case of optional *data values*, these are only ever consumed from
+//! within the same argument.
 //!
 //! ## With long options
 //!
@@ -86,31 +87,40 @@
 //!
 //! When parsing a *long option* argument, if the argument contains one or more equals (`=`)
 //! characters then it is considered to have an “in-same-argument” *data value* (since names are not
-//! permitted to contain them), and is split into two components upon the first. The left hand
-//! portion (without the double-dash prefix) is taken as the name, and the right as the
-//! “in-same-argument” *data value* (e.g. `--foo=bar` → name: “foo”, value: “bar”), with the equals
-//! (`=`) separator being discarded. This naturally occurs **before** checking for a matching
-//! “available” program *option*.
+//! permitted to contain them), even if that equals character is the last character in the string
+//! (to allow users to signal an empty string as being the intended string value). It thus splits it
+//! up into two components upon the first equals. The left hand portion (without the double-dash
+//! prefix) is taken as the name, and the right as the “in-same-argument” *data value*, with the
+//! equals (`=`) separator being discarded. For example, `--foo=bar` translates to a name of “foo”
+//! and a value of “bar”). This naturally occurs **before** checking for a matching “available”
+//! program *option*.
+//!
+//! The components are then handled thusly:
 //!
 //!  - If the name component does not match any “available” *long option*, then it is reported as
 //!    unknown, with any “in-same-argument” *data value* component ignored.
-//!  - If a match is found which **does not** take a *data value* (i.e. is a “flag” type option),
-//!    then if an “in-same-argument” *data value* component was supplied, its presence is reported
-//!    as unexpected, otherwise all is good.
-//!  - If a match is found that **does** take a *data value*, then if an “in-same-argument” *data
-//!    value* component was present, this is consumed as such, otherwise, if this option
-//!    **requires** a value (it is not optional) then the next argument is consumed. If an
-//!    “in-same-argument” *data value* component was present, but the actual value is missing (e.g.
-//!    as in `--foo=`), this does not matter, the *data value* is accepted as being an empty string.
-//!    If in an “in-next-argument” situation, the next argument is an empty string (e.g. as in
-//!    `--foo ""`), the *data value* is also accepted as an empty string. If in an
-//!    “in-next-argument” situation there is no next argument, then the *data value* is reported as
-//!    missing.
+//!  - If a match is found, then what happens depends upon the type of option matched against:
+//!
+//!     - For “flag” type options (those that **do not** take a *data value*), if no
+//!       “in-same-argument” *data value* component was supplied, then all is good, otherwise its
+//!       presence is reported as unexpected. However if it is an empty string then here an empty
+//!       string will simply be ignored, i.e. `--foo=` is treated as though it were just `--foo`.
+//!     - For mandatory data-taking options (those that require a value), then if an
+//!       “in-same-argument” *data value* component was present, this is consumed as such (even if
+//!       an empty string such as in `--foo=`), otherwise the next argument is consumed. If in an
+//!       “in-next-argument” situation, the next argument is an empty string (e.g. as in`--foo ""`),
+//!       the *data value* is also accepted as such. If in an “in-next-argument” situation there is
+//!       no next argument, then the *data value* is reported as missing.
+//!     - For optional data-taking options (those where supplying a value is optional), remember
+//!       that a value can only be provided “in-same-argument” style. If an “in-same-argument”
+//!       *data value* component was present, this is consumed as such in an identical manner to the
+//!       mandatory type. If no “in-same-argument” value was supplied, this is treated the same as
+//!       if an empty string was supplied.
 //!
 //! ## With short options
 //!
-//! For *short options*, “in-next-argument” style looks like `-o arg`, while “in-same-argument”
-//! style looks like `-oarg`.
+//! For *short options*, “in-next-argument” style looks like `-o val`, while “in-same-argument”
+//! style looks like `-oval`.
 //!
 //! When a *short option set* is encountered (remember, more than one *short option* can be grouped
 //! together in the same argument), the characters are gone through in sequence, looking for a
@@ -121,11 +131,16 @@
 //!    then the match is simply reported.
 //!  - If a match is found that **does** take a *data value*, then one needs to be found. If this
 //!    character is **not** the last in the set, then the remaining portion of the argument is
-//!    consumed as this *option*’s *data value* (e.g. if `o` is such an *option* then in `-oarg`,
-//!    `arg` is it’s *data value*). If it is the last character in the set, and this option
-//!    **requires** a value (it is not optional), then the next argument is consumed (e.g. `-o arg`
-//!    → `arg`). If in an “in-next-argument” situation there is no next argument, then the *data
-//!    value* is reported as missing.
+//!    consumed as this *option*’s *data value* (for example, if `o` is such an *option* then in
+//!    `-oval`, `val` is it’s *data value*). If it is the last character in the set, and this option
+//!    **requires** a value, then the next argument is consumed (for example with `-o val` the value
+//!    is `val`). If in an “in-next-argument” situation there is no next argument, then the *data
+//!    value* is reported as missing. If supplying a value is optional (remember that this can only
+//!    be done “in-same-argument” style) and no value is supplied, the value is considered to be an
+//!    empty string.
+//!
+//! Note that it is not possible to supply an empty string as an “in-same-argument” data value, and
+//! thus not possible at all with an option where supplying a value is optional.
 //!
 //! Naturally when multiple *short options* are grouped together in the same argument, only the last
 //! in that group can be one that takes a *data value*, and users must be careful when constructing
@@ -140,13 +155,13 @@
 //! This is supported and is optional. It is enabled by default, but can be opted out of when
 //! parsing, if not desired, through a parser setting.
 //!
-//! As an example, take the input arguments from the following command line:
+//! As an example, consider the input arguments from the following command line:
 //!
 //! ```text
 //! <progname> --f --fo --foo --foob --fooba --foobar
 //! ```
 //!
-//! If the feature is enabled, and `foo` and `foobar` are available *long options*, then:
+//! If the feature is enabled, and a set of options consisting of `foo` and `foobar`, then:
 //!
 //!  - `--foo` and `--foobar` are exact matches for the available `foo` and `foobar` *options*
 //!    respectively.

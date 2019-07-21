@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation: Overview
+//! Documentation: Crate overview
 //!
 //! A common requirement of a program is the need to parse command line arguments supplied to it.
 //! This library was designed to *assist* Rust based programs in this area.
@@ -18,6 +18,10 @@
 //! In C programming, the common `getopt` and `getopt_long` functions have, for a long time, served
 //! to assist in this area. This library was inspired by them and designed as a similar fundamental
 //! and broadly applicable *assistant*.
+//!
+//! Key principles of this library include efficiency and flexibility. It is intended that this
+//! library be suitable for a wide range of common usage patterns and thus flexible and adaptable,
+//! whilst offering minimal or preferably zero-cost mechanisms to achieve it.
 //!
 //! The basic premise of usage is simple:
 //!

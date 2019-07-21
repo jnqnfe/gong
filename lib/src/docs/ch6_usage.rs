@@ -115,7 +115,7 @@
 //! An example of constructing a *command* based structure is not given here, but it should be
 //! fairly trivial to understand how to achieve.
 //!
-//! ## Create the `Parser`
+//! ## Create the `Parser` itself
 //!
 //! Creating a [`Parser`] requires providing an *option set* reference, and optionally a *command
 //! set* reference.

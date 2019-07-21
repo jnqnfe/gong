@@ -8,47 +8,65 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation: “Command” argument support
+//! Documentation: Command argument support
 //!
-//! This crate has built-in understanding of *command arguments*, thus simplifying argument parsing
+//! This crate has built-in understanding of *command* arguments, thus simplifying argument parsing
 //! for applications that use them.
 //!
 //! See the [arguments overview][arguments] for an introductory explanation of what *command*
 //! arguments are. The following gives additional details of how they work (at least with respect to
 //! this parsing library).
 //!
-//! *Command arguments* have a command *name*, an associated *option set* (which may be empty), and
-//! a set of *sub-commands* (which also may be empty). Each *sub-command* has its own *name*,
-//! *option set* and *sub-command set*. There is no fixed limit to the size and depth of the tree of
-//! *commands* and nested *sub-commands* that can be built for a program.
+//! *Command* arguments each have a command *name*, an associated *option set* (which may be empty),
+//! and a set of *sub-commands* (which also may be empty). Each *sub-command* is simply just a
+//! command in its own right, with the exact same set of attributes. There is no fixed limit to the
+//! size and depth of the tree of *commands* and nested *sub-commands* that can be built for a
+//! program, though typically it is only every a depth of just one or two.
 //!
-//! When parsing a given set of arguments, initially arguments are parsed against the “main”
-//! (“top-level”) options in the *option set* given directly to the parser. If a *non-option* is
-//! encountered, and it is the first *non-option*, it is compared to the “main” (“top-level”) set of
-//! *commands*, if there are any. If there are no commands, then it would simply be considered to be
-//! a *positional*, but if there are commands, then a match will be looked for, and it will either
-//! thus be recognised as a known command, or otherwise reported as an unknown command. In the case
-//! of a known command, all subsequent arguments from that point forward will be parsed against the
-//! *option set* and *sub-command set* of that command. If a command has no sub-command set, then
-//! all *non-options* will be taken to be *positionals*. In the case of an unknown command, parsing
-//! of remaining arguments will continue with the same option/command sets, but naturally the
-//! results will be incorrect if it genuinely was intended as a command (you are free to reinterpret
-//! the unknown command argument to be a positional instead if applicable to your program, in which
-//! case ignore that). Upon encountering an unknown command, no further attempt will be made to
-//! interpret *non-options* as *commands* in subsequent arguments, they will be taken to be
-//! *positionals*.
+//! The command-oriented parser has all of the very same component attributes, minus only the
+//! command name. This set of data is considered the “main” or “top-level” stuff.
+//!
+//! When parsing a given set of arguments, initially the parser starts out using the its “top-level”
+//! set of parsing data. If a *non-option* is encountered, and it is the first *non-option*, it is
+//! compared to the “top-level” set of *commands*, if there are any. If there are no commands, then
+//! it would simply be considered to be a *positional*, but if there are commands, then a match will
+//! be looked for, and it will either thus be recognised as a known command, or otherwise reported
+//! as an unknown command. In the case of a known command, all subsequent arguments from that point
+//! forward will be parsed within the “context” of that command, i.e. against the alternate set of
+//! parsing data (*option set* and *sub-command set*) it defines. If a command has no sub-command
+//! set, then all *non-options* will be taken to be *positionals*. In the case of an unknown
+//! command, parsing of remaining arguments will continue with the same parsing data as before of
+//! course, but naturally the results will be incorrect if it genuinely was intended as a command
+//! (you are free to reinterpret the unknown command argument to be a positional instead if
+//! applicable to your program, in which case ignore that). Upon encountering an unknown command, no
+//! further attempt will be made to interpret *non-options* as *commands* in subsequent arguments,
+//! they will be taken to be *positionals*.
 //!
 //! Note, *command name* matching, like *option* matching, is case-sensitive. Similarly, abbreviated
 //! matching is supported, though is disabled by default (you can enable it with a parser setting).
 //!
-//! Visually, the usage model for a program with *command arguments* looks like this:
+//! Visually, the usage model for a program with *command* arguments looks like this:
 //!
 //! > <prog-name> [main-options] [command [cmd-options] [sub-cmd [sub-cmd-opts] [...]]]
 //!
+//! Or alternatively, broken into a tree:
+//!
+//! ```text
+//! <prog-name>
+//!     ↳ [main-options]
+//!     ↳ [command]
+//!         ↳ [cmd-options]
+//!         ↳ [sub-cmd]
+//!             ↳ [cmd-options]
+//!             ↳ [sub-cmd]
+//!                 ↳ ...
+//! ```
+//!
 //! Per the above description, *positional* arguments cannot come before *command* arguments, they
-//! must always only appear after the last command, mixed with any remaining *option* arguments. Any
-//! attempt to use a *positional* before a command would result in it being interpretted as an
-//! unknown command. (Unless of course the positional happens to unintentially match a command).
+//! must always only appear after the last command, mixed with any remaining *option* arguments (or
+//! only at the very end if in “posixly-correct” parsing mode).  Any attempt to use a *positional*
+//! before a command would result in it being interpretted as an unknown command. (Unless of course
+//! the positional happens to unintentially match a command).
 //!
 //! Thus, where a *command set* (or *sub-command set*) is active, i.e. one or more commands are
 //! available for use, but you also accept one or more *positionals*, understand that the first

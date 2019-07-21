@@ -8,14 +8,14 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! “Available” command argument description components
+//! Command description components
 //!
-//! This module contains components to do with describing the *command arguments* “available” within
+//! This module contains components to do with describing the *command* arguments “available” within
 //! a given program, i.e. those that an argument list will be parsed against. There are components
 //! for describing both individual *commands* and sets of *commands*.
 //!
-//! See the separate [*commands* support discussion][commands] for details on what *command
-//! arguments* are, and the details on how parsing works with respect to them.
+//! See the separate [*commands* support discussion][commands] for details on what *command*
+//! arguments are, and the details on how parsing works with respect to them.
 //!
 //! [commands]: ../docs/ch4_commands/index.html
 

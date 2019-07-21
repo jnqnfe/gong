@@ -8,7 +8,10 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! Documentation
+//! Extended documentation (the “book”)
+//!
+//! The following modules are dedicated solely to providing additional documentation not provided or
+//! suitable to include within other modules. Think of this as the crate “book”.
 
 pub mod ch1_overview;
 pub mod ch2_arguments;

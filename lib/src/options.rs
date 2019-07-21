@@ -8,7 +8,7 @@
 // <http://opensource.org/licenses/MIT> and <http://www.apache.org/licenses/LICENSE-2.0>
 // respectively.
 
-//! “Available” option description components
+//! Option description components
 //!
 //! This module contains components to do with describing the *options* “available” within a given
 //! program, i.e. those that an argument list will be parsed against. There are components for
@@ -277,6 +277,8 @@ impl<'s> OptionSetEx<'s> {
     }
 
     /// Add an existing (ready-made) long option
+    ///
+    /// No validation is performed here; the item given should be valid though.
     #[inline]
     pub fn add_existing_long(&mut self, long: LongOption<'s>) -> &mut Self {
         self.long.push(long);
@@ -284,6 +286,8 @@ impl<'s> OptionSetEx<'s> {
     }
 
     /// Add an existing (ready-made) short option
+    ///
+    /// No validation is performed here; the item given should be valid though.
     #[inline]
     pub fn add_existing_short(&mut self, short: ShortOption) -> &mut Self {
         self.short.push(short);
