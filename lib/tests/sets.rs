@@ -31,21 +31,37 @@ mod options {
         let mut opts = OptionSetEx::new();
         opts.add_short('h')
             .add_short_data('o')
+            .add_short_data_optional('g')
             .add_existing_short(shortopt!(@flag 'a'))
             .add_long("foo")
             .add_long_data("bar")
-            .add_existing_long(longopt!(@flag "foobar"));
+            .add_long_data_optional("hello")
+            .add_existing_long(longopt!(@flag "foobar"))
+            .add_pair('V', "version")
+            .add_pair_data('b', "efgh")
+            .add_pair_data_optional('i', "jklm")
+            .add_existing_pair(shortopt!(@flag 'n'), longopt!(@flag "opqr"));
 
         let expected = OptionSetEx {
             long: vec![
                 longopt!(@flag "foo"),
                 longopt!(@data "bar"),
+                longopt!(@opt_data "hello"),
                 longopt!(@flag "foobar"),
+                longopt!(@flag "version"),
+                longopt!(@data "efgh"),
+                longopt!(@opt_data "jklm"),
+                longopt!(@flag "opqr"),
             ],
             short: vec![
                 shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
+                shortopt!(@opt_data 'g'),
                 shortopt!(@flag 'a'),
+                shortopt!(@flag 'V'),
+                shortopt!(@data 'b'),
+                shortopt!(@opt_data 'i'),
+                shortopt!(@flag 'n'),
             ],
         };
 

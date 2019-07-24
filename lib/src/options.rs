@@ -240,6 +240,14 @@ impl<'s> OptionSetEx<'s> {
         self
     }
 
+    /// Add a long option and short option pair
+    ///
+    /// Panics (debug only) on invalid name or character.
+    #[inline]
+    pub fn add_pair(&mut self, ch: char, name: &'s str) -> &mut Self {
+        self.add_short(ch).add_long(name)
+    }
+
     /// Add a long option that expects data
     ///
     /// Panics (debug only) on invalid name.
@@ -256,6 +264,14 @@ impl<'s> OptionSetEx<'s> {
     pub fn add_short_data(&mut self, ch: char) -> &mut Self {
         self.short.push(ShortOption::new(ch, OptionType::Data));
         self
+    }
+
+    /// Add a long option and whort option pair, which expect data
+    ///
+    /// Panics (debug only) on invalid name.
+    #[inline]
+    pub fn add_pair_data(&mut self, ch: char, name: &'s str) -> &mut Self {
+        self.add_short_data(ch).add_long_data(name)
     }
 
     /// Add a long option that takes optional data
@@ -276,6 +292,14 @@ impl<'s> OptionSetEx<'s> {
         self
     }
 
+    /// Add a long option and short option pair, which take optional data
+    ///
+    /// Panics (debug only) on invalid name.
+    #[inline]
+    pub fn add_pair_data_optional(&mut self, ch: char, name: &'s str) -> &mut Self {
+        self.add_short_data_optional(ch).add_long_data_optional(name)
+    }
+
     /// Add an existing (ready-made) long option
     ///
     /// No validation is performed here; the item given should be valid though.
@@ -292,6 +316,14 @@ impl<'s> OptionSetEx<'s> {
     pub fn add_existing_short(&mut self, short: ShortOption) -> &mut Self {
         self.short.push(short);
         self
+    }
+
+    /// Add an existing (ready-made) long option and short option pair
+    ///
+    /// No validation is performed here; the item given should be valid though.
+    #[inline]
+    pub fn add_existing_pair(&mut self, short: ShortOption, long: LongOption<'s>) -> &mut Self {
+        self.add_existing_short(short).add_existing_long(long)
     }
 
     /// Add multiple short options from string

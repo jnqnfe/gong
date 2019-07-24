@@ -49,10 +49,9 @@
 //! ```rust
 //! use gong::options::OptionSetEx;
 //! let mut opts = OptionSetEx::new();
-//! opts.add_long("help")
-//!     .add_short('h')
+//! opts.add_pair('h', "help")
 //!     .add_long("foo")
-//!     .add_long("version")
+//!     .add_pair('V', "version")
 //!     .add_long("foobar")
 //!     .add_long("ábc")
 //!     .add_long_data("hah") // This one expects a data arg
@@ -80,6 +79,7 @@
 //!     ],
 //!     @short [
 //!         shortopt!(@flag 'h'),
+//!         shortopt!(@flag 'V'),
 //!         shortopt!(@flag '❤'),
 //!         shortopt!(@flag 'x'),
 //!         shortopt!(@data 'o'),
