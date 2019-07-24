@@ -226,8 +226,8 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Panics (debug only) on invalid name.
     #[inline]
-    pub fn add_long(&mut self, name: &'s str) -> &mut Self {
-        self.long.push(LongOption::new(name, OptionType::Flag));
+    pub fn add_long(&mut self, name: &'s str, ty: OptionType) -> &mut Self {
+        self.long.push(LongOption::new(name, ty));
         self
     }
 
@@ -235,8 +235,8 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Panics (debug only) on invalid `char` choice.
     #[inline]
-    pub fn add_short(&mut self, ch: char) -> &mut Self {
-        self.short.push(ShortOption::new(ch, OptionType::Flag));
+    pub fn add_short(&mut self, ch: char, ty: OptionType) -> &mut Self {
+        self.short.push(ShortOption::new(ch, ty));
         self
     }
 
@@ -244,60 +244,8 @@ impl<'s> OptionSetEx<'s> {
     ///
     /// Panics (debug only) on invalid name or character.
     #[inline]
-    pub fn add_pair(&mut self, ch: char, name: &'s str) -> &mut Self {
-        self.add_short(ch).add_long(name)
-    }
-
-    /// Add a long option that expects data
-    ///
-    /// Panics (debug only) on invalid name.
-    #[inline]
-    pub fn add_long_data(&mut self, name: &'s str) -> &mut Self {
-        self.long.push(LongOption::new(name, OptionType::Data));
-        self
-    }
-
-    /// Add a short option that expects data
-    ///
-    /// Panics (debug only) on invalid `char` choice.
-    #[inline]
-    pub fn add_short_data(&mut self, ch: char) -> &mut Self {
-        self.short.push(ShortOption::new(ch, OptionType::Data));
-        self
-    }
-
-    /// Add a long option and whort option pair, which expect data
-    ///
-    /// Panics (debug only) on invalid name.
-    #[inline]
-    pub fn add_pair_data(&mut self, ch: char, name: &'s str) -> &mut Self {
-        self.add_short_data(ch).add_long_data(name)
-    }
-
-    /// Add a long option that takes optional data
-    ///
-    /// Panics (debug only) on invalid name.
-    #[inline]
-    pub fn add_long_data_optional(&mut self, name: &'s str) -> &mut Self {
-        self.long.push(LongOption::new(name, OptionType::OptionalData));
-        self
-    }
-
-    /// Add a short option that takes optional data
-    ///
-    /// Panics (debug only) on invalid `char` choice.
-    #[inline]
-    pub fn add_short_data_optional(&mut self, ch: char) -> &mut Self {
-        self.short.push(ShortOption::new(ch, OptionType::OptionalData));
-        self
-    }
-
-    /// Add a long option and short option pair, which take optional data
-    ///
-    /// Panics (debug only) on invalid name.
-    #[inline]
-    pub fn add_pair_data_optional(&mut self, ch: char, name: &'s str) -> &mut Self {
-        self.add_short_data_optional(ch).add_long_data_optional(name)
+    pub fn add_pair(&mut self, ch: char, name: &'s str, ty: OptionType) -> &mut Self {
+        self.add_short(ch, ty).add_long(name, ty)
     }
 
     /// Add an existing (ready-made) long option

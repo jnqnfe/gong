@@ -29,17 +29,17 @@ mod options {
     #[test]
     fn basic() {
         let mut opts = OptionSetEx::new();
-        opts.add_short('h')
-            .add_short_data('o')
-            .add_short_data_optional('g')
+        opts.add_short('h', OptionType::Flag)
+            .add_short('o', OptionType::Data)
+            .add_short('g', OptionType::OptionalData)
             .add_existing_short(shortopt!(@flag 'a'))
-            .add_long("foo")
-            .add_long_data("bar")
-            .add_long_data_optional("hello")
+            .add_long("foo", OptionType::Flag)
+            .add_long("bar", OptionType::Data)
+            .add_long("hello", OptionType::OptionalData)
             .add_existing_long(longopt!(@flag "foobar"))
-            .add_pair('V', "version")
-            .add_pair_data('b', "efgh")
-            .add_pair_data_optional('i', "jklm")
+            .add_pair('V', "version", OptionType::Flag)
+            .add_pair('b', "efgh", OptionType::Data)
+            .add_pair('i', "jklm", OptionType::OptionalData)
             .add_existing_pair(shortopt!(@flag 'n'), longopt!(@flag "opqr"));
 
         let expected = OptionSetEx {
@@ -75,10 +75,10 @@ mod options {
         let mut opts = OptionSetEx::new();
 
         // Add some existing options, to check they are not modified in any way
-        opts.add_short('h')
-            .add_long("foo")
-            .add_short_data('o')
-            .add_long_data("bar");
+        opts.add_short('h', OptionType::Flag)
+            .add_long("foo", OptionType::Flag)
+            .add_short('o', OptionType::Data)
+            .add_long("bar", OptionType::Data);
 
         opts.add_shorts_from_str("ab:cde::f");
 
@@ -110,24 +110,24 @@ mod options {
         assert_eq!(opts, expected);
 
         opts.add_shorts_from_str(" ");
-        expected.add_short(' ');
+        expected.add_short(' ', OptionType::Flag);
         assert_eq!(opts, expected);
 
         opts.add_shorts_from_str(" :");
-        expected.add_short_data(' ');
+        expected.add_short(' ', OptionType::Data);
         assert_eq!(opts, expected);
 
         opts.add_shorts_from_str(":jkl");
-        expected.add_short('j')
-                .add_short('k')
-                .add_short('l');
+        expected.add_short('j', OptionType::Flag)
+                .add_short('k', OptionType::Flag)
+                .add_short('l', OptionType::Flag);
         assert_eq!(opts, expected);
 
         opts.add_shorts_from_str("mn:::op");
-        expected.add_short('m')
-                .add_short_data_optional('n')
-                .add_short('o')
-                .add_short('p');
+        expected.add_short('m', OptionType::Flag)
+                .add_short('n', OptionType::OptionalData)
+                .add_short('o', OptionType::Flag)
+                .add_short('p', OptionType::Flag);
         assert_eq!(opts, expected);
 
         // Double check

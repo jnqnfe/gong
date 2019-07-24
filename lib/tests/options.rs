@@ -34,14 +34,14 @@ mod short_dash {
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short() {
         let mut opts = OptionSetEx::new();
-        opts.add_short('-'); // Should panic here in debug mode!
+        opts.add_short('-', OptionType::Flag); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short_data() {
         let mut opts = OptionSetEx::new();
-        opts.add_short_data('-'); // Should panic here in debug mode!
+        opts.add_short('-', OptionType::Data); // Should panic here in debug mode!
     }
 
     #[test]
@@ -114,14 +114,14 @@ mod short_rep_char {
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short() {
         let mut opts = OptionSetEx::new();
-        opts.add_short(REPLACEMENT_CHARACTER); // Should panic here in debug mode!
+        opts.add_short(REPLACEMENT_CHARACTER, OptionType::Flag); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_short_data() {
         let mut opts = OptionSetEx::new();
-        opts.add_short_data(REPLACEMENT_CHARACTER); // Should panic here in debug mode!
+        opts.add_short(REPLACEMENT_CHARACTER, OptionType::Data); // Should panic here in debug mode!
     }
 
     #[test]
@@ -153,14 +153,14 @@ mod long_no_name {
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long() {
         let mut opts = OptionSetEx::new();
-        opts.add_long(""); // Should panic here in debug mode!
+        opts.add_long("", OptionType::Flag); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long_data() {
         let mut opts = OptionSetEx::new();
-        opts.add_long_data(""); // Should panic here in debug mode!
+        opts.add_long("", OptionType::Data); // Should panic here in debug mode!
     }
 
     #[test]
@@ -192,14 +192,14 @@ mod long_equals {
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long() {
         let mut opts = OptionSetEx::new();
-        opts.add_long("a=b"); // Should panic here in debug mode!
+        opts.add_long("a=b", OptionType::Flag); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long_data() {
         let mut opts = OptionSetEx::new();
-        opts.add_long_data("a=b"); // Should panic here in debug mode!
+        opts.add_long("a=b", OptionType::Data); // Should panic here in debug mode!
     }
 
     #[test]
@@ -262,14 +262,14 @@ mod long_rep_char {
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long() {
         let mut opts = OptionSetEx::new();
-        opts.add_long("a\u{FFFD}b"); // Should panic here in debug mode!
+        opts.add_long("a\u{FFFD}b", OptionType::Flag); // Should panic here in debug mode!
     }
 
     #[test]
     #[cfg_attr(debug_assertions, should_panic)]
     fn add_long_data() {
         let mut opts = OptionSetEx::new();
-        opts.add_long_data("a\u{FFFD}b"); // Should panic here in debug mode!
+        opts.add_long("a\u{FFFD}b", OptionType::Data); // Should panic here in debug mode!
     }
 
     #[test]
@@ -329,14 +329,14 @@ mod duplicates {
     #[test]
     fn short() {
         let mut opts = OptionSetEx::with_capacity(0, 8);
-        opts.add_short('a')
-            .add_short('b')
-            .add_short('c')
-            .add_short('c')       // dup
-            .add_short_data('d')
-            .add_short_data('b')  // dup (ignore data indicator)
-            .add_short('e')
-            .add_short('b');      // dup
+        opts.add_short('a', OptionType::Flag)
+            .add_short('b', OptionType::Flag)
+            .add_short('c', OptionType::Flag)
+            .add_short('c', OptionType::Flag)  // dup
+            .add_short('d', OptionType::Data)
+            .add_short('b', OptionType::Data)  // dup (ignore data indicator)
+            .add_short('e', OptionType::Flag)
+            .add_short('b', OptionType::Flag); // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::ShortDuplicated('b'),
@@ -347,14 +347,14 @@ mod duplicates {
     #[test]
     fn long() {
         let mut opts = OptionSetEx::with_capacity(8, 0);
-        opts.add_long("aaa")
-            .add_long("bbb")
-            .add_long("ccc")
-            .add_long("ccc")      // dup
-            .add_long_data("ddd")
-            .add_long_data("bbb") // dup (ignore data indicator)
-            .add_long("eee")
-            .add_long("bbb");     // dup
+        opts.add_long("aaa", OptionType::Flag)
+            .add_long("bbb", OptionType::Flag)
+            .add_long("ccc", OptionType::Flag)
+            .add_long("ccc", OptionType::Flag)  // dup
+            .add_long("ddd", OptionType::Data)
+            .add_long("bbb", OptionType::Data)  // dup (ignore data indicator)
+            .add_long("eee", OptionType::Flag)
+            .add_long("bbb", OptionType::Flag); // dup
         assert_eq!(false, opts.is_valid());
         assert_eq!(opts.validate(), Err(vec![
             OptionFlaw::LongDuplicated("bbb"),

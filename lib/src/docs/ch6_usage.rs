@@ -47,18 +47,18 @@
 //! An example of *option set* construction, “builder” style:
 //!
 //! ```rust
-//! use gong::options::OptionSetEx;
+//! use gong::options::{OptionSetEx, OptionType};
 //! let mut opts = OptionSetEx::new();
-//! opts.add_pair('h', "help")
-//!     .add_long("foo")
-//!     .add_pair('V', "version")
-//!     .add_long("foobar")
-//!     .add_long("ábc")
-//!     .add_long_data("hah") // This one expects a data arg
-//!     .add_long_data_optional("delay")
-//!     .add_short('❤')
-//!     .add_short('x')
-//!     .add_short_data('o')  // So does this one
+//! opts.add_pair('h', "help", OptionType::Flag)
+//!     .add_long("foo", OptionType::Flag)
+//!     .add_pair('V', "version", OptionType::Flag)
+//!     .add_long("foobar", OptionType::Flag)
+//!     .add_long("ábc", OptionType::Flag)
+//!     .add_long("hah", OptionType::Data)
+//!     .add_long("delay", OptionType::OptionalData)
+//!     .add_short('❤', OptionType::Flag)
+//!     .add_short('x', OptionType::Flag)
+//!     .add_short('o', OptionType::Data)
 //!     .add_shorts_from_str("jk:l"); // Multiple shorts from string, where `k` takes data
 //! ```
 //!

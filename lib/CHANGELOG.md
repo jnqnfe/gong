@@ -34,6 +34,8 @@
    Enforcement of “posixly correct” parsing behaviour means disallowing mixing of options and
    positionals, thus all arguments after a positional are to be interpreted as being positionals.
  * Added methods to `OptionSetEx` for adding a pair of related long and short options together
+ * Simplified the set of methods available on `OptionSetEx` for adding options; there had become too
+   many of them, so some were removed in favour of adding an option type parameter.
  * Renamed the analysis `NonOption` variant to `Positional`, better distinguishing between
    *command non-options* and *positional non-options*.
  * Added an `add_shorts_from_str` method to `OptionSetEx`, which allows adding multiple short

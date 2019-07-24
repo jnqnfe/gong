@@ -16,6 +16,7 @@ extern crate gong;
 #[allow(dead_code)] //Mod shared across test crates
 mod common;
 
+use gong::options::OptionType;
 use gong::parser::{Settings, OptionsMode};
 use self::common::{get_parser, get_base_opts, get_base_cmds};
 
@@ -48,7 +49,7 @@ mod base_opt_set {
     #[should_panic]
     fn can_break() {
         let mut opts = get_base_opts().to_extendible();
-        opts.add_long("foo"); // Duplicate - should panic here in debug mode!
+        opts.add_long("foo", OptionType::Flag); // Duplicate - should panic here in debug mode!
         assert!(opts.is_valid());
         assert_eq!(opts.validate(), Ok(()));
     }
