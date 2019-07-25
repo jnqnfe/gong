@@ -22,6 +22,8 @@
 #![doc(html_logo_url = "https://github.com/jnqnfe/gong/raw/master/logo.png",
        html_favicon_url = "https://github.com/jnqnfe/gong/raw/master/favicon.ico")]
 
+#![deny(bare_trait_objects)]
+
 #[cfg(feature = "suggestions")]
 extern crate strsim;
 
