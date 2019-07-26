@@ -240,6 +240,7 @@ impl<'a> FindOption<'a> {
     /// assert_eq!(false, FindOption::Long("foo").matches_long("bar"));
     /// assert_eq!(false, FindOption::Short('a').matches_long("foo"));
     /// ```
+    #[must_use]
     pub fn matches_long(&self, long: &str) -> bool {
         match *self {
             FindOption::Pair(_, l) | FindOption::Long(l) => { l == long },
@@ -259,6 +260,7 @@ impl<'a> FindOption<'a> {
     /// assert_eq!(false, FindOption::Short('a').matches_short('b'));
     /// assert_eq!(false, FindOption::Long("foo").matches_short('a'));
     /// ```
+    #[must_use]
     pub fn matches_short(&self, short: char) -> bool {
         match *self {
             FindOption::Pair(s, _) | FindOption::Short(s) => { s == short },
@@ -402,6 +404,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_problem_items`]: #method.get_problem_items
     #[inline]
+    #[must_use]
     pub fn get_first_problem(&'r self) -> Option<&'r ProblemItem<'s>> {
         self.get_problem_items().next()
     }
@@ -444,6 +447,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[must_use]
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
@@ -480,6 +484,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[must_use]
     pub fn count_instances(&self, option: FindOption<'_>) -> usize {
         let mut count = 0;
         for item in &self.items {
@@ -525,6 +530,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// ```
     ///
     /// [`get_all_values`]: #method.get_all_values
+    #[must_use]
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s OsStr> {
         for item in self.items.iter().rev() {
             match *item {
@@ -557,6 +563,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///     // Do something with it...
     /// }
     /// ```
+    #[must_use]
     pub fn get_all_values(&'r self, option: FindOption<'r>)
         -> impl Iterator<Item = &'s OsStr> + 'r
     {
@@ -598,6 +605,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`FindOption`]: enum.FindOption.html
     /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
+    #[must_use]
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
         for item in self.items.iter().rev() {
             match *item {
@@ -664,6 +672,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[must_use]
     pub fn get_bool_flag_state(&self, positive: FindOption<'_>, negative: FindOption<'_>)
         -> Option<bool>
     {
@@ -709,6 +718,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// ```
     ///
     /// [`get_bool_flag_state`]: #method.get_bool_flag_state
+    #[must_use]
     pub fn get_bool_flag_state_multi(&self, positive: &[FindOption<'_>], negative: &[FindOption<'_>])
         -> Option<bool>
     {
@@ -751,6 +761,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// efficient.
     ///
     /// [`FindOption`]: enum.FindOption.html
+    #[must_use]
     fn _get_bool_flag_state(&'r self, options: impl Iterator<Item = (FindOption<'r>, bool)> + Clone)
         -> Option<(FoundOption<'r>, bool)>
     {

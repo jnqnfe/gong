@@ -123,6 +123,7 @@ impl<'r, 's: 'r> Command<'r, 's> {
     /// Note, only the most crucial problems that could cause issues when parsing are checked for.
     /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
     /// free of issues.
+    #[must_use]
     fn validate(name: &str) -> Result<(), CommandFlaw> {
         if name.is_empty() {
             return Err(CommandFlaw::EmptyName);
@@ -251,6 +252,7 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
     ///
     /// See also the [`validate`](#method.validate) method.
     #[inline(always)]
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         validation::validate_set(self, false).is_ok()
     }
@@ -305,6 +307,7 @@ mod validation {
     /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
     /// useful for quick `is_valid` checks. Otherwise it builds up and provides a complete list of
     /// flaws.
+    #[must_use]
     pub fn validate_set<'r, 's: 'r>(set: &CommandSet<'r, 's>, detail: bool)
         -> Result<(), Vec<CommandFlaw<'s>>>
     {

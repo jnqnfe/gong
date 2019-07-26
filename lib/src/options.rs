@@ -137,6 +137,7 @@ impl<'a> LongOption<'a> {
     /// Note, only the most crucial problems that could cause issues when parsing are checked for.
     /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
     /// free of issues.
+    #[must_use]
     fn validate(name: &str) -> Result<(), OptionFlaw> {
         static FORBIDDEN: &[char] = &[
             '=',        // Would clash with “in-same-arg” data value extraction
@@ -171,6 +172,7 @@ impl ShortOption {
     /// Note, only the most crucial problems that could cause issues when parsing are checked for.
     /// Passing validation is not a confirmation that a given identifier is sensible, or entirely
     /// free of issues.
+    #[must_use]
     fn validate<'a>(ch: char) -> Result<(), OptionFlaw<'a>> {
         static FORBIDDEN: &[char] = &[
             '-',        // Would clash with correct identification of short option sets in some cases
@@ -448,6 +450,7 @@ pub(crate) mod validation {
     /// If `detail` is `false`, it returns early on encountering a problem (with an empty `Vec`),
     /// useful for quick `is_valid` checks. Otherwise it builds up and provides a complete list of
     /// flaws.
+    #[must_use]
     pub fn validate_set<'r, 's: 'r>(set: &OptionSet<'r, 's>, detail: bool)
         -> Result<(), Vec<OptionFlaw<'s>>>
     {

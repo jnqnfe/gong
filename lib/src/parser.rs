@@ -229,6 +229,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     ///
     /// See also the [`validate`](#method.validate) method.
     #[inline]
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.options.is_valid() && self.commands.is_valid()
     }
@@ -270,6 +271,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`is_valid`]: #method.is_valid
     /// [`validate`]: #method.validate
     #[inline(always)]
+    #[must_use]
     pub fn parse_iter<A>(&'r self, args: &'s [A]) -> ParseIter<'r, 's, A>
         where A: 's + AsRef<OsStr>
     {
@@ -299,6 +301,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`parse_cmd`]: #method.parse_cmd
     /// [`parse_iter`]: #method.parse_iter
     #[inline(always)]
+    #[must_use]
     pub fn parse<A>(&self, args: &'s [A]) -> ItemSet<'r, 's>
         where A: 's + AsRef<OsStr>
     {
@@ -325,6 +328,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`validate`]: #method.validate
     /// [`parse`]: #method.parse
     #[inline(always)]
+    #[must_use]
     pub fn parse_cmd<A>(&self, args: &'s [A]) -> CommandAnalysis<'r, 's>
         where A: 's + AsRef<OsStr>
     {
