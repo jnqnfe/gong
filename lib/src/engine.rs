@@ -18,7 +18,7 @@ use std::slice;
 use std::str::CharIndices;
 use crate::analysis::*;
 use crate::commands::CommandSet;
-use crate::matching::{find_name_match, OsStrExt};
+use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
 
@@ -236,18 +236,23 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                 // This may be a positional or a command
                 if !self.rest_are_positionals {
                     if self.try_command_matching {
-                        match find_name_match(arg, self.parser_data.commands.commands.iter(),
-                            |&c| { c.name }, self.parser_data.settings.allow_cmd_abbreviations)
-                        {
-                            Err(_) => {
-                                return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
-                            },
-                            Ok(Some(matched)) => {
+                        let lookup = match self.parser_data.settings.allow_cmd_abbreviations {
+                            false => crate::matching::find_by_name(arg,
+                                self.parser_data.commands.commands.iter(), |&c| { c.name }).into(),
+                            true => crate::matching::find_by_abbrev_name(arg,
+                                self.parser_data.commands.commands.iter(), |&c| { c.name }),
+                        };
+                        match lookup {
+                            NameSearchResult::Match(matched) |
+                            NameSearchResult::AbbreviatedMatch(matched) => {
                                 self.parser_data.options = matched.options;
                                 self.parser_data.commands = &matched.sub_commands;
                                 return Some(Ok(Item::Command(arg_index, matched.name)));
                             },
-                            Ok(None) => { /* fall through */ },
+                            NameSearchResult::AmbiguousMatch => {
+                                return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
+                            },
+                            NameSearchResult::NoMatch => { /* fall through */ },
                         }
                         self.try_command_matching = false;
                         if !self.parser_data.commands.commands.is_empty() {
@@ -290,53 +295,60 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     return Some(Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
-                let match_result = find_name_match(name, self.parser_data.options.long.iter(),
-                    |&o| { o.name }, self.parser_data.settings.allow_opt_abbreviations);
+                let lookup = match self.parser_data.settings.allow_opt_abbreviations {
+                    false => crate::matching::find_by_name(name,
+                        self.parser_data.options.long.iter(), |&o| { o.name }).into(),
+                    true => crate::matching::find_by_abbrev_name(name,
+                        self.parser_data.options.long.iter(), |&o| { o.name }),
+                };
 
-                if match_result.is_err() {
-                    Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))
-                }
-                else if let Ok(Some(matched)) = match_result {
-                    // Use option’s full name, not the possibly abbreviated user provided one
-                    let opt_name = matched.name;
+                match lookup {
+                    NameSearchResult::Match(matched) |
+                    NameSearchResult::AbbreviatedMatch(matched) => {
+                        // Use option’s full name, not the possibly abbreviated user provided one
+                        let opt_name = matched.name;
 
-                    if matched.opt_type != OptionType::Flag {
-                        // Data included in same argument
-                        // We accept it even if it’s an empty string
-                        if let Some(data) = data_included {
-                            Some(Ok(Item::Long(
-                                arg_index, opt_name, Some((data, DataLocation::SameArg))
-                            )))
+                        if matched.opt_type != OptionType::Flag {
+                            // Data included in same argument
+                            // We accept it even if it’s an empty string
+                            if let Some(data) = data_included {
+                                Some(Ok(Item::Long(
+                                    arg_index, opt_name, Some((data, DataLocation::SameArg))
+                                )))
+                            }
+                            // Data consumption is optional
+                            else if matched.opt_type == OptionType::OptionalData {
+                                Some(Ok(Item::Long(
+                                    arg_index, opt_name, Some((OsStr::new(""), DataLocation::SameArg))
+                                )))
+                            }
+                            // Data included in next argument
+                            else if let Some((_, next_arg)) = self.arg_iter.next() {
+                                Some(Ok(Item::Long(
+                                    arg_index, opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
+                                )))
+                            }
+                            // Data missing
+                            else {
+                                Some(Err(ProblemItem::LongMissingData(arg_index, opt_name)))
+                            }
                         }
-                        // Data consumption is optional
-                        else if matched.opt_type == OptionType::OptionalData {
-                            Some(Ok(Item::Long(
-                                arg_index, opt_name, Some((OsStr::new(""), DataLocation::SameArg))
-                            )))
+                        // Ignore unexpected data if empty string
+                        else if data_included.is_none() || data_included == Some(OsStr::new("")) {
+                            Some(Ok(Item::Long(arg_index, opt_name, None)))
                         }
-                        // Data included in next argument
-                        else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            Some(Ok(Item::Long(
-                                arg_index, opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
-                            )))
-                        }
-                        // Data missing
                         else {
-                            Some(Err(ProblemItem::LongMissingData(arg_index, opt_name)))
+                            let data = data_included.unwrap();
+                            Some(Err(ProblemItem::LongWithUnexpectedData(arg_index, opt_name, data)))
                         }
-                    }
-                    // Ignore unexpected data if empty string
-                    else if data_included.is_none() || data_included == Some(OsStr::new("")) {
-                        Some(Ok(Item::Long(arg_index, opt_name, None)))
-                    }
-                    else {
-                        let data = data_included.unwrap();
-                        Some(Err(ProblemItem::LongWithUnexpectedData(arg_index, opt_name, data)))
-                    }
-                }
-                else {
-                    // Again, we ignore any possibly included data in the argument
-                    Some(Err(ProblemItem::UnknownLong(arg_index, name)))
+                    },
+                    NameSearchResult::NoMatch => {
+                        // Again, we ignore any possibly included data in the argument
+                        Some(Err(ProblemItem::UnknownLong(arg_index, name)))
+                    },
+                    NameSearchResult::AmbiguousMatch => {
+                        Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))
+                    },
                 }
             },
         }
@@ -377,8 +389,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
 
         let (byte_pos, ch) = self.iter.next()?;
 
-        let mut match_found = false;
-        let mut opt_type = OptionType::Flag;
+        let lookup: SearchResult<ShortOption>;
 
         match ch {
             // If we encounter the Unicode replacement character (U+FFFD) then we must beware that
@@ -386,6 +397,8 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             // cannot be converted to valid UTF-8 in the original `OsStr`. To handle the latter, the
             // former is not allowed as a valid short option character.
             REPLACEMENT_CHARACTER => {
+                lookup = SearchResult::NoMatch;
+
                 // Here all we do is update a byte index such that any in-same-arg data value can be
                 // correctly extracted later.
 
@@ -415,13 +428,8 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             },
             // Not a Unicode replacement character, so lets try to match it
             _ => {
-                for candidate in self.parser_data.options.short {
-                    if candidate.ch == ch {
-                        match_found = true;
-                        opt_type = candidate.opt_type;
-                        break;
-                    }
-                }
+                lookup = crate::matching::find_by_char(ch,
+                    self.parser_data.options.short.iter(), |&o| { o.ch }).into();
 
                 // Tracking?
                 if self.bytes_consumed != 0 {
@@ -430,42 +438,45 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
             }
         }
 
-        if !match_found {
-            Some(Err(ProblemItem::UnknownShort(self.arg_index, ch)))
-        }
-        else if opt_type == OptionType::Flag {
-            Some(Ok(Item::Short(self.arg_index, ch, None)))
-        }
-        else {
-            let bytes_consumed_updated = byte_pos + ch.len_utf8();
+        match lookup {
+            SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(self.arg_index, ch))),
+            SearchResult::Match(matched) => {
+                match matched.opt_type {
+                    OptionType::Flag => Some(Ok(Item::Short(self.arg_index, ch, None))),
+                    _ => {
+                        let bytes_consumed_updated = byte_pos + ch.len_utf8();
 
-            // If not last char, remaining chars are our data
-            if bytes_consumed_updated < self.string_utf8.len() {
-                self.consumed = true;
-                if self.bytes_consumed == 0 {
-                    self.bytes_consumed = bytes_consumed_updated;
+                        // If not last char, remaining chars are our data
+                        if bytes_consumed_updated < self.string_utf8.len() {
+                            self.consumed = true;
+                            if self.bytes_consumed == 0 {
+                                self.bytes_consumed = bytes_consumed_updated;
+                            }
+                            let data = OsStr::from_bytes(
+                                &self.string.as_bytes()[self.bytes_consumed..]);
+                            Some(Ok(Item::Short(
+                                self.arg_index, ch, Some((data, DataLocation::SameArg))
+                            )))
+                        }
+                        // Data consumption is optional
+                        else if matched.opt_type == OptionType::OptionalData {
+                            Some(Ok(Item::Short(
+                                self.arg_index, ch, Some((OsStr::new(""), DataLocation::SameArg))
+                            )))
+                        }
+                        // Data included in next argument
+                        else if let Some((_, next_arg)) = self.arg_iter.next() {
+                            Some(Ok(Item::Short(
+                                self.arg_index, ch, Some((next_arg.as_ref(), DataLocation::NextArg))
+                            )))
+                        }
+                        // Data missing
+                        else {
+                            Some(Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
+                        }
+                    },
                 }
-                let data = OsStr::from_bytes(&self.string.as_bytes()[self.bytes_consumed..]);
-                Some(Ok(Item::Short(
-                    self.arg_index, ch, Some((data, DataLocation::SameArg))
-                )))
-            }
-            // Data consumption is optional
-            else if opt_type == OptionType::OptionalData {
-                Some(Ok(Item::Short(
-                    self.arg_index, ch, Some((OsStr::new(""), DataLocation::SameArg))
-                )))
-            }
-            // Data included in next argument
-            else if let Some((_, next_arg)) = self.arg_iter.next() {
-                Some(Ok(Item::Short(
-                    self.arg_index, ch, Some((next_arg.as_ref(), DataLocation::NextArg))
-                )))
-            }
-            // Data missing
-            else {
-                Some(Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
-            }
+            },
         }
     }
 }
