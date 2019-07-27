@@ -76,15 +76,24 @@ pub struct CommandSet<'r, 's: 'r> {
     pub commands: &'r [Command<'r, 's>],
 }
 
+impl<'r, 's: 'r> From<&'r CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
+    /// Create an `CommandSet` referencing an `CommandSetEx`’s vectors as slices
+    fn from(r: &'r CommandSetEx<'r, 's>) -> Self {
+        Self {
+            commands: &r.commands[..],
+        }
+    }
+}
+
 impl<'r, 's: 'r> PartialEq<CommandSet<'r, 's>> for CommandSetEx<'r, 's> {
     fn eq(&self, rhs: &CommandSet<'r, 's>) -> bool {
-        rhs.eq(&self.as_fixed())
+        CommandSet::from(self).eq(rhs)
     }
 }
 
 impl<'r, 's: 'r> PartialEq<CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
     fn eq(&self, rhs: &CommandSetEx<'r, 's>) -> bool {
-        self.eq(&rhs.as_fixed())
+        self.eq(&CommandSet::from(rhs))
     }
 }
 
@@ -158,7 +167,7 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
     /// Create a [`CommandSet`](struct.CommandSet.html) referencing `self`’s vectors as slices
     #[inline]
     pub fn as_fixed(&'r self) -> CommandSet<'r, 's> {
-        CommandSet { commands: &self.commands[..], }
+        self.into()
     }
 
     /// Checks if empty

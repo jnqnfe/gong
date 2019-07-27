@@ -92,15 +92,25 @@ pub struct OptionSet<'r, 's: 'r> {
     pub short: &'r [ShortOption],
 }
 
+impl<'r, 's: 'r> From<&'r OptionSetEx<'s>> for OptionSet<'r, 's> {
+    /// Create an `OptionSet` referencing an `OptionSetEx`’s vectors as slices
+    fn from(r: &'r OptionSetEx<'s>) -> Self {
+        Self {
+            long: &r.long[..],
+            short: &r.short[..],
+        }
+    }
+}
+
 impl<'r, 's: 'r> PartialEq<OptionSet<'r, 's>> for OptionSetEx<'s> {
     fn eq(&self, rhs: &OptionSet<'r, 's>) -> bool {
-        rhs.eq(&self.as_fixed())
+        OptionSet::from(self).eq(rhs)
     }
 }
 
 impl<'r, 's: 'r> PartialEq<OptionSetEx<'s>> for OptionSet<'r, 's> {
     fn eq(&self, rhs: &OptionSetEx<'s>) -> bool {
-        self.eq(&rhs.as_fixed())
+        self.eq(&OptionSet::from(rhs))
     }
 }
 
@@ -212,10 +222,7 @@ impl<'s> OptionSetEx<'s> {
     /// Create an [`OptionSet`](struct.OptionSet.html) referencing `self`’s vectors as slices
     #[inline]
     pub fn as_fixed<'r>(&'r self) -> OptionSet<'r, 's> where 's: 'r {
-        OptionSet {
-            long: &self.long[..],
-            short: &self.short[..],
-        }
+        self.into()
     }
 
     /// Checks if empty
