@@ -14,14 +14,13 @@ use std::convert::AsRef;
 use std::ffi::OsStr;
 use std::iter::Enumerate;
 use std::mem;
-#[cfg(any(unix, target_os = "redox"))]
-use std::os::unix::ffi::OsStrExt;
 use std::slice;
 use std::str::CharIndices;
-use crate::commands::CommandSet;
-use crate::parser::*;
-use crate::options::*;
 use crate::analysis::*;
+use crate::commands::CommandSet;
+use crate::matching::{find_name_match, OsStrExt};
+use crate::options::*;
+use crate::parser::*;
 
 type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
 
@@ -571,59 +570,5 @@ fn get_urc_bytes(string: &OsStr) -> usize {
                 Ok(_) => unreachable!(),
             }
         },
-    }
-}
-
-#[cfg(windows)]
-pub trait OsStrExt {
-    fn from_bytes(slice: &[u8]) -> &Self;
-    fn as_bytes(&self) -> &[u8];
-}
-
-#[cfg(windows)]
-impl OsStrExt for OsStr {
-    #[inline(always)]
-    fn from_bytes(slice: &[u8]) -> &OsStr {
-        unsafe { mem::transmute(slice) }
-    }
-    #[inline(always)]
-    fn as_bytes(&self) -> &[u8] {
-        unsafe { mem::transmute(self) }
-    }
-}
-
-/// Find a match for something with a name (long option or command), optionally allowing for
-/// abbreviations
-fn find_name_match<'a, T>(needle: &OsStr, haystack: impl Iterator<Item = &'a T>,
-    get_name: fn(&'a T) -> &'a str, abbreviations: bool) -> Result<Option<&'a T>, ()>
-{
-    let mut matched: Option<&T> = None;
-    let mut ambiguity = false;
-    for candidate in haystack {
-        let cand_name = get_name(candidate);
-        // Exact
-        if cand_name == needle {
-            // An exact match overrules a previously found partial match and ambiguity found with
-            // multiple partial matches.
-            matched = Some(candidate);
-            ambiguity = false;
-            break;
-        }
-        // Abbreviated
-        else if abbreviations && !ambiguity {
-            let cand_name_osstr = OsStr::new(cand_name);
-            if needle.len() < cand_name_osstr.len() {
-                if &cand_name_osstr.as_bytes()[..needle.len()] == needle.as_bytes() {
-                    match matched {
-                        Some(_) => { ambiguity = true; },
-                        None => { matched = Some(candidate); },
-                    }
-                }
-            }
-        }
-    }
-    match ambiguity {
-        true => Err(()),
-        false => Ok(matched),
     }
 }

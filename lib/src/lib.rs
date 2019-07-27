@@ -32,5 +32,6 @@ pub mod commands;
 pub mod docs;
 mod engine;
 mod macros;
+mod matching;
 pub mod options;
 pub mod parser;
