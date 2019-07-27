@@ -282,17 +282,7 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
     #[cfg(feature = "suggestions")]
     pub fn suggest(&self, unknown: &OsStr) -> Option<&'s str> {
         let unknown_lossy = unknown.to_string_lossy();
-        let filter = 0.8;
-        let mut best_metric: f64 = filter;
-        let mut best: Option<&str> = None;
-        for cmd in self.commands {
-            let metric = strsim::jaro_winkler(&unknown_lossy, cmd.name);
-            if metric > best_metric || (best.is_none() && metric >= filter) {
-                best = Some(cmd.name);
-                best_metric = metric;
-            }
-        }
-        best
+        crate::matching::suggest(&unknown_lossy, self.commands.iter(), |&c| c.name)
     }
 }
 

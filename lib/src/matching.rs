@@ -52,6 +52,58 @@ pub fn find_name_match<'a, T>(needle: &OsStr, haystack: impl Iterator<Item = &'a
     }
 }
 
+/// Suggestion matching implementation
+///
+/// Finds the best matching candidate, if any, from the given set, for the given string.
+///
+/// This is intended to be used when an unknown long option or command is encountered. Rather than
+/// simply display an error to the users telling them it was unknown, you can include a helpful hint
+/// in that error message suggesting an alternative option/command name that perhaps they meant to
+/// use (whereby you suggest the closest match from the set available, if any is a close enough of a
+/// match). I.e.:
+///
+/// > “Error: Unknown option ‘halp’, did you mean to use ‘help’?”
+///
+/// This helps you obtain that suggestion.
+///
+/// Specifically, this uses the `jaro_winkler` algorithm from the `strsim` crate; It filters
+/// out any candidates with a metric calculated as less than `0.8`, and returns the first candidate
+/// with the highest metric.
+///
+/// Similar to the “find_*” functions available in this module, this takes an iterator over a
+/// generic set of items, along with a function for accessing the relevant string from them to
+/// measure against.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use gong::matching::suggest;
+///
+/// // A basic set, simply using an array of `LongOption`
+/// let set = [ gong::longopt!(@flag "foo"), gong::longopt!(@flag "bar") ];
+///
+/// assert_eq!(Some("bar"), suggest("bat", set.iter(), |&o| o.name));
+/// assert_eq!(None,        suggest("xyz", set.iter(), |&o| o.name));
+/// ```
+#[cfg(feature = "suggestions")]
+pub fn suggest<'a, 'b, I>(unknown: &str, available: impl Iterator<Item = &'a I>,
+    get_name: fn(&'a I) -> &'b str) -> Option<&'b str>
+    where 'b: 'a, I: 'a
+{
+    let filter = 0.8;
+    let mut best_metric: f64 = filter;
+    let mut best: Option<&str> = None;
+    for candidate in available {
+        let cand_name = get_name(candidate);
+        let metric = strsim::jaro_winkler(unknown, cand_name);
+        if metric > best_metric || (best.is_none() && metric >= filter) {
+            best = Some(cand_name);
+            best_metric = metric;
+        }
+    }
+    best
+}
+
 #[cfg(windows)]
 pub(crate) trait OsStrExt {
     fn from_bytes(slice: &[u8]) -> &Self;
