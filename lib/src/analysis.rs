@@ -178,7 +178,7 @@ pub struct ItemSet<'r, 's: 'r> {
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
-    pub opt_set: &'r OptionSet<'r, 's>,
+    pub opt_set: OptionSet<'r, 's>,
 }
 
 /// Used for breaking up an analysis by command use
@@ -199,7 +199,7 @@ pub struct CommandAnalysis<'r, 's: 'r> {
     pub problems: bool,
     /// Pointer to the final command set, for use with suggestion matching an unknown command (which
     /// only applies to the first positional).
-    pub cmd_set: Option<&'r CommandSet<'r, 's>>,
+    pub cmd_set: Option<CommandSet<'r, 's>>,
 }
 
 /// A *to find* option description
@@ -322,7 +322,7 @@ impl From<super::options::ShortOption> for FindOption<'_> {
 impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
-    pub fn new(opt_set: &'r OptionSet<'r, 's>) -> Self {
+    pub fn new(opt_set: OptionSet<'r, 's>) -> Self {
         Self {
             items: Vec::new(),
             problems: false,
@@ -340,8 +340,8 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// Useful for suggestion matching with unknown options.
     #[inline(always)]
-    pub fn get_optset(&self) -> &'r OptionSet<'r, 's> {
-        self.opt_set
+    pub fn get_optset(&self) -> &OptionSet<'r, 's> {
+        &self.opt_set
     }
 
     /// Gives an iterator over all items in the set
@@ -396,7 +396,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// if let Some(problem) = item_set.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
@@ -417,7 +417,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let positionals: Vec<_> = item_set.get_positionals().collect();
     /// ```
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
@@ -440,7 +440,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// if item_set.option_used(gong::findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
@@ -479,7 +479,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let count = item_set.count_instances(gong::findopt!(@short 'v'));
     /// ```
     ///
@@ -525,7 +525,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let last_value = item_set.get_last_value(gong::findopt!(@long "output-format"));
     /// ```
     ///
@@ -558,7 +558,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// for val in item_set.get_all_values(gong::findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
@@ -593,7 +593,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
     /// match item_set.get_last_used(&find) {
     ///     Some(gong::foundopt!(@short 'c')) |
@@ -663,7 +663,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let val = item_set.get_bool_flag_state(
     ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
     ///         gong::findopt!(@long "no-color")    // Negative (false)
@@ -710,7 +710,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let val = item_set.get_bool_flag_state_multi(
     ///         &[ gong::findopt!(@pair 'c', "color") ],
     ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
@@ -816,8 +816,8 @@ impl<'r, 's: 'r> CommandAnalysis<'r, 's> {
     ///
     /// Useful for suggestion matching with unknown commands.
     #[inline(always)]
-    pub fn get_cmdset(&self) -> Option<&'r CommandSet<'r, 's>> {
-        self.cmd_set
+    pub fn get_cmdset(&self) -> &Option<CommandSet<'r, 's>> {
+        &self.cmd_set
     }
 }
 

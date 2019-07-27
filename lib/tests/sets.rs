@@ -344,8 +344,8 @@ mod commands {
         );
         let cmd_subcmds = command_set!(
             [
-                command!("build", @opts &subcmd_opts),
-                command!("destroy", @opts &subcmd_opts),
+                command!("build", @opts subcmd_opts),
+                command!("destroy", @opts subcmd_opts),
             ]
         );
 
@@ -353,7 +353,7 @@ mod commands {
         let cmds_fixed = CommandSet {
             commands: &[
                 command!("take_a_break"),
-                command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
+                command!("use_tools", @opts cmd_opts, @cmds cmd_subcmds.clone()),
             ],
         };
 
@@ -361,7 +361,7 @@ mod commands {
         let cmds_extendible = CommandSetEx {
             commands: vec![
                 command!("take_a_break"),
-                command!("use_tools", @opts &cmd_opts, @cmds cmd_subcmds.clone()),
+                command!("use_tools", @opts cmd_opts, @cmds cmd_subcmds.clone()),
             ],
         };
 

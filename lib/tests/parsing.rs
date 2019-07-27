@@ -515,7 +515,7 @@ mod abbreviations {
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: &opts,
+                opt_set: opts,
                 [
                     expected_item!(0, Long, "foo"),
                 ])
@@ -524,7 +524,7 @@ mod abbreviations {
             cmd_set: None
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let parser = Parser::new(opts, Some(cmds));
         check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
     }
 
@@ -539,19 +539,19 @@ mod abbreviations {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
+                opt_set: opts,
                 [
                     expected_item!(0, Long, "foo"),
                     expected_item!(1, UnknownCommand, "pu"),
                 ])
             ),
-            cmd_set: Some(&cmds)
+            cmd_set: Some(cmds)
         );
         let expected2 = cmd_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
+                opt_set: opts,
                 [
                     expected_item!(0, UnknownLong, "fo"),
                 ])
@@ -560,7 +560,7 @@ mod abbreviations {
             cmd_set: None
         );
 
-        let mut parser = Parser::new(&opts, Some(&cmds));
+        let mut parser = Parser::new(opts, Some(cmds));
         parser.settings.set_stop_on_problem(false);
         parser.settings.set_allow_opt_abbreviations(true);
         parser.settings.set_allow_cmd_abbreviations(false);
@@ -1372,16 +1372,16 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
+                opt_set: opts,
                 [
                     expected_item!(0, Long, "foo"),
                     expected_item!(1, UnknownLong, "bar"),
                 ])
             ),
-            cmd_set: Some(&cmds)
+            cmd_set: Some(cmds)
         );
 
-        let parser = Parser::new(&opts, Some(&cmds));
+        let parser = Parser::new(opts, Some(cmds));
         check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
     }
 

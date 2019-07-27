@@ -116,7 +116,7 @@ macro_rules! cmdset_optset_ref {
 /// E.g. ```cmdset_subcmdset_ref!(get_base_cmds(), 2, 0)``` should give:
 /// &get_base_cmds().commands[2].sub_commands.commands[0].sub_commands
 macro_rules! cmdset_subcmdset_ref {
-    ( $base:expr, $($index:expr),* ) => { &$base$(.commands[$index].sub_commands)* }
+    ( $base:expr, $($index:expr),* ) => { $base$(.commands[$index].sub_commands)* }
 }
 
 /// Get common base `Parser` set with common base option set and an empty command set
@@ -130,7 +130,7 @@ pub fn get_parser_cmd() -> Parser<'static, 'static> {
 }
 
 #[inline]
-fn get_parser_common(commands: Option<&'static CommandSet<'static, 'static>>) -> Parser<'static, 'static> {
+fn get_parser_common(commands: Option<CommandSet<'static, 'static>>) -> Parser<'static, 'static> {
     let mut parser = Parser::new(base::get_base_opts(), commands);
     parser.settings.set_stop_on_problem(false);
     parser
@@ -189,9 +189,9 @@ ItemSet {{
     items: [{}
     ],
     problems: {},
-    opt_set: {:p},
+    opt_set: {{ long: {:p}, short: {:p} }},
 }}",
-    items, analysis.problems, analysis.opt_set);
+    items, analysis.problems, analysis.opt_set.long, analysis.opt_set.short);
 }
 
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
@@ -216,14 +216,14 @@ fn pretty_print_cmd_results(analysis: &CommandAnalysis) {
             items: [{}
             ],
             problems: {},
-            opt_set: {:p},
+            opt_set: {{ long: {:p}, short: {:p} }},
         }}",
-                    items, s.problems, s.opt_set));
+                    items, s.problems, s.opt_set.long, s.opt_set.short));
             },
         }
     }
     let cmd_set = match analysis.cmd_set {
-        Some(cs) => format!("{:p}", cs),
+        Some(cs) => format!("{:p}", cs.commands),
         None => String::from("none"),
     };
     eprintln!("\

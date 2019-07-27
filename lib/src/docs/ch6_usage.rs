@@ -117,19 +117,18 @@
 //!
 //! ## Create the `Parser` itself
 //!
-//! Creating a [`Parser`] requires providing an *option set* reference, and optionally a *command
-//! set* reference.
+//! Creating a [`Parser`] requires providing an *option set*, and optionally a *command set*.
 //!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSet::default();
-//! let parser = Parser::new(&opts, None);
+//! let parser = Parser::new(opts, None);
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
-//! If you have a *command set*, replace `None` in the previous example with `Some(&cmds)` where
-//! `&cmds` is a reference to your *command set*. Understand that with a command-based program
-//! design, the *option set* specified here is the *top-level* set of *options* (see the
+//! If you have a *command set*, replace `None` in the previous example with `Some(cmds)` where
+//! `cmds` is your *command set*. Understand that with a command-based program design, the *option
+//! set* specified here is the *top-level* set of *options* (see the
 //! *[command arguments documentation][commands_doc]* for more information on this).
 //!
 //! Note that the [`Parser`] only accepts [`OptionSet`] and [`CommandSet`] types, not the extendible
@@ -140,9 +139,7 @@
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSetEx::default();
 //! # let cmds = gong::commands::CommandSetEx::default();
-//! let opts_fixed = opts.as_fixed();
-//! let cmds_fixed = cmds.as_fixed();
-//! let parser = Parser::new(&opts_fixed, Some(&cmds_fixed));
+//! let parser = Parser::new(opts.as_fixed(), Some(cmds.as_fixed()));
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
@@ -227,7 +224,7 @@
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
+//! # let parser = gong::parser::Parser::new(opts, Some(cmds));
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! for item in parser.parse_iter(&args[..]) {
 //!     // react to it...
@@ -239,7 +236,7 @@
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::Parser::new(&opts, Some(&cmds));
+//! # let parser = gong::parser::Parser::new(opts, Some(cmds));
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! let analysis = parser.parse(&args[..]);
 //! // now react to it...

@@ -66,9 +66,9 @@ pub use crate::engine::ParseIter;
 pub struct Parser<'r, 's: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
-    pub options: &'r OptionSet<'r, 's>,
+    pub options: OptionSet<'r, 's>,
     /// Command set
-    pub commands: &'r CommandSet<'r, 's>,
+    pub commands: CommandSet<'r, 's>,
     /// Settings
     pub settings: Settings,
 }
@@ -76,8 +76,8 @@ pub struct Parser<'r, 's: 'r> {
 impl<'r, 's: 'r> Default for Parser<'r, 's> {
     fn default() -> Self {
         Self {
-            options: &option_set!(),
-            commands: &command_set!(),
+            options: option_set!(),
+            commands: command_set!(),
             settings: Settings::default(),
         }
     }
@@ -204,10 +204,10 @@ impl Settings {
 
 impl<'r, 's: 'r> Parser<'r, 's> {
     /// Create a new parser
-    pub fn new(options: &'r OptionSet<'r, 's>, commands: Option<&'r CommandSet<'r, 's>>) -> Self {
+    pub fn new(options: OptionSet<'r, 's>, commands: Option<CommandSet<'r, 's>>) -> Self {
         Self {
             options: options,
-            commands: commands.unwrap_or(&command_set!()),
+            commands: commands.unwrap_or(command_set!()),
             settings: Settings::default(),
         }
     }

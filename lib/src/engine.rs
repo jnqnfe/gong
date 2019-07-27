@@ -155,7 +155,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     ///
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
-    pub fn get_option_set(&self) -> &'r OptionSet<'r, 's> {
+    pub fn get_option_set(&self) -> OptionSet<'r, 's> {
         self.parser_data.options
     }
 
@@ -167,7 +167,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid option set.
-    pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 's>) {
+    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 's>) {
         self.parser_data.options = opt_set;
         if let Some(ref mut short_set_iter) = self.short_set_iter {
             short_set_iter.parser_data.options = opt_set;
@@ -178,7 +178,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     ///
     /// This is useful for suggestion matching of an unknown command
     #[inline(always)]
-    pub fn get_command_set(&self) -> &'r CommandSet<'r, 's> {
+    pub fn get_command_set(&self) -> CommandSet<'r, 's> {
         self.parser_data.commands
     }
 
@@ -190,7 +190,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid command set.
-    pub fn set_command_set(&mut self, cmd_set: &'r CommandSet<'r, 's>) {
+    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 's>) {
         self.parser_data.commands = cmd_set;
         if let Some(ref mut short_set_iter) = self.short_set_iter {
             short_set_iter.parser_data.commands = cmd_set;
@@ -246,7 +246,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                             NameSearchResult::Match(matched) |
                             NameSearchResult::AbbreviatedMatch(matched) => {
                                 self.parser_data.options = matched.options;
-                                self.parser_data.commands = &matched.sub_commands;
+                                self.parser_data.commands = matched.sub_commands;
                                 return Some(Ok(Item::Command(arg_index, matched.name)));
                             },
                             NameSearchResult::AmbiguousMatch => {
