@@ -87,7 +87,7 @@ mod short_dash {
         );
         let expected = expected!(
             problems: true,
-            opt_set: opts,
+            opt_set: &opts,
             [
                 expected_item!(0, UnknownLong, "abc"),
                 expected_item!(1, UnknownShort, 'a'),
@@ -98,7 +98,7 @@ mod short_dash {
             ]
         );
 
-        let mut parser = Parser::new(opts);
+        let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
         check_result!(&Actual(parser.parse(&args)), &expected);
     }
@@ -239,14 +239,14 @@ mod long_equals {
         );
         let expected = expected!(
             problems: true,
-            opt_set: opts,
+            opt_set: &opts,
             [
                 expected_item!(0, Long, "a=b"),
                 expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
             ]
         );
 
-        let mut parser = Parser::new(opts);
+        let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
         check_result!(&Actual(parser.parse(&args)), &expected);
     }

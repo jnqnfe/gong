@@ -34,7 +34,7 @@ pub struct Command<'r, 's: 'r> {
     /// Command name
     pub name: &'s str,
     /// Options
-    pub options: OptionSet<'r, 's>,
+    pub options: &'r OptionSet<'r, 's>,
     /// Sub-commands
     pub sub_commands: CommandSet<'r, 's>,
 }
@@ -124,11 +124,11 @@ impl<'r, 's: 'r> Command<'r, 's> {
     /// Create a new command descriptor
     ///
     /// Panics (debug only) if the given name is invalid.
-    fn new(name: &'s str, options: Option<OptionSet<'r, 's>>, sub_commands: CommandSet<'r, 's>)
-        -> Self
+    fn new(name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
+        sub_commands: CommandSet<'r, 's>) -> Self
     {
         debug_assert!(Self::validate(name).is_ok());
-        let opts_actual = options.unwrap_or(option_set!());
+        let opts_actual = options.unwrap_or(&option_set!());
         Self { name, options: opts_actual, sub_commands }
     }
 
@@ -187,7 +187,7 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
     ///
     /// Panics (debug only) on invalid name.
     #[inline]
-    pub fn add_command(&mut self, name: &'s str, options: Option<OptionSet<'r, 's>>,
+    pub fn add_command(&mut self, name: &'s str, options: Option<&'r OptionSet<'r, 's>>,
         sub_commands: CommandSet<'r, 's>) -> &mut Self
     {
         self.commands.push(Command::new(name, options, sub_commands));
@@ -339,7 +339,7 @@ mod validation {
 
         // Check the sub_commands and option sets of commands
         for command in set.commands {
-            if let Err(f) = options::validation::validate_set(&command.options, detail) {
+            if let Err(f) = options::validation::validate_set(command.options, detail) {
                 match detail {
                     true => { flaws.push(CommandFlaw::NestedOptSetFlaws(command.name, f)); },
                     false => { return Err(flaws); },

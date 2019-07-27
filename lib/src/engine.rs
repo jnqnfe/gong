@@ -37,7 +37,7 @@ use crate::parser::*;
 #[derive(Clone)]
 pub struct CmdParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// The command set in use (will change on encountering a command)
-    commands: CommandSet<'r, 'set>,
+    commands: &'r CommandSet<'r, 'set>,
     /// Inner main iterator
     inner: ParseIter<'r, 'set, 'arg, A>,
 }
@@ -53,7 +53,7 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
     /// The option set in use (will change on encountering a command)
-    options: OptionSet<'r, 'set>,
+    options: &'r OptionSet<'r, 'set>,
     /// Settings
     settings: Settings,
     /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
@@ -77,7 +77,7 @@ struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, '
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
     /// The option set in use
-    options: OptionSet<'r, 'set>,
+    options: &'r OptionSet<'r, 'set>,
     /// The short option set string being iterated over.
     /// We need to hold a copy of this at least for the purpose of extracting in-same-arg data.
     string: &'arg OsStr,
@@ -123,7 +123,7 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                 match lookup {
                     NameSearchResult::Match(matched) |
                     NameSearchResult::AbbreviatedMatch(matched) => {
-                        self.commands = matched.sub_commands;
+                        self.commands = &matched.sub_commands;
                         self.inner.options = matched.options;
                         self.inner.rest_are_positionals = false; // Reverse
                         return Some(Ok(Item::Command(arg_index, matched.name)));
@@ -204,7 +204,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     ///
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
-    pub fn get_option_set(&self) -> OptionSet<'r, 'set> {
+    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
         self.inner.options
     }
 
@@ -216,7 +216,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid option set.
-    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 'set>) {
+    pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 'set>) {
         self.inner.options = opt_set;
         if let Some(ref mut short_set_iter) = self.inner.short_set_iter {
             short_set_iter.options = opt_set;
@@ -227,7 +227,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     ///
     /// This is useful for suggestion matching of an unknown command
     #[inline(always)]
-    pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
+    pub fn get_command_set(&self) -> &'r CommandSet<'r, 'set> {
         self.commands
     }
 
@@ -239,7 +239,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid command set.
-    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
+    pub fn set_command_set(&mut self, cmd_set: &'r CommandSet<'r, 'set>) {
         self.commands = cmd_set;
     }
 
@@ -280,7 +280,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     ///
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
-    pub fn get_option_set(&self) -> OptionSet<'r, 'set> {
+    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
         self.options
     }
 

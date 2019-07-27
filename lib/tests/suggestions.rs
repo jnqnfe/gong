@@ -36,7 +36,7 @@ mod options {
         let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
         let expected = expected!(
             problems: true,
-            opt_set: opts,
+            opt_set: &opts,
             [
                 expected_item!(0, UnknownLong, "a"),
                 expected_item!(1, UnknownLong, "foo"),
@@ -45,7 +45,7 @@ mod options {
             ]
         );
 
-        let mut parser = Parser::new(opts);
+        let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -86,7 +86,7 @@ mod options {
         let args = arg_list!("--hellp", "--bard", "--fooa");
         let expected = expected!(
             problems: true,
-            opt_set: opts,
+            opt_set: &opts,
             [
                 expected_item!(0, UnknownLong, "hellp"),
                 expected_item!(1, UnknownLong, "bard"),
@@ -94,7 +94,7 @@ mod options {
             ]
         );
 
-        let mut parser = Parser::new(opts);
+        let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -140,15 +140,15 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: opts,
+                opt_set: &opts,
                 [
                     expected_item!(0, UnknownCommand, "but_i_digest"),
                 ])
             ),
-            cmd_set: Some(cmds)
+            cmd_set: Some(&cmds)
         );
 
-        let mut parser = CmdParser::new(opts, cmds);
+        let mut parser = CmdParser::new(&opts, &cmds);
         parser.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -186,15 +186,15 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: opts,
+                opt_set: &opts,
                 [
                     expected_item!(0, UnknownCommand, "bard"),
                 ])
             ),
-            cmd_set: Some(cmds)
+            cmd_set: Some(&cmds)
         );
 
-        let mut parser = CmdParser::new(opts, cmds);
+        let mut parser = CmdParser::new(&opts, &cmds);
         parser.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -232,15 +232,15 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: opts,
+                opt_set: &opts,
                 [
                     expected_item!(0, UnknownCommand, "hellp"),
                 ])
             ),
-            cmd_set: Some(cmds)
+            cmd_set: Some(&cmds)
         );
 
-        let mut parser = CmdParser::new(opts, cmds);
+        let mut parser = CmdParser::new(&opts, &cmds);
         parser.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -278,15 +278,15 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: opts,
+                opt_set: &opts,
                 [
                     expected_item!(0, UnknownCommand, "fooa"),
                 ])
             ),
-            cmd_set: Some(cmds)
+            cmd_set: Some(&cmds)
         );
 
-        let mut parser = CmdParser::new(opts, cmds);
+        let mut parser = CmdParser::new(&opts, &cmds);
         parser.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);

@@ -73,7 +73,7 @@ pub use crate::engine::{ParseIter, CmdParseIter};
 pub struct Parser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
-    pub options: OptionSet<'r, 'set>,
+    pub options: &'r OptionSet<'r, 'set>,
     /// Settings
     pub settings: Settings,
 }
@@ -90,9 +90,9 @@ pub struct Parser<'r, 'set: 'r> {
 pub struct CmdParser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
-    pub options: OptionSet<'r, 'set>,
+    pub options: &'r OptionSet<'r, 'set>,
     /// Command set
-    pub commands: CommandSet<'r, 'set>,
+    pub commands: &'r CommandSet<'r, 'set>,
     /// Settings
     pub settings: Settings,
 }
@@ -100,7 +100,7 @@ pub struct CmdParser<'r, 'set: 'r> {
 impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
     fn default() -> Self {
         Self {
-            options: option_set!(),
+            options: &option_set!(),
             settings: Settings::default(),
         }
     }
@@ -109,8 +109,8 @@ impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
 impl<'r, 'set: 'r> Default for CmdParser<'r, 'set> {
     fn default() -> Self {
         Self {
-            options: option_set!(),
-            commands: command_set!(),
+            options: &option_set!(),
+            commands: &command_set!(),
             settings: Settings::default(),
         }
     }
@@ -237,7 +237,7 @@ impl Settings {
 
 impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// Create a new parser
-    pub fn new(options: OptionSet<'r, 'set>) -> Self {
+    pub fn new(options: &'r OptionSet<'r, 'set>) -> Self {
         Self {
             options: options,
             settings: Settings::default(),
@@ -325,7 +325,7 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
 
 impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// Create a new parser
-    pub fn new(options: OptionSet<'r, 'set>, commands: CommandSet<'r, 'set>) -> Self {
+    pub fn new(options: &'r OptionSet<'r, 'set>, commands: &'r CommandSet<'r, 'set>) -> Self {
         Self {
             options: options,
             commands: commands,

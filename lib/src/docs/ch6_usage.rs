@@ -118,13 +118,13 @@
 //!
 //! ## Create the parser itself
 //!
-//! Creating a [`Parser`] (or [`CmdParser`]) requires providing an *option set* (and in the
-//! [`CmdParser`] case, also a *command set*).
+//! Creating a [`Parser`] (or [`CmdParser`]) requires providing an *option set* reference (and in
+//! the [`CmdParser`] case, also a *command set* reference).
 //!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSet::default();
-//! let parser = Parser::new(opts);
+//! let parser = Parser::new(&opts);
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
@@ -140,7 +140,9 @@
 //! use gong::parser::CmdParser;
 //! # let opts = gong::options::OptionSetEx::default();
 //! # let cmds = gong::commands::CommandSetEx::default();
-//! let parser = CmdParser::new(opts.as_fixed(), cmds.as_fixed());
+//! let opts_fixed = opts.as_fixed();
+//! let cmds_fixed = cmds.as_fixed();
+//! let parser = CmdParser::new(&opts_fixed, &cmds_fixed);
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
@@ -225,7 +227,7 @@
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::CmdParser::new(opts, cmds);
+//! # let parser = gong::parser::CmdParser::new(&opts, &cmds);
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! for item in parser.parse_iter(&args[..]) {
 //!     // react to it...
@@ -237,7 +239,7 @@
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::CmdParser::new(opts, cmds);
+//! # let parser = gong::parser::CmdParser::new(&opts, &cmds);
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! let analysis = parser.parse(&args[..]);
 //! // now react to it...

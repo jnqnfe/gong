@@ -50,7 +50,7 @@ static BASE_CMDS: CommandSet = command_set!([
     command!("add"),
     command!("commit"),
     command!("push",
-        @opts option_set!(
+        @opts &option_set!(
             @long [
                 longopt!(@flag "help"),
                 longopt!(@flag "tags"),
@@ -61,7 +61,7 @@ static BASE_CMDS: CommandSet = command_set!([
         ),
         @cmds command_set!([
             command!("origin",
-                @opts option_set!(
+                @opts &option_set!(
                     @long [
                         longopt!(@flag "help"),
                         longopt!(@flag "force"),
@@ -73,7 +73,7 @@ static BASE_CMDS: CommandSet = command_set!([
         ])
     ),
     command!("branch",
-        @opts option_set!(
+        @opts &option_set!(
             @long [
                 longopt!(@flag "help"),
                 longopt!(@flag "sorted"),
@@ -85,7 +85,7 @@ static BASE_CMDS: CommandSet = command_set!([
         @cmds command_set!([
             command!("add"),
             command!("del",
-                @opts option_set!(),
+                @opts &option_set!(),
                 @cmds command_set!([
                     // Note, the names here are chosen to be different to those below for greater
                     // assurance that a match is made from this set, not the sibling below.
@@ -94,7 +94,7 @@ static BASE_CMDS: CommandSet = command_set!([
                 ])
             ),
             command!("list",
-                @opts option_set!(
+                @opts &option_set!(
                     @long [
                         longopt!(@flag "help"),
                         longopt!(@flag "show-current"),
@@ -110,7 +110,7 @@ static BASE_CMDS: CommandSet = command_set!([
     ),
     // For abbreviation ambiguity
     command!("put",
-        @opts option_set!(),
+        @opts &option_set!(),
         @cmds command_set!([
             command!("beep"),
             command!("boop"),
@@ -120,11 +120,11 @@ static BASE_CMDS: CommandSet = command_set!([
 ]);
 
 /// Provides a base set of options for common usage in tests
-pub fn get_base_opts() -> OptionSet<'static, 'static> {
-    BASE_OPTS
+pub fn get_base_opts() -> &'static OptionSet<'static, 'static> {
+    &BASE_OPTS
 }
 
 /// Provides a base set of commands for common usage in tests
-pub fn get_base_cmds() -> CommandSet<'static, 'static> {
-    BASE_CMDS
+pub fn get_base_cmds() -> &'static CommandSet<'static, 'static> {
+    &BASE_CMDS
 }

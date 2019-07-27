@@ -74,7 +74,7 @@ mod change_data {
         let main_opt_set = option_set!(@long [ longopt!(@flag "foo") ]);
         let main_cmd_set = command_set!([ command!("c1") ]);
 
-        let mut parser = CmdParser::new(main_opt_set, main_cmd_set);
+        let mut parser = CmdParser::new(&main_opt_set, &main_cmd_set);
         parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
         let mut parse_iter = parser.parse_iter(&args);
@@ -94,8 +94,8 @@ mod change_data {
 
         let mut parse_iter = parse_iter.clone(); //Necessary to get around borrow checker
 
-        parse_iter.set_option_set(c1_opt_set);   // Change option set
-        parse_iter.set_command_set(c1_cmd_set);  // Change command set
+        parse_iter.set_option_set(&c1_opt_set);   // Change option set
+        parse_iter.set_command_set(&c1_cmd_set);  // Change command set
 
         // Programs would not normally change settings part way through, it would confuse users,
         // this just tests that the ability to change settings (if a program really wanted to, or

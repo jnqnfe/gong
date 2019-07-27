@@ -123,20 +123,20 @@ macro_rules! shortopt {
 /// let subcmds = gong::command_set!(); // An example (empty) command set
 ///
 /// let _ = gong::command!("foo");
-/// let _ = gong::command!("foo", @opts opts.clone());    // With option set
+/// let _ = gong::command!("foo", @opts &opts);           // With option set
 /// let _ = gong::command!("foo", @cmds subcmds.clone()); // With sub-command set
-/// let _ = gong::command!("foo", @opts opts.clone(), @cmds subcmds.clone());
+/// let _ = gong::command!("foo", @opts &opts, @cmds subcmds.clone());
 /// ```
 #[macro_export]
 macro_rules! command {
     ( $name:expr ) => {
-        $crate::command!($name, @opts $crate::option_set!(), @cmds $crate::command_set!())
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $crate::command_set!())
     };
     ( $name:expr, @opts $opts:expr ) => {
         $crate::command!($name, @opts $opts, @cmds $crate::command_set!())
     };
     ( $name:expr, @cmds $sub_cmds:expr ) => {
-        $crate::command!($name, @opts $crate::option_set!(), @cmds $sub_cmds)
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $sub_cmds)
     };
     ( $name:expr, @opts $opts:expr, @cmds $sub_cmds:expr ) => {
         $crate::commands::Command {

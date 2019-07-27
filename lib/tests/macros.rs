@@ -25,7 +25,7 @@ mod available_options {
     #[test]
     fn cmp_non_fixed() {
         // The common base set is already constructed with the “fixed” (`OptionSet` based) macro
-        let fixed: OptionSet = common::get_base_opts();
+        let fixed: &OptionSet = common::get_base_opts();
 
         // Re-build with “non-fixed” (`OptionSetEx` based) macro
         let non_fixed = OptionSetEx {
@@ -56,7 +56,7 @@ mod available_options {
                 shortopt!(@opt_data 'p'),
             ]
         };
-        assert_eq!(fixed, non_fixed);
+        assert_eq!(*fixed, non_fixed);
     }
 
     /// Compare macro-built with hand-built “available options” set
@@ -95,7 +95,7 @@ mod available_options {
             ]
         };
 
-        assert_eq!(macro_built, hand_built);
+        assert_eq!(*macro_built, hand_built);
     }
 
     /// Compare macro-built with method-built “available options” set
@@ -129,6 +129,6 @@ mod available_options {
             .add_short('💧', OptionType::OptionalData)
             .add_short('p', OptionType::OptionalData);
 
-        assert_eq!(macro_built, method_built);
+        assert_eq!(*macro_built, method_built);
     }
 }
