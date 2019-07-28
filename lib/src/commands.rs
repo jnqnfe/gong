@@ -85,6 +85,13 @@ impl<'r, 's: 'r> From<&'r CommandSetEx<'r, 's>> for CommandSet<'r, 's> {
     }
 }
 
+impl<'r, 's: 'r> From<CommandSet<'r, 's>> for CommandSetEx<'r, 's> {
+    /// Create an `CommandSetEx` from an `CommandSet`
+    fn from(c: CommandSet<'r, 's>) -> Self {
+        Self { commands: c.commands.iter().cloned().collect() }
+    }
+}
+
 impl<'r, 's: 'r> PartialEq<CommandSet<'r, 's>> for CommandSetEx<'r, 's> {
     fn eq(&self, rhs: &CommandSet<'r, 's>) -> bool {
         CommandSet::from(self).eq(rhs)
@@ -238,11 +245,12 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
 }
 
 impl<'r, 's: 'r> CommandSet<'r, 's> {
-    /// Creates an “extendible” copy of `self`
+    /// Converts to an “extendible” copy of `self`
     ///
     /// This duplicates the options in `self` into a [`CommandSetEx`](struct.CommandSetEx.html).
-    pub fn to_extendible(&self) -> CommandSetEx<'r, 's> {
-        CommandSetEx { commands: self.commands.iter().cloned().collect() }
+    #[inline]
+    pub fn to_extendible(self) -> CommandSetEx<'r, 's> {
+        CommandSetEx::from(self)
     }
 
     /// Checks if empty

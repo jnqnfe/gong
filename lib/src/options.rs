@@ -102,6 +102,16 @@ impl<'r, 's: 'r> From<&'r OptionSetEx<'s>> for OptionSet<'r, 's> {
     }
 }
 
+impl<'r, 's: 'r> From<OptionSet<'r, 's>> for OptionSetEx<'s> {
+    /// Create an `OptionSetEx` from an `OptionSet`
+    fn from(o: OptionSet<'r, 's>) -> Self {
+        Self {
+            long: o.long.iter().cloned().collect(),
+            short: o.short.iter().cloned().collect(),
+        }
+    }
+}
+
 impl<'r, 's: 'r> PartialEq<OptionSet<'r, 's>> for OptionSetEx<'s> {
     fn eq(&self, rhs: &OptionSet<'r, 's>) -> bool {
         OptionSet::from(self).eq(rhs)
@@ -379,14 +389,12 @@ impl<'s> OptionSetEx<'s> {
 }
 
 impl<'r, 's: 'r> OptionSet<'r, 's> {
-    /// Creates an “extendible” copy of `self`
+    /// Converts to an “extendible” copy of `self`
     ///
     /// This duplicates the options in `self` into an [`OptionSetEx`](struct.OptionSetEx.html).
-    pub fn to_extendible(&self) -> OptionSetEx<'s> {
-        OptionSetEx {
-            long: self.long.iter().cloned().collect(),
-            short: self.short.iter().cloned().collect(),
-        }
+    #[inline]
+    pub fn to_extendible(self) -> OptionSetEx<'s> {
+        OptionSetEx::from(self)
     }
 
     /// Checks if empty
