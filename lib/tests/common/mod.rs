@@ -18,13 +18,13 @@ use gong::commands::CommandSet;
 use gong::parser::Parser;
 
 /// Wrapper for actual analysis result
-#[derive(Debug)] pub struct Actual<'a, 'b>(pub ItemSet<'a, 'b>);
+#[derive(Debug)] pub struct Actual<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
 /// Wrapper for expected result, for comparison
-#[derive(Debug)] pub struct Expected<'a, 'b>(pub ItemSet<'a, 'b>);
+#[derive(Debug)] pub struct Expected<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
 /// Wrapper for actual analysis result (command partitioned)
-#[derive(Debug)] pub struct CmdActual<'a, 'b>(pub CommandAnalysis<'a, 'b>);
+#[derive(Debug)] pub struct CmdActual<'a, 'b, 'c>(pub CommandAnalysis<'a, 'b, 'c>);
 /// Wrapper for expected result, for comparison (command partitioned)
-#[derive(Debug)] pub struct CmdExpected<'a, 'b>(pub CommandAnalysis<'a, 'b>);
+#[derive(Debug)] pub struct CmdExpected<'a, 'b, 'c>(pub CommandAnalysis<'a, 'b, 'c>);
 
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
@@ -148,7 +148,7 @@ macro_rules! check_result {
     }}
 }
 
-impl<'a, 'b> Actual<'a, 'b> {
+impl<'a, 'b, 'c> Actual<'a, 'b, 'c> {
     pub fn as_expected(&self, expected: &Expected) -> bool {
         let equal = self.0 == expected.0;
         if !equal {
@@ -161,7 +161,7 @@ impl<'a, 'b> Actual<'a, 'b> {
     }
 }
 
-impl<'a, 'b> CmdActual<'a, 'b> {
+impl<'a, 'b, 'c> CmdActual<'a, 'b, 'c> {
     pub fn as_expected(&self, expected: &CmdExpected) -> bool {
         let equal = self.0 == expected.0;
         if !equal {

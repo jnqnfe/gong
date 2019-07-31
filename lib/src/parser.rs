@@ -63,17 +63,17 @@ pub use crate::engine::ParseIter;
 /// Holds the option set and command set descriptions used for parsing input arguments, along with
 /// parser settings, and provides methods for parsing.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Parser<'r, 's: 'r> {
+pub struct Parser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
-    pub options: OptionSet<'r, 's>,
+    pub options: OptionSet<'r, 'set>,
     /// Command set
-    pub commands: CommandSet<'r, 's>,
+    pub commands: CommandSet<'r, 'set>,
     /// Settings
     pub settings: Settings,
 }
 
-impl<'r, 's: 'r> Default for Parser<'r, 's> {
+impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
     fn default() -> Self {
         Self {
             options: option_set!(),
@@ -202,9 +202,9 @@ impl Settings {
     }
 }
 
-impl<'r, 's: 'r> Parser<'r, 's> {
+impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// Create a new parser
-    pub fn new(options: OptionSet<'r, 's>, commands: Option<CommandSet<'r, 's>>) -> Self {
+    pub fn new(options: OptionSet<'r, 'set>, commands: Option<CommandSet<'r, 'set>>) -> Self {
         Self {
             options: options,
             commands: commands.unwrap_or(command_set!()),
@@ -244,7 +244,7 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// could cause issues when parsing are checked for; Passing validation is not a confirmation
     /// that the command or option identifiers used are all sensible or otherwise entirely free of
     /// issues.
-    pub fn validate(&self) -> Result<(), (Vec<OptionFlaw<'s>>, Vec<CommandFlaw<'s>>)> {
+    pub fn validate(&self) -> Result<(), (Vec<OptionFlaw<'set>>, Vec<CommandFlaw<'set>>)> {
         let option_set_flaws = self.options.validate();
         let command_set_flaws = self.commands.validate();
         match (option_set_flaws, command_set_flaws) {
@@ -272,8 +272,8 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`validate`]: #method.validate
     #[inline(always)]
     #[must_use]
-    pub fn parse_iter<A>(&'r self, args: &'s [A]) -> ParseIter<'r, 's, A>
-        where A: 's + AsRef<OsStr>
+    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> ParseIter<'r, 'set, 'arg, A>
+        where A: AsRef<OsStr> + 'arg
     {
         ParseIter::new(args, self)
     }
@@ -302,8 +302,8 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`parse_iter`]: #method.parse_iter
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'s [A]) -> ItemSet<'r, 's>
-        where A: 's + AsRef<OsStr>
+    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'r, 'set, 'arg>
+        where A: AsRef<OsStr> + 'arg
     {
         assert!(self.commands.is_empty(), "parser has a non-empty command set, parse() should not be used, use parse_cmd() instead");
         ItemSet::from(ParseIter::new(args, self))
@@ -329,8 +329,8 @@ impl<'r, 's: 'r> Parser<'r, 's> {
     /// [`parse`]: #method.parse
     #[inline(always)]
     #[must_use]
-    pub fn parse_cmd<A>(&self, args: &'s [A]) -> CommandAnalysis<'r, 's>
-        where A: 's + AsRef<OsStr>
+    pub fn parse_cmd<A>(&self, args: &'arg [A]) -> CommandAnalysis<'r, 'set, 'arg>
+        where A: AsRef<OsStr> + 'arg
     {
         CommandAnalysis::from(ParseIter::new(args, self))
     }

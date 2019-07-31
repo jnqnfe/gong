@@ -37,11 +37,11 @@ type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
 /// structure to the parser up front, you want to dynamically switch the sets used for subsequent
 /// iterations (arguments) manually, after encountering a command.
 #[derive(Clone)]
-pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<OsStr>> {
+pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
-    arg_iter: Enumerate<slice::Iter<'s, A>>,
+    arg_iter: Enumerate<slice::Iter<'arg, A>>,
     /// The parser data in use (will change on encountering a command)
-    parser_data: Parser<'r, 's>,
+    parser_data: Parser<'r, 'set>,
     /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
     /// either an early terminator has been encountered, or “posixly correct” behaviour is required
     /// and a positional has been encountered).
@@ -53,19 +53,19 @@ pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<OsStr>> {
     /// Function for determining basic argument type (different function per option mode)
     get_basic_arg_type_fn: ArgTypeAssessor,
     /// Short option set argument iterator
-    short_set_iter: Option<ShortSetIter<'r, 's, A>>,
+    short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
 }
 
 /// A short option set string iterator
 #[derive(Debug, Clone)]
-struct ShortSetIter<'r, 's: 'r, A: 's + AsRef<OsStr>> {
+struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
-    arg_iter: Enumerate<slice::Iter<'s, A>>,
+    arg_iter: Enumerate<slice::Iter<'arg, A>>,
     /// The parser data in use
-    parser_data: Parser<'r, 's>,
+    parser_data: Parser<'r, 'set>,
     /// The short option set string being iterated over.
     /// We need to hold a copy of this at least for the purpose of extracting in-same-arg data.
-    string: &'s OsStr,
+    string: &'arg OsStr,
     /// A lossy UTF-8 conversion of the string
     string_utf8: Cow<'r, str>,
     /// Char iterator over the lossily converted UTF-8 string
@@ -90,10 +90,10 @@ enum ArgTypeBasic<'a> {
     ShortOptionSet(&'a OsStr),
 }
 
-impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    type Item = ItemResult<'s>;
+    type Item = ItemResult<'set, 'arg>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Continue from where we left off for a short option set?
@@ -116,10 +116,10 @@ impl<'r, 's, A> Iterator for ParseIter<'r, 's, A>
     }
 }
 
-impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    type Item = ItemResult<'s>;
+    type Item = ItemResult<'set, 'arg>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
@@ -128,11 +128,11 @@ impl<'r, 's, A> Iterator for ShortSetIter<'r, 's, A>
     }
 }
 
-impl<'r, 's, A> ParseIter<'r, 's, A>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     /// Create a new instance
-    pub(crate) fn new(args: &'s [A], parser: &Parser<'r, 's>) -> Self {
+    pub(crate) fn new(args: &'arg [A], parser: &Parser<'r, 'set>) -> Self {
         Self {
             arg_iter: args.iter().enumerate(),
             parser_data: *parser,
@@ -155,7 +155,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     ///
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
-    pub fn get_option_set(&self) -> OptionSet<'r, 's> {
+    pub fn get_option_set(&self) -> OptionSet<'r, 'set> {
         self.parser_data.options
     }
 
@@ -167,7 +167,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid option set.
-    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 's>) {
+    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 'set>) {
         self.parser_data.options = opt_set;
         if let Some(ref mut short_set_iter) = self.short_set_iter {
             short_set_iter.parser_data.options = opt_set;
@@ -178,7 +178,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     ///
     /// This is useful for suggestion matching of an unknown command
     #[inline(always)]
-    pub fn get_command_set(&self) -> CommandSet<'r, 's> {
+    pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
         self.parser_data.commands
     }
 
@@ -190,7 +190,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     /// iterations (arguments) manually, after encountering a command.
     ///
     /// Note, it is undefined behaviour to set a non-valid command set.
-    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 's>) {
+    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
         self.parser_data.commands = cmd_set;
         if let Some(ref mut short_set_iter) = self.short_set_iter {
             short_set_iter.parser_data.commands = cmd_set;
@@ -222,7 +222,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     }
 
     /// Parse next argument, if any
-    fn get_next(&mut self) -> Option<ItemResult<'s>> {
+    fn get_next(&mut self) -> Option<ItemResult<'set, 'arg>> {
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
@@ -355,11 +355,11 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
     }
 }
 
-impl<'r, 's, A> ShortSetIter<'r, 's, A>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     /// Create a new instance. Note, the provided string should **not** include the dash prefix.
-    pub(crate) fn new(parse_iter: &ParseIter<'r, 's, A>, short_set_string: &'s OsStr,
+    pub(crate) fn new(parse_iter: &ParseIter<'r, 'set, 'arg, A>, short_set_string: &'arg OsStr,
         arg_index: usize) -> Self
     {
         // Note, both the lossy converted string and the char iterator over it will live within the
@@ -382,7 +382,7 @@ impl<'r, 's, A> ShortSetIter<'r, 's, A>
     }
 
     /// Get next item, if any
-    fn get_next(&mut self) -> Option<ItemResult<'s>> {
+    fn get_next(&mut self) -> Option<ItemResult<'set, 'arg>> {
         if self.consumed {
             return None;
         }

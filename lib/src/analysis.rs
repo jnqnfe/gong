@@ -94,7 +94,7 @@ use std::ffi::OsStr;
 use crate::commands::CommandSet;
 use crate::options::OptionSet;
 
-pub type ItemResult<'s> = Result<Item<'s>, ProblemItem<'s>>;
+pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
 
 /// Non-problematic items
 ///
@@ -110,17 +110,17 @@ pub type ItemResult<'s> = Result<Item<'s>, ProblemItem<'s>>;
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`Positional`]: #variant.Positional
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum Item<'a> {
+pub enum Item<'set, 'arg> {
     /// Positional argument (not an option, command, or early terminator).
-    Positional(usize, &'a OsStr),
+    Positional(usize, &'arg OsStr),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
     /// Long option match, possibly with a data argument.
-    Long(usize, &'a str, Option<(&'a OsStr, DataLocation)>),
+    Long(usize, &'set str, Option<(&'arg OsStr, DataLocation)>),
     /// Short option match, possibly with a data argument.
-    Short(usize, char, Option<(&'a OsStr, DataLocation)>),
+    Short(usize, char, Option<(&'arg OsStr, DataLocation)>),
     /// Command match.
-    Command(usize, &'a str),
+    Command(usize, &'set str),
 }
 
 /// Problematic items
@@ -135,26 +135,26 @@ pub enum Item<'a> {
 ///
 /// [`LongWithUnexpectedData`]: #variant.LongWithUnexpectedData
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum ProblemItem<'a> {
+pub enum ProblemItem<'set, 'arg> {
     /// Looked like a long option, but no match
-    UnknownLong(usize, &'a OsStr),
+    UnknownLong(usize, &'arg OsStr),
     /// Unknown short option `char`
     UnknownShort(usize, char),
     /// Unknown command
-    UnknownCommand(usize, &'a OsStr),
+    UnknownCommand(usize, &'arg OsStr),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found.
-    AmbiguousLong(usize, &'a OsStr),
+    AmbiguousLong(usize, &'arg OsStr),
     /// Ambiguous match with multiple commands. This only occurs when an exact match was not found,
     /// but multiple  abbreviated possible matches were found.
-    AmbiguousCmd(usize, &'a OsStr),
+    AmbiguousCmd(usize, &'arg OsStr),
     /// Long option match, but data argument missing
-    LongMissingData(usize, &'a str),
+    LongMissingData(usize, &'set str),
     /// Short option match, but data argument missing
     ShortMissingData(usize, char),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. (The first string is the option name, the second the data).
-    LongWithUnexpectedData(usize, &'a str, &'a OsStr),
+    LongWithUnexpectedData(usize, &'set str, &'arg OsStr),
 }
 
 /// Used to describe where data was located, for options that require data
@@ -172,34 +172,34 @@ pub enum DataLocation {
 /// This type provides a set of “data-mining” methods for extracting information from the set of
 /// wrapped items. Note that most such methods ignore problem items.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ItemSet<'r, 's: 'r> {
+pub struct ItemSet<'r, 'set: 'r, 'arg: 'r> {
     /// Set of items describing what was found
-    pub items: Vec<ItemResult<'s>>,
+    pub items: Vec<ItemResult<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
-    pub opt_set: OptionSet<'r, 's>,
+    pub opt_set: OptionSet<'r, 'set>,
 }
 
 /// Used for breaking up an analysis by command use
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CommandBlockPart<'r, 's: 'r> {
+pub enum CommandBlockPart<'r, 'set: 'r, 'arg: 'r> {
     /// A command
-    Command(usize, &'s str),
+    Command(usize, &'set str),
     /// Set of items describing what was found, up to the next use of a command
-    ItemSet(ItemSet<'r, 's>),
+    ItemSet(ItemSet<'r, 'set, 'arg>),
 }
 
 /// Analysis of parsing arguments, partitioned per command use
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CommandAnalysis<'r, 's: 'r> {
+pub struct CommandAnalysis<'r, 'set: 'r, 'arg: 'r> {
     /// Partitioned analysis
-    pub parts: Vec<CommandBlockPart<'r, 's>>,
+    pub parts: Vec<CommandBlockPart<'r, 'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown option, or missing arg data)
     pub problems: bool,
     /// Pointer to the final command set, for use with suggestion matching an unknown command (which
     /// only applies to the first positional).
-    pub cmd_set: Option<CommandSet<'r, 's>>,
+    pub cmd_set: Option<CommandSet<'r, 'set>>,
 }
 
 /// A *to find* option description
@@ -319,10 +319,10 @@ impl From<super::options::ShortOption> for FindOption<'_> {
     }
 }
 
-impl<'r, 's: 'r> ItemSet<'r, 's> {
+impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
-    pub fn new(opt_set: OptionSet<'r, 's>) -> Self {
+    pub fn new(opt_set: OptionSet<'r, 'set>) -> Self {
         Self {
             items: Vec::new(),
             problems: false,
@@ -340,18 +340,18 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// Useful for suggestion matching with unknown options.
     #[inline(always)]
-    pub fn get_optset(&self) -> &OptionSet<'r, 's> {
+    pub fn get_optset(&self) -> &OptionSet<'r, 'set> {
         &self.opt_set
     }
 
     /// Gives an iterator over all items in the set
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResult<'s>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResult<'set, 'arg>> {
         self.items.iter()
     }
 
     /// Gives an iterator over any good (non-problematic) items
-    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'s>> {
+    pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
                 Ok(_) => true,
@@ -374,7 +374,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_first_problem`]: #method.get_first_problem
     /// [`stop_on_problem`]: ../parser/struct.Settings.html#structfield.stop_on_problem
-    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'s>> {
+    pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
                 Err(_) => true,
@@ -405,7 +405,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// [`get_problem_items`]: #method.get_problem_items
     #[inline]
     #[must_use]
-    pub fn get_first_problem(&'r self) -> Option<&'r ProblemItem<'s>> {
+    pub fn get_first_problem(&'r self) -> Option<&'r ProblemItem<'set, 'arg>> {
         self.get_problem_items().next()
     }
 
@@ -420,7 +420,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// # let item_set = gong::analysis::ItemSet::new(opt_set);
     /// let positionals: Vec<_> = item_set.get_positionals().collect();
     /// ```
-    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s OsStr> + 'r {
+    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
         self.items.iter()
             .filter_map(|i| match i {
                 Ok(Item::Positional(_, s)) => Some(*s),
@@ -531,7 +531,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     ///
     /// [`get_all_values`]: #method.get_all_values
     #[must_use]
-    pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'s OsStr> {
+    pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'arg OsStr> {
         for item in self.items.iter().rev() {
             match *item {
                 Ok(Item::Long(_, n, Some((ref d, _)))) => {
@@ -565,7 +565,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     /// ```
     #[must_use]
     pub fn get_all_values(&'r self, option: FindOption<'r>)
-        -> impl Iterator<Item = &'s OsStr> + 'r
+        -> impl Iterator<Item = &'arg OsStr> + 'r
     {
         self.items.iter()
             .filter_map(move |i| match i {
@@ -795,7 +795,7 @@ impl<'r, 's: 'r> ItemSet<'r, 's> {
     }
 }
 
-impl<'r, 's: 'r> CommandAnalysis<'r, 's> {
+impl<'r, 'set: 'r, 'arg: 'r> CommandAnalysis<'r, 'set, 'arg> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
     pub fn new() -> Self {
@@ -816,15 +816,16 @@ impl<'r, 's: 'r> CommandAnalysis<'r, 's> {
     ///
     /// Useful for suggestion matching with unknown commands.
     #[inline(always)]
-    pub fn get_cmdset(&self) -> &Option<CommandSet<'r, 's>> {
+    pub fn get_cmdset(&self) -> &Option<CommandSet<'r, 'set>> {
         &self.cmd_set
     }
 }
 
-impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for ItemSet<'r, 's>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
+    for ItemSet<'r, 'set, 'arg>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    fn from(mut iter: crate::engine::ParseIter<'r, 's, A>) -> Self {
+    fn from(mut iter: crate::engine::ParseIter<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut item_set = ItemSet::new(iter.get_option_set());
         while let Some(item) = iter.next() {
@@ -840,10 +841,11 @@ impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for ItemSet<'r, 's>
     }
 }
 
-impl<'r, 's, A> From<crate::engine::ParseIter<'r, 's, A>> for CommandAnalysis<'r, 's>
-    where A: 's + AsRef<OsStr>, 's: 'r
+impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
+    for CommandAnalysis<'r, 'set, 'arg>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    fn from(mut iter: crate::engine::ParseIter<'r, 's, A>) -> Self {
+    fn from(mut iter: crate::engine::ParseIter<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;
