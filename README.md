@@ -30,7 +30,11 @@ as the library, however there is extremely little to it, and really it can be co
 re-use pieces of it for the purposes of writing code that uses the library without worrying about
 such stuff. (It can be considered an example of basic usage).
 
-The logo image files are derivatives of the Rust programming language icon.
+The logo image files are derivatives of the Rust programming language icon. I apply no specific
+image-oriented license upon them (I am not familiar with such licenses). As a substitute, subject to
+any constraints of licensing of the Rust logo image, I freely permit use on a common-sense fair-use
+basis. Feel free to make your own such derived logos, I make no claim upon it being an original
+idea.
 
 Source Code Contents
 ====================
