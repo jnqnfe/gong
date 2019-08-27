@@ -40,8 +40,12 @@ type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
 pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
-    /// The parser data in use (will change on encountering a command)
-    parser_data: Parser<'r, 'set>,
+    /// The option set in use (will change on encountering a command)
+    options: OptionSet<'r, 'set>,
+    /// The command set in use (will change on encountering a command)
+    commands: CommandSet<'r, 'set>,
+    /// Settings
+    settings: Settings,
     /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
     /// either an early terminator has been encountered, or “posixly correct” behaviour is required
     /// and a positional has been encountered).
@@ -61,8 +65,8 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
 struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
-    /// The parser data in use
-    parser_data: Parser<'r, 'set>,
+    /// The option set in use
+    options: OptionSet<'r, 'set>,
     /// The short option set string being iterated over.
     /// We need to hold a copy of this at least for the purpose of extracting in-same-arg data.
     string: &'arg OsStr,
@@ -135,7 +139,9 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     pub(crate) fn new(args: &'arg [A], parser: &Parser<'r, 'set>) -> Self {
         Self {
             arg_iter: args.iter().enumerate(),
-            parser_data: *parser,
+            options: parser.options,
+            commands: parser.commands,
+            settings: parser.settings,
             rest_are_positionals: false,
             try_command_matching: true,
             get_basic_arg_type_fn: Self::get_type_assessor(parser.settings.mode),
@@ -156,7 +162,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
     pub fn get_option_set(&self) -> OptionSet<'r, 'set> {
-        self.parser_data.options
+        self.options
     }
 
     /// Change the *option set* used for parsing by subsequent iterations
@@ -168,9 +174,9 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     ///
     /// Note, it is undefined behaviour to set a non-valid option set.
     pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 'set>) {
-        self.parser_data.options = opt_set;
+        self.options = opt_set;
         if let Some(ref mut short_set_iter) = self.short_set_iter {
-            short_set_iter.parser_data.options = opt_set;
+            short_set_iter.options = opt_set;
         }
     }
 
@@ -179,7 +185,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// This is useful for suggestion matching of an unknown command
     #[inline(always)]
     pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
-        self.parser_data.commands
+        self.commands
     }
 
     /// Change the *command set* used for parsing by subsequent iterations
@@ -191,10 +197,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     ///
     /// Note, it is undefined behaviour to set a non-valid command set.
     pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
-        self.parser_data.commands = cmd_set;
-        if let Some(ref mut short_set_iter) = self.short_set_iter {
-            short_set_iter.parser_data.commands = cmd_set;
-        }
+        self.commands = cmd_set;
     }
 
     /// Get copy of parser settings in use
@@ -204,7 +207,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// avoiding the need for a pointer to the original parser object.
     #[inline]
     pub fn get_parse_settings(&self) -> Settings {
-        self.parser_data.settings
+        self.settings
     }
 
     /// Change the settings used for parsing by subsequent iterations
@@ -214,10 +217,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// program should have any need to change settings in the middle of parsing, but you can if you
     /// absolutely want to (there is no reason to prevent you from doing so).
     pub fn set_parse_settings(&mut self, settings: Settings) {
-        self.parser_data.settings = settings;
-        if let Some(ref mut short_set_iter) = self.short_set_iter {
-            short_set_iter.parser_data.settings = settings;
-        }
+        self.settings = settings;
         self.get_basic_arg_type_fn = Self::get_type_assessor(settings.mode);
     }
 
@@ -236,17 +236,17 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 // This may be a positional or a command
                 if !self.rest_are_positionals {
                     if self.try_command_matching {
-                        let lookup = match self.parser_data.settings.allow_cmd_abbreviations {
+                        let lookup = match self.settings.allow_cmd_abbreviations {
                             false => crate::matching::find_by_name(arg,
-                                self.parser_data.commands.commands.iter(), |&c| { c.name }).into(),
+                                self.commands.commands.iter(), |&c| { c.name }).into(),
                             true => crate::matching::find_by_abbrev_name(arg,
-                                self.parser_data.commands.commands.iter(), |&c| { c.name }),
+                                self.commands.commands.iter(), |&c| { c.name }),
                         };
                         match lookup {
                             NameSearchResult::Match(matched) |
                             NameSearchResult::AbbreviatedMatch(matched) => {
-                                self.parser_data.options = matched.options;
-                                self.parser_data.commands = matched.sub_commands;
+                                self.options = matched.options;
+                                self.commands = matched.sub_commands;
                                 return Some(Ok(Item::Command(arg_index, matched.name)));
                             },
                             NameSearchResult::AmbiguousMatch => {
@@ -255,11 +255,11 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             NameSearchResult::NoMatch => { /* fall through */ },
                         }
                         self.try_command_matching = false;
-                        if !self.parser_data.commands.commands.is_empty() {
+                        if !self.commands.commands.is_empty() {
                             return Some(Err(ProblemItem::UnknownCommand(arg_index, arg)));
                         }
                     }
-                    if self.parser_data.settings.posixly_correct {
+                    if self.settings.posixly_correct {
                         self.rest_are_positionals = true;
                     }
                 }
@@ -295,11 +295,11 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                     return Some(Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
                 }
 
-                let lookup = match self.parser_data.settings.allow_opt_abbreviations {
+                let lookup = match self.settings.allow_opt_abbreviations {
                     false => crate::matching::find_by_name(name,
-                        self.parser_data.options.long.iter(), |&o| { o.name }).into(),
+                        self.options.long.iter(), |&o| { o.name }).into(),
                     true => crate::matching::find_by_abbrev_name(name,
-                        self.parser_data.options.long.iter(), |&o| { o.name }),
+                        self.options.long.iter(), |&o| { o.name }),
                 };
 
                 match lookup {
@@ -371,7 +371,7 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
         let iter = lossy_ref.char_indices();
         Self {
             arg_iter: parse_iter.arg_iter.clone(),
-            parser_data: parse_iter.parser_data,
+            options: parse_iter.options,
             string: short_set_string,
             string_utf8: lossy,
             iter: iter,
@@ -429,7 +429,7 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
             // Not a Unicode replacement character, so lets try to match it
             _ => {
                 lookup = crate::matching::find_by_char(ch,
-                    self.parser_data.options.short.iter(), |&o| { o.ch }).into();
+                    self.options.short.iter(), |&o| { o.ch }).into();
 
                 // Tracking?
                 if self.bytes_consumed != 0 {
