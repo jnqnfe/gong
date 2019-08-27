@@ -22,8 +22,6 @@ use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
 
-type ArgTypeAssessor = fn(&OsStr) -> ArgTypeBasic<'_>;
-
 /// An argument list parsing iterator
 ///
 /// Created by the [`parse_iter`] method of [`Parser`].
@@ -54,8 +52,6 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// for each option-set analysis (reset for each command identified), and 2) we have not
     /// encountered an early terminator.
     try_command_matching: bool,
-    /// Function for determining basic argument type (different function per option mode)
-    get_basic_arg_type_fn: ArgTypeAssessor,
     /// Short option set argument iterator
     short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
 }
@@ -144,16 +140,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             settings: parser.settings,
             rest_are_positionals: false,
             try_command_matching: true,
-            get_basic_arg_type_fn: Self::get_type_assessor(parser.settings.mode),
             short_set_iter: None,
-        }
-    }
-
-    #[inline]
-    fn get_type_assessor(mode: OptionsMode) -> ArgTypeAssessor {
-        match mode {
-            OptionsMode::Standard => get_basic_arg_type_standard,
-            OptionsMode::Alternate => get_basic_arg_type_alternate,
         }
     }
 
@@ -218,7 +205,6 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// absolutely want to (there is no reason to prevent you from doing so).
     pub fn set_parse_settings(&mut self, settings: Settings) {
         self.settings = settings;
-        self.get_basic_arg_type_fn = Self::get_type_assessor(settings.mode);
     }
 
     /// Parse next argument, if any
@@ -226,9 +212,10 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
-        let arg_type = match self.rest_are_positionals {
-            true => ArgTypeBasic::NonOption,
-            false => (self.get_basic_arg_type_fn)(arg),
+        let arg_type = match (self.rest_are_positionals, self.settings.mode) {
+            (true, _) => ArgTypeBasic::NonOption,
+            (false, OptionsMode::Standard) => get_basic_arg_type_standard(arg),
+            (false, OptionsMode::Alternate) => get_basic_arg_type_alternate(arg),
         };
 
         match arg_type {
