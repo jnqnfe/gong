@@ -36,6 +36,9 @@ use crate::parser::*;
 /// iterations (arguments) manually, after encountering a command.
 #[derive(Clone)]
 pub struct CmdParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
+    /// The command set in use (will change on encountering a command)
+    commands: CommandSet<'r, 'set>,
+    /// Inner main iterator
     inner: ParseIter<'r, 'set, 'arg, A>,
 }
 
@@ -51,17 +54,18 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
     /// The option set in use (will change on encountering a command)
     options: OptionSet<'r, 'set>,
-    /// The command set in use (will change on encountering a command)
-    commands: CommandSet<'r, 'set>,
     /// Settings
     settings: Settings,
     /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
     /// either an early terminator has been encountered, or “posixly correct” behaviour is required
     /// and a positional has been encountered).
     rest_are_positionals: bool,
-    /// A positional is only assessed as being a possible command if 1) it is the first encountered
-    /// for each option-set analysis (reset for each command identified), and 2) we have not
-    /// encountered an early terminator.
+    /// Whether or not to consider non-options as possible commands rather than just positionals
+    ///
+    /// Interpretation of non-options as commands should only occur if command parsing is actually
+    /// being done (this being used through the command-based iterator); if we have not yet served a
+    /// positional item (since positionals can only occur **after** commands); and if
+    /// `rest_are_positionals` is `false` of course.
     try_command_matching: bool,
     /// Short option set argument iterator
     short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
@@ -106,9 +110,39 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
 {
     type Item = ItemResult<'set, 'arg>;
 
-    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
+        let next = self.inner.next();
+        if self.inner.try_command_matching {
+            if let Some(Ok(Item::Positional(arg_index, arg))) = next {
+                let lookup = match self.inner.settings.allow_cmd_abbreviations {
+                    false => crate::matching::find_by_name(arg,
+                        self.commands.commands.iter(), |&c| { c.name }).into(),
+                    true => crate::matching::find_by_abbrev_name(arg,
+                        self.commands.commands.iter(), |&c| { c.name }),
+                };
+                match lookup {
+                    NameSearchResult::Match(matched) |
+                    NameSearchResult::AbbreviatedMatch(matched) => {
+                        self.commands = matched.sub_commands;
+                        self.inner.options = matched.options;
+                        self.inner.rest_are_positionals = false; // Reverse
+                        return Some(Ok(Item::Command(arg_index, matched.name)));
+                    },
+                    NameSearchResult::AmbiguousMatch => {
+                        self.inner.rest_are_positionals = false; // Reverse
+                        return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
+                    },
+                    NameSearchResult::NoMatch => {
+                        self.inner.try_command_matching = false;
+                        if !self.commands.commands.is_empty() {
+                            return Some(Err(ProblemItem::UnknownCommand(arg_index, arg)));
+                        }
+                        /* fall through */
+                    },
+                }
+            }
+        }
+        next
     }
 }
 
@@ -158,10 +192,12 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     pub(crate) fn new(args: &'arg [A], parser: &CmdParser<'r, 'set>) -> Self {
         let tmp_parser = Parser {
             options: parser.options,
-            commands: parser.commands,
             settings: parser.settings,
         };
-        Self { inner: ParseIter::new(args, &tmp_parser) }
+        Self {
+            commands: parser.commands,
+            inner: ParseIter::new_inner(args, &tmp_parser, true),
+        }
     }
 
     /// Get the *option set* currently in use for parsing
@@ -192,7 +228,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// This is useful for suggestion matching of an unknown command
     #[inline(always)]
     pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
-        self.inner.commands
+        self.commands
     }
 
     /// Change the *command set* used for parsing by subsequent iterations
@@ -204,7 +240,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     ///
     /// Note, it is undefined behaviour to set a non-valid command set.
     pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
-        self.inner.commands = cmd_set;
+        self.commands = cmd_set;
     }
 
     /// Get a mutable reference to the parser settings
@@ -223,14 +259,19 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     /// Create a new instance
+    #[inline(always)]
     pub(crate) fn new(args: &'arg [A], parser: &Parser<'r, 'set>) -> Self {
+        Self::new_inner(args, parser, false)
+    }
+
+    /// Create a new instance
+    fn new_inner(args: &'arg [A], parser: &Parser<'r, 'set>, command_mode: bool) -> Self {
         Self {
             arg_iter: args.iter().enumerate(),
             options: parser.options,
-            commands: parser.commands,
             settings: parser.settings,
             rest_are_positionals: false,
-            try_command_matching: true,
+            try_command_matching: command_mode,
             short_set_iter: None,
         }
     }
@@ -262,40 +303,14 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
         match arg_type {
             ArgTypeBasic::NonOption => {
-                // This may be a positional or a command
-                if !self.rest_are_positionals {
-                    if self.try_command_matching {
-                        let lookup = match self.settings.allow_cmd_abbreviations {
-                            false => crate::matching::find_by_name(arg,
-                                self.commands.commands.iter(), |&c| { c.name }).into(),
-                            true => crate::matching::find_by_abbrev_name(arg,
-                                self.commands.commands.iter(), |&c| { c.name }),
-                        };
-                        match lookup {
-                            NameSearchResult::Match(matched) |
-                            NameSearchResult::AbbreviatedMatch(matched) => {
-                                self.options = matched.options;
-                                self.commands = matched.sub_commands;
-                                return Some(Ok(Item::Command(arg_index, matched.name)));
-                            },
-                            NameSearchResult::AmbiguousMatch => {
-                                return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
-                            },
-                            NameSearchResult::NoMatch => { /* fall through */ },
-                        }
-                        self.try_command_matching = false;
-                        if !self.commands.commands.is_empty() {
-                            return Some(Err(ProblemItem::UnknownCommand(arg_index, arg)));
-                        }
-                    }
-                    if self.settings.posixly_correct {
-                        self.rest_are_positionals = true;
-                    }
+                if self.settings.posixly_correct {
+                    self.rest_are_positionals = true;
                 }
                 Some(Ok(Item::Positional(arg_index, arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
                 self.rest_are_positionals = true;
+                self.try_command_matching = false;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
                 // where, so let’s not leave it out of the results.
                 Some(Ok(Item::EarlyTerminator(arg_index)))

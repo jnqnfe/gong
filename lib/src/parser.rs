@@ -74,9 +74,6 @@ pub struct Parser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
     pub options: OptionSet<'r, 'set>,
-    //TODO: remove this (requires splitting out command handling to level above main engine iterator)
-    /// Dummy command set
-    pub commands: CommandSet<'r, 'set>,
     /// Settings
     pub settings: Settings,
 }
@@ -104,7 +101,6 @@ impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
     fn default() -> Self {
         Self {
             options: option_set!(),
-            commands: command_set!(),
             settings: Settings::default(),
         }
     }
@@ -244,7 +240,6 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     pub fn new(options: OptionSet<'r, 'set>) -> Self {
         Self {
             options: options,
-            commands: command_set!(),
             settings: Settings::default(),
         }
     }
