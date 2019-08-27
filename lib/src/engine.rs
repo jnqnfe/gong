@@ -187,24 +187,15 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         self.commands = cmd_set;
     }
 
-    /// Get copy of parser settings in use
-    ///
-    /// The point of this is for use in situations where `set_parse_settings` might be used, where
-    /// a copy of the original settings are wanted for modification before applying on the iterator,
-    /// avoiding the need for a pointer to the original parser object.
-    #[inline]
-    pub fn get_parse_settings(&self) -> Settings {
-        self.settings
-    }
-
-    /// Change the settings used for parsing by subsequent iterations
+    /// Get a mutable reference to the parser settings
     ///
     /// The use case for this method is similar to that of the methods for changing the *option
     /// set* and *command set* to be used, though more niche. It is thought unlikely that any
     /// program should have any need to change settings in the middle of parsing, but you can if you
     /// absolutely want to (there is no reason to prevent you from doing so).
-    pub fn set_parse_settings(&mut self, settings: Settings) {
-        self.settings = settings;
+    #[inline]
+    pub fn get_parse_settings(&mut self) -> &mut Settings {
+        &mut self.settings
     }
 
     /// Parse next argument, if any

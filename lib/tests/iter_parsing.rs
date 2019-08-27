@@ -100,9 +100,7 @@ mod change_data {
         // Programs would not normally change settings part way through, it would confuse users,
         // this just tests that the ability to change settings (if a program really wanted to, or
         // actually has a genuine need) works.
-        let mut new_settings = parse_iter.get_parse_settings(); // Get current settings
-        new_settings.set_mode(OptionsMode::Alternate);          // Change them
-        parse_iter.set_parse_settings(new_settings);            // Apply them
+        parse_iter.get_parse_settings().set_mode(OptionsMode::Alternate);
         // NB: We confirm change of settings took place successfully by the fact that we’re matching
         // the next option in alternate mode.
 
