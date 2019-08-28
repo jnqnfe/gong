@@ -17,6 +17,7 @@ use std::mem;
 use std::slice;
 use std::str::CharIndices;
 use crate::analysis::*;
+use crate::arguments::Args;
 use crate::commands::CommandSet;
 use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
@@ -298,15 +299,15 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 {
     /// Create a new instance
     #[inline(always)]
-    pub(crate) fn new(args: &'arg [A], parser: &Parser<'r, 'set>) -> Self {
+    pub(crate) fn new(args: &'arg Args<A>, parser: &Parser<'r, 'set>) -> Self {
         Self::new_inner(args, parser, false)
     }
 
     /// Create a new instance
-    fn new_inner(args: &'arg [A], parser: &Parser<'r, 'set>, command_mode: bool) -> Self {
+    fn new_inner(args: &'arg Args<A>, parser: &Parser<'r, 'set>, command_mode: bool) -> Self {
         parser.positionals_policy.assert_valid();
         Self {
-            arg_iter: args.iter().enumerate(),
+            arg_iter: args.as_slice().iter().enumerate(),
             options: parser.options,
             settings: parser.settings,
             rest_are_positionals: false,
@@ -873,7 +874,7 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
 {
     /// Create a new instance
     #[inline]
-    pub(crate) fn new(args: &'arg [A], parser: &CmdParser<'r, 'set>) -> Self {
+    pub(crate) fn new(args: &'arg Args<A>, parser: &CmdParser<'r, 'set>) -> Self {
         Self {
             commands: parser.commands,
             inner: ParseIter::new_inner(args, &parser.inner, true),

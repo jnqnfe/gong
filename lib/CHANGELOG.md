@@ -22,6 +22,8 @@
       this new wrapping `Parser` object. There is a `parse_iter` method for iterative based parsing,
       a `parse` method for the “all in one” style, and a `parse_cmd` method providing a suitable
       alternative to `parse` for command-based programs.
+ * Added a new argument capturing `Args` type, which can capture real arguments or take a set of
+   custom ones. This is now what is taken by the parser instead of a raw string slice.
  * Added support for “optional” data-values.
    This option type has been named “mixed”, as it can be used as either flag or data-taking style.
    This means greater flexibility for data-taking options; you can now choose whether providing a

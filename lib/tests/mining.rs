@@ -1050,7 +1050,7 @@ mod last_used {
     /// Empty argument list
     #[test]
     fn no_args() {
-        let args: Vec<&OsStr> = Vec::new();
+        let args = arg_list!();
         let parser = get_parser();
 
         let expected = expected!([]);
@@ -1310,7 +1310,7 @@ mod first_used {
     /// Empty argument list
     #[test]
     fn no_args() {
-        let args: Vec<&OsStr> = Vec::new();
+        let args = arg_list!();
         let parser = get_parser();
 
         let expected = dm_expected!(

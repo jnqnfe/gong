@@ -55,6 +55,7 @@ use std::convert::AsRef;
 use std::ffi::OsStr;
 use crate::{option_set, command_set};
 use crate::analysis::{ItemSet, CommandAnalysis};
+use crate::arguments::Args;
 use crate::commands::{CommandSet, CommandFlaw};
 use crate::options::{OptionSet, OptionFlaw};
 use crate::positionals::Policy as PositionalsPolicy;
@@ -329,7 +330,7 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// [`validate`]: #method.validate
     #[inline(always)]
     #[must_use]
-    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> ParseIter<'r, 'set, 'arg, A>
+    pub fn parse_iter<A>(&'r self, args: &'arg Args<A>) -> ParseIter<'r, 'set, 'arg, A>
         where A: AsRef<OsStr> + 'arg
     {
         ParseIter::new(args, self)
@@ -354,7 +355,9 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// [`parse_iter`]: #method.parse_iter
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'set, 'arg> where A: AsRef<OsStr> + 'arg {
+    pub fn parse<A>(&self, args: &'arg Args<A>) -> ItemSet<'set, 'arg>
+        where A: AsRef<OsStr> + 'arg
+    {
         ItemSet::from(ParseIter::new(args, self))
     }
 }
@@ -436,7 +439,7 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// [`validate`]: #method.validate
     #[inline(always)]
     #[must_use]
-    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> CmdParseIter<'r, 'set, 'arg, A>
+    pub fn parse_iter<A>(&'r self, args: &'arg Args<A>) -> CmdParseIter<'r, 'set, 'arg, A>
         where A: AsRef<OsStr> + 'arg
     {
         CmdParseIter::new(args, self)
@@ -467,7 +470,7 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// [`Parser::parse`]: struct.Parser.html#method.parse
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'arg [A]) -> CommandAnalysis<'set, 'arg>
+    pub fn parse<A>(&self, args: &'arg Args<A>) -> CommandAnalysis<'set, 'arg>
         where A: AsRef<OsStr> + 'arg
     {
         CommandAnalysis::from(CmdParseIter::new(args, self))

@@ -31,21 +31,27 @@ use self::common::{get_parser, get_parser_cmd, CmdActual, CmdExpected};
 /// All that we really need concern ourselves with is that it compiles.
 #[test]
 fn arg_list_owned_set() {
+    use gong::arguments::Args;
+
     // Test works (compiles) using a `OsString` based slice (as given from `env::args_os()` for real
     // args).
-    let args: Vec<OsString> = vec![ OsString::from("--foo"), OsString::from("--bah") ];
+    let arg_vec: Vec<OsString> = vec![ OsString::from("--foo"), OsString::from("--bah") ];
+    let args = Args::from_vec(arg_vec);
     let _ = get_parser().parse(&args);
 
     // Test works (compiles) using an `&OsStr` based slice
-    let args: Vec<&OsStr> = vec![ OsStr::new("--foo"), OsStr::new("--bah") ];
+    let arg_vec: Vec<&OsStr> = vec![ OsStr::new("--foo"), OsStr::new("--bah") ];
+    let args = Args::from_vec(arg_vec);
     let _ = get_parser().parse(&args);
 
     // Test works (compiles) using a `String` based slice (as given from `env::args()` for real args)
-    let args: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
+    let arg_vec: Vec<String> = vec![ String::from("--foo"), String::from("--bah") ];
+    let args = Args::from_vec(arg_vec);
     let _ = get_parser().parse(&args);
 
     // Test works (compiles) using a `&str` based slice
-    let args: Vec<&str> = vec![ "--foo", "--bah" ];
+    let arg_vec: Vec<&str> = vec![ "--foo", "--bah" ];
+    let args = Args::from_vec(arg_vec);
     let _ = get_parser().parse(&args);
 }
 
@@ -133,7 +139,7 @@ fn stop_on_problems_on_cmd() {
 /// No args
 #[test]
 fn nothing() {
-    let args: [&OsStr; 0] = arg_list!();
+    let args = arg_list!();
     let expected = expected!([]);
     check_iter_result!(get_parser(), args, expected);
 }
@@ -2130,6 +2136,7 @@ mod posixly_correct {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod invalid_byte_sequences {
+    use gong::arguments::Args;
     use super::*;
 
     /*
@@ -2173,7 +2180,7 @@ mod invalid_byte_sequences {
     fn unix() {
         use std::os::unix::ffi::OsStrExt;
 
-        let args = [
+        let args_arr = [
             OsStr::from_bytes(b"a\x80bc"),       // Positional
             OsStr::from_bytes(b"--\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\x80bc"), // Known long, with in-same-arg data
@@ -2215,6 +2222,7 @@ mod invalid_byte_sequences {
             // following should be four.
             OsStr::from_bytes(b"-\x80\x81\xef\xbf\xbd\x82"),
         ];
+        let args = Args::from_slice(&args_arr);
 
         let expected_strings = [
             OsStr::from_bytes(b"a\x80bc"),
@@ -2286,7 +2294,7 @@ mod invalid_byte_sequences {
             fn from_bytes(slice: &[u8]) -> &OsStr { unsafe { std::mem::transmute(slice) } }
         }
 
-        let args = [
+        let args_arr = [
             OsStr::from_bytes(b"a\xed\xa0\x80bc"),       // Positional
             OsStr::from_bytes(b"--\xed\xa0\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\xed\xa0\x80bc"), // Known long, with in-same-arg data
@@ -2316,6 +2324,7 @@ mod invalid_byte_sequences {
             // And what happens if an actual unicode replacement character (u+FFFD) is given?
             OsStr::from_bytes(b"-m\xef\xbf\xbdoar\xed\xa0\x84\xed\xa0\x85g"),
         ];
+        let args = Args::from_slice(&args_arr);
 
         let expected_strings = [
             OsStr::from_bytes(b"a\xed\xa0\x80bc"),
@@ -2370,6 +2379,7 @@ mod invalid_byte_sequences {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod limits {
+    use gong::arguments::Args;
     use super::*;
 
     /// Limits of positionals counting
@@ -2390,10 +2400,11 @@ mod limits {
         // Let’s construct a set of arguments with a greater quantity of positionals than the limit
         // of the counter.
         const NUM: usize = MAX + 2; // Going a couple over (65537)
-        let mut args = Vec::with_capacity(NUM);
+        let mut args_vec = Vec::with_capacity(NUM);
         for _ in 1..=NUM { // Args 1-65537 (inclusive), so 65537 args
-            args.push("a");
+            args_vec.push("a");
         }
+        let args = Args::from_vec(args_vec);
 
         let mut parser = get_parser();
 

@@ -193,43 +193,22 @@
 //!
 //! # Step #2: Gather arguments to be parsed
 //!
-//! You also need to retrieve (or build) a set of arguments to be parsed. A simple example, skipping
-//! the program-name argument:
+//! You also need to retrieve (or build) a set of arguments to be parsed. This is made incredibly
+//! trivial:
 //!
 //! ```rust
-//! let args: Vec<_> = std::env::args_os().skip(1).collect();
+//! use gong::arguments::Args;
+//! let args = Args::new();
 //! ```
 //!
-//! An alternate solution, capturing the program-name argument into a variable:
+//! Note that if you want the program name argument for any reason, this can be retrieved via a
+//! method on the [`Args`] object:
 //!
 //! ```rust
-//! let mut args_iter = std::env::args_os();
-//! let prog_name = args_iter.next().unwrap();
-//! let args: Vec<_> = args_iter.collect();
+//! # use gong::arguments::Args;
+//! # let args = Args::new();
+//! let prog_name = args.get_prog_name(); // Note, this is `Option` wrapped!
 //! ```
-//!
-//! Notes:
-//!
-//! 1. The very first entry in an argument list is the program path/name, and often you will not be
-//!    interested in it. It is usually best to just skip it. You can do so in two easy ways, with
-//!    the `skip()` method when collecting, as above, or alternatively with the slice range used
-//!    when parsing (i.e. `&args[1..]` instead of `&args[..]`).
-//! 2. Rust’s `std` library provides two functions for obtaining arguments, `std::end::args()` and
-//!    `std::env::args_os()`. Understand that both Windows and Unix based (Linux and Mac OSx)
-//!    operating systems allow file and folder names that may not be fully valid Unicode, while the
-//!    primary string types in Rust must be fully valid, hence Rust offers “OS” variants which
-//!    preserve the possible OS string quirks. With the latter function, Rust simply gives us the
-//!    arguments in `OsString` form. With the former, they are converted to `String` form, panicking
-//!    if they contained such quirks and thus could not be converted. The latter is what you should
-//!    use here; the parser handles strings in OS form, which is what you will want for taking
-//!    file or folder names. For other values you will want to later convert them to `&str` form,
-//!    just as you may want to convert a value from string to integer form.
-//! 3. The parser methods accept argument lists in both `&OsStr` and `&str` forms.
-//! 4. The argument iterators given by `std::end::args()` and `std::env::args_os()` are more costly
-//!    to create than you might realise; it involves parsing the entire set of OS provided C strings
-//!    in order to generate a `Vec` of `CStr`. This is done on iterator creation; individual C
-//!    string arguments are **not** processed on each iteration, and the results are not cached.
-//!    Thus you should avoid creating more than one such instance where ever possible.
 //!
 //! # Step #3: Parse
 //!
@@ -250,8 +229,8 @@
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
 //! # let parser = gong::parser::CmdParser::new(&opts, &cmds);
-//! # let args: Vec<_> = std::env::args_os().collect();
-//! for item in parser.parse_iter(&args[..]) {
+//! # let args = gong::arguments::Args::new();
+//! for item in parser.parse_iter(&args) {
 //!     // react to it...
 //! }
 //! ```
@@ -262,8 +241,8 @@
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
 //! # let parser = gong::parser::CmdParser::new(&opts, &cmds);
-//! # let args: Vec<_> = std::env::args_os().collect();
-//! let analysis = parser.parse(&args[..]);
+//! # let args = gong::arguments::Args::new();
+//! let analysis = parser.parse(&args);
 //! // now react to it...
 //! ```
 //!
@@ -333,6 +312,7 @@
 //! provided arguments against them. Instruction on using it are provided in the `README.md` file
 //! that accompanies it.
 //!
+//! [`Args`]: ../../arguments/struct.Args.html
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
 //! [`Parser::parse_iter`]: ../../parser/struct.Parser.html#method.parse_iter

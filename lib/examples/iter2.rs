@@ -20,6 +20,7 @@ extern crate gong;
 use std::ffi::OsStr;
 use gong::{longopt, shortopt, option_set};
 use gong::analysis::{Item, ProblemItem};
+use gong::arguments::Args;
 use gong::options::OptionSet;
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
@@ -51,8 +52,8 @@ OPTIONS:
 
 // Our program entry point
 fn main() {
-    // Collect our arguments
-    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    // Get our arguments
+    let args = Args::new();
 
     // Setup our parser
     let mut parser = Parser::new(&OPTIONS);
@@ -63,7 +64,7 @@ fn main() {
     debug_assert!(parser.is_valid());
 
     // Create the parsing iterator for our arguments
-    let mut iter = parser.parse_iter(&args[..]);
+    let mut iter = parser.parse_iter(&args);
 
     // For collecting positionals
     let mut input_file = OsStr::new("");

@@ -19,6 +19,7 @@ extern crate gong;
 
 use gong::{option_set, optpair};
 use gong::analysis::ProblemItem;
+use gong::arguments::Args;
 use gong::options::{OptionSet, OptionPair};
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
@@ -59,8 +60,8 @@ OPTIONS:
 
 // Our program entry point
 fn main() {
-    // Collect our arguments
-    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    // Get our arguments
+    let args = Args::new();
 
     // Setup our parser
     let mut parser = Parser::new(&OPTIONS);
@@ -71,7 +72,7 @@ fn main() {
     debug_assert!(parser.is_valid());
 
     // Parse our arguments, collecting into a data-mining suitable object
-    let analysis = parser.parse(&args[..]);
+    let analysis = parser.parse(&args);
 
     // Since if help or version info is requested we actually need to ignore the minimum aspect of
     // our positionals policy, we need to find a way to work around it. Here we will record the

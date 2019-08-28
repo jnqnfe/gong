@@ -18,6 +18,7 @@ extern crate gong;
 
 use gong::{option_set, optpair};
 use gong::analysis::ProblemItem;
+use gong::arguments::Args;
 use gong::options::{OptionSet, OptionPair};
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
@@ -55,8 +56,8 @@ OPTIONS:
 
 // Our program entry point
 fn main() {
-    // Collect our arguments
-    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    // Get our arguments
+    let args = Args::new();
 
     // Setup our parser
     let mut parser = Parser::new(&OPTIONS);
@@ -70,7 +71,7 @@ fn main() {
     //
     // Note above that by setting the `set_stop_on_problem` setting to `true` above, this will
     // collect only up to the first occuring problem, if there is one.
-    let analysis = parser.parse(&args[..]);
+    let analysis = parser.parse(&args);
 
     // Handle the first problem, if there is one, and exit
     //

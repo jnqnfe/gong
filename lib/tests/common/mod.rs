@@ -29,9 +29,9 @@ use gong::positionals::Policy as PositionalsPolicy;
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
 macro_rules! arg_list {
-    ( $($e:expr),+ ) => { [ $(OsStr::new($e)),+ ] };
-    ( $($e:expr,)+ ) => { [ $(OsStr::new($e)),+ ] };
-    () => { [] };
+    ( $($e:expr),+ ) => { gong::arguments::Args::from_slice(&[ $($e),+ ]) };
+    ( $($e:expr,)+ ) => { gong::arguments::Args::from_slice(&[ $($e),+ ]) };
+    ()               => { gong::arguments::Args::new_empty() };
 }
 
 /// Construct a set of expected items

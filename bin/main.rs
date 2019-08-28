@@ -27,6 +27,7 @@ use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
 use gong::analysis::{Item, ProblemItem, DataLocation};
+use gong::arguments::Args;
 use gong::options::{OptionType, OptionSet};
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
@@ -113,14 +114,14 @@ fn main() {
 
     /* -- Handle real options -- */
 
-    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    let args = Args::new();
 
     let mut real_parser = Parser::new(&REAL_OPTIONS);
     real_parser.set_positionals_policy(PositionalsPolicy::Fixed(0));
     real_parser.settings().set_mode(OptionsMode::Standard);
     debug_assert!(real_parser.is_valid());
 
-    let mut iter = real_parser.parse_iter(&args[..]);
+    let mut iter = real_parser.parse_iter(&args);
 
     while let Some(item) = iter.next() {
         match item {
@@ -163,20 +164,20 @@ fn main() {
     }
 
     #[cfg(feature = "keep_prog_name")]
-    let args: Vec<_> = std::env::args_os().collect();
+    let args = Args::from_vec(std::env::args_os().collect());
     #[cfg(not(feature = "keep_prog_name"))]
-    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    let args = Args::from_vec(std::env::args_os().skip(1).collect());
 
     println!("[ {}Input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    match args.len() {
+    match args.as_slice().len() {
         0 => println!("None!"),
-        _ => for (i, arg) in args.iter().enumerate() {
+        _ => for (i, arg) in args.as_slice().iter().enumerate() {
             println!("[{}]: {:?}", i, arg);
         },
     }
 
-    let mut iter = parser.parse_iter(&args[..]).indexed();
+    let mut iter = parser.parse_iter(&args).indexed();
     let mut problems = false;
     let mut count_zero = true;
 

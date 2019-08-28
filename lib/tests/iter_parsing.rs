@@ -149,7 +149,7 @@ mod change_data {
         c1(&parse_iter);
     }
 
-    fn c1(parse_iter: &CmdParseIterIndexed<&OsStr>) {
+    fn c1(parse_iter: &CmdParseIterIndexed<&str>) {
         let c1_opt_set = option_set!(@long [ longopt!(@flag "bar") ]);
         let c1_cmd_set = command_set!([ command!("c2") ]);
 

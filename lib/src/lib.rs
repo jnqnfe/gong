@@ -27,6 +27,7 @@
 #[cfg(feature = "suggestions")]
 extern crate strsim;
 
+pub mod arguments;
 pub mod analysis;
 pub mod commands;
 pub mod docs;
