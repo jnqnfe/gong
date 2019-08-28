@@ -98,7 +98,7 @@ mod short_dash {
             ]
         );
 
-        let mut parser = Parser::new(opts, None);
+        let mut parser = Parser::new(opts);
         parser.settings.set_stop_on_problem(false);
         check_result!(&Actual(parser.parse(&args)), &expected);
     }
@@ -246,7 +246,7 @@ mod long_equals {
             ]
         );
 
-        let mut parser = Parser::new(opts, None);
+        let mut parser = Parser::new(opts);
         parser.settings.set_stop_on_problem(false);
         check_result!(&Actual(parser.parse(&args)), &expected);
     }

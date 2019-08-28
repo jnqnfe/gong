@@ -10,9 +10,15 @@
 
 //! The parser & parser settings
 //!
-//! A [`Parser`] wraps a description of a collection of available program [*options*][options] and
-//! [*command arguments*][commands], along with parser settings, and provides the parser methods
-//! that parse a given set of input arguments.
+//! A “parser” object wraps a description of a collection of available program [*options*][options]
+//! and [*command arguments*][commands] (where applicable), along with parser settings, and provides
+//! the parse methods that parse a given set of input arguments.
+//!
+//! Two parsers are provided; [`Parser`] is suitable for use cases that do not involve command
+//! arguments, while the alternative [`CmdParser`] is suitable for those that do.
+//!
+//! As just mentioned, the parser holds the settings that control certain aspects of parsing, which
+//! you should configure correctly as needed *before* performing parsing.
 //!
 //! # Parsing style
 //!
@@ -21,11 +27,14 @@
 //!
 //! - The “iterative” (“one at a time”) model: The [`parse_iter`] method returns an iterator, with
 //!   which you can simply handle each analysed “item” one at a time.
-//! - The “data-mining” (“all in one”) model: The [`parse`] method returns an [`ItemSet`] object,
-//!   which wraps a `Vec` of items, collected from use of the above mentioned iterator. It contains
-//!   a quick indication of whether or not any problems were found, and importantly, it provides a
-//!   set of “data mining” methods for retrieving information from the item set. There is also the
-//!   alternative [`parse_cmd`] method, which is more suitable for programs using command arguments.
+//! - The “data-mining” (“all in one”) model: The [`parse`] method of [`Parser`] returns an
+//!   [`ItemSet`] object, which wraps a `Vec` of items, collected from use of the above mentioned
+//!   iterator. It contains a quick indication of whether or not any problems were found, and
+//!   importantly, it provides a set of “data mining” methods for retrieving information from the
+//!   item set. With [`CmdParser`] an [`CommandAnalysis`] is returned, which breaks up the items as
+//!   appropriate per use of command arguments.
+//!
+//! # Command-based parsing
 //!
 //! Note that the iterator objects have methods that allow you to change the *option set* and
 //! *command set* used for subsequent iterations. The purpose behind these methods is for situations
@@ -33,18 +42,12 @@
 //! full command structure up front, with these methods giving you the ability to manually set the
 //! *option* and *command* sets to use in subsequent iterations after encountering a *command*.
 //!
-//! # Settings
-//!
-//! A [`Parser`] has settings to control certain aspects of parsing, for instance to choose which
-//! mode to parse options in (*standard* or *alternate*; the difference of which is discussed in the
-//! [option support documentation][options]), and whether or not to allow abbreviated *long option*
-//! name matching.
-//!
 //! [`ItemSet`]: ../analysis/struct.ItemSet.html
 //! [`Parser`]: struct.Parser.html
+//! [`CmdParser`]: struct.CmdParser.html
 //! [`parse`]: struct.Parser.html#method.parse
-//! [`parse_cmd`]: struct.Parser.html#method.parse_cmd
 //! [`parse_iter`]: struct.Parser.html#method.parse_iter
+//! [`CommandAnalysis`]: ../analysis/struct.CommandAnalysis.html
 //! [commands]: ../docs/ch4_commands/index.html
 //! [options]: ../docs/ch3_options/index.html
 
@@ -62,8 +65,32 @@ pub use crate::engine::ParseIter;
 ///
 /// Holds the option set and command set descriptions used for parsing input arguments, along with
 /// parser settings, and provides methods for parsing.
+///
+/// If your program is built upon use of “command” arguments then use [`CmdParser`] instead.
+///
+/// [`CmdParser`]: struct.CmdParser.html
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Parser<'r, 'set: 'r> {
+    /* NOTE: these have been left public to allow efficient static creation */
+    /// The main (top level) option set
+    pub options: OptionSet<'r, 'set>,
+    //TODO: remove this (requires splitting out command handling to level above main engine iterator)
+    /// Dummy command set
+    pub commands: CommandSet<'r, 'set>,
+    /// Settings
+    pub settings: Settings,
+}
+
+/// The parser, command based
+///
+/// Holds the option set and command set descriptions used for parsing input arguments, along with
+/// parser settings, and provides methods for parsing.
+///
+/// Use this instead of [`Parser`] if your program is built upon use of “command” arguments.
+///
+/// [`Parser`]: struct.Parser.html
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct CmdParser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
     pub options: OptionSet<'r, 'set>,
@@ -74,6 +101,16 @@ pub struct Parser<'r, 'set: 'r> {
 }
 
 impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
+    fn default() -> Self {
+        Self {
+            options: option_set!(),
+            commands: command_set!(),
+            settings: Settings::default(),
+        }
+    }
+}
+
+impl<'r, 'set: 'r> Default for CmdParser<'r, 'set> {
     fn default() -> Self {
         Self {
             options: option_set!(),
@@ -204,10 +241,99 @@ impl Settings {
 
 impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// Create a new parser
-    pub fn new(options: OptionSet<'r, 'set>, commands: Option<CommandSet<'r, 'set>>) -> Self {
+    pub fn new(options: OptionSet<'r, 'set>) -> Self {
         Self {
             options: options,
-            commands: commands.unwrap_or(command_set!()),
+            commands: command_set!(),
+            settings: Settings::default(),
+        }
+    }
+
+    /// Get a mutable reference to settings
+    #[inline(always)]
+    pub fn settings(&mut self) -> &mut Settings {
+        &mut self.settings
+    }
+
+    /// Checks validity of the option set
+    ///
+    /// Returns `true` if valid.
+    ///
+    /// Note, only the most crucial option identifier (name or character) problems that could cause
+    /// issues when parsing are checked for; Passing validation is not a confirmation that the
+    /// option identifiers used are all sensible or otherwise entirely free of issues.
+    ///
+    /// See also the [`validate`](#method.validate) method.
+    #[inline]
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
+        self.options.is_valid()
+    }
+
+    /// Checks validity of the option set, returning details of any problems
+    ///
+    /// Note, only the most crucial option identifier (name or character) problems that could cause
+    /// issues when parsing are checked for; Passing validation is not a confirmation that the
+    /// option identifiers used are all sensible or otherwise entirely free of issues.
+    pub fn validate(&self) -> Result<(), Vec<OptionFlaw<'set>>> {
+        self.options.validate()
+    }
+
+    /// Gives an iterator for parsing the provided program arguments
+    ///
+    /// Returns an iterator. Each iteration consumes one (or sometimes two) input arguments (except
+    /// with a *short option set* where one short option in the set is consumed), returning a single
+    /// analysis item.
+    ///
+    /// The returned analysis item may include `&str` references to strings provided in `self`,
+    /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
+    /// object lifetimes.
+    ///
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
+    ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
+    #[inline(always)]
+    #[must_use]
+    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> ParseIter<'r, 'set, 'arg, A>
+        where A: AsRef<OsStr> + 'arg
+    {
+        ParseIter::new(args, self)
+    }
+
+    /// Parses the provided program arguments
+    ///
+    /// Returns an analysis describing the parsed argument list. While the [`parse_iter`] method is
+    /// aimed at iterative based parsing, this alternative provides a “parse-and-data-mine”
+    /// alternative; it basically uses an iterator, collecting all of the results into an object
+    /// which has a set of methods for mining the result set for information.
+    ///
+    /// The returned analysis item may include `&str` references to strings provided in `self`,
+    /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
+    /// object lifetimes.
+    ///
+    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
+    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
+    ///
+    /// [`is_valid`]: #method.is_valid
+    /// [`validate`]: #method.validate
+    /// [`parse_iter`]: #method.parse_iter
+    #[inline(always)]
+    #[must_use]
+    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'r, 'set, 'arg>
+        where A: AsRef<OsStr> + 'arg
+    {
+        ItemSet::from(ParseIter::new(args, self))
+    }
+}
+
+impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
+    /// Create a new parser
+    pub fn new(options: OptionSet<'r, 'set>, commands: CommandSet<'r, 'set>) -> Self {
+        Self {
+            options: options,
+            commands: commands,
             settings: Settings::default(),
         }
     }
@@ -275,19 +401,25 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> ParseIter<'r, 'set, 'arg, A>
         where A: AsRef<OsStr> + 'arg
     {
-        ParseIter::new(args, self)
+        let parser = Parser {
+            options: self.options,
+            commands: self.commands,
+            settings: self.settings,
+        };
+        ParseIter::new(args, &parser)
     }
 
     /// Parses the provided program arguments
     ///
     /// Returns an analysis describing the parsed argument list. While the [`parse_iter`] method is
     /// aimed at iterative based parsing, this alternative provides a “parse-and-data-mine”
-    /// alternative; it basically uses an iterator, collecting all of the results into an object
-    /// which has a set of methods for mining the result set for information.
+    /// alternative.
     ///
-    /// If your program is built upon use of “command” arguments, use [`parse_cmd`] instead. This
-    /// method will **panic** if used on a parser that has a (non-empty) command set, to avoid
-    /// mistakes.
+    /// This is similar to [`Parser::parse`] except of course being more suited to programs built
+    /// upon use of “command” arguments. The primary difference is that rather than returning one
+    /// `ItemSet`, it breaks up (partitions) the analysis items by command use, thus the object
+    /// returned wraps a list of `ItemSet`s and command names. It also provides a reference to the
+    /// relevant `CommandSet` for use with unknown-command suggestion matching.
     ///
     /// The returned analysis item may include `&str` references to strings provided in `self`,
     /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
@@ -298,40 +430,18 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     ///
     /// [`is_valid`]: #method.is_valid
     /// [`validate`]: #method.validate
-    /// [`parse_cmd`]: #method.parse_cmd
     /// [`parse_iter`]: #method.parse_iter
+    /// [`Parser::parse`]: struct.Parser.html#method.parse
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'r, 'set, 'arg>
+    pub fn parse<A>(&self, args: &'arg [A]) -> CommandAnalysis<'r, 'set, 'arg>
         where A: AsRef<OsStr> + 'arg
     {
-        assert!(self.commands.is_empty(), "parser has a non-empty command set, parse() should not be used, use parse_cmd() instead");
-        ItemSet::from(ParseIter::new(args, self))
-    }
-
-    /// Parses the provided program arguments
-    ///
-    /// This is an alternative to [`parse`], more suited to programs built upon use of “command”
-    /// arguments. The primary difference is that rather than returning one `ItemSet`, it breaks up
-    /// (partitions) the analysis items by command use, thus the object returned wraps a list of
-    /// `ItemSet`s and command names. It also provides a reference to the relevant `CommandSet`
-    /// for use with unknown-command suggestion matching; something not available via [`parse`].
-    ///
-    /// The returned analysis item may include `&str` references to strings provided in `self`,
-    /// and/or `&OsStr` to those provided in the `args` parameter. Take note of this with respect to
-    /// object lifetimes.
-    ///
-    /// Note, it is undefined behaviour to perform parsing with a non-valid option and/or command
-    /// set. See [`is_valid`] and [`validate`] for validation checking methods.
-    ///
-    /// [`is_valid`]: #method.is_valid
-    /// [`validate`]: #method.validate
-    /// [`parse`]: #method.parse
-    #[inline(always)]
-    #[must_use]
-    pub fn parse_cmd<A>(&self, args: &'arg [A]) -> CommandAnalysis<'r, 'set, 'arg>
-        where A: AsRef<OsStr> + 'arg
-    {
-        CommandAnalysis::from(ParseIter::new(args, self))
+        let parser = Parser {
+            options: self.options,
+            commands: self.commands,
+            settings: self.settings,
+        };
+        CommandAnalysis::from(ParseIter::new(args, &parser))
     }
 }

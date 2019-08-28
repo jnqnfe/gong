@@ -14,8 +14,7 @@ pub mod base;
 pub use self::base::{get_base_opts, get_base_cmds};
 
 use gong::analysis::{ItemSet, CommandAnalysis, CommandBlockPart};
-use gong::commands::CommandSet;
-use gong::parser::Parser;
+use gong::parser::{Parser, CmdParser};
 
 /// Wrapper for actual analysis result
 #[derive(Debug)] pub struct Actual<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
@@ -121,17 +120,14 @@ macro_rules! cmdset_subcmdset_ref {
 
 /// Get common base `Parser` set with common base option set and an empty command set
 pub fn get_parser() -> Parser<'static, 'static> {
-    get_parser_common(None)
+    let mut parser = Parser::new(base::get_base_opts());
+    parser.settings.set_stop_on_problem(false);
+    parser
 }
 
 /// Get common base `Parser` set with common base option and command sets
-pub fn get_parser_cmd() -> Parser<'static, 'static> {
-    get_parser_common(Some(base::get_base_cmds()))
-}
-
-#[inline]
-fn get_parser_common(commands: Option<CommandSet<'static, 'static>>) -> Parser<'static, 'static> {
-    let mut parser = Parser::new(base::get_base_opts(), commands);
+pub fn get_parser_cmd() -> CmdParser<'static, 'static> {
+    let mut parser = CmdParser::new(base::get_base_opts(), base::get_base_cmds());
     parser.settings.set_stop_on_problem(false);
     parser
 }

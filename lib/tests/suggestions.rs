@@ -45,7 +45,7 @@ mod options {
             ]
         );
 
-        let mut parser = Parser::new(opts, None);
+        let mut parser = Parser::new(opts);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -94,7 +94,7 @@ mod options {
             ]
         );
 
-        let mut parser = Parser::new(opts, None);
+        let mut parser = Parser::new(opts);
         parser.settings.set_stop_on_problem(false);
         let actual_results = Actual(parser.parse(&args));
         check_result!(&actual_results, &expected);
@@ -121,7 +121,7 @@ mod commands {
     use std::ffi::OsStr;
     use gong::{command, command_set, option_set};
     use gong::analysis::*;
-    use gong::parser::Parser;
+    use gong::parser::CmdParser;
     use self::super::common::{CmdActual, CmdExpected};
 
     #[test]
@@ -148,9 +148,9 @@ mod commands {
             cmd_set: Some(cmds)
         );
 
-        let mut parser = Parser::new(opts, Some(cmds));
+        let mut parser = CmdParser::new(opts, cmds);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = CmdActual(parser.parse_cmd(&args));
+        let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
@@ -194,9 +194,9 @@ mod commands {
             cmd_set: Some(cmds)
         );
 
-        let mut parser = Parser::new(opts, Some(cmds));
+        let mut parser = CmdParser::new(opts, cmds);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = CmdActual(parser.parse_cmd(&args));
+        let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
@@ -240,9 +240,9 @@ mod commands {
             cmd_set: Some(cmds)
         );
 
-        let mut parser = Parser::new(opts, Some(cmds));
+        let mut parser = CmdParser::new(opts, cmds);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = CmdActual(parser.parse_cmd(&args));
+        let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();
@@ -286,9 +286,9 @@ mod commands {
             cmd_set: Some(cmds)
         );
 
-        let mut parser = Parser::new(opts, Some(cmds));
+        let mut parser = CmdParser::new(opts, cmds);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = CmdActual(parser.parse_cmd(&args));
+        let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
         let mut suggestions = Vec::new();

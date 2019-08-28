@@ -18,7 +18,7 @@ mod common;
 use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
-use gong::parser::{Parser, OptionsMode};
+use gong::parser::{CmdParser, OptionsMode};
 use self::common::{get_parser, get_parser_cmd, get_base_opts, get_base_cmds, Actual, Expected, CmdActual, CmdExpected};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ fn stop_on_problems_off_cmd() {
     );
     let mut parser = get_parser_cmd();
     parser.settings.set_stop_on_problem(false);
-    check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+    check_result!(&CmdActual(parser.parse(&args)), &expected);
 }
 
 /// Check with feature on, after a command (command related item partitioning could trip things up
@@ -127,7 +127,7 @@ fn stop_on_problems_on_cmd() {
     );
     let mut parser = get_parser_cmd();
     parser.settings.set_stop_on_problem(true);
-    check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+    check_result!(&CmdActual(parser.parse(&args)), &expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -428,7 +428,7 @@ mod abbreviations {
         );
         let mut parser = get_parser_cmd();
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
     /// Test handling of abbreviated long options, without ambiguity
@@ -460,7 +460,7 @@ mod abbreviations {
         );
         let mut parser = get_parser_cmd();
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
     /// Test handling when abbreviated matching is disabled
@@ -486,7 +486,7 @@ mod abbreviations {
         );
         let mut parser = get_parser_cmd();
         parser.settings.set_allow_opt_abbreviations(false);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
     /// Test that an exact match overrides ambiguity
@@ -524,8 +524,8 @@ mod abbreviations {
             cmd_set: None
         );
 
-        let parser = Parser::new(opts, Some(cmds));
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        let parser = CmdParser::new(opts, cmds);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
     /// Test that controls for options/commands work independently
@@ -560,14 +560,14 @@ mod abbreviations {
             cmd_set: None
         );
 
-        let mut parser = Parser::new(opts, Some(cmds));
+        let mut parser = CmdParser::new(opts, cmds);
         parser.settings.set_stop_on_problem(false);
         parser.settings.set_allow_opt_abbreviations(true);
         parser.settings.set_allow_cmd_abbreviations(false);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected1);
+        check_result!(&CmdActual(parser.parse(&args)), &expected1);
         parser.settings.set_allow_opt_abbreviations(false);
         parser.settings.set_allow_cmd_abbreviations(true);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected2);
+        check_result!(&CmdActual(parser.parse(&args)), &expected2);
     }
 }
 
@@ -1228,7 +1228,7 @@ mod commands {
             @part cmd_part!(command: 0, "commit"),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// We do not support case-insensitive matching
@@ -1246,7 +1246,7 @@ mod commands {
             ),
             cmd_set: Some(get_base_cmds())
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check repeated use correctly fails, where same command is used
@@ -1268,7 +1268,7 @@ mod commands {
             ),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check repeated use correctly fails, where different commands are used
@@ -1287,7 +1287,7 @@ mod commands {
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check early terminator forces command to be treated as positional
@@ -1306,7 +1306,7 @@ mod commands {
             ),
             cmd_set: Some(get_base_cmds())
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check works alongside option arguments
@@ -1329,7 +1329,7 @@ mod commands {
             @part cmd_part!(command: 2, "commit"),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check name clash with option
@@ -1351,7 +1351,7 @@ mod commands {
             @part cmd_part!(command: 1, "foo"),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check names that look like options, take preference as options
@@ -1381,8 +1381,8 @@ mod commands {
             cmd_set: Some(cmds)
         );
 
-        let parser = Parser::new(opts, Some(cmds));
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        let parser = CmdParser::new(opts, cmds);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
     /// Check consumed as option argument data
@@ -1403,7 +1403,7 @@ mod commands {
             ),
             cmd_set: Some(get_base_cmds())
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check not recognised as command in secondary non-option position, and first is reported as
@@ -1428,7 +1428,7 @@ mod commands {
             ),
             cmd_set: Some(get_base_cmds())
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check that the option set is changed following the command, with command that has no option
@@ -1463,7 +1463,7 @@ mod commands {
             ),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check that the option set is changed following the command, with command that has an option
@@ -1503,7 +1503,7 @@ mod commands {
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check nested sub-commands
@@ -1565,7 +1565,7 @@ mod commands {
             ),
             cmd_set: None
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check early terminator works in nested sub-command usage
@@ -1613,7 +1613,7 @@ mod commands {
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check known command from wrong set
@@ -1637,7 +1637,7 @@ mod commands {
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 
     /// Check known sub-command, given after a non-option that is not a known sub-command
@@ -1661,7 +1661,7 @@ mod commands {
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
         );
-        check_result!(&CmdActual(get_parser_cmd().parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(get_parser_cmd().parse(&args)), &expected);
     }
 }
 
@@ -1856,7 +1856,7 @@ mod alt_mode {
         );
         let mut parser = get_parser_cmd();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result!(&CmdActual(parser.parse_cmd(&args)), &expected);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 }
 

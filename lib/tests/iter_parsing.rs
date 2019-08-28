@@ -57,7 +57,7 @@ fn basic() {
 /// to a command-specific handling function.
 mod change_data {
     use super::*;
-    use gong::parser::{Parser, OptionsMode, ParseIter};
+    use gong::parser::{CmdParser, OptionsMode, ParseIter};
 
     #[test]
     fn main() {
@@ -74,7 +74,7 @@ mod change_data {
         let main_opt_set = option_set!(@long [ longopt!(@flag "foo") ]);
         let main_cmd_set = command_set!([ command!("c1") ]);
 
-        let mut parser = Parser::new(main_opt_set, Some(main_cmd_set));
+        let mut parser = CmdParser::new(main_opt_set, main_cmd_set);
         parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
         let mut parse_iter = parser.parse_iter(&args);

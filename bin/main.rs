@@ -87,7 +87,7 @@ fn main() {
             shortopt!(@data 'Ɛ'),
         ]
     );
-    let mut parser = Parser::new(opts, None);
+    let mut parser = Parser::new(opts);
 
     match cfg!(feature = "alt_mode") {
         true => { parser.settings.set_mode(OptionsMode::Alternate); },

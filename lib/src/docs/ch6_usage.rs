@@ -23,14 +23,15 @@
 //!
 //! Now proceed with the following steps.
 //!
-//! # Step #1: Create a `Parser`
+//! # Step #1: Create a parser
 //!
-//! A [`Parser`] holds: a description of the available [*options*][options_doc]; a description of
-//! the available [*commands*][commands_doc]; and settings to control parsing. It also provides the
-//! methods for performing the actual parsing.
+//! A parser holds: a description of the available [*options*][options_doc]; a description of the
+//! available [*commands*][commands_doc] (where applicable); and settings to control parsing. It
+//! also provides the methods for performing the actual parsing.
 //!
-//! One of the first things you need to do therefore, is construct a [`Parser`]. We will begin here
-//! by creating descriptions of the data that the [`Parser`] object will need to hold.
+//! One of the first things you need to do therefore is construct a [`Parser`] or, if your program
+//! will make use of *command arguments*, a [`CmdParser`]. We will begin here by creating
+//! descriptions of the data that the parser object will need to hold.
 //!
 //! ## Describe the available options
 //!
@@ -115,31 +116,31 @@
 //! An example of constructing a *command* based structure is not given here, but it should be
 //! fairly trivial to understand how to achieve.
 //!
-//! ## Create the `Parser` itself
+//! ## Create the parser itself
 //!
-//! Creating a [`Parser`] requires providing an *option set*, and optionally a *command set*.
+//! Creating a [`Parser`] (or [`CmdParser`]) requires providing an *option set* (and in the
+//! [`CmdParser`] case, also a *command set*).
 //!
 //! ```rust
 //! use gong::parser::Parser;
 //! # let opts = gong::options::OptionSet::default();
-//! let parser = Parser::new(opts, None);
+//! let parser = Parser::new(opts);
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
-//! If you have a *command set*, replace `None` in the previous example with `Some(cmds)` where
-//! `cmds` is your *command set*. Understand that with a command-based program design, the *option
-//! set* specified here is the *top-level* set of *options* (see the
-//! *[command arguments documentation][commands_doc]* for more information on this).
+//! Understand that with a command-based program design, the *option set* specified in parser
+//! creation is the *top-level* set of *options* (see the *[command arguments documentation][commands_doc]*
+//! for more information on this).
 //!
 //! Note that the [`Parser`] only accepts [`OptionSet`] and [`CommandSet`] types, not the extendible
 //! variants, so if you have used the extendible ones, you must use the respective `as_fixed`
 //! methods.
 //!
 //! ```rust
-//! use gong::parser::Parser;
+//! use gong::parser::CmdParser;
 //! # let opts = gong::options::OptionSetEx::default();
 //! # let cmds = gong::commands::CommandSetEx::default();
-//! let parser = Parser::new(opts.as_fixed(), Some(cmds.as_fixed()));
+//! let parser = CmdParser::new(opts.as_fixed(), cmds.as_fixed());
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
@@ -212,19 +213,19 @@
 //! ready for parsing. You have two choices here for how you want to approach this, either “one at a
 //! time” (iterative) style or “all in one” (collect and data mine) style.
 //!
-//! The former is done with the [`parse_iter`][`Parser::parse_iter`] method, which returns an
-//! iterator, allowing arguments to be parsed and responded to one at a time. The latter is done
-//! with the [`parse`][`Parser::parse`] method; internally it uses the iterator method, collecting
-//! the results into an object that it returns, which has methods suitable for performing “data
-//! mining” on them. There is also the [`parse_cmd`][`Parser::parse_cmd`] method, an alternate to
-//! the latter, for use with programs with command arguments.
+//! The former is done with the `parse_iter` method (see [`Parser::parse_iter`] or
+//! [`CmdParser::parse_iter`]) which returns an iterator, allowing arguments to be parsed and
+//! responded to one at a time. The latter is done with the `parse` method (see [`Parser::parse`] or
+//! [`CmdParser::parse`]); internally this uses the iterator method, collecting the results into an
+//! object that has methods suitable for performing “data mining”. In the case of
+//! [`CmdParser::parse`] the items are further partitioned per use of command arguments.
 //!
 //! An example of “one at a time” (iterative) analysis:
 //!
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::Parser::new(opts, Some(cmds));
+//! # let parser = gong::parser::CmdParser::new(opts, cmds);
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! for item in parser.parse_iter(&args[..]) {
 //!     // react to it...
@@ -236,7 +237,7 @@
 //! ```rust
 //! # let opts = gong::options::OptionSet::default();
 //! # let cmds = gong::commands::CommandSet::default();
-//! # let parser = gong::parser::Parser::new(opts, Some(cmds));
+//! # let parser = gong::parser::CmdParser::new(opts, cmds);
 //! # let args: Vec<_> = std::env::args_os().collect();
 //! let analysis = parser.parse(&args[..]);
 //! // now react to it...
@@ -257,7 +258,7 @@
 //! different option and command sets.
 //!
 //! Note that if you have nested sub-commands, you do **not** *have* to describe the full structure
-//! up front when creating the [`Parser`] if you use the iterative approach; the iterator object
+//! up front when creating the [`CmdParser`] if you use the iterative approach; the iterator object
 //! provides methods for changing the *option set* and *command set* for subsequent iterations, thus
 //! you can specify the top-level command names only, with empty *option*/*command* sets, and on
 //! encountering a command, give the iterator to the relevant function handling that command, which
@@ -309,9 +310,11 @@
 //! [`Parser`]: ../../parser/struct.Parser.html
 //! [`Parser::parse`]: ../../parser/struct.Parser.html#method.parse
 //! [`Parser::parse_iter`]: ../../parser/struct.Parser.html#method.parse_iter
-//! [`Parser::parse_cmd`]: ../../parser/struct.Parser.html#method.parse_cmd
 //! [`Parser::is_valid`]: ../../parser/struct.Parser.html#method.is_valid
 //! [`Parser::validate`]: ../../parser/struct.Parser.html#method.validate
+//! [`CmdParser`]: ../../parser/struct.CmdParser.html
+//! [`CmdParser::parse`]: ../../parser/struct.CmdParser.html#method.parse
+//! [`CmdParser::parse_iter`]: ../../parser/struct.CmdParser.html#method.parse_iter
 //! [`Settings`]: ../../parser/struct.Settings.html
 //! [`OptionType`]: ../../options/enum.OptionType.html
 //! [`OptionSet`]: ../../options/struct.OptionSet.html
