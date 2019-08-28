@@ -59,7 +59,7 @@ use crate::commands::{CommandSet, CommandFlaw};
 use crate::options::{OptionSet, OptionFlaw};
 
 // NB: We export this in the public API here (the `engine` mod is private)
-pub use crate::engine::ParseIter;
+pub use crate::engine::{ParseIter, CmdParseIter};
 
 /// The parser
 ///
@@ -398,15 +398,10 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// [`validate`]: #method.validate
     #[inline(always)]
     #[must_use]
-    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> ParseIter<'r, 'set, 'arg, A>
+    pub fn parse_iter<A>(&'r self, args: &'arg [A]) -> CmdParseIter<'r, 'set, 'arg, A>
         where A: AsRef<OsStr> + 'arg
     {
-        let parser = Parser {
-            options: self.options,
-            commands: self.commands,
-            settings: self.settings,
-        };
-        ParseIter::new(args, &parser)
+        CmdParseIter::new(args, self)
     }
 
     /// Parses the provided program arguments
@@ -437,11 +432,6 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     pub fn parse<A>(&self, args: &'arg [A]) -> CommandAnalysis<'r, 'set, 'arg>
         where A: AsRef<OsStr> + 'arg
     {
-        let parser = Parser {
-            options: self.options,
-            commands: self.commands,
-            settings: self.settings,
-        };
-        CommandAnalysis::from(ParseIter::new(args, &parser))
+        CommandAnalysis::from(CmdParseIter::new(args, self))
     }
 }

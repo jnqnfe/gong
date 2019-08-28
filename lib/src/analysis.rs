@@ -841,11 +841,11 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
     }
 }
 
-impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
+impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
     for CommandAnalysis<'r, 'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    fn from(mut iter: crate::engine::ParseIter<'r, 'set, 'arg, A>) -> Self {
+    fn from(mut iter: crate::engine::CmdParseIter<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;

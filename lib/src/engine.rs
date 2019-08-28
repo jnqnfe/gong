@@ -22,18 +22,29 @@ use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
 
-/// An argument list parsing iterator
+/// An argument list parsing iterator, command based
 ///
-/// Created by the [`parse_iter`] method of [`Parser`].
+/// Created by the [`parse_iter`] method of [`CmdParser`].
 ///
-/// [`parse_iter`]: ../parser/struct.Parser.html#method.parse_iter
-/// [`Parser`]: ../parser/struct.Parser.html
+/// [`parse_iter`]: ../parser/struct.CmdParser.html#method.parse_iter
+/// [`CmdParser`]: ../parser/struct.CmdParser.html
 ///
 /// Note that methods are provided for changing the *option set* and *command set* used for
 /// subsequent iterations. These are typically only applicable where you are using the iterative
 /// parsing style with a command based program, where instead of describing the entire command
 /// structure to the parser up front, you want to dynamically switch the sets used for subsequent
 /// iterations (arguments) manually, after encountering a command.
+#[derive(Clone)]
+pub struct CmdParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
+    inner: ParseIter<'r, 'set, 'arg, A>,
+}
+
+/// An argument list parsing iterator
+///
+/// Created by the [`parse_iter`] method of [`Parser`].
+///
+/// [`parse_iter`]: ../parser/struct.Parser.html#method.parse_iter
+/// [`Parser`]: ../parser/struct.Parser.html
 #[derive(Clone)]
 pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
@@ -90,6 +101,17 @@ enum ArgTypeBasic<'a> {
     ShortOptionSet(&'a OsStr),
 }
 
+impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    type Item = ItemResult<'set, 'arg>;
+
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
 impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -128,6 +150,75 @@ impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
     }
 }
 
+impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    /// Create a new instance
+    #[inline]
+    pub(crate) fn new(args: &'arg [A], parser: &CmdParser<'r, 'set>) -> Self {
+        let tmp_parser = Parser {
+            options: parser.options,
+            commands: parser.commands,
+            settings: parser.settings,
+        };
+        Self { inner: ParseIter::new(args, &tmp_parser) }
+    }
+
+    /// Get the *option set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of unknown options
+    #[inline(always)]
+    pub fn get_option_set(&self) -> OptionSet<'r, 'set> {
+        self.inner.options
+    }
+
+    /// Change the *option set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *option set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid option set.
+    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 'set>) {
+        self.inner.options = opt_set;
+        if let Some(ref mut short_set_iter) = self.inner.short_set_iter {
+            short_set_iter.options = opt_set;
+        }
+    }
+
+    /// Get the *command set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of an unknown command
+    #[inline(always)]
+    pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
+        self.inner.commands
+    }
+
+    /// Change the *command set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *command set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid command set.
+    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
+        self.inner.commands = cmd_set;
+    }
+
+    /// Get a mutable reference to the parser settings
+    ///
+    /// The use case for this method is similar to that of the methods for changing the *option
+    /// set* and *command set* to be used, though more niche. It is thought unlikely that any
+    /// program should have any need to change settings in the middle of parsing, but you can if you
+    /// absolutely want to (there is no reason to prevent you from doing so).
+    #[inline]
+    pub fn get_parse_settings(&mut self) -> &mut Settings {
+        &mut self.inner.settings
+    }
+}
+
 impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -144,7 +235,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         }
     }
 
-    /// Get the *option set* currently in use for parsing
+    /// Get a copy of the *option set*
     ///
     /// This is useful for suggestion matching of unknown options
     #[inline(always)]
@@ -152,50 +243,10 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         self.options
     }
 
-    /// Change the *option set* used for parsing by subsequent iterations
-    ///
-    /// This is typically only applicable where you are using the iterative parsing style with a
-    /// command based program, where instead of describing the entire command structure to the
-    /// parser up front, you want to dynamically switch out the *option set* used for subsequent
-    /// iterations (arguments) manually, after encountering a command.
-    ///
-    /// Note, it is undefined behaviour to set a non-valid option set.
-    pub fn set_option_set(&mut self, opt_set: OptionSet<'r, 'set>) {
-        self.options = opt_set;
-        if let Some(ref mut short_set_iter) = self.short_set_iter {
-            short_set_iter.options = opt_set;
-        }
-    }
-
-    /// Get the *command set* currently in use for parsing
-    ///
-    /// This is useful for suggestion matching of an unknown command
+    // Used by creation of `ItemSet` from iterator only
     #[inline(always)]
-    pub fn get_command_set(&self) -> CommandSet<'r, 'set> {
-        self.commands
-    }
-
-    /// Change the *command set* used for parsing by subsequent iterations
-    ///
-    /// This is typically only applicable where you are using the iterative parsing style with a
-    /// command based program, where instead of describing the entire command structure to the
-    /// parser up front, you want to dynamically switch out the *command set* used for subsequent
-    /// iterations (arguments) manually, after encountering a command.
-    ///
-    /// Note, it is undefined behaviour to set a non-valid command set.
-    pub fn set_command_set(&mut self, cmd_set: CommandSet<'r, 'set>) {
-        self.commands = cmd_set;
-    }
-
-    /// Get a mutable reference to the parser settings
-    ///
-    /// The use case for this method is similar to that of the methods for changing the *option
-    /// set* and *command set* to be used, though more niche. It is thought unlikely that any
-    /// program should have any need to change settings in the middle of parsing, but you can if you
-    /// absolutely want to (there is no reason to prevent you from doing so).
-    #[inline]
-    pub fn get_parse_settings(&mut self) -> &mut Settings {
-        &mut self.settings
+    pub(crate) fn get_parse_settings(&self) -> &Settings {
+        &self.settings
     }
 
     /// Parse next argument, if any
