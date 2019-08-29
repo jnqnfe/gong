@@ -94,7 +94,6 @@ fn main() {
         false => { parser.settings.set_mode(OptionsMode::Standard); },
     }
     parser.settings.set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
-                   .set_allow_cmd_abbreviations(!cfg!(feature = "no_cmd_abbreviations"))
                    .set_posixly_correct(cfg!(feature = "posixly_correct"))
                    .set_stop_on_problem(!cfg!(feature = "no_stop_on_problem"));
 
@@ -121,11 +120,6 @@ fn main() {
     println!("Abbreviated option name matching: {}on{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "no_opt_abbreviations")]
     println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
-
-    #[cfg(not(feature = "no_cmd_abbreviations"))]
-    println!("Abbreviated command name matching: {}on{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "no_cmd_abbreviations")]
-    println!("Abbreviated command name matching: {}off{}", c!(COL_MODE), c!(RESET));
 
     #[cfg(not(feature = "no_stop_on_problem"))]
     println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));

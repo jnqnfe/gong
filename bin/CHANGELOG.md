@@ -7,7 +7,7 @@
  * Updated per merge of `ItemE` and `ItemW`
  * Updated per merge of with-data long/short item types into non-data variants and simplification
    of `LongWithUnexpectedData`
- * Added `posixly_correct`, `no_stop_on_problem` and `no_cmd_abbreviations` features
+ * Added `posixly_correct` and `no_stop_on_problem` features
  * Renamed the `no_abbreviations` feature to `no_opt_abbreviations`
 
 # 1.2.1 (November 25th, 2020)

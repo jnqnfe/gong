@@ -42,7 +42,6 @@ The test program has the following features that can be enabled/disabled when co
  - `posixly_correct` enables “posixly correct” parsing mode, where all arguments after the first
     positional argument are also taken to be positionals, per the POSIX standard.
  - `no_opt_abbreviations` disables `gong`’s abbreviated long option name matching feature.
- - `no_cmd_abbreviations` disables `gong`’s abbreviated command name matching feature.
  - `no_stop_on_problem` disables stopping parsing upon encountering a problem.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.

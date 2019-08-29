@@ -21,12 +21,11 @@ gong = { path = "../lib" }
 term-ctrl = "0.7"
 
 [features]
-default = ["color", "no_cmd_abbreviations"]
+default = ["color"]
 # See the `README.md` file for documentation of these
 alt_mode = []
 posixly_correct = []
 keep_prog_name = []
 no_opt_abbreviations = []
-no_cmd_abbreviations = []
 no_stop_on_problem = []
 color = []
