@@ -57,7 +57,7 @@
 //!  * All parsing can be done in one go, rather than with recursive function calls, though this is
 //!    optional.
 //!  * Use of static global variables for “position” tracking is avoided.
-//!  * *Non-options* are **not** shuffled to the end of the list, unlike the default behaviour of
+//!  * *Positionals* are **not** shuffled to the end of the list, unlike the default behaviour of
 //!    `getopt`.
 //!  * The “convenience” functionality of `-W foo` being treated as `--foo` is not supported
 //!    (unnecessary complexity).
@@ -75,7 +75,7 @@
 //!         <tr><td>Traditional style options (‘long’ and ‘short’)</td><td>Yes</td></tr>
 //!         <tr><td>Alternate style options (‘long’ only, with single dash)</td><td>Yes</td></tr>
 //!         <tr><td>Data-value taking options</td><td>Yes, both ‘in-same-arg’ and ‘in-next-arg’</td></tr>
-//!         <tr><td>‘Positional’ (‘non-option’) arguments</td><td>Yes</td></tr>
+//!         <tr><td>‘Positional’ arguments</td><td>Yes</td></tr>
 //!         <tr><td>‘Early terminator’</td><td>Yes</td></tr>
 //!         <tr><td>‘Command’ options</td><td>Yes, including nested</td></tr>
 //!         <tr><td>Abbreviated long option name matching</td><td>Yes (optional)</td></tr>

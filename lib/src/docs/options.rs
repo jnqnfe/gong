@@ -48,8 +48,8 @@
 //! The fundamental argument parsing logic follows this model:
 //!
 //!  - An argument either **not** starting with a dash (`-`), or consisting only of a single dash,
-//!    is not an *option*, it is a *non-option* (aka *positional*) argument. A *non-option* argument
-//!    is either a generic argument, or possibly a *[command argument][commands]*.
+//!    is not an *option*, it is a *non-option* argument. A *non-option* argument is either a
+//!    *positional* argument, or possibly a *[command argument][commands]*.
 //!  - An argument of exactly two dashes (`--`) only is called an *early terminator*. This has
 //!    special meaning, as described below.
 //!  - An argument starting with two dashes (`--`) followed by additional characters is a *long
@@ -134,26 +134,26 @@
 //!
 //! An *early terminator* is an argument which consists entirely of two dashes only (`--`). It is
 //! a special argument used to control interpretation of arguments. More specifically, it is used to
-//! request that all remaining arguments simply be assumed to be *non-options*, thus that no attempt
+//! request that all remaining arguments simply be assumed to be *positionals*, thus that no attempt
 //! be made to interpret them as *options*, nor anything else. (I.e. it requests early termination
 //! of argument interpretation). This provides users with a means of preventing arguments that look
-//! like *option* arguments from being parsed as such, when needing to supply them as *non-options*.
+//! like *option* arguments from being parsed as such, when needing to supply them as *positionals*.
 //!
-//! This is useful for instance if a program passes along some or all *non-options* to something
+//! This is useful for instance if a program passes along some or all *positionals* to something
 //! else, and the user wants some *option* arguments to be passed along.
 //!
 //! An example use case is given below, using the `cargo` program, which as a Rust programmer you
 //! should be familiar with. Note that the first argument, `run`, is a *non-option* which `cargo`
 //! recognises and consumes as a *[command argument][commands]*, and determines `cargo`’s “mode”.
 //! As you should know, in “run” mode, `cargo` *runs* the binary program of the `Cargo` project in
-//! the *current working directory*, and does so passing along all *non-options* (excluding `run`)
-//! as input arguments. So in the below example command line, `run` has already just been explained;
-//! the `--release` argument is consumed by `cargo` as a *long option*; the `--` argument is an
-//! *early terminator*, and the `--foo` and `--bar` arguments are thus considered *non-options*.
-//! Thus, `cargo` here in “run” mode passes along `--foo` and `--bar` to the project program it
-//! runs. This is equivalent to running `<my-prog> --foo --bar` directly. Without the *early
-//! terminator*, `cargo` would have seen `--foo` and `--bar` to be *options* and thus tried to
-//! consume them for itself (resulting in unrecognised *option* errors).
+//! the *current working directory*, and does so passing along all *positional* arguments as input
+//! arguments. So in the below example command line, `run` has already just been explained; the
+//! `--release` argument is consumed by `cargo` as a *long option*; the `--` argument is an *early
+//! terminator*, and the `--foo` and `--bar` arguments are thus considered *positionals*. Thus,
+//! `cargo` here in “run” mode passes along `--foo` and `--bar` to the project program it runs. This
+//! is equivalent to running `<my-prog> --foo --bar` directly. Without the *early terminator*,
+//! `cargo` would have seen `--foo` and `--bar` to be *options* and thus tried to consume them for
+//! itself (resulting in unrecognised *option* errors).
 //!
 //! ```text
 //! cargo run --release -- --foo --bar

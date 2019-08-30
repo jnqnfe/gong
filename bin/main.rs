@@ -205,7 +205,7 @@ fn main() {
             ItemClass::Warn(_) => print_arg_warn,
         };
         match *result {
-            ItemClass::Ok(Item::NonOption(i, s)) => printer(i, "NonOption", s),
+            ItemClass::Ok(Item::Positional(i, s)) => printer(i, "Positional", s),
             ItemClass::Ok(Item::EarlyTerminator(i)) => printer(i, "EarlyTerminator", ow("")),
             ItemClass::Ok(Item::Long(i, n)) => printer(i, "Long", ow(n)),
             ItemClass::Ok(Item::LongWithData { i, n, d, ref l }) => {

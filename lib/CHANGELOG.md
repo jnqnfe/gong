@@ -20,11 +20,13 @@
  * Added data-mining methods to `Analysis`.
    This means that you can now, for instance, ask if an option was used, how many times it was used,
    retrieve the value from the last instance, or get the set of values of all instances, or get an
-   iterator over non-options.
+   iterator over positionals.
  * Added “posixly correct” parsing capability.
    This is controlled with a new `posixly_correct` parser setting, disabled by default.
    Enforcement of “posixly correct” parsing behaviour means disallowing mixing of options and
-   non-options, thus all arguments after a non-option are to be interpreted as being non-options.
+   positionals, thus all arguments after a positional are to be interpreted as being positionals.
+ * Renamed the analysis `NonOption` variant to `Positional`, better distinguishing between
+   *command non-options* and *positional non-options*.
  * Added an `add_shorts_from_str` method to `OptionSetEx`, which allows adding multiple short
    options in one go using a string.
  * Removed the `gong_option_set` macro that constructed an `OptionSetEx`, since there was very

@@ -32,11 +32,11 @@
 //! When parsing a given set of arguments, initially arguments are parsed against the “main”
 //! (“top-level”) options in the *option set* given directly to the parser. If a *non-option* is
 //! encountered, and it is the first *non-option*, it is compared to the “main” (“top-level”) set of
-//! *commands*, if there are any. If it does not match any *command* in the set, it remains a simple
-//! *non-option*, but if it does, then it is promoted to *command*, and all subsequent arguments
-//! will be parsed against the *option set* and *sub-command set* of that command. If the first
-//! *non-option* following that command matches one of its *sub-commands*, then it is promoted to
-//! a *command* in exactly the same way.
+//! *commands*, if there are any. If it does not match any *command* in the set, it is considered to
+//! be a *positional* argument, but if it does, then it is promoted to *command*, and all subsequent
+//! arguments will be parsed against the *option set* and *sub-command set* of that command. If the
+//! first *non-option* following that command matches one of its *sub-commands*, then it is promoted
+//! to a *command* in exactly the same way.
 //!
 //! Note, *command name* matching, like *option* matching, is case-sensitive. However, unlike
 //! *option* matching, abbreviated matching is not (currently) supported for *command names*.
@@ -45,10 +45,10 @@
 //!
 //! > <prog-name> [main-options] [command [cmd-options] [sub-cmd [sub-cmd-opts] [...]]]
 //!
-//! Per the above description, *non-option* arguments cannot come before *command* arguments, they
+//! Per the above description, *positional* arguments cannot come before *command* arguments, they
 //! must always only appear after the last command, mixed with any remaining *option* arguments. Any
-//! attempt to use a *non-option* before a command would result in the command being interpretted as
-//! a *non-option*.
+//! attempt to use a *positional* before a command would result in the command being interpretted as
+//! a *positional*.
 //!
 //! ## Example
 //!
@@ -76,9 +76,9 @@
 //! # command’s `action` option.
 //! <prog-name> --verbose build --action
 //!
-//! # Here, `blah` is a non-option that does not match a recognised command.
-//! # Since `build` is not the first non-option, it too is simply interpreted
-//! # as a non-option.
+//! # Here, `blah` is a non-option that does not match a recognised command, and
+//! # thus is a positional. Since `build` is not the first non-option, it too is
+//! # simply interpreted as a positional.
 //! <prog-name> blah build
 //!
 //! # Here the `build` command is used, followed by its `help` option, which

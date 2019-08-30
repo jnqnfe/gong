@@ -23,7 +23,7 @@
  *  4. Convert the analysis item returned by the `str` based parser:
  *      a. Copy warn/error booleans
  *      b. Loop through analysis items, converting and adding each.
- *          - Some cases will be easy to handle, for instance with non-options and in-next-arg data
+ *          - Some cases will be easy to handle, for instance with positionals and in-next-arg data
  *            values we just reference the original argument.
  *          - For matched long option names, we just use what was given, since valid option names
  *            are only permitted to be valid UTF-8 strings (being `&str`), and because in the case
@@ -244,8 +244,8 @@ impl<'r, 's, A> ParseIterOs<'r, 's, A>
 
             /* These need more work, capturing part or all of the original `OsStr` */
 
-            ItemClass::Ok(Item::NonOption(i, _)) => {
-                ItemClass::Ok(Item::NonOption(i, self.args[i].as_ref()))
+            ItemClass::Ok(Item::Positional(i, _)) => {
+                ItemClass::Ok(Item::Positional(i, self.args[i].as_ref()))
             },
             ItemClass::Ok(Item::LongWithData{ i, n, l, .. }) => {
                 let data = match l {

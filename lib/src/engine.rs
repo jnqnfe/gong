@@ -41,11 +41,11 @@ pub struct ParseIter<'r, 's: 'r, A: 's + AsRef<str>> {
     arg_iter: Enumerate<slice::Iter<'s, A>>,
     /// The parser data in use (will change on encountering a command)
     pub(crate) parser_data: Parser<'r, 's>,
-    /// Whether or not all remaining arguments should be interpreted as non-options (`true` if
+    /// Whether or not all remaining arguments should be interpreted as positionals (`true` if
     /// either an early terminator has been encountered, or “posixly correct” behaviour is required
-    /// and a non-option has been encountered).
-    rest_are_nonoptions: bool,
-    /// A non-option is only assessed as being a possible command if 1) it is the first encountered
+    /// and a positional has been encountered).
+    rest_are_positionals: bool,
+    /// A positional is only assessed as being a possible command if 1) it is the first encountered
     /// for each option-set analysis (reset for each command identified), and 2) we have not
     /// encountered an early terminator.
     try_command_matching: bool,
@@ -130,7 +130,7 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         Self {
             arg_iter: args.iter().enumerate(),
             parser_data: *parser,
-            rest_are_nonoptions: false,
+            rest_are_positionals: false,
             try_command_matching: true,
             get_basic_arg_type_fn: Self::get_type_assessor(parser.settings.mode),
             short_set_iter: None,
@@ -204,14 +204,14 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
-        let arg_type = match self.rest_are_nonoptions {
+        let arg_type = match self.rest_are_positionals {
             true => ArgTypeBasic::NonOption,
             false => (self.get_basic_arg_type_fn)(arg),
         };
 
         match arg_type {
             ArgTypeBasic::NonOption => {
-                if self.try_command_matching && !self.rest_are_nonoptions {
+                if self.try_command_matching && !self.rest_are_positionals {
                     for candidate in self.parser_data.commands.commands {
                         if candidate.name == arg {
                             self.parser_data.options = candidate.options;
@@ -221,13 +221,13 @@ impl<'r, 's, A> ParseIter<'r, 's, A>
                     }
                 }
                 if self.parser_data.settings.posixly_correct {
-                    self.rest_are_nonoptions = true;
+                    self.rest_are_positionals = true;
                 }
                 self.try_command_matching = false;
-                Some(ItemClass::Ok(Item::NonOption(arg_index, arg)))
+                Some(ItemClass::Ok(Item::Positional(arg_index, arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
-                self.rest_are_nonoptions = true;
+                self.rest_are_positionals = true;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
                 // where, so let’s not leave it out of the results.
                 Some(ItemClass::Ok(Item::EarlyTerminator(arg_index)))

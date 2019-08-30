@@ -178,7 +178,7 @@ impl<'r, 's: 'r> CommandSetEx<'r, 's> {
 
     /// Find the best matching command for the given string
     ///
-    /// This is intended to be used when a command argument was expected, and an *non-option*
+    /// This is intended to be used when a command argument was expected, and a *positional*
     /// argument was given, but it was not matched against any available command, and you want to
     /// report an “unrecognised command” error, indicating the most likely option the user may have
     /// meant, if a suitable suggestion can be found. E.g.
@@ -235,7 +235,7 @@ impl<'r, 's: 'r> CommandSet<'r, 's> {
 
     /// Find the best matching command for the given string
     ///
-    /// This is intended to be used when a command argument was expected, and an *non-option*
+    /// This is intended to be used when a command argument was expected, and a *positional*
     /// argument was given, but it was not matched against any available command, and you want to
     /// report an “unrecognised command” error, indicating the most likely option the user may have
     /// meant, if a suitable suggestion can be found. E.g.

@@ -19,9 +19,9 @@ here.
 
 Cargo supports passing command line arguments to your program when you use `cargo run`, but needs to
 distinguish between arguments meant for itself and those meant for the to-be-run program. Any
-argument that does not look like an option (does not start with a dash) are non-options, and Cargo
+argument that does not look like an option (does not start with a dash) are positionals, and Cargo
 passes these on. An argument of exactly two dashes only is special - an *early terminator* - which
-Cargo responds to by treating all subsequent arguments as non-options. You can thus use the early
+Cargo responds to by treating all subsequent arguments as positionals. You can thus use the early
 terminator to get Cargo to pass options to the test program.
 
 So, type the following, then add on the end any arguments to give to the test program (after a
@@ -32,7 +32,7 @@ An example: `cargo run -- --foo --bar abc -- def --ghi`
 In this example, the test program will be run with: `--foo --bar abc -- def --ghi`
 
 (Only the first *early terminator* is consumed by Cargo, subsequent ones are themselves treated as
-non-options and thus are passed on).
+positionals and thus are passed on).
 
 ## Features
 

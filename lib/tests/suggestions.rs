@@ -122,7 +122,7 @@ mod commands {
             error: false,
             warn: false,
             [
-                expected_item!(0, NonOption, "but_i_digest"),
+                expected_item!(0, Positional, "but_i_digest"),
             ]
         );
         let opts = gong_option_set!();
@@ -140,7 +140,7 @@ mod commands {
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
         for item in &actual_results.0.items {
             match item {
-                ItemClass::Ok(Item::NonOption(_, s)) => {
+                ItemClass::Ok(Item::Positional(_, s)) => {
                     suggestions.push((*s, cmds.suggest(s)));
                 },
                 _ => unreachable!(),
@@ -159,7 +159,7 @@ mod commands {
             error: false,
             warn: false,
             [
-                expected_item!(0, NonOption, "bard"),
+                expected_item!(0, Positional, "bard"),
             ]
         );
         let opts = gong_option_set!();
@@ -176,7 +176,7 @@ mod commands {
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
         for item in &actual_results.0.items {
             match item {
-                ItemClass::Ok(Item::NonOption(_, s)) => {
+                ItemClass::Ok(Item::Positional(_, s)) => {
                     suggestions.push((*s, cmds.suggest(s)));
                 },
                 _ => unreachable!(),
@@ -195,7 +195,7 @@ mod commands {
             error: false,
             warn: false,
             [
-                expected_item!(0, NonOption, "hellp"),
+                expected_item!(0, Positional, "hellp"),
             ]
         );
         let opts = gong_option_set!();
@@ -212,7 +212,7 @@ mod commands {
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
         for item in &actual_results.0.items {
             match item {
-                ItemClass::Ok(Item::NonOption(_, s)) => {
+                ItemClass::Ok(Item::Positional(_, s)) => {
                     suggestions.push((*s, cmds.suggest(s)));
                 },
                 _ => unreachable!(),
@@ -231,7 +231,7 @@ mod commands {
             error: false,
             warn: false,
             [
-                expected_item!(0, NonOption, "fooa"),
+                expected_item!(0, Positional, "fooa"),
             ]
         );
         let opts = gong_option_set!();
@@ -248,7 +248,7 @@ mod commands {
         let mut suggestions = Vec::with_capacity(actual_results.0.items.len());
         for item in &actual_results.0.items {
             match item {
-                ItemClass::Ok(Item::NonOption(_, s)) => {
+                ItemClass::Ok(Item::Positional(_, s)) => {
                     suggestions.push((*s, cmds.suggest(s)));
                 },
                 _ => unreachable!(),

@@ -110,7 +110,7 @@ pub struct Settings {
     /// Whether or not to allow abbreviated long option name matching
     pub allow_abbreviations: bool,
     /// Whether or not to stop interpretation of arguments as possible options/commands upon
-    /// encountering a non-option, similar to encountering an early terminator, i.e.
+    /// encountering a positional argument, similar to encountering an early terminator, i.e.
     /// “posixly correct” behaviour. See [the respective setter method][set_posixly_correct]
     /// documentation for details.
     ///
@@ -161,8 +161,8 @@ impl Settings {
 
     /// Control whether or not “posixly correct” mode is enabled
     ///
-    /// “Posixly correct” mode means that upon encountering a *non-option* argument (that is not a
-    /// *command*) all subsequent arguments must also be considered just *non-options*.
+    /// “Posixly correct” mode means that upon encountering a *positional* argument all subsequent
+    /// arguments must also be considered to be *positionals*.
     ///
     /// This mode is disabled by default.
     ///
@@ -170,9 +170,9 @@ impl Settings {
     ///
     /// As discussed in `Appendix B` of `The Linux Programming Interface`, `2010` by `Michael
     /// Kerrisk`, the POSIX/SUS standards relating to command line argument parsing do not allow
-    /// mixing of *option* and *non-option* arguments, requiring that all *options* must come before
-    /// *non-options*, and on encountering a *non-option*, all subsequent arguments should be
-    /// interpreted as being *non-options*.
+    /// mixing of *option* and *positional* arguments, requiring that all *options* must come before
+    /// *positional*, and on encountering a *positional*, all subsequent arguments should be
+    /// interpreted as being *positionals*.
     ///
     /// Also discussed is the fact that the `glibc` (standard GNU C library) implementation by
     /// default does not conform to this requirement, allowing mixing, though will change its
@@ -181,7 +181,7 @@ impl Settings {
     /// # Notes
     ///
     /// The design of this library **optionally** allows free inter-mixing of *option* and
-    /// *non-option* arguments. The default state is to allow such free mixing. If you are building
+    /// *positional* arguments. The default state is to allow such free mixing. If you are building
     /// a program that for any reason needs to conform to the above requirement of the mentioned
     /// standards then this setting is very relevant to you; you can achieve such conformance simply
     /// by configuring this setting to `true` via this method.
@@ -189,12 +189,6 @@ impl Settings {
     /// Note that this library does **not** itself pay any attention to the mentioned
     /// `POSIXLY_CORRECT` environment variable. You of course can freely do so in your application
     /// however, changing this setting in response as appropriate.
-    ///
-    /// This setting has no affect with respect to *[command arguments]* (which are *non-option*
-    /// arguments with special meaning). If a *non-option* is recognised as a *command argument*
-    /// then it is promoted as such and thus will not trigger the effect of this setting.
-    ///
-    /// [command arguments]: ../docs/commands/index.html
     #[inline(always)]
     pub fn set_posixly_correct(&mut self, enable: bool) -> &mut Self {
         self.posixly_correct = enable;

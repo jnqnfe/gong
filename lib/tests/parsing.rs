@@ -48,44 +48,44 @@ fn arg_list_owned_set() {
 #[test]
 fn basic() {
     let args = arg_list!(
-        "abc", "-", "z",    // Non-options
+        "abc", "-", "z",    // Positionals
         "--help",           // Known long option
         "--xxx",            // Unknown long option
         "---yy",            // Extra dash should be taken as part of long option name
-        "version",          // Known long option, but no prefix, thus non-option
+        "version",          // Known long option, but no prefix, thus positional
         "-bxs",             // Short option set, two unknown, one known (`x`)
-        "ghi",              // Non-option, containing known short option (`h`)
+        "ghi",              // Positional, containing known short option (`h`)
         "-a-",              // Dash in short opt set should come out as unknown short opt (can not
                             // be a known one as not allowed), so long as not the first in set, as
                             // would then arg would then be interpreted as long option or early
                             // terminator.
         "-h-",              // Same, but with known short opt in set, which should not matter.
         "--",               // Early terminator
-        "--foo",            // Known option, taken as non-option due to early terminator
-        "jkl",              // Non-option either way
+        "--foo",            // Known option, taken as positional due to early terminator
+        "jkl",              // Positional either way
     );
     let expected = expected!(
         error: false,
         warn: true,
         [
-            expected_item!(0, NonOption, "abc"),
-            expected_item!(1, NonOption, "-"),
-            expected_item!(2, NonOption, "z"),
+            expected_item!(0, Positional, "abc"),
+            expected_item!(1, Positional, "-"),
+            expected_item!(2, Positional, "z"),
             expected_item!(3, Long, "help"),
             expected_item!(4, UnknownLong, "xxx"),
             expected_item!(5, UnknownLong, "-yy"),
-            expected_item!(6, NonOption, "version"),
+            expected_item!(6, Positional, "version"),
             expected_item!(7, UnknownShort, 'b'),
             expected_item!(7, Short, 'x'),
             expected_item!(7, UnknownShort, 's'),
-            expected_item!(8, NonOption, "ghi"),
+            expected_item!(8, Positional, "ghi"),
             expected_item!(9, UnknownShort, 'a'),
             expected_item!(9, UnknownShort, '-'),
             expected_item!(10, Short, 'h'),
             expected_item!(10, UnknownShort, '-'),
             expected_item!(11, EarlyTerminator),
-            expected_item!(12, NonOption, "--foo"),
-            expected_item!(13, NonOption, "jkl"),
+            expected_item!(12, Positional, "--foo"),
+            expected_item!(13, Positional, "jkl"),
         ]
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -106,15 +106,15 @@ fn case_sensitivity() {
     check_result(&Actual(get_parser().parse(&args)), &expected);
 }
 
-/// Test that everything after an early terminator is taken to be a non-option, including any
+/// Test that everything after an early terminator is taken to be a positional, including any
 /// further early terminators.
 #[test]
 fn early_term() {
     let args = arg_list!(
         "--foo",    // Before the early terminator, should work as option
         "--",       // Our early terminator
-        "--help",   // Should be affected, thus non-option
-        "--",       // Should be a non-option, **not** another early terminator
+        "--help",   // Should be affected, thus positional
+        "--",       // Should be a positional, **not** another early terminator
         // A mix of various other items, some of which might be interpreted differently if it were
         // not for the early terminator.
         "-o", "--foo", "blah", "--bb", "-h", "--hah", "--hah=", "--", "--hah=a", "-oa", "-b",
@@ -125,19 +125,19 @@ fn early_term() {
         [
             expected_item!(0, Long, "foo"),
             expected_item!(1, EarlyTerminator),
-            expected_item!(2, NonOption, "--help"),
-            expected_item!(3, NonOption, "--"),
-            expected_item!(4, NonOption, "-o"),
-            expected_item!(5, NonOption, "--foo"),
-            expected_item!(6, NonOption, "blah"),
-            expected_item!(7, NonOption, "--bb"),
-            expected_item!(8, NonOption, "-h"),
-            expected_item!(9, NonOption, "--hah"),
-            expected_item!(10, NonOption, "--hah="),
-            expected_item!(11, NonOption, "--"),
-            expected_item!(12, NonOption, "--hah=a"),
-            expected_item!(13, NonOption, "-oa"),
-            expected_item!(14, NonOption, "-b"),
+            expected_item!(2, Positional, "--help"),
+            expected_item!(3, Positional, "--"),
+            expected_item!(4, Positional, "-o"),
+            expected_item!(5, Positional, "--foo"),
+            expected_item!(6, Positional, "blah"),
+            expected_item!(7, Positional, "--bb"),
+            expected_item!(8, Positional, "-h"),
+            expected_item!(9, Positional, "--hah"),
+            expected_item!(10, Positional, "--hah="),
+            expected_item!(11, Positional, "--"),
+            expected_item!(12, Positional, "--hah=a"),
+            expected_item!(13, Positional, "-oa"),
+            expected_item!(14, Positional, "-b"),
         ]
     );
     check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -198,7 +198,7 @@ mod utf8 {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, "🗻∈🌏"),
+                expected_item!(0, Positional, "🗻∈🌏"),
                 expected_item!(1, UnknownShort, '🗻'),
                 expected_item!(1, UnknownShort, '∈'),
                 expected_item!(1, UnknownShort, '🌏'),
@@ -218,11 +218,11 @@ mod utf8 {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, "y̆"),
+                expected_item!(0, Positional, "y̆"),
                 expected_item!(1, UnknownShort, 'y'),        // `y`
                 expected_item!(1, UnknownShort, '\u{0306}'), // breve
                 expected_item!(2, UnknownLong, "y̆"),
-                expected_item!(3, NonOption, "ëéy̆"),
+                expected_item!(3, Positional, "ëéy̆"),
                 expected_item!(4, UnknownShort, 'ë'),        // e+diaeresis
                 expected_item!(4, UnknownShort, 'e'),        // `e`
                 expected_item!(4, UnknownShort, '\u{0301}'), // acute accent
@@ -248,7 +248,7 @@ mod utf8 {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, "❤️"),
+                expected_item!(0, Positional, "❤️"),
                 expected_item!(1, Short, '\u{2764}'),        // black-heart
                 expected_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
                 expected_item!(2, UnknownLong, "❤️"),
@@ -265,7 +265,7 @@ mod utf8 {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, "\u{0306}"),
+                expected_item!(0, Positional, "\u{0306}"),
                 expected_item!(1, UnknownShort, '\u{0306}'),
                 expected_item!(2, UnknownLong, "\u{0306}"),
                 expected_item!(3, Short, '\u{030a}'),
@@ -414,7 +414,7 @@ mod data {
             warn: false,
             [
                 expected_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
-                expected_item!(1, NonOption, "g"),
+                expected_item!(1, Positional, "g"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -586,7 +586,7 @@ mod data {
             "--hah=",   // Known option, takes data, not given, should be empty string
             "--help",   // Random known option, should not be take as data for previous
             "--hah=",   // Same again...
-            "help",     // Non-option this time, also should not be taken as data
+            "help",     // Positional this time, also should not be taken as data
         );
         let expected = expected!(
             error: false,
@@ -595,7 +595,7 @@ mod data {
                 expected_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
                 expected_item!(1, Long, "help"),
                 expected_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
-                expected_item!(3, NonOption, "help"),
+                expected_item!(3, Positional, "help"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -851,7 +851,7 @@ mod commands {
             error: false,
             warn: false,
             [
-                expected_item!(0, NonOption, "Commit"),
+                expected_item!(0, Positional, "Commit"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -869,7 +869,7 @@ mod commands {
             warn: false,
             [
                 expected_item!(0, Command, "commit"),
-                expected_item!(1, NonOption, "commit"),
+                expected_item!(1, Positional, "commit"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -884,13 +884,13 @@ mod commands {
             warn: false,
             [
                 expected_item!(0, Command, "push"),
-                expected_item!(1, NonOption, "commit"),
+                expected_item!(1, Positional, "commit"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
-    /// Check early terminator forces command to be treated as non-option
+    /// Check early terminator forces command to be treated as positional
     #[test]
     fn after_early_term() {
         let args = arg_list!("--", "commit");
@@ -899,7 +899,7 @@ mod commands {
             warn: false,
             [
                 expected_item!(0, EarlyTerminator),
-                expected_item!(1, NonOption, "commit"),
+                expected_item!(1, Positional, "commit"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -986,22 +986,22 @@ mod commands {
         check_result(&Actual(get_parser().parse(&args)), &expected);
     }
 
-    /// Check not recognised as command in secondary non-option position, and first non-option is
-    /// reported as a non-option, not as an unrecognised command (n/a to current design).
+    /// Check not recognised as command in secondary non-option position, and first is reported as a
+    /// positional, not as an unrecognised command (n/a to current design).
     #[test]
     fn following_unknown() {
         let args = arg_list!(
             "--hah", "foo",     // Option taking data
-            "blah",             // Non-option, not matching any command
-            "commit"            // A command, but one or more non-options already given
+            "blah",             // Positional, not matching any command
+            "commit"            // A command, but one or more positionals already given
         );
         let expected = expected!(
             error: false,
             warn: false,
             [
                 expected_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
-                expected_item!(2, NonOption, "blah"),
-                expected_item!(3, NonOption, "commit"),
+                expected_item!(2, Positional, "blah"),
+                expected_item!(3, Positional, "commit"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1081,7 +1081,7 @@ mod commands {
             "--help",           // Option unknown to sub-command
             "--nope",           // Option unknown to sub-command
             "--show-current",   // Option unknown to sub-command
-            "blah"              // Non-option
+            "blah"              // Positional
         );
         let expected = expected!(
             error: false,
@@ -1102,7 +1102,7 @@ mod commands {
                 expected_item!(12, UnknownLong, "help"),
                 expected_item!(13, UnknownLong, "nope"),
                 expected_item!(14, UnknownLong, "show-current"),
-                expected_item!(15, NonOption, "blah"),
+                expected_item!(15, Positional, "blah"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1120,10 +1120,10 @@ mod commands {
             "del",              // Sub-command
             "--foo",            // Option unknown to sub-command
             "--",               // Early terminator
-            "--show-current",   // Everything here onwards should be taken as non-options
+            "--show-current",   // Everything here onwards should be taken as positionals
             "remotely",         // Sub-command (level 2)
             "--foo",            // Option unknown to sub-command
-            "blah"              // Non-option
+            "blah"              // Positional
         );
         let expected = expected!(
             error: false,
@@ -1137,10 +1137,10 @@ mod commands {
                 expected_item!(5, Command, "del"),
                 expected_item!(6, UnknownLong, "foo"),
                 expected_item!(7, EarlyTerminator),
-                expected_item!(8, NonOption, "--show-current"),
-                expected_item!(9, NonOption, "remotely"),
-                expected_item!(10, NonOption, "--foo"),
-                expected_item!(11, NonOption, "blah"),
+                expected_item!(8, Positional, "--show-current"),
+                expected_item!(9, Positional, "remotely"),
+                expected_item!(10, Positional, "--foo"),
+                expected_item!(11, Positional, "blah"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1160,7 +1160,7 @@ mod commands {
             [
                 expected_item!(0, Command, "branch"),
                 expected_item!(1, Command, "del"),
-                expected_item!(2, NonOption, "list"),
+                expected_item!(2, Positional, "list"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1168,19 +1168,19 @@ mod commands {
 
     /// Check known sub-command, given after a non-option that is not a known sub-command
     #[test]
-    fn nested_following_nonoption() {
+    fn nested_following_positional() {
         let args = arg_list!(
             "branch",   // Primary command
-            "blah",     // Non-option
-            "list",     // Sub-command, but follows non-option, so not taken as a command
+            "blah",     // Positional
+            "list",     // Sub-command, but follows positional, so not taken as a command
         );
         let expected = expected!(
             error: false,
             warn: false,
             [
                 expected_item!(0, Command, "branch"),
-                expected_item!(1, NonOption, "blah"),
-                expected_item!(2, NonOption, "list"),
+                expected_item!(1, Positional, "blah"),
+                expected_item!(2, Positional, "list"),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1199,7 +1199,7 @@ mod trimming {
     fn basic() {
         let args = arg_list!(
             // In all of these cases the whitespace is expected to be preserved, which thus might
-            // cause arguments to be seen as non-options, or cause option match failure.
+            // cause arguments to be seen as positionals, or cause option match failure.
             " --foo",                   // Whitespace at start of long option style argument
             "--foo ",                   // Whitespace at end of long option name
             "-- foo",                   // Whitespace at start of long option name
@@ -1212,17 +1212,17 @@ mod trimming {
             "--hah", "   a  b\t c ",    // Whitespace in in-next-arg long option data value
             "-o   a  b\t c ",           // Whitespace in in-same-arg short option data value
             "-o", "   a  b\t c ",       // Whitespace in in-next-arg short option data value
-            "   a  b\t c ",             // Whitespace in non-option
+            "   a  b\t c ",             // Whitespace in positional
         );
         let expected = expected!(
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, " --foo"),
+                expected_item!(0, Positional, " --foo"),
                 expected_item!(1, UnknownLong, "foo "),
                 expected_item!(2, UnknownLong, " foo"),
                 expected_item!(3, UnknownLong, "f o\to"),
-                expected_item!(4, NonOption, " -a"),
+                expected_item!(4, Positional, " -a"),
                 expected_item!(5, UnknownShort, 'a'),
                 expected_item!(5, UnknownShort, ' '),
                 expected_item!(6, UnknownShort, ' '),
@@ -1235,7 +1235,7 @@ mod trimming {
                 expected_item!(9, LongWithData, "hah", "   a  b\t c ", DataLocation::NextArg),
                 expected_item!(11, ShortWithData, 'o', "   a  b\t c ", DataLocation::SameArg),
                 expected_item!(12, ShortWithData, 'o', "   a  b\t c ", DataLocation::NextArg),
-                expected_item!(14, NonOption, "   a  b\t c "),
+                expected_item!(14, Positional, "   a  b\t c "),
             ]
         );
         check_result(&Actual(get_parser().parse(&args)), &expected);
@@ -1256,8 +1256,8 @@ mod alt_mode {
     #[test]
     fn basic() {
         let args = arg_list!(
-            "abc",          // Non-opt
-            "-",            // Should be non-opt
+            "abc",          // Positional
+            "-",            // Should be positional
             "-help",        // Known option, via alt-mode single dash
             "-hah=abc",     // Data-taking variant, in-arg
             "-hah", "cba",  // Same, next-arg
@@ -1272,14 +1272,14 @@ mod alt_mode {
             "-foob",        // Unique abbreviation to `foobar`
             "-❤",           // Check known short opt not taken as such
             "--",           // Early term
-            "-help",        // Known option, should be non-opt though due to early terminator
+            "-help",        // Known option, should be positional though due to early terminator
         );
         let expected = expected!(
             error: true,
             warn: true,
             [
-                expected_item!(0, NonOption, "abc"),
-                expected_item!(1, NonOption, "-"),
+                expected_item!(0, Positional, "abc"),
+                expected_item!(1, Positional, "-"),
                 expected_item!(2, Long, "help"),
                 expected_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
                 expected_item!(4, LongWithData, "hah", "cba", DataLocation::NextArg),
@@ -1293,7 +1293,7 @@ mod alt_mode {
                 expected_item!(13, Long, "foobar"),
                 expected_item!(14, UnknownLong, "❤"),
                 expected_item!(15, EarlyTerminator),
-                expected_item!(16, NonOption, "-help"),
+                expected_item!(16, Positional, "-help"),
             ]
         );
         let mut parser = get_parser();
@@ -1373,8 +1373,8 @@ mod alt_mode {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// “Posixly correct” parsing, i.e. no mixing of options and non-options, the first non-options
-// causes all subsequent arguments to be treated as non-options.
+// “Posixly correct” parsing, i.e. no mixing of options and positionals, the first positionals
+// causes all subsequent arguments to be treated as positionals.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 mod posixly_correct {
@@ -1384,20 +1384,20 @@ mod posixly_correct {
     fn basic() {
         let args = arg_list!(
             "--help",   // Option
-            "abc",      // Non-option
-            "--foo",    // Option, to be taken as non-option
-            "--",       // Early terminator, to be taken as non-option
-            "bar",      // Option, to be taken as non-option
+            "abc",      // Positional
+            "--foo",    // Option, to be taken as positional
+            "--",       // Early terminator, to be taken as positional
+            "bar",      // Option, to be taken as positional
         );
         let expected = expected!(
             error: false,
             warn: false,
             [
                 expected_item!(0, Long, "help"),
-                expected_item!(1, NonOption, "abc"),
-                expected_item!(2, NonOption, "--foo"),
-                expected_item!(3, NonOption, "--"),
-                expected_item!(4, NonOption, "bar"),
+                expected_item!(1, Positional, "abc"),
+                expected_item!(2, Positional, "--foo"),
+                expected_item!(3, Positional, "--"),
+                expected_item!(4, Positional, "bar"),
             ]
         );
         let mut parser = get_parser();
@@ -1411,8 +1411,8 @@ mod posixly_correct {
         let args = arg_list!(
             "--help",   // Option
             "--",       // Early terminator
-            "abc",      // Non-option
-            "--foo",    // Option, to be taken as non-option
+            "abc",      // Positional
+            "--foo",    // Option, to be taken as positional
         );
         let expected = expected!(
             error: false,
@@ -1420,8 +1420,8 @@ mod posixly_correct {
             [
                 expected_item!(0, Long, "help"),
                 expected_item!(1, EarlyTerminator),
-                expected_item!(2, NonOption, "abc"),
-                expected_item!(3, NonOption, "--foo"),
+                expected_item!(2, Positional, "abc"),
+                expected_item!(3, Positional, "--foo"),
             ]
         );
         let mut parser = get_parser();

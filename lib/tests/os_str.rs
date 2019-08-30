@@ -66,7 +66,7 @@ fn arg_list_owned_set() {
 #[test]
 fn basic() {
     let args = arg_list_os!(
-        "abc",              // Non-option
+        "abc",              // Positional
         "--xxx",            // Unknown long option
         "--help",           // Known long option
         "--hah=abc",        // Known long, with in-same-arg data
@@ -87,7 +87,7 @@ fn basic() {
         error: true,
         warn: true,
         [
-            expected_item!(0, NonOption, OsStr::new("abc")),
+            expected_item!(0, Positional, OsStr::new("abc")),
             expected_item!(1, UnknownLong, OsStr::new("xxx")),
             expected_item!(2, Long, "help"),
             expected_item!(3, LongWithData, "hah", OsStr::new("abc"), DataLocation::SameArg),
@@ -249,7 +249,7 @@ mod invalid_byte_sequences {
         use std::os::unix::ffi::OsStrExt;
 
         let args = [
-            OsStr::from_bytes(b"a\x80bc"),       // Non-option
+            OsStr::from_bytes(b"a\x80bc"),       // Positional
             OsStr::from_bytes(b"--\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\x80bc"), // Known long, with in-same-arg data
             OsStr::from_bytes(b"--hah"),         // Known long, with in-next-arg data
@@ -307,7 +307,7 @@ mod invalid_byte_sequences {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, expected_strings[0]),
+                expected_item!(0, Positional, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
@@ -366,7 +366,7 @@ mod invalid_byte_sequences {
         }
 
         let args = [
-            OsStr::from_bytes(b"a\xed\xa0\x80bc"),       // Non-option
+            OsStr::from_bytes(b"a\xed\xa0\x80bc"),       // Positional
             OsStr::from_bytes(b"--\xed\xa0\x80xx"),      // Unknown long option
             OsStr::from_bytes(b"--hah=a\xed\xa0\x80bc"), // Known long, with in-same-arg data
             OsStr::from_bytes(b"--hah"),                 // Known long, with in-next-arg data
@@ -412,7 +412,7 @@ mod invalid_byte_sequences {
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, expected_strings[0]),
+                expected_item!(0, Positional, expected_strings[0]),
                 expected_item!(1, UnknownLong, expected_strings[1]),
                 expected_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
                 expected_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),

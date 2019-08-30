@@ -82,14 +82,14 @@ impl<'s, S: 's + ?Sized> Clone for Analysis<'s, S> {
 /// Most sub-variants also hold additional data. Long option sub-variants hold a string slice
 /// reference to the matched option. Short option sub-variants hold the `char` matched. Options with
 /// data arguments additionally hold a string slice reference to the data string matched, and in
-/// some cases also a [`DataLocation`] variant. The [`NonOption`] sub-variant holds a string slice
+/// some cases also a [`DataLocation`] variant. The [`Positional`] sub-variant holds a string slice
 /// reference to the matched string.
 ///
 /// [`Item`]: enum.Item.html
 /// [`ItemW`]: enum.ItemW.html
 /// [`ItemE`]: enum.ItemE.html
 /// [`DataLocation`]: enum.DataLocation.html
-/// [`NonOption`]: enum.Item.html#variant.NonOption
+/// [`Positional`]: enum.Item.html#variant.Positional
 #[derive(Debug, PartialEq, Eq)]
 pub enum ItemClass<'s, S: 's + ?Sized> {
     /// Non-problematic item
@@ -110,8 +110,8 @@ impl<'a, S: 'a + ?Sized> Clone for ItemClass<'a, S> {
 /// Non-problematic items. See [`ItemClass`](enum.ItemClass.html) documentation for details.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Item<'a, S: 'a + ?Sized> {
-    /// Argument not considered an option, command, or early terminator.
-    NonOption(usize, &'a S),
+    /// Positional argument (not an option, command, or early terminator).
+    Positional(usize, &'a S),
     /// Early terminator (`--`) encountered.
     EarlyTerminator(usize),
     /// Long option match.
@@ -372,7 +372,7 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
         self.get_problem_items().next()
     }
 
-    /// Gives an iterator over any *non-options*
+    /// Gives an iterator over any *positional* arguments
     ///
     /// They are served in the order given by the user.
     ///
@@ -383,13 +383,13 @@ impl<'r, 's: 'r, S: 's + ?Sized> Analysis<'s, S> {
     /// # extern crate gong;
     /// # fn main() {
     /// # let analysis: gong::analysis::Analysis<&str> = gong::analysis::Analysis::new(0);
-    /// let nonoptions: Vec<_> = analysis.get_nonoptions().collect();
+    /// let positionals: Vec<_> = analysis.get_positionals().collect();
     /// # }
     /// ```
-    pub fn get_nonoptions(&'r self) -> impl Iterator<Item = &'s S> + 'r {
+    pub fn get_positionals(&'r self) -> impl Iterator<Item = &'s S> + 'r {
         self.items.iter()
             .filter_map(|i| match i {
-                ItemClass::Ok(Item::NonOption(_, s)) => Some(*s),
+                ItemClass::Ok(Item::Positional(_, s)) => Some(*s),
                 _ => None,
             })
     }

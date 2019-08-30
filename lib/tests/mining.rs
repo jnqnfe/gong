@@ -254,7 +254,7 @@ mod iter {
     #[test]
     fn types() {
         let args = arg_list!(
-            "abc",         // Non-option
+            "abc",         // Positional
             "--why",       // Unknown option
             "--fo",        // Ambiguous option
             "--foo",       // Known option
@@ -264,7 +264,7 @@ mod iter {
             error: true,
             warn: true,
             [
-                expected_item!(0, NonOption, "abc"),
+                expected_item!(0, Positional, "abc"),
                 expected_item!(1, UnknownLong, "why"),
                 expected_item!(2, AmbiguousLong, "fo"),
                 expected_item!(3, Long, "foo"),
@@ -276,7 +276,7 @@ mod iter {
 
         // All items
         let mut iter = analysis.get_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, NonOption, "abc")));
+        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
         assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
         assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
@@ -285,7 +285,7 @@ mod iter {
 
         // Good items
         let mut iter = analysis.get_good_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, NonOption, "abc")));
+        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
         assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
         assert_eq!(iter.next(), None);
 
@@ -297,41 +297,41 @@ mod iter {
         assert_eq!(iter.next(), None);
     }
 
-    /// Test that iterating over non-options works
+    /// Test that iterating over positionals works
     #[test]
-    fn nonopts() {
+    fn positionals() {
         let args = arg_list!(
-            "abc",          // Non-option
+            "abc",          // Positional
             "--help",       // Known option
-            "def",          // Non-option
-            "hij",          // Non-option
+            "def",          // Positional
+            "hij",          // Positional
             "--jjj",        // Unknown option
-            "klm",          // Non-option
+            "klm",          // Positional
             "--",           // Early terminator
-            "nop",          // Non-option
-            "--help",       // Non-option
+            "nop",          // Positional
+            "--help",       // Positional
         );
         let expected = expected!(
             error: false,
             warn: true,
             [
-                expected_item!(0, NonOption, "abc"),
+                expected_item!(0, Positional, "abc"),
                 expected_item!(1, Long, "help"),
-                expected_item!(2, NonOption, "def"),
-                expected_item!(3, NonOption, "hij"),
+                expected_item!(2, Positional, "def"),
+                expected_item!(3, Positional, "hij"),
                 expected_item!(4, UnknownLong, "jjj"),
-                expected_item!(5, NonOption, "klm"),
+                expected_item!(5, Positional, "klm"),
                 expected_item!(6, EarlyTerminator),
-                expected_item!(7, NonOption, "nop"),
-                expected_item!(8, NonOption, "--help"),
+                expected_item!(7, Positional, "nop"),
+                expected_item!(8, Positional, "--help"),
             ]
         );
         let analysis = get_parser().parse(&args);
         check_result(&Actual(analysis.clone()), &expected);
 
-        assert_eq!(6, analysis.get_nonoptions().count());
+        assert_eq!(6, analysis.get_positionals().count());
 
-        let mut iter = analysis.get_nonoptions();
+        let mut iter = analysis.get_positionals();
         assert_eq!(iter.next(), Some("abc"));
         assert_eq!(iter.next(), Some("def"));
         assert_eq!(iter.next(), Some("hij"));

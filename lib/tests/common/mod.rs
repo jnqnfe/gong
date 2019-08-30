@@ -65,7 +65,7 @@ macro_rules! expected_os {
 /// be found at in the analysis. The second param is the label of the unique type. The final params
 /// as necessary allow for: [<name/char>[, <data-value>, <data-location>]]
 macro_rules! expected_item {
-    ( $i:expr, NonOption, $s:expr ) => { ItemClass::Ok(Item::NonOption($i, $s)) };
+    ( $i:expr, Positional, $s:expr ) => { ItemClass::Ok(Item::Positional($i, $s)) };
     ( $i:expr, EarlyTerminator ) => { ItemClass::Ok(Item::EarlyTerminator($i)) };
     ( $i:expr, Long, $n:expr ) => { ItemClass::Ok(Item::Long($i, $n)) };
     ( $i:expr, Short, $c:expr ) => { ItemClass::Ok(Item::Short($i, $c)) };

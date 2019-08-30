@@ -13,11 +13,11 @@
 //! # How do I specify “positional” arguments?
 //!
 //! > What are “positional” arguments? They are *generic* arguments, basically any argument which is
-//! > not interpreted as an *option* argument, a *command* argument, or an *early terminator*. They
-//! > are sometimes referred to as *non-option* arguments by this library. The term “positional”
-//! > relates to the fact that the position in the argument list determines the purpose of each one.
-//! > Contrast this with a data-taking option argument, where the option name/character gives
-//! > purpose to the data value (and allows greater flexibility, for instance in terms of order).
+//! > not interpreted as an *option* argument, a *command* argument, or an *early terminator*. The
+//! > term “positional” relates to the fact that the position in the argument list determines the
+//! > purpose of each one. Contrast this with a data-taking option argument, where the option
+//! > name/character gives purpose to the data value (and allows greater flexibility, for instance
+//! > in terms of order).
 //!
 //! You don’t. *Describing* positional arguments would only be useful if something would be done
 //! with that information, which is not the case with this library. If a positional argument is
@@ -139,16 +139,16 @@
 //!
 //! Here the quotes force the leading space to be preserved by the terminal. The presence of the
 //! space causes the library to see this input argument as a *non-option* of `" --foo"`, and thus
-//! would **not** try to match any `foo` option.
+//! would **not** try to match any `foo` option, it would be taken to be a *positional*.
 //!
 //! Note that all of these examples required quotes to **force** the creation of potential option
 //! match problems. The likelihood of users making genuine such mistakes is quite low.
 //!
 //! The decision to not trim whitespace for *data values* is obviously important, and similarly so
-//! for *non-options*. The decision to not do so for option names/`char`s was a deliberate design
+//! for *positionals*. The decision to not do so for option names/`char`s was a deliberate design
 //! choice, for efficiency, simplicity of parsing implementation, and flexibility of requirements.
 //! It is not expected to present any usability problem for users of programs, nor put anyone off
 //! using this library in their program. Note that you always do have the option of ignoring
 //! unrecognised whitespace short options. Trimming of whitespace in the last example for instance
-//! would place restrictions upon the possible *non-option* strings that could be specified to a
+//! would place restrictions upon the possible *positional* strings that could be specified to a
 //! program, and the trimming could catch users off guard, being unexpected behaviour.
