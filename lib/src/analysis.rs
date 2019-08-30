@@ -96,6 +96,7 @@ use crate::options::OptionSet;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
 pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>);
+pub type ItemResultIndexed2<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
 
 /// Non-problematic items
 ///
@@ -113,9 +114,9 @@ pub enum Item<'set, 'arg> {
     /// Early terminator (`--`) encountered.
     EarlyTerminator,
     /// Long option match, possibly with a data argument.
-    Long(&'set str, Option<(&'arg OsStr, DataLocation)>),
+    Long(&'set str, Option<&'arg OsStr>),
     /// Short option match, possibly with a data argument.
-    Short(char, Option<(&'arg OsStr, DataLocation)>),
+    Short(char, Option<&'arg OsStr>),
     /// Command match.
     Command(&'set str),
 }
@@ -167,7 +168,7 @@ pub enum DataLocation {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemSet<'r, 'set: 'r, 'arg: 'r> {
     /// Set of items describing what was found
-    pub items: Vec<ItemResultIndexed<'set, 'arg>>,
+    pub items: Vec<ItemResultIndexed2<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
@@ -339,7 +340,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
 
     /// Gives an iterator over all items in the set
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResultIndexed<'set, 'arg>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResultIndexed2<'set, 'arg>> {
         self.items.iter()
     }
 
@@ -347,11 +348,11 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
-                (_, Ok(_)) => true,
+                (_, Ok(_), _) => true,
                 _ => false,
             })
             .map(|i| match i {
-                (_, Ok(inner)) => inner,
+                (_, Ok(inner), _) => inner,
                 _ => unreachable!(),
             })
     }
@@ -370,11 +371,11 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
-                (_, Err(_)) => true,
+                (_, Err(_), _) => true,
                 _ => false,
             })
             .map(|i| match i {
-                (_, Err(inner)) => inner,
+                (_, Err(inner), _) => inner,
                 _ => unreachable!(),
             })
     }
@@ -416,7 +417,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
         self.items.iter()
             .filter_map(|i| match i {
-                (_, Ok(Item::Positional(s))) => Some(*s),
+                (_, Ok(Item::Positional(s)), _) => Some(*s),
                 _ => None,
             })
     }
@@ -444,12 +445,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
-                (_, Ok(Item::Long(n, _))) |
+                (_, Ok(Item::Long(n, _)), _) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _)), _) => {
                     if option.matches_long(n) { return true; }
                 },
-                (_, Ok(Item::Short(c, _))) => {
+                (_, Ok(Item::Short(c, _)), _) => {
                     if option.matches_short(c) { return true; }
                 },
                 _ => {},
@@ -488,12 +489,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                (_, Ok(Item::Long(n, _))) |
+                (_, Ok(Item::Long(n, _)), _) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _)), _) => {
                     if option.matches_long(n) { count += 1; }
                 },
-                (_, Ok(Item::Short(c, _))) => {
+                (_, Ok(Item::Short(c, _)), _) => {
                     if option.matches_short(c) { count += 1; }
                 },
                 _ => {},
@@ -527,10 +528,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'arg OsStr> {
         for item in self.items.iter().rev() {
             match *item {
-                (_, Ok(Item::Long(n, Some((ref d, _))))) => {
+                (_, Ok(Item::Long(n, Some(ref d))), _) => {
                     if option.matches_long(n) { return Some(d.clone()); }
                 },
-                (_, Ok(Item::Short(c, Some((ref d, _))))) => {
+                (_, Ok(Item::Short(c, Some(ref d))), _) => {
                     if option.matches_short(c) { return Some(d.clone()); }
                 },
                 _ => {},
@@ -562,10 +563,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     {
         self.items.iter()
             .filter_map(move |i| match i {
-                (_, Ok(Item::Long(n, Some((d, _))))) => {
+                (_, Ok(Item::Long(n, Some(d))), _) => {
                     if option.matches_long(n) { Some(*d) } else { None }
                 },
-                (_, Ok(Item::Short(c, Some((d, _))))) => {
+                (_, Ok(Item::Short(c, Some(d))), _) => {
                     if option.matches_short(*c) { Some(*d) } else { None }
                 },
                 _ => None,
@@ -602,14 +603,14 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
         for item in self.items.iter().rev() {
             match *item {
-                (_, Ok(Item::Long(n, _))) |
+                (_, Ok(Item::Long(n, _)), _) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _)), _) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
                 },
-                (_, Ok(Item::Short(c, _))) => {
+                (_, Ok(Item::Short(c, _)), _) => {
                     for o in options.clone() {
                         if o.matches_short(c) { return Some(FoundOption::Short(c)); }
                     }
@@ -769,14 +770,14 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
                 // since not stored in the data-mining objects). We just have to put this down to
                 // being a quirk of this function. Nothing can be done unless the extra data were
                 // stored in the data-mining objects and we cared to check it.
-                (_, Ok(Item::Long(n, None))) |
+                (_, Ok(Item::Long(n, None)), _) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _)), _) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }
                 },
-                (_, Ok(Item::Short(c, None))) => {
+                (_, Ok(Item::Short(c, None)), _) => {
                     for (o, tag) in options.clone() {
                         if o.matches_short(c) { return Some((FoundOption::Short(c), tag)); }
                     }
@@ -846,7 +847,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
             if let Err(_) = item {
                 item_set.problems = true;
             }
-            item_set.items.push((index, item));
+            item_set.items.push((index, item, iter.get_last_dataloc()));
             if stop_on_problem && item_set.problems {
                 break;
             }
@@ -876,7 +877,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
                     item_set_ref.problems = true;
                     analysis.problems = true;
                 }
-                item_set_ref.items.push((index, item));
+                item_set_ref.items.push((index, item, iter.get_last_dataloc()));
                 if stop_on_problem && item_set_ref.problems {
                     break;
                 }

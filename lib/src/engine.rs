@@ -100,6 +100,8 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     try_command_matching: bool,
     /// Cached index of previous item
     last_index: usize,
+    /// Cached data-location of previous item
+    last_data_loc: Option<DataLocation>,
     /// Short option set argument iterator
     short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
 }
@@ -120,6 +122,8 @@ struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, '
     iter: CharIndices<'r>,
     /// Bytes consumed in the original `OsStr`, used for extraction of an in-same-arg data value.
     bytes_consumed: usize,
+    /// Cached data-location of previous item
+    last_data_loc: Option<DataLocation>,
     /// For marking as fully consumed when remaining portion of the string has been consumed as the
     /// data value of a short option, bypassing the fact that the char iterator has not finished.
     consumed: bool,
@@ -207,6 +211,7 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
         if self.short_set_iter.is_some() {
             let mut set_iter = self.short_set_iter.take().unwrap();
             let result = set_iter.get_next();
+            self.last_data_loc = set_iter.last_data_loc;
             if result.is_some() {
                 self.short_set_iter = Some(set_iter); // Move it back
                 return result;
@@ -238,6 +243,19 @@ impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Get the data-location of the previous item, if any
+    ///
+    /// This is used to query whether a data value provided with an option was supplied within the
+    /// same argument or in the next argument, should you wish to know.
+    ///
+    /// `None` will be returned if this does not apply to the previous item, and similarly if
+    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
+    /// to return the last value seen.
+    #[inline(always)]
+    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
+        self.inner.get_last_dataloc()
+    }
+
     /// Get the *option set* currently in use for parsing
     ///
     /// This is useful for suggestion matching of unknown options
@@ -324,6 +342,19 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
         self.inner.last_index
     }
 
+    /// Get the data-location of the previous item, if any
+    ///
+    /// This is used to query whether a data value provided with an option was supplied within the
+    /// same argument or in the next argument, should you wish to know.
+    ///
+    /// `None` will be returned if this does not apply to the previous item, and similarly if
+    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
+    /// to return the last value seen.
+    #[inline(always)]
+    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
+        self.inner.last_data_loc
+    }
+
     /// Get the *option set* currently in use for parsing
     ///
     /// This is useful for suggestion matching of unknown options
@@ -382,6 +413,19 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Get the data-location of the previous item, if any
+    ///
+    /// This is used to query whether a data value provided with an option was supplied within the
+    /// same argument or in the next argument, should you wish to know.
+    ///
+    /// `None` will be returned if this does not apply to the previous item, and similarly if
+    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
+    /// to return the last value seen.
+    #[inline(always)]
+    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
+        self.inner.get_last_dataloc()
+    }
+
     /// Get a copy of the *option set*
     ///
     /// This is useful for suggestion matching of unknown options
@@ -415,6 +459,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             rest_are_positionals: false,
             try_command_matching: command_mode,
             last_index: 0,
+            last_data_loc: None,
             short_set_iter: None,
         }
     }
@@ -433,6 +478,19 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     #[inline(always)]
     pub fn get_last_index(&self) -> usize {
         self.last_index
+    }
+
+    /// Get the data-location of the previous item, if any
+    ///
+    /// This is used to query whether a data value provided with an option was supplied within the
+    /// same argument or in the next argument, should you wish to know.
+    ///
+    /// `None` will be returned if this does not apply to the previous item, and similarly if
+    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
+    /// to return the last value seen.
+    #[inline(always)]
+    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
+        self.last_data_loc
     }
 
     /// Get a copy of the *option set*
@@ -455,6 +513,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         let arg = arg.as_ref();
 
         self.last_index = arg_index;
+        self.last_data_loc = None;
 
         let arg_type = match (self.rest_are_positionals, self.settings.mode) {
             (true, _) => ArgTypeBasic::NonOption,
@@ -482,6 +541,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 // the main iterator, and just return its first `next()` result here.
                 let mut short_set_iter = ShortSetIter::new(self, optset_string);
                 let first = short_set_iter.next();
+                self.last_data_loc = short_set_iter.last_data_loc;
                 self.short_set_iter = Some(short_set_iter);
                 first
             },
@@ -517,19 +577,18 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             // Data included in same argument
                             // We accept it even if it’s an empty string
                             if let Some(data) = data_included {
-                                Some(Ok(Item::Long(opt_name, Some((data, DataLocation::SameArg)))))
+                                self.last_data_loc = Some(DataLocation::SameArg);
+                                Some(Ok(Item::Long(opt_name, Some(data))))
                             }
                             // Data consumption is optional
                             else if matched.opt_type == OptionType::OptionalData {
-                                Some(Ok(Item::Long(
-                                    opt_name, Some((OsStr::new(""), DataLocation::SameArg))
-                                )))
+                                self.last_data_loc = Some(DataLocation::SameArg);
+                                Some(Ok(Item::Long(opt_name, Some(OsStr::new("")))))
                             }
                             // Data included in next argument
                             else if let Some((_, next_arg)) = self.arg_iter.next() {
-                                Some(Ok(Item::Long(
-                                    opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
-                                )))
+                                self.last_data_loc = Some(DataLocation::NextArg);
+                                Some(Ok(Item::Long(opt_name, Some(next_arg.as_ref()))))
                             }
                             // Data missing
                             else {
@@ -579,6 +638,7 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
             string_utf8: lossy,
             iter: iter,
             bytes_consumed: 0,
+            last_data_loc: None,
             consumed: false,
         }
     }
@@ -656,15 +716,18 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
                             }
                             let data = OsStr::from_bytes(
                                 &self.string.as_bytes()[self.bytes_consumed..]);
-                            Some(Ok(Item::Short(ch, Some((data, DataLocation::SameArg)))))
+                            self.last_data_loc = Some(DataLocation::SameArg);
+                            Some(Ok(Item::Short(ch, Some(data))))
                         }
                         // Data consumption is optional
                         else if matched.opt_type == OptionType::OptionalData {
-                            Some(Ok(Item::Short(ch, Some((OsStr::new(""), DataLocation::SameArg)))))
+                            self.last_data_loc = Some(DataLocation::SameArg);
+                            Some(Ok(Item::Short(ch, Some(OsStr::new("")))))
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            Some(Ok(Item::Short(ch, Some((next_arg.as_ref(), DataLocation::NextArg)))))
+                            self.last_data_loc = Some(DataLocation::NextArg);
+                            Some(Ok(Item::Short(ch, Some(next_arg.as_ref()))))
                         }
                         // Data missing
                         else {
