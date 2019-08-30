@@ -283,11 +283,10 @@
 //!
 //! Matched and unmatched long-option/command names are returned in `&str` form, whilst positionals
 //! and data values are returned in `&OsStr` form. If you wish to know the argument index number for
-//! a given item, the iterator has a method for retrieving that extra piece of information. You can
+//! a given item, or the location from which option data was taken (same argument as the option
+//! itself or the next argument), the iterator has methods for retrieving that information. You can
 //! also alternatively use the `indexed` method of the iterators to convert to a wrapping iterator
-//! which bundles this extra data along with each item in a tuple. If you want to know whether a
-//! data value of a given option was found within the same argument or the next, this is (currently)
-//! supplied in the item variant.
+//! which bundles this extra data along with each item in a tuple.
 //!
 //! Note that the [`ItemSet`] and [`CommandAnalysis`] objects both contain a `problems` boolean
 //! which gives a quick indication of problems (of course).

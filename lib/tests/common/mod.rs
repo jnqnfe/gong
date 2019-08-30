@@ -88,7 +88,7 @@ macro_rules! item {
     ( AmbiguousCmd, $n:expr )           => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
 }
 
-/// Construct an `ItemResultIndexed2`.
+/// Construct an `ItemResultIndexed`.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
 /// be found at in the analysis. The second param is the label of the unique type. The final params
@@ -119,7 +119,7 @@ macro_rules! indexed_item {
 }
 
 //TODO: remove, switching everything over to `item` and `indexed_item`
-/// Construct an `ItemResultIndexed2`.
+/// Construct an `ItemResultIndexed`.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
 /// be found at in the analysis. The second param is the label of the unique type. The final params

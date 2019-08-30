@@ -95,15 +95,14 @@ use crate::commands::CommandSet;
 use crate::options::OptionSet;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
-pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>);
-pub type ItemResultIndexed2<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
+pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
 
 /// Non-problematic items
 ///
 /// Long option variants hold a string slice reference to the matched option. Short option variants
 /// hold the `char` matched. Options with data arguments additionally hold a string slice reference
-/// to the data string matched (in `OsStr` form) and also a [`DataLocation`] variant. The
-/// [`Positional`] variant holds a string slice reference to the matched string (in `OsStr` form).
+/// to the data string matched (in `OsStr` form). The [`Positional`] variant holds a string slice
+/// reference to the matched string (in `OsStr` form).
 ///
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`Positional`]: #variant.Positional
@@ -168,7 +167,7 @@ pub enum DataLocation {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemSet<'r, 'set: 'r, 'arg: 'r> {
     /// Set of items describing what was found
-    pub items: Vec<ItemResultIndexed2<'set, 'arg>>,
+    pub items: Vec<ItemResultIndexed<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
@@ -340,7 +339,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
 
     /// Gives an iterator over all items in the set
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResultIndexed2<'set, 'arg>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResultIndexed<'set, 'arg>> {
         self.items.iter()
     }
 
@@ -843,11 +842,11 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
     fn from(mut iter: crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut item_set = ItemSet::new(iter.get_option_set());
-        while let Some((index, item)) = iter.next() {
+        while let Some((index, item, dataloc)) = iter.next() {
             if let Err(_) = item {
                 item_set.problems = true;
             }
-            item_set.items.push((index, item, iter.get_last_dataloc()));
+            item_set.items.push((index, item, dataloc));
             if stop_on_problem && item_set.problems {
                 break;
             }
@@ -864,7 +863,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;
-        while let Some((index, item)) = iter.next() {
+        while let Some((index, item, dataloc)) = iter.next() {
             if let Ok(Item::Command(name)) = item {
                 if item_set.is_some() {
                     analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
@@ -877,7 +876,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
                     item_set_ref.problems = true;
                     analysis.problems = true;
                 }
-                item_set_ref.items.push((index, item, iter.get_last_dataloc()));
+                item_set_ref.items.push((index, item, dataloc));
                 if stop_on_problem && item_set_ref.problems {
                     break;
                 }

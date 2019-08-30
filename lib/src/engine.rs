@@ -146,7 +146,7 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIterIndexed<'r, 'set, 'arg, A>
     type Item = ItemResultIndexed<'set, 'arg>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|item| (self.inner.get_last_index(), item))
+        self.inner.next().map(|item| (self.inner.get_last_index(), item, self.inner.get_last_dataloc()))
     }
 }
 
@@ -197,7 +197,7 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIterIndexed<'r, 'set, 'arg, A>
     type Item = ItemResultIndexed<'set, 'arg>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|item| (self.inner.get_last_index(), item))
+        self.inner.next().map(|item| (self.inner.get_last_index(), item, self.inner.get_last_dataloc()))
     }
 }
 
@@ -243,19 +243,6 @@ impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    /// Get the data-location of the previous item, if any
-    ///
-    /// This is used to query whether a data value provided with an option was supplied within the
-    /// same argument or in the next argument, should you wish to know.
-    ///
-    /// `None` will be returned if this does not apply to the previous item, and similarly if
-    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
-    /// to return the last value seen.
-    #[inline(always)]
-    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
-        self.inner.get_last_dataloc()
-    }
-
     /// Get the *option set* currently in use for parsing
     ///
     /// This is useful for suggestion matching of unknown options
@@ -326,7 +313,10 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
         }
     }
 
-    /// Wraps the iterator in one which also returns argument index info
+    /// Wraps the iterator in one which also returns extra data
+    ///
+    /// Specifically this extra data amounts to argument index number and, where applicable, the
+    /// location that option data was obtained from (same argument or next).
     #[inline(always)]
     pub fn indexed(self) -> CmdParseIterIndexed<'r, 'set, 'arg, A> {
         CmdParseIterIndexed { inner: self }
@@ -413,19 +403,6 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    /// Get the data-location of the previous item, if any
-    ///
-    /// This is used to query whether a data value provided with an option was supplied within the
-    /// same argument or in the next argument, should you wish to know.
-    ///
-    /// `None` will be returned if this does not apply to the previous item, and similarly if
-    /// `next()` has not yet been called. If the iterator has been fully consumed, it will continue
-    /// to return the last value seen.
-    #[inline(always)]
-    pub fn get_last_dataloc(&self) -> Option<DataLocation> {
-        self.inner.get_last_dataloc()
-    }
-
     /// Get a copy of the *option set*
     ///
     /// This is useful for suggestion matching of unknown options
@@ -464,7 +441,10 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         }
     }
 
-    /// Wraps the iterator in one which also returns argument index info
+    /// Wraps the iterator in one which also returns extra data
+    ///
+    /// Specifically this extra data amounts to argument index number and, where applicable, the
+    /// location that option data was obtained from (same argument or next).
     #[inline(always)]
     pub fn indexed(self) -> ParseIterIndexed<'r, 'set, 'arg, A> {
         ParseIterIndexed { inner: self }
