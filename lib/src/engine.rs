@@ -103,16 +103,12 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// Cached data-location of previous item
     last_data_loc: Option<DataLocation>,
     /// Short option set argument iterator
-    short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
+    short_set_iter: Option<ShortSetIter<'r, 'arg>>,
 }
 
 /// A short option set string iterator
 #[derive(Clone)]
-struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
-    /// Enumerated iterator over the argument list
-    arg_iter: Enumerate<slice::Iter<'arg, A>>,
-    /// The option set in use
-    options: &'r OptionSet<'r, 'set>,
+struct ShortSetIter<'r, 'arg: 'r> {
     /// The short option set string being iterated over.
     /// We need to hold a copy of this at least for the purpose of extracting in-same-arg data.
     string: &'arg OsStr,
@@ -122,8 +118,6 @@ struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, '
     iter: CharIndices<'r>,
     /// Bytes consumed in the original `OsStr`, used for extraction of an in-same-arg data value.
     bytes_consumed: usize,
-    /// Cached data-location of previous item
-    last_data_loc: Option<DataLocation>,
     /// For marking as fully consumed when remaining portion of the string has been consumed as the
     /// data value of a short option, bypassing the fact that the char iterator has not finished.
     consumed: bool,
@@ -208,18 +202,13 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
     fn next(&mut self) -> Option<Self::Item> {
         // Continue from where we left off for a short option set?
         if self.short_set_iter.is_some() {
-            let mut set_iter = self.short_set_iter.take().unwrap();
-            let result = set_iter.get_next();
-            self.last_data_loc = set_iter.last_data_loc;
-            if result.is_some() {
-                self.short_set_iter = Some(set_iter); // Move it back
-                return result;
-            }
-            else {
-                // Update our iterator based on short option set progress (it may have consumed an
-                // extra one for an in-next-arg data value, and it’s working on a copy of our
-                // iterator, not a reference).
-                self.arg_iter = set_iter.arg_iter;
+            let mut short_set_iter = self.short_set_iter.take().unwrap();
+            match short_set_iter.get_next(self) {
+                Some(result) => {
+                    self.short_set_iter = Some(short_set_iter); // Move it back
+                    return Some(result);
+                },
+                None => self.short_set_iter = None,
             }
         }
         // Do next argument, if there is one
@@ -350,9 +339,6 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// Note, it is undefined behaviour to set a non-valid option set.
     pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 'set>) {
         self.inner.options = opt_set;
-        if let Some(ref mut short_set_iter) = self.inner.short_set_iter {
-            short_set_iter.options = opt_set;
-        }
     }
 
     /// Get the *command set* currently in use for parsing
@@ -506,9 +492,8 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 // Here we defer to an iterator specific to iterating over the short option set in
                 // the non-prefixed portion of the current argument. We will save the iterator in
                 // the main iterator, and just return its first `next()` result here.
-                let mut short_set_iter = ShortSetIter::new(self, optset_string);
-                let first = short_set_iter.get_next();
-                self.last_data_loc = short_set_iter.last_data_loc;
+                let mut short_set_iter = ShortSetIter::new(optset_string);
+                let first = short_set_iter.get_next(self);
                 self.short_set_iter = Some(short_set_iter);
                 first
             },
@@ -584,13 +569,9 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     }
 }
 
-impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
-    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
-{
+impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
     /// Create a new instance. Note, the provided string should **not** include the dash prefix.
-    pub(crate) fn new(parse_iter: &ParseIter<'r, 'set, 'arg, A>, short_set_string: &'arg OsStr
-        ) -> Self
-    {
+    pub(crate) fn new(short_set_string: &'arg OsStr) -> Self {
         // Note, both the lossy converted string and the char iterator over it will live within the
         // struct, and will have the same lifetime. We are forced however to transmute the lifetime
         // of the borrow in creating the iterator to achieve this, but we know there will be no
@@ -599,19 +580,19 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
         let lossy_ref = unsafe { mem::transmute::<&'_ Cow<str>, &'r Cow<str>>(&lossy) };
         let iter = lossy_ref.char_indices();
         Self {
-            arg_iter: parse_iter.arg_iter.clone(),
-            options: parse_iter.options,
             string: short_set_string,
             string_utf8: lossy,
             iter: iter,
             bytes_consumed: 0,
-            last_data_loc: None,
             consumed: false,
         }
     }
 
     /// Get next item, if any
-    fn get_next(&mut self) -> Option<ItemResult<'set, 'arg>> {
+    fn get_next<'set, A>(&mut self, parent: &mut ParseIter<'r, 'set, 'arg, A>)
+        -> Option<ItemResult<'set, 'arg>>
+        where A: AsRef<OsStr> + 'arg, 'set: 'r
+    {
         if self.consumed {
             return None;
         }
@@ -658,7 +639,7 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
             // Not a Unicode replacement character, so lets try to match it
             _ => {
                 lookup = crate::matching::find_by_char(ch,
-                    self.options.short.iter(), |&o| { o.ch }).into();
+                    parent.options.short.iter(), |&o| { o.ch }).into();
 
                 // Tracking?
                 if self.bytes_consumed != 0 {
@@ -683,17 +664,17 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
                             }
                             let data = OsStr::from_bytes(
                                 &self.string.as_bytes()[self.bytes_consumed..]);
-                            self.last_data_loc = Some(DataLocation::SameArg);
+                            parent.last_data_loc = Some(DataLocation::SameArg);
                             Some(Ok(Item::Short(ch, Some(data))))
                         }
                         // Data consumption is optional
                         else if matched.opt_type == OptionType::OptionalData {
-                            self.last_data_loc = Some(DataLocation::SameArg);
+                            parent.last_data_loc = Some(DataLocation::SameArg);
                             Some(Ok(Item::Short(ch, Some(OsStr::new("")))))
                         }
                         // Data included in next argument
-                        else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            self.last_data_loc = Some(DataLocation::NextArg);
+                        else if let Some((_, next_arg)) = parent.arg_iter.next() {
+                            parent.last_data_loc = Some(DataLocation::NextArg);
                             Some(Ok(Item::Short(ch, Some(next_arg.as_ref()))))
                         }
                         // Data missing
