@@ -489,13 +489,21 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 Some(Ok(Item::EarlyTerminator))
             },
             ArgTypeBasic::ShortOptionSet(optset_string) => {
-                // Here we defer to an iterator specific to iterating over the short option set in
-                // the non-prefixed portion of the current argument. We will save the iterator in
-                // the main iterator, and just return its first `next()` result here.
-                let mut short_set_iter = ShortSetIter::new(optset_string);
-                let first = short_set_iter.get_next(self);
-                self.short_set_iter = Some(short_set_iter);
-                first
+                // For **very** simple cases we can handle much more efficiently with an optimised
+                // handler, e.g. for `-h` where we have just a single byte (ASCII) character.
+                let optset_string_bytes = optset_string.as_bytes();
+                if optset_string_bytes.len() == 1 {
+                    Some(self.short_quick(optset_string_bytes[0]))
+                }
+                // Otherwise, we defer to a sub-iterator-like object specific to iterating over the
+                // short option set (with dash prefix stripped). We will save the object in the main
+                // iterator, and return its first `next()` result here.
+                else {
+                    let mut short_set_iter = ShortSetIter::new(optset_string);
+                    let first = short_set_iter.get_next(self);
+                    self.short_set_iter = Some(short_set_iter);
+                    first
+                }
             },
             ArgTypeBasic::LongOption(opt_string) => {
                 /* We need to deal with the fact that arg data may be supplied in the same argument,
@@ -563,6 +571,40 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                     NameSearchResult::AmbiguousMatch => {
                         Some(Err(ProblemItem::AmbiguousLong(name)))
                     },
+                }
+            },
+        }
+    }
+
+    /// Handles very simple short option args more efficiently than with `ShortSetIter`.
+    /// Specifically this is designed to handle cases like `-h` where we just have a single ASCII
+    /// byte.
+    fn short_quick(&mut self, byte: u8) -> ItemResult<'set, 'arg> {
+        let ch = char::from(byte);
+
+        let lookup: SearchResult<ShortOption> = crate::matching::find_by_char(ch,
+            self.options.short.iter(), |&o| { o.ch }).into();
+
+        match lookup {
+            SearchResult::NoMatch => Err(ProblemItem::UnknownShort(ch)),
+            SearchResult::Match(matched) => {
+                match matched.opt_type {
+                    OptionType::Flag => Ok(Item::Short(ch, None)),
+                    OptionType::OptionalData => {
+                        self.last_data_loc = Some(DataLocation::SameArg);
+                        Ok(Item::Short(ch, Some(OsStr::new(""))))
+                    },
+                    OptionType::Data => {
+                        if let Some((_, next_arg)) = self.arg_iter.next()
+                        {
+                            self.last_data_loc = Some(DataLocation::NextArg);
+                            Ok(Item::Short(ch, Some(next_arg.as_ref())))
+                        }
+                        // Data missing
+                        else {
+                            Err(ProblemItem::ShortMissingData(ch))
+                        }
+                    }
                 }
             },
         }
