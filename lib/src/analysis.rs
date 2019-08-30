@@ -818,14 +818,35 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
     for ItemSet<'r, 'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    fn from(mut iter: crate::engine::ParseIter<'r, 'set, 'arg, A>) -> Self {
+    #[inline]
+    fn from(iter: crate::engine::ParseIter<'r, 'set, 'arg, A>) -> Self {
+        ItemSet::from(iter.indexed())
+    }
+}
+
+
+impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
+    for CommandAnalysis<'r, 'set, 'arg>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    #[inline]
+    fn from(iter: crate::engine::CmdParseIter<'r, 'set, 'arg, A>) -> Self {
+        CommandAnalysis::from(iter.indexed())
+    }
+}
+
+impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
+    for ItemSet<'r, 'set, 'arg>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    fn from(mut iter: crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut item_set = ItemSet::new(iter.get_option_set());
-        while let Some(item) = iter.next() {
+        while let Some((index, item)) = iter.next() {
             if let Err(_) = item {
                 item_set.problems = true;
             }
-            item_set.items.push((iter.get_last_index(), item));
+            item_set.items.push((index, item));
             if stop_on_problem && item_set.problems {
                 break;
             }
@@ -834,20 +855,20 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
     }
 }
 
-impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
+impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, A>>
     for CommandAnalysis<'r, 'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
-    fn from(mut iter: crate::engine::CmdParseIter<'r, 'set, 'arg, A>) -> Self {
+    fn from(mut iter: crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;
-        while let Some(item) = iter.next() {
+        while let Some((index, item)) = iter.next() {
             if let Ok(Item::Command(name)) = item {
                 if item_set.is_some() {
                     analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
                 }
-                analysis.parts.push(CommandBlockPart::Command(iter.get_last_index(), name));
+                analysis.parts.push(CommandBlockPart::Command(index, name));
             }
             else {
                 let item_set_ref = item_set.get_or_insert(ItemSet::new(iter.get_option_set()));
@@ -855,7 +876,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
                     item_set_ref.problems = true;
                     analysis.problems = true;
                 }
-                item_set_ref.items.push((iter.get_last_index(), item));
+                item_set_ref.items.push((index, item));
                 if stop_on_problem && item_set_ref.problems {
                     break;
                 }

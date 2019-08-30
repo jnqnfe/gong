@@ -22,6 +22,22 @@ use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
 
+/// An argument list parsing iterator, bundling extra data
+///
+/// This bundles items along with their respective argument indexes in a tuple, in a similar way to
+/// how `enumerate()` on a generic iterator bundles a count index.
+///
+/// Created by the [`indexed`] method of [`CmdParseIter`].
+///
+/// [`indexed`]: struct.CmdParseIter.html#method.indexed
+/// [`CmdParseIter`]: struct.CmdParseIter.html
+#[derive(Clone)]
+pub struct CmdParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    inner: CmdParseIter<'r, 'set, 'arg, A>,
+}
+
 /// An argument list parsing iterator, command based
 ///
 /// Created by the [`parse_iter`] method of [`CmdParser`].
@@ -39,6 +55,21 @@ pub struct CmdParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: '
     /// The command set in use (will change on encountering a command)
     commands: &'r CommandSet<'r, 'set>,
     /// Inner main iterator
+    inner: ParseIter<'r, 'set, 'arg, A>,
+}
+
+/// An argument list parsing iterator, bundling extra data
+///
+/// This bundles items along with their respective argument indexes in a tuple, in a similar way to
+/// how `enumerate()` on a generic iterator bundles a count index.
+///
+/// Created by the [`indexed`] method of [`ParseIter`].
+///
+/// [`indexed`]: struct.ParseIter.html#method.indexed
+/// [`ParseIter`]: struct.ParseIter.html
+#[derive(Clone)]
+pub struct ParseIterIndexed<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
     inner: ParseIter<'r, 'set, 'arg, A>,
 }
 
@@ -105,6 +136,16 @@ enum ArgTypeBasic<'a> {
     ShortOptionSet(&'a OsStr),
 }
 
+impl<'r, 'set, 'arg, A> Iterator for CmdParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    type Item = ItemResultIndexed<'set, 'arg>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|item| (self.inner.get_last_index(), item))
+    }
+}
+
 impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -146,6 +187,16 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
     }
 }
 
+impl<'r, 'set, 'arg, A> Iterator for ParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    type Item = ItemResultIndexed<'set, 'arg>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|item| (self.inner.get_last_index(), item))
+    }
+}
+
 impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -184,6 +235,63 @@ impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
     }
 }
 
+impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    /// Get the *option set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of unknown options
+    #[inline(always)]
+    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
+        self.inner.get_option_set()
+    }
+
+    /// Change the *option set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *option set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid option set.
+    #[inline(always)]
+    pub fn set_option_set(&mut self, opt_set: &'r OptionSet<'r, 'set>) {
+        self.inner.set_option_set(opt_set);
+    }
+
+    /// Get the *command set* currently in use for parsing
+    ///
+    /// This is useful for suggestion matching of an unknown command
+    #[inline(always)]
+    pub fn get_command_set(&self) -> &'r CommandSet<'r, 'set> {
+        self.inner.get_command_set()
+    }
+
+    /// Change the *command set* used for parsing by subsequent iterations
+    ///
+    /// This is typically only applicable where you are using the iterative parsing style with a
+    /// command based program, where instead of describing the entire command structure to the
+    /// parser up front, you want to dynamically switch out the *command set* used for subsequent
+    /// iterations (arguments) manually, after encountering a command.
+    ///
+    /// Note, it is undefined behaviour to set a non-valid command set.
+    #[inline(always)]
+    pub fn set_command_set(&mut self, cmd_set: &'r CommandSet<'r, 'set>) {
+        self.inner.set_command_set(cmd_set);
+    }
+
+    /// Get a mutable reference to the parser settings
+    ///
+    /// The use case for this method is similar to that of the methods for changing the *option
+    /// set* and *command set* to be used, though more niche. It is thought unlikely that any
+    /// program should have any need to change settings in the middle of parsing, but you can if you
+    /// absolutely want to (there is no reason to prevent you from doing so).
+    #[inline(always)]
+    pub fn get_parse_settings(&mut self) -> &mut Settings {
+        self.inner.get_parse_settings()
+    }
+}
+
 impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -198,6 +306,12 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
             commands: parser.commands,
             inner: ParseIter::new_inner(args, &tmp_parser, true),
         }
+    }
+
+    /// Wraps the iterator in one which also returns argument index info
+    #[inline(always)]
+    pub fn indexed(self) -> CmdParseIterIndexed<'r, 'set, 'arg, A> {
+        CmdParseIterIndexed { inner: self }
     }
 
     /// Get the input argument index of the previous item
@@ -265,6 +379,24 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     }
 }
 
+impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    /// Get a copy of the *option set*
+    ///
+    /// This is useful for suggestion matching of unknown options
+    #[inline(always)]
+    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
+        self.inner.get_option_set()
+    }
+
+    // Used by creation of `ItemSet` from iterator only
+    #[inline(always)]
+    pub(crate) fn get_parse_settings(&self) -> &Settings {
+        self.inner.get_parse_settings()
+    }
+}
+
 impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -285,6 +417,12 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             last_index: 0,
             short_set_iter: None,
         }
+    }
+
+    /// Wraps the iterator in one which also returns argument index info
+    #[inline(always)]
+    pub fn indexed(self) -> ParseIterIndexed<'r, 'set, 'arg, A> {
+        ParseIterIndexed { inner: self }
     }
 
     /// Get the input argument index of the previous item
@@ -639,5 +777,23 @@ fn get_urc_bytes(string: &OsStr) -> usize {
                 Ok(_) => unreachable!(),
             }
         },
+    }
+}
+
+impl<'r, 'set, 'arg, A> From<ParseIter<'r, 'set, 'arg, A>>
+    for ParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    fn from(iter: ParseIter<'r, 'set, 'arg, A>) -> Self {
+        iter.indexed()
+    }
+}
+
+impl<'r, 'set, 'arg, A> From<CmdParseIter<'r, 'set, 'arg, A>>
+    for CmdParseIterIndexed<'r, 'set, 'arg, A>
+    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
+{
+    fn from(iter: CmdParseIter<'r, 'set, 'arg, A>) -> Self {
+        iter.indexed()
     }
 }

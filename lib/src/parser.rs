@@ -59,7 +59,7 @@ use crate::commands::{CommandSet, CommandFlaw};
 use crate::options::{OptionSet, OptionFlaw};
 
 // NB: We export this in the public API here (the `engine` mod is private)
-pub use crate::engine::{ParseIter, CmdParseIter};
+pub use crate::engine::{ParseIter, ParseIterIndexed, CmdParseIter, CmdParseIterIndexed};
 
 /// The parser
 ///
