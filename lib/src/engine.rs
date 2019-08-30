@@ -228,18 +228,6 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
     }
 }
 
-impl<'r, 'set, 'arg, A> Iterator for ShortSetIter<'r, 'set, 'arg, A>
-    where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
-{
-    type Item = ItemResult<'set, 'arg>;
-
-    #[inline(always)]
-    fn next(&mut self) -> Option<Self::Item> {
-        // Do next short, if there is one
-        self.get_next()
-    }
-}
-
 impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
@@ -520,7 +508,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 // the non-prefixed portion of the current argument. We will save the iterator in
                 // the main iterator, and just return its first `next()` result here.
                 let mut short_set_iter = ShortSetIter::new(self, optset_string);
-                let first = short_set_iter.next();
+                let first = short_set_iter.get_next();
                 self.last_data_loc = short_set_iter.last_data_loc;
                 self.short_set_iter = Some(short_set_iter);
                 first
