@@ -107,7 +107,7 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
 }
 
 /// A short option set string iterator
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r {
     /// Enumerated iterator over the argument list
     arg_iter: Enumerate<slice::Iter<'arg, A>>,
@@ -132,7 +132,6 @@ struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, '
 /// Basic argument type
 ///
 /// Option variants should: include argument without prefix; include “in-same-arg” data values.
-#[derive(Debug)]
 enum ArgTypeBasic<'a> {
     NonOption,
     EarlyTerminator,
