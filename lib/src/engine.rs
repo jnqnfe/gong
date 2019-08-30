@@ -67,6 +67,8 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// positional item (since positionals can only occur **after** commands); and if
     /// `rest_are_positionals` is `false` of course.
     try_command_matching: bool,
+    /// Cached index of previous item
+    last_index: usize,
     /// Short option set argument iterator
     short_set_iter: Option<ShortSetIter<'r, 'set, 'arg, A>>,
 }
@@ -87,8 +89,6 @@ struct ShortSetIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, '
     iter: CharIndices<'r>,
     /// Bytes consumed in the original `OsStr`, used for extraction of an in-same-arg data value.
     bytes_consumed: usize,
-    /// Index of argument the set came from, for recording in items
-    arg_index: usize,
     /// For marking as fully consumed when remaining portion of the string has been consumed as the
     /// data value of a short option, bypassing the fact that the char iterator has not finished.
     consumed: bool,
@@ -113,7 +113,7 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.inner.next();
         if self.inner.try_command_matching {
-            if let Some(Ok(Item::Positional(arg_index, arg))) = next {
+            if let Some(Ok(Item::Positional(arg))) = next {
                 let lookup = match self.inner.settings.allow_cmd_abbreviations {
                     false => crate::matching::find_by_name(arg,
                         self.commands.commands.iter(), |&c| { c.name }).into(),
@@ -126,16 +126,16 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                         self.commands = &matched.sub_commands;
                         self.inner.options = matched.options;
                         self.inner.rest_are_positionals = false; // Reverse
-                        return Some(Ok(Item::Command(arg_index, matched.name)));
+                        return Some(Ok(Item::Command(matched.name)));
                     },
                     NameSearchResult::AmbiguousMatch => {
                         self.inner.rest_are_positionals = false; // Reverse
-                        return Some(Err(ProblemItem::AmbiguousCmd(arg_index, arg)));
+                        return Some(Err(ProblemItem::AmbiguousCmd(arg)));
                     },
                     NameSearchResult::NoMatch => {
                         self.inner.try_command_matching = false;
                         if !self.commands.commands.is_empty() {
-                            return Some(Err(ProblemItem::UnknownCommand(arg_index, arg)));
+                            return Some(Err(ProblemItem::UnknownCommand(arg)));
                         }
                         /* fall through */
                     },
@@ -198,6 +198,16 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
             commands: parser.commands,
             inner: ParseIter::new_inner(args, &tmp_parser, true),
         }
+    }
+
+    /// Get the input argument index of the previous item
+    ///
+    /// Note, if `next()` has not yet been called, zero will be returned (we do not bother with an
+    /// `Option` wrapper). If the iterator has been fully consumed, it will continue to return the
+    /// index of the last item.
+    #[inline(always)]
+    pub fn get_last_index(&self) -> usize {
+        self.inner.last_index
     }
 
     /// Get the *option set* currently in use for parsing
@@ -272,8 +282,19 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             settings: parser.settings,
             rest_are_positionals: false,
             try_command_matching: command_mode,
+            last_index: 0,
             short_set_iter: None,
         }
+    }
+
+    /// Get the input argument index of the previous item
+    ///
+    /// Note, if `next()` has not yet been called, zero will be returned (we do not bother with an
+    /// `Option` wrapper). If the iterator has been fully consumed, it will continue to return the
+    /// index of the last item.
+    #[inline(always)]
+    pub fn get_last_index(&self) -> usize {
+        self.last_index
     }
 
     /// Get a copy of the *option set*
@@ -295,6 +316,8 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         let (arg_index, arg) = self.arg_iter.next()?;
         let arg = arg.as_ref();
 
+        self.last_index = arg_index;
+
         let arg_type = match (self.rest_are_positionals, self.settings.mode) {
             (true, _) => ArgTypeBasic::NonOption,
             (false, OptionsMode::Standard) => get_basic_arg_type_standard(arg),
@@ -306,20 +329,20 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 if self.settings.posixly_correct {
                     self.rest_are_positionals = true;
                 }
-                Some(Ok(Item::Positional(arg_index, arg)))
+                Some(Ok(Item::Positional(arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
                 self.rest_are_positionals = true;
                 self.try_command_matching = false;
                 // Yes, it may be valuable info to the caller to know that one was encountered and
                 // where, so let’s not leave it out of the results.
-                Some(Ok(Item::EarlyTerminator(arg_index)))
+                Some(Ok(Item::EarlyTerminator))
             },
             ArgTypeBasic::ShortOptionSet(optset_string) => {
                 // Here we defer to an iterator specific to iterating over the short option set in
                 // the non-prefixed portion of the current argument. We will save the iterator in
                 // the main iterator, and just return its first `next()` result here.
-                let mut short_set_iter = ShortSetIter::new(self, optset_string, arg_index);
+                let mut short_set_iter = ShortSetIter::new(self, optset_string);
                 let first = short_set_iter.next();
                 self.short_set_iter = Some(short_set_iter);
                 first
@@ -336,7 +359,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(Err(ProblemItem::UnknownLong(arg_index, OsStr::new(""))));
+                    return Some(Err(ProblemItem::UnknownLong(OsStr::new(""))));
                 }
 
                 let lookup = match self.settings.allow_opt_abbreviations {
@@ -356,42 +379,40 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             // Data included in same argument
                             // We accept it even if it’s an empty string
                             if let Some(data) = data_included {
-                                Some(Ok(Item::Long(
-                                    arg_index, opt_name, Some((data, DataLocation::SameArg))
-                                )))
+                                Some(Ok(Item::Long(opt_name, Some((data, DataLocation::SameArg)))))
                             }
                             // Data consumption is optional
                             else if matched.opt_type == OptionType::OptionalData {
                                 Some(Ok(Item::Long(
-                                    arg_index, opt_name, Some((OsStr::new(""), DataLocation::SameArg))
+                                    opt_name, Some((OsStr::new(""), DataLocation::SameArg))
                                 )))
                             }
                             // Data included in next argument
                             else if let Some((_, next_arg)) = self.arg_iter.next() {
                                 Some(Ok(Item::Long(
-                                    arg_index, opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
+                                    opt_name, Some((next_arg.as_ref(), DataLocation::NextArg))
                                 )))
                             }
                             // Data missing
                             else {
-                                Some(Err(ProblemItem::LongMissingData(arg_index, opt_name)))
+                                Some(Err(ProblemItem::LongMissingData(opt_name)))
                             }
                         }
                         // Ignore unexpected data if empty string
                         else if data_included.is_none() || data_included == Some(OsStr::new("")) {
-                            Some(Ok(Item::Long(arg_index, opt_name, None)))
+                            Some(Ok(Item::Long(opt_name, None)))
                         }
                         else {
                             let data = data_included.unwrap();
-                            Some(Err(ProblemItem::LongWithUnexpectedData(arg_index, opt_name, data)))
+                            Some(Err(ProblemItem::LongWithUnexpectedData(opt_name, data)))
                         }
                     },
                     NameSearchResult::NoMatch => {
                         // Again, we ignore any possibly included data in the argument
-                        Some(Err(ProblemItem::UnknownLong(arg_index, name)))
+                        Some(Err(ProblemItem::UnknownLong(name)))
                     },
                     NameSearchResult::AmbiguousMatch => {
-                        Some(Err(ProblemItem::AmbiguousLong(arg_index, name)))
+                        Some(Err(ProblemItem::AmbiguousLong(name)))
                     },
                 }
             },
@@ -403,8 +424,8 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     /// Create a new instance. Note, the provided string should **not** include the dash prefix.
-    pub(crate) fn new(parse_iter: &ParseIter<'r, 'set, 'arg, A>, short_set_string: &'arg OsStr,
-        arg_index: usize) -> Self
+    pub(crate) fn new(parse_iter: &ParseIter<'r, 'set, 'arg, A>, short_set_string: &'arg OsStr
+        ) -> Self
     {
         // Note, both the lossy converted string and the char iterator over it will live within the
         // struct, and will have the same lifetime. We are forced however to transmute the lifetime
@@ -420,7 +441,6 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
             string_utf8: lossy,
             iter: iter,
             bytes_consumed: 0,
-            arg_index: arg_index,
             consumed: false,
         }
     }
@@ -483,10 +503,10 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
         }
 
         match lookup {
-            SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(self.arg_index, ch))),
+            SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(ch))),
             SearchResult::Match(matched) => {
                 match matched.opt_type {
-                    OptionType::Flag => Some(Ok(Item::Short(self.arg_index, ch, None))),
+                    OptionType::Flag => Some(Ok(Item::Short(ch, None))),
                     _ => {
                         let bytes_consumed_updated = byte_pos + ch.len_utf8();
 
@@ -498,25 +518,19 @@ impl<'r, 'set, 'arg, A> ShortSetIter<'r, 'set, 'arg, A>
                             }
                             let data = OsStr::from_bytes(
                                 &self.string.as_bytes()[self.bytes_consumed..]);
-                            Some(Ok(Item::Short(
-                                self.arg_index, ch, Some((data, DataLocation::SameArg))
-                            )))
+                            Some(Ok(Item::Short(ch, Some((data, DataLocation::SameArg)))))
                         }
                         // Data consumption is optional
                         else if matched.opt_type == OptionType::OptionalData {
-                            Some(Ok(Item::Short(
-                                self.arg_index, ch, Some((OsStr::new(""), DataLocation::SameArg))
-                            )))
+                            Some(Ok(Item::Short(ch, Some((OsStr::new(""), DataLocation::SameArg)))))
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = self.arg_iter.next() {
-                            Some(Ok(Item::Short(
-                                self.arg_index, ch, Some((next_arg.as_ref(), DataLocation::NextArg))
-                            )))
+                            Some(Ok(Item::Short(ch, Some((next_arg.as_ref(), DataLocation::NextArg)))))
                         }
                         // Data missing
                         else {
-                            Some(Err(ProblemItem::ShortMissingData(self.arg_index, ch)))
+                            Some(Err(ProblemItem::ShortMissingData(ch)))
                         }
                     },
                 }

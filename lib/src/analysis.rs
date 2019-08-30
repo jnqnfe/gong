@@ -95,66 +95,59 @@ use crate::commands::CommandSet;
 use crate::options::OptionSet;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
+pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>);
 
 /// Non-problematic items
 ///
-/// All variants hold a `usize` value to be used for indicating the index of the argument at which
-/// the item was found.
-///
-/// Most variants also hold additional data. Long option variants hold a string slice reference to
-/// the matched option. Short option variants hold the `char` matched. Options with data arguments
-/// additionally hold a string slice reference to the data string matched (in `OsStr` form) and also
-/// a [`DataLocation`] variant. The [`Positional`] variant holds a string slice reference to the
-/// matched string (in `OsStr` form).
+/// Long option variants hold a string slice reference to the matched option. Short option variants
+/// hold the `char` matched. Options with data arguments additionally hold a string slice reference
+/// to the data string matched (in `OsStr` form) and also a [`DataLocation`] variant. The
+/// [`Positional`] variant holds a string slice reference to the matched string (in `OsStr` form).
 ///
 /// [`DataLocation`]: enum.DataLocation.html
 /// [`Positional`]: #variant.Positional
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Item<'set, 'arg> {
     /// Positional argument (not an option, command, or early terminator).
-    Positional(usize, &'arg OsStr),
+    Positional(&'arg OsStr),
     /// Early terminator (`--`) encountered.
-    EarlyTerminator(usize),
+    EarlyTerminator,
     /// Long option match, possibly with a data argument.
-    Long(usize, &'set str, Option<(&'arg OsStr, DataLocation)>),
+    Long(&'set str, Option<(&'arg OsStr, DataLocation)>),
     /// Short option match, possibly with a data argument.
-    Short(usize, char, Option<(&'arg OsStr, DataLocation)>),
+    Short(char, Option<(&'arg OsStr, DataLocation)>),
     /// Command match.
-    Command(usize, &'set str),
+    Command(&'set str),
 }
 
 /// Problematic items
 ///
-/// All variants hold a `usize` value to be used for indicating the index of the argument at which
-/// the item was found.
-///
-/// Most variants also hold additional data. Long option variants hold a string slice reference of
-/// the matched/unmatched option name. Short option variants hold the matched/unmatched short option
-/// `char`. The [`LongWithUnexpectedData`] variant holds a string slice reference (in `OsStr` form)
-/// to the data string matched.
+/// Long option variants hold a string slice reference of the matched/unmatched option name. Short
+/// option variants hold the matched/unmatched short option `char`. The [`LongWithUnexpectedData`]
+/// variant holds a string slice reference (in `OsStr` form) to the data string matched.
 ///
 /// [`LongWithUnexpectedData`]: #variant.LongWithUnexpectedData
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ProblemItem<'set, 'arg> {
     /// Looked like a long option, but no match
-    UnknownLong(usize, &'arg OsStr),
+    UnknownLong(&'arg OsStr),
     /// Unknown short option `char`
-    UnknownShort(usize, char),
+    UnknownShort(char),
     /// Unknown command
-    UnknownCommand(usize, &'arg OsStr),
+    UnknownCommand(&'arg OsStr),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found.
-    AmbiguousLong(usize, &'arg OsStr),
+    AmbiguousLong(&'arg OsStr),
     /// Ambiguous match with multiple commands. This only occurs when an exact match was not found,
     /// but multiple  abbreviated possible matches were found.
-    AmbiguousCmd(usize, &'arg OsStr),
+    AmbiguousCmd(&'arg OsStr),
     /// Long option match, but data argument missing
-    LongMissingData(usize, &'set str),
+    LongMissingData(&'set str),
     /// Short option match, but data argument missing
-    ShortMissingData(usize, char),
+    ShortMissingData(char),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. (The first string is the option name, the second the data).
-    LongWithUnexpectedData(usize, &'set str, &'arg OsStr),
+    LongWithUnexpectedData(&'set str, &'arg OsStr),
 }
 
 /// Used to describe where data was located, for options that require data
@@ -174,7 +167,7 @@ pub enum DataLocation {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemSet<'r, 'set: 'r, 'arg: 'r> {
     /// Set of items describing what was found
-    pub items: Vec<ItemResult<'set, 'arg>>,
+    pub items: Vec<ItemResultIndexed<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
     /// Pointer to the option set, for use with suggestion matching of unknown options
@@ -346,7 +339,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
 
     /// Gives an iterator over all items in the set
     #[inline]
-    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResult<'set, 'arg>> {
+    pub fn get_items(&'r self) -> impl Iterator<Item = &'r ItemResultIndexed<'set, 'arg>> {
         self.items.iter()
     }
 
@@ -354,11 +347,11 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_good_items(&'r self) -> impl Iterator<Item = &'r Item<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
-                Ok(_) => true,
+                (_, Ok(_)) => true,
                 _ => false,
             })
             .map(|i| match i {
-                Ok(inner) => inner,
+                (_, Ok(inner)) => inner,
                 _ => unreachable!(),
             })
     }
@@ -377,11 +370,11 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_problem_items(&'r self) -> impl Iterator<Item = &'r ProblemItem<'set, 'arg>> {
         self.items.iter()
             .filter(|i| match i {
-                Err(_) => true,
+                (_, Err(_)) => true,
                 _ => false,
             })
             .map(|i| match i {
-                Err(inner) => inner,
+                (_, Err(inner)) => inner,
                 _ => unreachable!(),
             })
     }
@@ -423,7 +416,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
         self.items.iter()
             .filter_map(|i| match i {
-                Ok(Item::Positional(_, s)) => Some(*s),
+                (_, Ok(Item::Positional(s))) => Some(*s),
                 _ => None,
             })
     }
@@ -451,12 +444,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
-                Ok(Item::Long(_, n, _)) |
+                (_, Ok(Item::Long(n, _))) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
                     if option.matches_long(n) { return true; }
                 },
-                Ok(Item::Short(_, c, _)) => {
+                (_, Ok(Item::Short(c, _))) => {
                     if option.matches_short(c) { return true; }
                 },
                 _ => {},
@@ -495,12 +488,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Long(_, n, _)) |
+                (_, Ok(Item::Long(n, _))) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
                     if option.matches_long(n) { count += 1; }
                 },
-                Ok(Item::Short(_, c, _)) => {
+                (_, Ok(Item::Short(c, _))) => {
                     if option.matches_short(c) { count += 1; }
                 },
                 _ => {},
@@ -534,10 +527,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'arg OsStr> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(_, n, Some((ref d, _)))) => {
+                (_, Ok(Item::Long(n, Some((ref d, _))))) => {
                     if option.matches_long(n) { return Some(d.clone()); }
                 },
-                Ok(Item::Short(_, c, Some((ref d, _)))) => {
+                (_, Ok(Item::Short(c, Some((ref d, _))))) => {
                     if option.matches_short(c) { return Some(d.clone()); }
                 },
                 _ => {},
@@ -569,10 +562,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     {
         self.items.iter()
             .filter_map(move |i| match i {
-                Ok(Item::Long(_, n, Some((d, _)))) => {
+                (_, Ok(Item::Long(n, Some((d, _))))) => {
                     if option.matches_long(n) { Some(*d) } else { None }
                 },
-                Ok(Item::Short(_, c, Some((d, _)))) => {
+                (_, Ok(Item::Short(c, Some((d, _))))) => {
                     if option.matches_short(*c) { Some(*d) } else { None }
                 },
                 _ => None,
@@ -609,14 +602,14 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(_, n, _)) |
+                (_, Ok(Item::Long(n, _))) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
                 },
-                Ok(Item::Short(_, c, _)) => {
+                (_, Ok(Item::Short(c, _))) => {
                     for o in options.clone() {
                         if o.matches_short(c) { return Some(FoundOption::Short(c)); }
                     }
@@ -776,14 +769,14 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
                 // since not stored in the data-mining objects). We just have to put this down to
                 // being a quirk of this function. Nothing can be done unless the extra data were
                 // stored in the data-mining objects and we cared to check it.
-                Ok(Item::Long(_, n, None)) |
+                (_, Ok(Item::Long(n, None))) |
 //TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(_, n, _)) => {
+                (_, Err(ProblemItem::LongWithUnexpectedData(n, _))) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }
                 },
-                Ok(Item::Short(_, c, None)) => {
+                (_, Ok(Item::Short(c, None))) => {
                     for (o, tag) in options.clone() {
                         if o.matches_short(c) { return Some((FoundOption::Short(c), tag)); }
                     }
@@ -832,7 +825,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
             if let Err(_) = item {
                 item_set.problems = true;
             }
-            item_set.items.push(item);
+            item_set.items.push((iter.get_last_index(), item));
             if stop_on_problem && item_set.problems {
                 break;
             }
@@ -850,11 +843,11 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;
         while let Some(item) = iter.next() {
-            if let Ok(Item::Command(i, name)) = item {
+            if let Ok(Item::Command(name)) = item {
                 if item_set.is_some() {
                     analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
                 }
-                analysis.parts.push(CommandBlockPart::Command(i, name));
+                analysis.parts.push(CommandBlockPart::Command(iter.get_last_index(), name));
             }
             else {
                 let item_set_ref = item_set.get_or_insert(ItemSet::new(iter.get_option_set()));
@@ -862,7 +855,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
                     item_set_ref.problems = true;
                     analysis.problems = true;
                 }
-                item_set_ref.items.push(item);
+                item_set_ref.items.push((iter.get_last_index(), item));
                 if stop_on_problem && item_set_ref.problems {
                     break;
                 }

@@ -281,11 +281,11 @@
 //! [`ItemResult`] which is just simply a type alias of `Result<Item, ProblemItem>` where [`Item`]
 //! represents a good item and [`ProblemItem`] represents a problematic one.
 //!
-//! All variants of each item hold a `usize` value used to indicate the index of the argument in
-//! which the item was found, should you want to know that. Similarly, information is returned where
-//! applicable with *data values* as to whether the data arg was located in the same argument or the
-//! next. Matched and unmatched long-option/command names are returned in `&str` form, whilst
-//! positionals and data values are returned in `&OsStr` form.
+//! Matched and unmatched long-option/command names are returned in `&str` form, whilst positionals
+//! and data values are returned in `&OsStr` form. If you wish to know the argument index number for
+//! a given item, the iterator has a method for retrieving that extra piece of information. If you
+//! want to know whether a data value of a given option was found within the same argument or the
+//! next, this is (currently) supplied in the item variant.
 //!
 //! Note that the [`ItemSet`] and [`CommandAnalysis`] objects both contain a `problems` boolean
 //! which gives a quick indication of problems (of course).

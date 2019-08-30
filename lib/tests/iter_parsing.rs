@@ -40,15 +40,15 @@ fn basic() {
     );
     let parser = get_parser_cmd();
     let mut parse_iter = parser.parse_iter(&args);
-    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownCommand, "abc")));
-    assert_eq!(parse_iter.next(), Some(expected_item!(1, Long, "help")));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 'b')));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, Short, 'x')));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 's')));
-    assert_eq!(parse_iter.next(), Some(expected_item!(3, LongWithData, "hah", "xyz", DataLocation::SameArg)));
-    assert_eq!(parse_iter.next(), Some(expected_item!(4, LongWithData, "ƒƒ", "cba", DataLocation::NextArg)));
-    assert_eq!(parse_iter.next(), Some(expected_item!(6, ShortWithData, 'o', "123", DataLocation::SameArg)));
-    assert_eq!(parse_iter.next(), Some(expected_item!(7, ShortWithData, 'Ɛ', "456", DataLocation::NextArg)));
+    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownCommand, "abc").1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(1, Long, "help").1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 'b').1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(2, Short, 'x').1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 's').1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(3, LongWithData, "hah", "xyz", DataLocation::SameArg).1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(4, LongWithData, "ƒƒ", "cba", DataLocation::NextArg).1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(6, ShortWithData, 'o', "123", DataLocation::SameArg).1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(7, ShortWithData, 'Ɛ', "456", DataLocation::NextArg).1));
     assert_eq!(parse_iter.next(), None);
     assert_eq!(parse_iter.next(), None);
 }
@@ -79,8 +79,8 @@ mod change_data {
 
         let mut parse_iter = parser.parse_iter(&args);
 
-        assert_eq!(parse_iter.next(), Some(expected_item!(0, Long, "foo")));
-        assert_eq!(parse_iter.next(), Some(expected_item!(1, Command, "c1")));
+        assert_eq!(parse_iter.next(), Some(expected_item!(0, Long, "foo").1));
+        assert_eq!(parse_iter.next(), Some(expected_item!(1, Command, "c1").1));
 
         // Here we pretend that the application responds to the `c1` command by passing the iterator
         // on to a function dedicated to handling a `c1` command situation, which is responsible for
@@ -104,8 +104,8 @@ mod change_data {
         // NB: We confirm change of settings took place successfully by the fact that we’re matching
         // the next option in alternate mode.
 
-        assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar")));
-        assert_eq!(parse_iter.next(), Some(expected_item!(3, Command, "c2")));
+        assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar").1));
+        assert_eq!(parse_iter.next(), Some(expected_item!(3, Command, "c2").1));
         assert_eq!(parse_iter.next(), None);
     }
 }
@@ -117,7 +117,7 @@ fn stop_on_error() {
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(true);
     let mut parse_iter = parser.parse_iter(&args);
-    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownLong, "fake1")));
-    assert_eq!(parse_iter.next(), Some(expected_item!(1, UnknownLong, "fake2")));
+    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownLong, "fake1").1));
+    assert_eq!(parse_iter.next(), Some(expected_item!(1, UnknownLong, "fake2").1));
     assert_eq!(parse_iter.next(), None);
 }

@@ -53,7 +53,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.items {
             match item {
-                Err(ProblemItem::UnknownLong(_, name)) => {
+                (_, Err(ProblemItem::UnknownLong(name))) => {
                     suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -102,7 +102,7 @@ mod options {
         let mut suggestions = Vec::new();
         for item in &actual_results.0.items {
             match item {
-                Err(ProblemItem::UnknownLong(_, name)) => {
+                (_, Err(ProblemItem::UnknownLong(name))) => {
                     suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
                 },
                 _ => unreachable!(),
@@ -157,7 +157,7 @@ mod commands {
         for part in &actual_results.0.parts {
             if let CommandBlockPart::ItemSet(is) = part {
                 for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                    if let (_, Err(ProblemItem::UnknownCommand(name))) = item {
                         if let Some(cmd_set) = actual_results.0.cmd_set {
                             suggestions.push((*name, cmd_set.suggest(name)));
                         }
@@ -203,7 +203,7 @@ mod commands {
         for part in &actual_results.0.parts {
             if let CommandBlockPart::ItemSet(is) = part {
                 for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                    if let (_, Err(ProblemItem::UnknownCommand(name))) = item {
                         if let Some(cmd_set) = actual_results.0.cmd_set {
                             suggestions.push((*name, cmd_set.suggest(name)));
                         }
@@ -249,7 +249,7 @@ mod commands {
         for part in &actual_results.0.parts {
             if let CommandBlockPart::ItemSet(is) = part {
                 for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                    if let (_, Err(ProblemItem::UnknownCommand(name))) = item {
                         if let Some(cmd_set) = actual_results.0.cmd_set {
                             suggestions.push((*name, cmd_set.suggest(name)));
                         }
@@ -295,7 +295,7 @@ mod commands {
         for part in &actual_results.0.parts {
             if let CommandBlockPart::ItemSet(is) = part {
                 for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(_, name)) = item {
+                    if let (_, Err(ProblemItem::UnknownCommand(name))) = item {
                         if let Some(cmd_set) = actual_results.0.cmd_set {
                             suggestions.push((*name, cmd_set.suggest(name)));
                         }

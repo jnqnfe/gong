@@ -65,33 +65,82 @@ macro_rules! cmd_part {
     ( item_set: $is:expr ) => { CommandBlockPart::ItemSet($is) };
 }
 
-/// Construct an `ItemResult` result item, for an `Expected`.
+/// Construct an `ItemResult`.
+///
+/// There is one matcher for each item type. The first param for each is the label of the unique
+/// type. The final params as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
+macro_rules! item {
+    ( Positional, $s:expr )       => { Ok(Item::Positional(OsStr::new($s))) };
+    ( EarlyTerminator )           => { Ok(Item::EarlyTerminator) };
+    ( Long, $n:expr )             => { Ok(Item::Long($n, None)) };
+    ( Short, $c:expr )            => { Ok(Item::Short($c, None)) };
+    ( LongWithData, $n:expr, $d:expr, $l:expr )
+                                  => { Ok(Item::Long($n, Some((OsStr::new($d), $l)))) };
+    ( ShortWithData, $c:expr, $d:expr, $l:expr )
+                                  => { Ok(Item::Short($c, Some((OsStr::new($d), $l)))) };
+    ( Command, $n:expr )          => { Ok(Item::Command($n)) };
+    ( UnknownLong, $n:expr )      => { Err(ProblemItem::UnknownLong(OsStr::new($n))) };
+    ( UnknownShort, $c:expr )     => { Err(ProblemItem::UnknownShort($c)) };
+    ( UnknownCommand, $n:expr )   => { Err(ProblemItem::UnknownCommand(OsStr::new($n))) };
+    ( LongWithUnexpectedData, $n:expr, $d:expr )
+                                  => { Err(ProblemItem::LongWithUnexpectedData($n, OsStr::new($d))) };
+    ( LongMissingData, $n:expr )  => { Err(ProblemItem::LongMissingData($n)) };
+    ( ShortMissingData, $c:expr ) => { Err(ProblemItem::ShortMissingData($c)) };
+    ( AmbiguousLong, $n:expr )    => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
+    ( AmbiguousCmd, $n:expr )     => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
+}
+
+/// Construct an `ItemResultIndexed`.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
 /// be found at in the analysis. The second param is the label of the unique type. The final params
-/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]]
+/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
+macro_rules! indexed_item {
+    ( $i:expr, Positional, $s:expr )       => { ($i, item!(Positional, $s)) };
+    ( $i:expr, EarlyTerminator )           => { ($i, item!(EarlyTerminator)) };
+    ( $i:expr, Long, $n:expr )             => { ($i, item!(Long, $n)) };
+    ( $i:expr, Short, $c:expr )            => { ($i, item!(Short, $c)) };
+    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
+                                           => { ($i, item!(LongWithData, $n, $d, $l)) };
+    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
+                                           => { ($i, item!(ShortWithData, $c, $d, $l)) };
+    ( $i:expr, Command, $n:expr )          => { ($i, item!(Command, $n)) };
+    ( $i:expr, UnknownLong, $n:expr )      => { ($i, item!(UnknownLong, $n)) };
+    ( $i:expr, UnknownShort, $c:expr )     => { ($i, item!(UnknownShort, $c)) };
+    ( $i:expr, UnknownCommand, $n:expr )   => { ($i, item!(UnknownCommand, $n)) };
+    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
+                                           => { ($i, item!(LongWithUnexpectedData, $n, $d)) };
+    ( $i:expr, LongMissingData, $n:expr )  => { ($i, item!(LongMissingData, $n)) };
+    ( $i:expr, ShortMissingData, $c:expr ) => { ($i, item!(ShortMissingData, $c)) };
+    ( $i:expr, AmbiguousLong, $n:expr )    => { ($i, item!(AmbiguousLong, $n)) };
+    ( $i:expr, AmbiguousCmd, $n:expr )     => { ($i, item!(AmbiguousCmd, $n)) };
+}
+
+//TODO: remove, switching everything over to `item` and `indexed_item`
+/// Construct an `ItemResultIndexed`.
+///
+/// There is one matcher for each item type. The first param for each is the index to expect it to
+/// be found at in the analysis. The second param is the label of the unique type. The final params
+/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
 macro_rules! expected_item {
-    ( $i:expr, Positional, $s:expr ) => { Ok(Item::Positional($i, OsStr::new($s))) };
-    ( $i:expr, EarlyTerminator ) => { Ok(Item::EarlyTerminator($i)) };
-    ( $i:expr, Long, $n:expr ) => { Ok(Item::Long($i, $n, None)) };
-    ( $i:expr, Short, $c:expr ) => { Ok(Item::Short($i, $c, None)) };
-    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr ) => {
-        Ok(Item::Long($i, $n, Some((OsStr::new($d), $l))))
-    };
-    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr ) => {
-        Ok(Item::Short($i, $c, Some((OsStr::new($d), $l))))
-    };
-    ( $i:expr, Command, $n:expr ) => { Ok(Item::Command($i, $n)) };
-    ( $i:expr, UnknownLong, $n:expr ) => { Err(ProblemItem::UnknownLong($i, OsStr::new($n))) };
-    ( $i:expr, UnknownShort, $c:expr ) => { Err(ProblemItem::UnknownShort($i, $c)) };
-    ( $i:expr, UnknownCommand, $n:expr ) => { Err(ProblemItem::UnknownCommand($i, OsStr::new($n))) };
-    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr ) => {
-        Err(ProblemItem::LongWithUnexpectedData($i, $n, OsStr::new($d)))
-    };
-    ( $i:expr, LongMissingData, $n:expr ) => { Err(ProblemItem::LongMissingData($i, $n)) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { Err(ProblemItem::ShortMissingData($i, $c)) };
-    ( $i:expr, AmbiguousLong, $n:expr ) => { Err(ProblemItem::AmbiguousLong($i, OsStr::new($n))) };
-    ( $i:expr, AmbiguousCmd, $n:expr ) => { Err(ProblemItem::AmbiguousCmd($i, OsStr::new($n))) };
+    ( $i:expr, Positional, $s:expr )       => { indexed_item!($i, Positional, $s) };
+    ( $i:expr, EarlyTerminator )           => { indexed_item!($i, EarlyTerminator) };
+    ( $i:expr, Long, $n:expr )             => { indexed_item!($i, Long, $n) };
+    ( $i:expr, Short, $c:expr )            => { indexed_item!($i, Short, $c) };
+    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
+                                           => { indexed_item!($i, LongWithData, $n, $d, $l) };
+    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
+                                           => { indexed_item!($i, ShortWithData, $c, $d, $l) };
+    ( $i:expr, Command, $n:expr )          => { indexed_item!($i, Command, $n) };
+    ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!($i, UnknownLong, $n) };
+    ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!($i, UnknownShort, $c) };
+    ( $i:expr, UnknownCommand, $n:expr )   => { indexed_item!($i, UnknownCommand, $n) };
+    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
+                                           => { indexed_item!($i, LongWithUnexpectedData, $n, $d) };
+    ( $i:expr, LongMissingData, $n:expr )  => { indexed_item!($i, LongMissingData, $n) };
+    ( $i:expr, ShortMissingData, $c:expr ) => { indexed_item!($i, ShortMissingData, $c) };
+    ( $i:expr, AmbiguousLong, $n:expr )    => { indexed_item!($i, AmbiguousLong, $n) };
+    ( $i:expr, AmbiguousCmd, $n:expr )     => { indexed_item!($i, AmbiguousCmd, $n) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set
