@@ -48,9 +48,9 @@
 //!
 //! In terms of data values, there are three variations:
 //!
-//!  - *Flag* type options do not come with a data value; their presence alone within a set of input
-//!    arguments means something to the program. Typically their use will toggle the default state
-//!    of some boolean feature.
+//!  - *Flag* type options (sometimes known as the *switch* type) do not come with a data value;
+//!    their presence alone within a set of input arguments means something to the program.
+//!    Typically their use will toggle the default state of some boolean feature.
 //!  - *Data-taking* type options require a single accompanying value. The benefit of such options
 //!    over positionals for providing data input arguments to a program, as mentioned, is the
 //!    flexibility that options offer, in terms of the order they are given for instance.
