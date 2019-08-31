@@ -163,67 +163,76 @@ fn main() {
         },
     }
 
-    let results = parser.parse(&args[..]);
+    let mut iter = parser.parse_iter(&args[..]).indexed();
+    let mut problems = false;
+    let mut count_zero = true;
 
     println!("\n[ {}Analysis{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    match results.problems {
-        true => { println!("Problems: {}true{}", c!(COL_E), c!(RESET)); },
-        false => {
-            println!("Problems: {}false{}", c!(COL_O), c!(RESET));
-        },
-    }
-
-    println!("Items: {}\n", results.items.len());
-    for result in &results.items {
-        let printer = match *result {
-            (_, Ok(_), _) => print_arg_ok,
-            (_, Err(_), _) => print_arg_err,
+    while let Some((i, item, l)) = iter.next() {
+        let printer = match item {
+            Ok(_) => print_arg_ok,
+            Err(_) => {
+                problems = true;
+                print_arg_err
+            },
         };
-        match result {
-            (i, Ok(Item::Positional(s)), _) => printer(*i, "Positional", s),
-            (i, Ok(Item::EarlyTerminator), _) => printer(*i, "EarlyTerminator", OsStr::new("")),
-            (i, Ok(Item::Long(n, None)), _) => printer(*i, "Long", OsStr::new(&n)),
-            (i, Ok(Item::Long(n, Some(d))), ref l) => {
-                printer(*i, "LongWithData", OsStr::new(&n));
+        count_zero = false;
+        match item {
+            Ok(Item::Positional(s)) => printer(i, "Positional", s),
+            Ok(Item::EarlyTerminator) => printer(i, "EarlyTerminator", OsStr::new("")),
+            Ok(Item::Long(n, None)) => printer(i, "Long", OsStr::new(&n)),
+            Ok(Item::Long(n, Some(d))) => {
+                printer(i, "LongWithData", OsStr::new(&n));
                 print_data(l.unwrap(), d);
             },
-            (i, Err(ProblemItem::LongMissingData(n)), _) => printer(*i, "LongMissingData", OsStr::new(&n)),
-            (i, Err(ProblemItem::LongWithUnexpectedData(n, d)), _) => {
-                printer(*i, "LongWithUnexpectedData", OsStr::new(&n));
+            Err(ProblemItem::LongMissingData(n)) => printer(i, "LongMissingData", OsStr::new(&n)),
+            Err(ProblemItem::LongWithUnexpectedData(n, d)) => {
+                printer(i, "LongWithUnexpectedData", OsStr::new(&n));
                 println!("    data: {:?}", d)
             },
-            (i, Err(ProblemItem::AmbiguousLong(n)), _) => printer(*i, "AmbiguousLong", n),
-            (i, Err(ProblemItem::AmbiguousCmd(n)), _) => printer(*i, "AmbiguousCmd", n),
-            (i, Err(ProblemItem::UnknownLong(n)), _) => printer(*i, "UnknownLong", OsStr::new(&n)),
-            (i, Ok(Item::Short(c, None)), _) => {
-                let desc = desc_char(*c);
-                printer(*i, "Short", OsStr::new(&desc));
+            Err(ProblemItem::AmbiguousLong(n)) => printer(i, "AmbiguousLong", n),
+            Err(ProblemItem::AmbiguousCmd(n)) => printer(i, "AmbiguousCmd", n),
+            Err(ProblemItem::UnknownLong(n)) => printer(i, "UnknownLong", OsStr::new(&n)),
+            Ok(Item::Short(c, None)) => {
+                let desc = desc_char(c);
+                printer(i, "Short", OsStr::new(&desc));
             },
-            (i, Ok(Item::Short(c, Some(d))), ref l) => {
-                let desc = desc_char(*c);
-                printer(*i, "ShortWithData", OsStr::new(&desc));
+            Ok(Item::Short(c, Some(d))) => {
+                let desc = desc_char(c);
+                printer(i, "ShortWithData", OsStr::new(&desc));
                 print_data(l.unwrap(), d);
             },
-            (i, Err(ProblemItem::ShortMissingData(c)), _) => {
-                let desc = desc_char(*c);
-                printer(*i, "ShortMissingData", OsStr::new(&desc));
+            Err(ProblemItem::ShortMissingData(c)) => {
+                let desc = desc_char(c);
+                printer(i, "ShortMissingData", OsStr::new(&desc));
             },
-            (i, Err(ProblemItem::UnknownShort(c)), _) => {
-                let desc = desc_char(*c);
-                printer(*i, "UnknownShort", OsStr::new(&desc));
+            Err(ProblemItem::UnknownShort(c)) => {
+                let desc = desc_char(c);
+                printer(i, "UnknownShort", OsStr::new(&desc));
             },
-            (i, Ok(Item::Command(n)), _) => printer(*i, "Command", OsStr::new(&n)),
-            (i, Err(ProblemItem::UnknownCommand(n)), _) => printer(*i, "UnknownCommand", OsStr::new(&n)),
+            Ok(Item::Command(n)) => printer(i, "Command", OsStr::new(&n)),
+            Err(ProblemItem::UnknownCommand(n)) => printer(i, "UnknownCommand", OsStr::new(&n)),
         }
     }
-    #[cfg(not(feature = "no_stop_on_problem"))] {
-        if results.problems {
-            println!("\nProblem found, stopped early!");
-        }
-    }
-    if results.items.len() != 0 {
+    if !count_zero {
         println!();
+    }
+    else {
+        println!("No arguments given!\n");
+    }
+
+    #[cfg(not(feature = "no_stop_on_problem"))] {
+        if problems {
+            println!("Problem found, stopped early!\n");
+        }
+    }
+
+    match problems {
+        true => { println!("Problems: {}true{}\n", c!(COL_E), c!(RESET)); },
+        false => {
+            println!("Problems: {}false{}\n", c!(COL_O), c!(RESET));
+        },
     }
 }
 
