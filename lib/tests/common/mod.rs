@@ -61,7 +61,7 @@ macro_rules! item_set {
 
 /// Construct a `CommandBlockPart`
 macro_rules! cmd_part {
-    ( command: $i:expr, $c:expr ) => { CommandBlockPart::Command($i, $c) };
+    ( command: $i:expr, $c:expr ) => { CommandBlockPart::Command($c) };
     ( item_set: $is:expr ) => { CommandBlockPart::ItemSet($is) };
 }
 
@@ -124,24 +124,24 @@ macro_rules! indexed_item {
 /// be found at in the analysis. The second param is the label of the unique type. The final params
 /// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
 macro_rules! dm_item {
-    ( $i:expr, Positional, $s:expr )       => { indexed_item!($i, Positional, $s) };
-    ( $i:expr, EarlyTerminator )           => { indexed_item!($i, EarlyTerminator) };
-    ( $i:expr, Long, $n:expr )             => { indexed_item!($i, Long, $n) };
-    ( $i:expr, Short, $c:expr )            => { indexed_item!($i, Short, $c) };
+    ( $i:expr, Positional, $s:expr )       => { item!(Positional, $s) };
+    ( $i:expr, EarlyTerminator )           => { item!(EarlyTerminator) };
+    ( $i:expr, Long, $n:expr )             => { item!(Long, $n) };
+    ( $i:expr, Short, $c:expr )            => { item!(Short, $c) };
     ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
-                                           => { indexed_item!($i, LongWithData, $n, $d, $l) };
+                                           => { item!(LongWithData, $n, $d) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
-                                           => { indexed_item!($i, ShortWithData, $c, $d, $l) };
-    ( $i:expr, Command, $n:expr )          => { indexed_item!($i, Command, $n) };
-    ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!($i, UnknownLong, $n) };
-    ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!($i, UnknownShort, $c) };
-    ( $i:expr, UnknownCommand, $n:expr )   => { indexed_item!($i, UnknownCommand, $n) };
+                                           => { item!(ShortWithData, $c, $d) };
+    ( $i:expr, Command, $n:expr )          => { item!(Command, $n) };
+    ( $i:expr, UnknownLong, $n:expr )      => { item!(UnknownLong, $n) };
+    ( $i:expr, UnknownShort, $c:expr )     => { item!(UnknownShort, $c) };
+    ( $i:expr, UnknownCommand, $n:expr )   => { item!(UnknownCommand, $n) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
-                                           => { indexed_item!($i, LongWithUnexpectedData, $n, $d) };
-    ( $i:expr, LongMissingData, $n:expr )  => { indexed_item!($i, LongMissingData, $n) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { indexed_item!($i, ShortMissingData, $c) };
-    ( $i:expr, AmbiguousLong, $n:expr )    => { indexed_item!($i, AmbiguousLong, $n) };
-    ( $i:expr, AmbiguousCmd, $n:expr )     => { indexed_item!($i, AmbiguousCmd, $n) };
+                                           => { item!(LongWithUnexpectedData, $n, $d) };
+    ( $i:expr, LongMissingData, $n:expr )  => { item!(LongMissingData, $n) };
+    ( $i:expr, ShortMissingData, $c:expr ) => { item!(ShortMissingData, $c) };
+    ( $i:expr, AmbiguousLong, $n:expr )    => { item!(AmbiguousLong, $n) };
+    ( $i:expr, AmbiguousCmd, $n:expr )     => { item!(AmbiguousCmd, $n) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set
@@ -249,8 +249,8 @@ fn pretty_print_cmd_results(analysis: &CommandAnalysis) {
     let mut parts = String::new();
     for part in &analysis.parts {
         match part {
-            CommandBlockPart::Command(i, c) => {
-                parts.push_str(&format!("\n        Command: ({}, {}),", i, c));
+            CommandBlockPart::Command(c) => {
+                parts.push_str(&format!("\n        Command: {},", c));
             },
             CommandBlockPart::ItemSet(s) => {
                 let mut items = String::new();

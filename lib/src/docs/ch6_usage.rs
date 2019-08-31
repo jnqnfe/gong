@@ -286,7 +286,8 @@
 //! a given item, or the location from which option data was taken (same argument as the option
 //! itself or the next argument), the iterator has methods for retrieving that information. You can
 //! also alternatively use the `indexed` method of the iterators to convert to a wrapping iterator
-//! which bundles this extra data along with each item in a tuple.
+//! which bundles this extra data along with each item in a tuple. (Note that it is excluded from
+//! the data-mining object though, since unlikely to be wanted).
 //!
 //! Note that the [`ItemSet`] and [`CommandAnalysis`] objects both contain a `problems` boolean
 //! which gives a quick indication of problems (of course).
