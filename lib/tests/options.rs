@@ -22,7 +22,6 @@ use gong::{option_set, longopt, shortopt};
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;
-use self::common::{Actual, Expected};
 
 /// Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its own
 /// (`--`), and would be misinterpreted as a long option if given as the first in a short option set
@@ -85,22 +84,18 @@ mod short_dash {
             "-a-bc",    // Can use like this
             "--",       // Can’t use as a shortopt like this, will be interpreted as early terminator
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: &opts,
-            [
-                dm_item!(0, UnknownLong, "abc"),
-                dm_item!(1, UnknownShort, 'a'),
-                dm_item!(1, Short, '-'),
-                dm_item!(1, UnknownShort, 'b'),
-                dm_item!(1, UnknownShort, 'c'),
-                dm_item!(2, EarlyTerminator),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, UnknownLong, "abc"),
+            indexed_item!(1, UnknownShort, 'a'),
+            indexed_item!(1, Short, '-'),
+            indexed_item!(1, UnknownShort, 'b'),
+            indexed_item!(1, UnknownShort, 'c'),
+            indexed_item!(2, EarlyTerminator),
+        ]);
 
         let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 }
 
@@ -237,18 +232,14 @@ mod long_equals {
                         // which again therefore matches the invalid “a=b” option, as an
                         // abbreviation, but carrying “b” as data.
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: &opts,
-            [
-                dm_item!(0, Long, "a=b"),
-                dm_item!(1, LongWithUnexpectedData, "a=b", "b"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, Long, "a=b"),
+            indexed_item!(1, LongWithUnexpectedData, "a=b", "b"),
+        ]);
 
         let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 }
 

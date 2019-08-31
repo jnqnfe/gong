@@ -19,7 +19,7 @@ use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{CmdParser, OptionsMode};
-use self::common::{get_parser, get_parser_cmd, get_base_opts, get_base_cmds, Actual, Expected, CmdActual, CmdExpected};
+use self::common::{get_parser, get_parser_cmd, get_base_opts, get_base_cmds, CmdActual, CmdExpected};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -50,39 +50,22 @@ fn arg_list_owned_set() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Stopping on problems handling
+// This should not impact iterative parsing at all
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// Check with feature off
+/// Check with feature on and off
 #[test]
-fn stop_on_problems_off() {
+fn stop_on_problems() {
     let args = arg_list!("--fake1", "--fake2");
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, UnknownLong, "fake1"),
-            dm_item!(1, UnknownLong, "fake2"),
-        ]
-    );
-    let mut parser = get_parser();
-    parser.settings.set_stop_on_problem(false);
-    check_result!(&Actual(parser.parse(&args)), &expected);
-}
-
-/// Check with feature on
-#[test]
-fn stop_on_problems_on() {
-    let args = arg_list!("--fake1", "--fake2");
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, UnknownLong, "fake1"),
-        ]
-    );
+    let expected = expected!([
+        indexed_item!(0, UnknownLong, "fake1"),
+        indexed_item!(1, UnknownLong, "fake2"),
+    ]);
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(true);
-    check_result!(&Actual(parser.parse(&args)), &expected);
+    check_iter_result!(parser, args, expected);
+    parser.settings.set_stop_on_problem(false);
+    check_iter_result!(parser, args, expected);
 }
 
 /// Check with feature off, after a command (command related item partitioning could trip things up
@@ -134,6 +117,14 @@ fn stop_on_problems_on_cmd() {
 // Basic option handling
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/// No args
+#[test]
+fn nothing() {
+    let args: [&OsStr; 0] = arg_list!();
+    let expected = expected!([]);
+    check_iter_result!(get_parser(), args, expected);
+}
+
 /// Some general, basic argument handling
 #[test]
 fn basic() {
@@ -154,45 +145,37 @@ fn basic() {
         "--foo",            // Known option, taken as positional due to early terminator
         "jkl",              // Positional either way
     );
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, Positional, "abc"),
-            dm_item!(1, Positional, "-"),
-            dm_item!(2, Long, "help"),
-            dm_item!(3, UnknownLong, "xxx"),
-            dm_item!(4, UnknownLong, "-yy"),
-            dm_item!(5, Positional, "version"),
-            dm_item!(6, UnknownShort, 'b'),
-            dm_item!(6, Short, 'x'),
-            dm_item!(6, UnknownShort, 's'),
-            dm_item!(7, Positional, "ghi"),
-            dm_item!(8, UnknownShort, 'a'),
-            dm_item!(8, UnknownShort, '-'),
-            dm_item!(9, Short, 'h'),
-            dm_item!(9, UnknownShort, '-'),
-            dm_item!(10, EarlyTerminator),
-            dm_item!(11, Positional, "--foo"),
-            dm_item!(12, Positional, "jkl"),
-        ]
-    );
-    check_result!(&Actual(get_parser().parse(&args)), &expected);
+    let expected = expected!([
+        indexed_item!(0, Positional, "abc"),
+        indexed_item!(1, Positional, "-"),
+        indexed_item!(2, Long, "help"),
+        indexed_item!(3, UnknownLong, "xxx"),
+        indexed_item!(4, UnknownLong, "-yy"),
+        indexed_item!(5, Positional, "version"),
+        indexed_item!(6, UnknownShort, 'b'),
+        indexed_item!(6, Short, 'x'),
+        indexed_item!(6, UnknownShort, 's'),
+        indexed_item!(7, Positional, "ghi"),
+        indexed_item!(8, UnknownShort, 'a'),
+        indexed_item!(8, UnknownShort, '-'),
+        indexed_item!(9, Short, 'h'),
+        indexed_item!(9, UnknownShort, '-'),
+        indexed_item!(10, EarlyTerminator),
+        indexed_item!(11, Positional, "--foo"),
+        indexed_item!(12, Positional, "jkl"),
+    ]);
+    check_iter_result!(get_parser(), args, expected);
 }
 
 /// Verify that option matching is case sensitive
 #[test]
 fn case_sensitivity() {
     let args = arg_list!("--Foo", "-O");
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, UnknownLong, "Foo"),
-            dm_item!(1, UnknownShort, 'O'),
-        ]
-    );
-    check_result!(&Actual(get_parser().parse(&args)), &expected);
+    let expected = expected!([
+        indexed_item!(0, UnknownLong, "Foo"),
+        indexed_item!(1, UnknownShort, 'O'),
+    ]);
+    check_iter_result!(get_parser(), args, expected);
 }
 
 /// Test that everything after an early terminator is taken to be a positional, including any
@@ -208,28 +191,24 @@ fn early_term() {
         // not for the early terminator.
         "-o", "--foo", "blah", "--bb", "-h", "--hah", "--hah=", "--", "--hah=a", "-oa", "-b",
     );
-    let expected = expected!(
-        problems: false,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, Long, "foo"),
-            dm_item!(1, EarlyTerminator),
-            dm_item!(2, Positional, "--help"),
-            dm_item!(3, Positional, "--"),
-            dm_item!(4, Positional, "-o"),
-            dm_item!(5, Positional, "--foo"),
-            dm_item!(6, Positional, "blah"),
-            dm_item!(7, Positional, "--bb"),
-            dm_item!(8, Positional, "-h"),
-            dm_item!(9, Positional, "--hah"),
-            dm_item!(10, Positional, "--hah="),
-            dm_item!(11, Positional, "--"),
-            dm_item!(12, Positional, "--hah=a"),
-            dm_item!(13, Positional, "-oa"),
-            dm_item!(14, Positional, "-b"),
-        ]
-    );
-    check_result!(&Actual(get_parser().parse(&args)), &expected);
+    let expected = expected!([
+        indexed_item!(0, Long, "foo"),
+        indexed_item!(1, EarlyTerminator),
+        indexed_item!(2, Positional, "--help"),
+        indexed_item!(3, Positional, "--"),
+        indexed_item!(4, Positional, "-o"),
+        indexed_item!(5, Positional, "--foo"),
+        indexed_item!(6, Positional, "blah"),
+        indexed_item!(7, Positional, "--bb"),
+        indexed_item!(8, Positional, "-h"),
+        indexed_item!(9, Positional, "--hah"),
+        indexed_item!(10, Positional, "--hah="),
+        indexed_item!(11, Positional, "--"),
+        indexed_item!(12, Positional, "--hah=a"),
+        indexed_item!(13, Positional, "-oa"),
+        indexed_item!(14, Positional, "-b"),
+    ]);
+    check_iter_result!(get_parser(), args, expected);
 }
 
 /// Test empty long option names with data param (-- on it’s own is obviously picked up as early
@@ -237,15 +216,11 @@ fn early_term() {
 #[test]
 fn long_no_name() {
     let args = arg_list!("--=a", "--=");
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, UnknownLong, ""),
-            dm_item!(1, UnknownLong, ""),
-        ]
-    );
-    check_result!(&Actual(get_parser().parse(&args)), &expected);
+    let expected = expected!([
+        indexed_item!(0, UnknownLong, ""),
+        indexed_item!(1, UnknownLong, ""),
+    ]);
+    check_iter_result!(get_parser(), args, expected);
 }
 
 /// Test repetition - each instance should exist in the results in its own right. Note, data arg
@@ -253,23 +228,19 @@ fn long_no_name() {
 #[test]
 fn repetition() {
     let args = arg_list!("--foo", "-h", "--version", "-h", "-x", "--blah", "--version", "-hhh");
-    let expected = expected!(
-        problems: true,
-        opt_set: get_base_opts(),
-        [
-            dm_item!(0, Long, "foo"),
-            dm_item!(1, Short, 'h'),
-            dm_item!(2, Long, "version"),
-            dm_item!(3, Short, 'h'),
-            dm_item!(4, Short, 'x'),
-            dm_item!(5, UnknownLong, "blah"),
-            dm_item!(6, Long, "version"),
-            dm_item!(7, Short, 'h'),
-            dm_item!(7, Short, 'h'),
-            dm_item!(7, Short, 'h'),
-        ]
-    );
-    check_result!(&Actual(get_parser().parse(&args)), &expected);
+    let expected = expected!([
+        indexed_item!(0, Long, "foo"),
+        indexed_item!(1, Short, 'h'),
+        indexed_item!(2, Long, "version"),
+        indexed_item!(3, Short, 'h'),
+        indexed_item!(4, Short, 'x'),
+        indexed_item!(5, UnknownLong, "blah"),
+        indexed_item!(6, Long, "version"),
+        indexed_item!(7, Short, 'h'),
+        indexed_item!(7, Short, 'h'),
+        indexed_item!(7, Short, 'h'),
+    ]);
+    check_iter_result!(get_parser(), args, expected);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,60 +274,52 @@ mod utf8 {
             "-Ɛ", "argş",       // Known short option, with in-next-arg data
             "🌏∈🗻",              // Positional
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, "🗻∈🌏"),
-                dm_item!(1, UnknownLong, "x❤x"),
-                dm_item!(2, UnknownLong, "🗻∈🌏"),
-                dm_item!(3, UnknownLong, "ƒoo"),
-                dm_item!(4, Long, "ábc"),
-                dm_item!(5, LongWithData, "ƒƒ", "💖abc", DataLocation::SameArg),
-                dm_item!(6, LongWithData, "ƒƒ", "abc💖", DataLocation::NextArg),
-                dm_item!(8, LongWithData, "ƒƒ", "", DataLocation::SameArg),
-                dm_item!(9, Long, "ábc"),
-                dm_item!(10, LongWithUnexpectedData, "ábc", "x💖z"),
-                dm_item!(11, AmbiguousLong, "ƒ"),
-                dm_item!(12, UnknownLong, ""),
-                dm_item!(13, UnknownLong, ""),
-                dm_item!(14, UnknownShort, 'ă'),
-                dm_item!(15, UnknownShort, '🗻'),
-                dm_item!(15, UnknownShort, '∈'),
-                dm_item!(15, UnknownShort, '🌏'),
-                dm_item!(16, Short, '❤'),
-                dm_item!(17, ShortWithData, 'Ɛ', "aşrg", DataLocation::SameArg),
-                dm_item!(18, ShortWithData, 'Ɛ', "argş", DataLocation::NextArg),
-                dm_item!(20, Positional, "🌏∈🗻"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, "🗻∈🌏"),
+            indexed_item!(1, UnknownLong, "x❤x"),
+            indexed_item!(2, UnknownLong, "🗻∈🌏"),
+            indexed_item!(3, UnknownLong, "ƒoo"),
+            indexed_item!(4, Long, "ábc"),
+            indexed_item!(5, LongWithData, "ƒƒ", "💖abc", DataLocation::SameArg),
+            indexed_item!(6, LongWithData, "ƒƒ", "abc💖", DataLocation::NextArg),
+            indexed_item!(8, LongWithData, "ƒƒ", "", DataLocation::SameArg),
+            indexed_item!(9, Long, "ábc"),
+            indexed_item!(10, LongWithUnexpectedData, "ábc", "x💖z"),
+            indexed_item!(11, AmbiguousLong, "ƒ"),
+            indexed_item!(12, UnknownLong, ""),
+            indexed_item!(13, UnknownLong, ""),
+            indexed_item!(14, UnknownShort, 'ă'),
+            indexed_item!(15, UnknownShort, '🗻'),
+            indexed_item!(15, UnknownShort, '∈'),
+            indexed_item!(15, UnknownShort, '🌏'),
+            indexed_item!(16, Short, '❤'),
+            indexed_item!(17, ShortWithData, 'Ɛ', "aşrg", DataLocation::SameArg),
+            indexed_item!(18, ShortWithData, 'Ɛ', "argş", DataLocation::NextArg),
+            indexed_item!(20, Positional, "🌏∈🗻"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Chars with combinator chars (e.g. accent)
     #[test]
     fn combinators() {
         let args = arg_list!("y̆", "-y̆", "--y̆", "ëéy̆", "-ëéy̆", "--ëéy̆", "--ábc", "--ábc");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, "y̆"),
-                dm_item!(1, UnknownShort, 'y'),        // `y`
-                dm_item!(1, UnknownShort, '\u{0306}'), // breve
-                dm_item!(2, UnknownLong, "y̆"),
-                dm_item!(3, Positional, "ëéy̆"),
-                dm_item!(4, UnknownShort, 'ë'),        // e+diaeresis
-                dm_item!(4, UnknownShort, 'e'),        // `e`
-                dm_item!(4, UnknownShort, '\u{0301}'), // acute accent
-                dm_item!(4, UnknownShort, 'y'),        // `y`
-                dm_item!(4, UnknownShort, '\u{0306}'), // breve
-                dm_item!(5, UnknownLong, "ëéy̆"),
-                dm_item!(6, UnknownLong, "ábc"),       // without combinator
-                dm_item!(7, Long, "ábc"),              // with combinator
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, "y̆"),
+            indexed_item!(1, UnknownShort, 'y'),        // `y`
+            indexed_item!(1, UnknownShort, '\u{0306}'), // breve
+            indexed_item!(2, UnknownLong, "y̆"),
+            indexed_item!(3, Positional, "ëéy̆"),
+            indexed_item!(4, UnknownShort, 'ë'),        // e+diaeresis
+            indexed_item!(4, UnknownShort, 'e'),        // `e`
+            indexed_item!(4, UnknownShort, '\u{0301}'), // acute accent
+            indexed_item!(4, UnknownShort, 'y'),        // `y`
+            indexed_item!(4, UnknownShort, '\u{0306}'), // breve
+            indexed_item!(5, UnknownLong, "ëéy̆"),
+            indexed_item!(6, UnknownLong, "ábc"),       // without combinator
+            indexed_item!(7, Long, "ábc"),              // with combinator
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Chars with variation selector
@@ -367,34 +330,26 @@ mod utf8 {
         // Note: the following is the “black heart” character, followed by the variation selector
         // #16 (emoji) character.
         let args = arg_list!("❤️", "-❤️", "--❤️");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, "❤️"),
-                dm_item!(1, Short, '\u{2764}'),        // black-heart
-                dm_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
-                dm_item!(2, UnknownLong, "❤️"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, "❤️"),
+            indexed_item!(1, Short, '\u{2764}'),        // black-heart
+            indexed_item!(1, UnknownShort, '\u{fe0f}'), // emoji selector
+            indexed_item!(2, UnknownLong, "❤️"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Lone combinator chars
     #[test]
     fn lone_combinators() {
         let args = arg_list!("\u{0306}", "-\u{0306}", "--\u{0306}", "-\u{030a}");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, "\u{0306}"),
-                dm_item!(1, UnknownShort, '\u{0306}'),
-                dm_item!(2, UnknownLong, "\u{0306}"),
-                dm_item!(3, Short, '\u{030a}'),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, "\u{0306}"),
+            indexed_item!(1, UnknownShort, '\u{0306}'),
+            indexed_item!(2, UnknownLong, "\u{0306}"),
+            indexed_item!(3, Short, '\u{030a}'),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 }
 
@@ -591,22 +546,18 @@ mod data {
             "--delay=def",    // In-same-arg for optional type
             "--help",         // Random
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
-                dm_item!(2, Long, "help"),
-                dm_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
-                dm_item!(4, Long, "help"),
-                dm_item!(5, LongWithData, "delay", "", DataLocation::SameArg),
-                dm_item!(6, Positional, "def"),
-                dm_item!(7, Long, "help"),
-                dm_item!(8, LongWithData, "delay", "def", DataLocation::SameArg),
-                dm_item!(9, Long, "help"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "def", DataLocation::NextArg),
+            indexed_item!(2, Long, "help"),
+            indexed_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
+            indexed_item!(4, Long, "help"),
+            indexed_item!(5, LongWithData, "delay", "", DataLocation::SameArg),
+            indexed_item!(6, Positional, "def"),
+            indexed_item!(7, Long, "help"),
+            indexed_item!(8, LongWithData, "delay", "def", DataLocation::SameArg),
+            indexed_item!(9, Long, "help"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test calculation of whether or not short-opt taking data is the last character in the short
@@ -618,17 +569,13 @@ mod data {
     #[test]
     fn arg_placement_short_calc() {
         let args = arg_list!("-oa", "g", "-pa", "g");
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
-                dm_item!(1, Positional, "g"),
-                dm_item!(2, ShortWithData, 'p', "a", DataLocation::SameArg),
-                dm_item!(3, Positional, "g"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+            indexed_item!(1, Positional, "g"),
+            indexed_item!(2, ShortWithData, 'p', "a", DataLocation::SameArg),
+            indexed_item!(3, Positional, "g"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test option with expected data arg, provided in next argument for short options
@@ -641,22 +588,18 @@ mod data {
             "-bxo", "def",  // Even chars that are valid short opts
             "-xao", "def",  // Different variation
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
-                dm_item!(2, UnknownShort, 'b'),
-                dm_item!(2, ShortWithData, 'o', "def", DataLocation::NextArg),
-                dm_item!(4, UnknownShort, 'b'),
-                dm_item!(4, Short, 'x'),
-                dm_item!(4, ShortWithData, 'o', "def", DataLocation::NextArg),
-                dm_item!(6, Short, 'x'),
-                dm_item!(6, UnknownShort, 'a'),
-                dm_item!(6, ShortWithData, 'o', "def", DataLocation::NextArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, ShortWithData, 'o', "def", DataLocation::NextArg),
+            indexed_item!(2, UnknownShort, 'b'),
+            indexed_item!(2, ShortWithData, 'o', "def", DataLocation::NextArg),
+            indexed_item!(4, UnknownShort, 'b'),
+            indexed_item!(4, Short, 'x'),
+            indexed_item!(4, ShortWithData, 'o', "def", DataLocation::NextArg),
+            indexed_item!(6, Short, 'x'),
+            indexed_item!(6, UnknownShort, 'a'),
+            indexed_item!(6, ShortWithData, 'o', "def", DataLocation::NextArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test option with expected data arg, provided in same argument for short options
@@ -686,82 +629,70 @@ mod data {
             "-pxbc",
             "-pabx",
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
-                dm_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
-                dm_item!(2, UnknownShort, 'a'),
-                dm_item!(2, ShortWithData, 'o', "b", DataLocation::SameArg),
-                dm_item!(3, UnknownShort, 'a'),
-                dm_item!(3, ShortWithData, 'o', "bcd", DataLocation::SameArg),
-                dm_item!(4, UnknownShort, 'a'),
-                dm_item!(4, UnknownShort, 'b'),
-                dm_item!(4, UnknownShort, 'c'),
-                dm_item!(4, ShortWithData, 'o', "d", DataLocation::SameArg),
-                dm_item!(5, UnknownShort, 'a'),
-                dm_item!(5, UnknownShort, 'b'),
-                dm_item!(5, UnknownShort, 'c'),
-                dm_item!(5, ShortWithData, 'o', "def", DataLocation::SameArg),
-                dm_item!(6, Short, 'x'),
-                dm_item!(6, ShortWithData, 'o', "abc", DataLocation::SameArg),
-                dm_item!(7, ShortWithData, 'o', "axc", DataLocation::SameArg),
-                dm_item!(8, ShortWithData, 'o', "xbc", DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
-                dm_item!(10, ShortWithData, 'p', "a", DataLocation::SameArg),
-                dm_item!(11, ShortWithData, 'p', "abc", DataLocation::SameArg),
-                dm_item!(12, UnknownShort, 'a'),
-                dm_item!(12, ShortWithData, 'p', "b", DataLocation::SameArg),
-                dm_item!(13, UnknownShort, 'a'),
-                dm_item!(13, ShortWithData, 'p', "bcd", DataLocation::SameArg),
-                dm_item!(14, UnknownShort, 'a'),
-                dm_item!(14, UnknownShort, 'b'),
-                dm_item!(14, UnknownShort, 'c'),
-                dm_item!(14, ShortWithData, 'p', "d", DataLocation::SameArg),
-                dm_item!(15, UnknownShort, 'a'),
-                dm_item!(15, UnknownShort, 'b'),
-                dm_item!(15, UnknownShort, 'c'),
-                dm_item!(15, ShortWithData, 'p', "def", DataLocation::SameArg),
-                dm_item!(16, Short, 'x'),
-                dm_item!(16, ShortWithData, 'p', "abc", DataLocation::SameArg),
-                dm_item!(17, ShortWithData, 'p', "axc", DataLocation::SameArg),
-                dm_item!(18, ShortWithData, 'p', "xbc", DataLocation::SameArg),
-                dm_item!(19, ShortWithData, 'p', "abx", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+            indexed_item!(1, ShortWithData, 'o', "abc", DataLocation::SameArg),
+            indexed_item!(2, UnknownShort, 'a'),
+            indexed_item!(2, ShortWithData, 'o', "b", DataLocation::SameArg),
+            indexed_item!(3, UnknownShort, 'a'),
+            indexed_item!(3, ShortWithData, 'o', "bcd", DataLocation::SameArg),
+            indexed_item!(4, UnknownShort, 'a'),
+            indexed_item!(4, UnknownShort, 'b'),
+            indexed_item!(4, UnknownShort, 'c'),
+            indexed_item!(4, ShortWithData, 'o', "d", DataLocation::SameArg),
+            indexed_item!(5, UnknownShort, 'a'),
+            indexed_item!(5, UnknownShort, 'b'),
+            indexed_item!(5, UnknownShort, 'c'),
+            indexed_item!(5, ShortWithData, 'o', "def", DataLocation::SameArg),
+            indexed_item!(6, Short, 'x'),
+            indexed_item!(6, ShortWithData, 'o', "abc", DataLocation::SameArg),
+            indexed_item!(7, ShortWithData, 'o', "axc", DataLocation::SameArg),
+            indexed_item!(8, ShortWithData, 'o', "xbc", DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'o', "abx", DataLocation::SameArg),
+            indexed_item!(10, ShortWithData, 'p', "a", DataLocation::SameArg),
+            indexed_item!(11, ShortWithData, 'p', "abc", DataLocation::SameArg),
+            indexed_item!(12, UnknownShort, 'a'),
+            indexed_item!(12, ShortWithData, 'p', "b", DataLocation::SameArg),
+            indexed_item!(13, UnknownShort, 'a'),
+            indexed_item!(13, ShortWithData, 'p', "bcd", DataLocation::SameArg),
+            indexed_item!(14, UnknownShort, 'a'),
+            indexed_item!(14, UnknownShort, 'b'),
+            indexed_item!(14, UnknownShort, 'c'),
+            indexed_item!(14, ShortWithData, 'p', "d", DataLocation::SameArg),
+            indexed_item!(15, UnknownShort, 'a'),
+            indexed_item!(15, UnknownShort, 'b'),
+            indexed_item!(15, UnknownShort, 'c'),
+            indexed_item!(15, ShortWithData, 'p', "def", DataLocation::SameArg),
+            indexed_item!(16, Short, 'x'),
+            indexed_item!(16, ShortWithData, 'p', "abc", DataLocation::SameArg),
+            indexed_item!(17, ShortWithData, 'p', "axc", DataLocation::SameArg),
+            indexed_item!(18, ShortWithData, 'p', "xbc", DataLocation::SameArg),
+            indexed_item!(19, ShortWithData, 'p', "abx", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test missing argument data for long option
     #[test]
     fn missing_long() {
         let args = arg_list!("--hah");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongMissingData, "hah"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongMissingData, "hah"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test missing argument data for short option
     #[test]
     fn missing_short() {
         let args = arg_list!("-bxso");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, UnknownShort, 'b'),
-                dm_item!(0, Short, 'x'),
-                dm_item!(0, UnknownShort, 's'),
-                dm_item!(0, ShortMissingData, 'o'),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, UnknownShort, 'b'),
+            indexed_item!(0, Short, 'x'),
+            indexed_item!(0, UnknownShort, 's'),
+            indexed_item!(0, ShortMissingData, 'o'),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test missing argument data for long option with the value being being optional, thus no
@@ -769,14 +700,10 @@ mod data {
     #[test]
     fn missing_long_optional() {
         let args = arg_list!("--delay");
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "delay", "", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "delay", "", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test missing argument data for short option with the value being being optional, thus no
@@ -784,17 +711,13 @@ mod data {
     #[test]
     fn missing_short_optional() {
         let args = arg_list!("-bxsp");
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, UnknownShort, 'b'),
-                dm_item!(0, Short, 'x'),
-                dm_item!(0, UnknownShort, 's'),
-                dm_item!(0, ShortWithData, 'p', "", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, UnknownShort, 'b'),
+            indexed_item!(0, Short, 'x'),
+            indexed_item!(0, UnknownShort, 's'),
+            indexed_item!(0, ShortWithData, 'p', "", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test some misc. data handling.
@@ -817,25 +740,21 @@ mod data {
             "-o=b",      // Try with short option that takes data, which should consume it
             "-p=b",      // Same again but with optional data-taking option
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, UnknownLong, "xx"),
-                dm_item!(1, UnknownLong, "tt"),
-                dm_item!(2, Short, 'x'),
-                dm_item!(3, LongWithUnexpectedData, "foo", "bar"),
-                dm_item!(4, Long, "foo"),
-                dm_item!(5, Short, 'x'),
-                dm_item!(6, UnknownShort, '='),
-                dm_item!(7, UnknownShort, 'a'),
-                dm_item!(7, UnknownShort, '='),
-                dm_item!(7, UnknownShort, 'b'),
-                dm_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'p', "=b", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, UnknownLong, "xx"),
+            indexed_item!(1, UnknownLong, "tt"),
+            indexed_item!(2, Short, 'x'),
+            indexed_item!(3, LongWithUnexpectedData, "foo", "bar"),
+            indexed_item!(4, Long, "foo"),
+            indexed_item!(5, Short, 'x'),
+            indexed_item!(6, UnknownShort, '='),
+            indexed_item!(7, UnknownShort, 'a'),
+            indexed_item!(7, UnknownShort, '='),
+            indexed_item!(7, UnknownShort, 'b'),
+            indexed_item!(8, ShortWithData, 'o', "=b", DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'p', "=b", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test repetition - each instance should exist in the results in its own right. Note, basic
@@ -843,17 +762,13 @@ mod data {
     #[test]
     fn repetition() {
         let args = arg_list!("--hah=a", "-o", "s", "--hah=b", "-obc");
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
-                dm_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
-                dm_item!(3, LongWithData, "hah", "b", DataLocation::SameArg),
-                dm_item!(4, ShortWithData, 'o', "bc", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "a", DataLocation::SameArg),
+            indexed_item!(1, ShortWithData, 'o', "s", DataLocation::NextArg),
+            indexed_item!(3, LongWithData, "hah", "b", DataLocation::SameArg),
+            indexed_item!(4, ShortWithData, 'o', "bc", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test option with expected data arg, declared to be in same argument, but empty
@@ -893,21 +808,17 @@ mod data {
             "--delay=",
             "help",
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
-                dm_item!(1, Long, "help"),
-                dm_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
-                dm_item!(3, Positional, "help"),
-                dm_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
-                dm_item!(5, Long, "help"),
-                dm_item!(6, LongWithData, "delay", "", DataLocation::SameArg),
-                dm_item!(7, Positional, "help"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "", DataLocation::SameArg),
+            indexed_item!(1, Long, "help"),
+            indexed_item!(2, LongWithData, "hah", "", DataLocation::SameArg),
+            indexed_item!(3, Positional, "help"),
+            indexed_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
+            indexed_item!(5, Long, "help"),
+            indexed_item!(6, LongWithData, "delay", "", DataLocation::SameArg),
+            indexed_item!(7, Positional, "help"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test option with expected data arg, provided in next argument, but empty. Note that users
@@ -923,19 +834,15 @@ mod data {
             "--delay", "",
             "-p", "",
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
-                dm_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
-                dm_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
-                dm_item!(5, Positional, ""),
-                dm_item!(6, ShortWithData, 'p', "", DataLocation::SameArg),
-                dm_item!(7, Positional, ""),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
+            indexed_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
+            indexed_item!(4, LongWithData, "delay", "", DataLocation::SameArg),
+            indexed_item!(5, Positional, ""),
+            indexed_item!(6, ShortWithData, 'p', "", DataLocation::SameArg),
+            indexed_item!(7, Positional, ""),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test option with expected data arg, with data containing `=`. An `=` in a long option arg
@@ -962,28 +869,24 @@ mod data {
             "-p=",
             "-p===p",
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
-                dm_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
-                dm_item!(4, LongWithData, "hah", "d=ef", DataLocation::SameArg),
-                dm_item!(5, LongWithData, "hah", "=ef", DataLocation::SameArg),
-                dm_item!(6, Long, "help"),
-                dm_item!(7, UnknownLong, "blah"),
-                dm_item!(8, ShortWithData, 'o', "a=b", DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'o', "=", DataLocation::SameArg),
-                dm_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
-                dm_item!(11, LongWithData, "delay", "d=ef", DataLocation::SameArg),
-                dm_item!(12, LongWithData, "delay", "=ef", DataLocation::SameArg),
-                dm_item!(13, Long, "help"),
-                dm_item!(14, ShortWithData, 'p', "a=b", DataLocation::SameArg),
-                dm_item!(15, ShortWithData, 'p', "=", DataLocation::SameArg),
-                dm_item!(16, ShortWithData, 'p', "===p", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "d=ef", DataLocation::NextArg),
+            indexed_item!(2, LongWithData, "hah", "=", DataLocation::NextArg),
+            indexed_item!(4, LongWithData, "hah", "d=ef", DataLocation::SameArg),
+            indexed_item!(5, LongWithData, "hah", "=ef", DataLocation::SameArg),
+            indexed_item!(6, Long, "help"),
+            indexed_item!(7, UnknownLong, "blah"),
+            indexed_item!(8, ShortWithData, 'o', "a=b", DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'o', "=", DataLocation::SameArg),
+            indexed_item!(10, ShortWithData, 'o', "===o", DataLocation::SameArg),
+            indexed_item!(11, LongWithData, "delay", "d=ef", DataLocation::SameArg),
+            indexed_item!(12, LongWithData, "delay", "=ef", DataLocation::SameArg),
+            indexed_item!(13, Long, "help"),
+            indexed_item!(14, ShortWithData, 'p', "a=b", DataLocation::SameArg),
+            indexed_item!(15, ShortWithData, 'p', "=", DataLocation::SameArg),
+            indexed_item!(16, ShortWithData, 'p', "===p", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test argument data that looks like options
@@ -1010,37 +913,33 @@ mod data {
             "-p--foo",
             "-p--blah",
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
-                dm_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
-                dm_item!(3, LongWithData, "hah", "--blah", DataLocation::SameArg),
-                dm_item!(4, LongWithData, "hah", "--blah", DataLocation::NextArg),
-                dm_item!(6, LongWithData, "hah", "-h", DataLocation::SameArg),
-                dm_item!(7, LongWithData, "hah", "-h", DataLocation::NextArg),
-                dm_item!(9, LongWithData, "hah", "-n", DataLocation::SameArg),
-                dm_item!(10, LongWithData, "hah", "-n", DataLocation::NextArg),
-                dm_item!(12, ShortWithData, 'o', "-h", DataLocation::SameArg),
-                dm_item!(13, ShortWithData, 'o', "-h", DataLocation::NextArg),
-                dm_item!(15, ShortWithData, 'o', "-n", DataLocation::SameArg),
-                dm_item!(16, ShortWithData, 'o', "-n", DataLocation::NextArg),
-                dm_item!(18, ShortWithData, 'o', "--foo", DataLocation::SameArg),
-                dm_item!(19, ShortWithData, 'o', "--hah", DataLocation::NextArg),
-                dm_item!(21, ShortWithData, 'o', "--blah", DataLocation::SameArg),
-                dm_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
-                dm_item!(24, LongWithData, "delay", "--foo", DataLocation::SameArg),
-                dm_item!(25, LongWithData, "delay", "--blah", DataLocation::SameArg),
-                dm_item!(26, LongWithData, "delay", "-h", DataLocation::SameArg),
-                dm_item!(27, LongWithData, "delay", "-n", DataLocation::SameArg),
-                dm_item!(28, ShortWithData, 'p', "-h", DataLocation::SameArg),
-                dm_item!(29, ShortWithData, 'p', "-n", DataLocation::SameArg),
-                dm_item!(30, ShortWithData, 'p', "--foo", DataLocation::SameArg),
-                dm_item!(31, ShortWithData, 'p', "--blah", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "--foo", DataLocation::SameArg),
+            indexed_item!(1, LongWithData, "hah", "--foo", DataLocation::NextArg),
+            indexed_item!(3, LongWithData, "hah", "--blah", DataLocation::SameArg),
+            indexed_item!(4, LongWithData, "hah", "--blah", DataLocation::NextArg),
+            indexed_item!(6, LongWithData, "hah", "-h", DataLocation::SameArg),
+            indexed_item!(7, LongWithData, "hah", "-h", DataLocation::NextArg),
+            indexed_item!(9, LongWithData, "hah", "-n", DataLocation::SameArg),
+            indexed_item!(10, LongWithData, "hah", "-n", DataLocation::NextArg),
+            indexed_item!(12, ShortWithData, 'o', "-h", DataLocation::SameArg),
+            indexed_item!(13, ShortWithData, 'o', "-h", DataLocation::NextArg),
+            indexed_item!(15, ShortWithData, 'o', "-n", DataLocation::SameArg),
+            indexed_item!(16, ShortWithData, 'o', "-n", DataLocation::NextArg),
+            indexed_item!(18, ShortWithData, 'o', "--foo", DataLocation::SameArg),
+            indexed_item!(19, ShortWithData, 'o', "--hah", DataLocation::NextArg),
+            indexed_item!(21, ShortWithData, 'o', "--blah", DataLocation::SameArg),
+            indexed_item!(22, ShortWithData, 'o', "--blah", DataLocation::NextArg),
+            indexed_item!(24, LongWithData, "delay", "--foo", DataLocation::SameArg),
+            indexed_item!(25, LongWithData, "delay", "--blah", DataLocation::SameArg),
+            indexed_item!(26, LongWithData, "delay", "-h", DataLocation::SameArg),
+            indexed_item!(27, LongWithData, "delay", "-n", DataLocation::SameArg),
+            indexed_item!(28, ShortWithData, 'p', "-h", DataLocation::SameArg),
+            indexed_item!(29, ShortWithData, 'p', "-n", DataLocation::SameArg),
+            indexed_item!(30, ShortWithData, 'p', "--foo", DataLocation::SameArg),
+            indexed_item!(31, ShortWithData, 'p', "--blah", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -1056,19 +955,15 @@ mod data {
             "--delay=--",
             "-p--",
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
-                dm_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
-                dm_item!(3, ShortWithData, 'o', "--", DataLocation::SameArg),
-                dm_item!(4, ShortWithData, 'o', "--", DataLocation::NextArg),
-                dm_item!(6, LongWithData, "delay", "--", DataLocation::SameArg),
-                dm_item!(7, ShortWithData, 'p', "--", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
+            indexed_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
+            indexed_item!(3, ShortWithData, 'o', "--", DataLocation::SameArg),
+            indexed_item!(4, ShortWithData, 'o', "--", DataLocation::NextArg),
+            indexed_item!(6, LongWithData, "delay", "--", DataLocation::SameArg),
+            indexed_item!(7, ShortWithData, 'p', "--", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test long option involving multi-byte chars, to ensure “in-arg” component splitting for
@@ -1083,22 +978,18 @@ mod data {
             // Manadtory, missing data
              "--ƒƒ",
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
-                dm_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
-                dm_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
-                dm_item!(4, LongWithData, "ƒƒ", "❤️", DataLocation::SameArg),
-                dm_item!(5, LongWithData, "ǝƃ", "", DataLocation::SameArg),
-                dm_item!(6, LongWithData, "ǝƃ", "abc", DataLocation::SameArg),
-                dm_item!(7, LongWithData, "ǝƃ", "❤️", DataLocation::SameArg),
-                dm_item!(8, LongWithData, "ǝƃ", "", DataLocation::SameArg),
-                dm_item!(9, LongMissingData, "ƒƒ"),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "ƒƒ", "abc", DataLocation::NextArg),
+            indexed_item!(2, LongWithData, "ƒƒ", "", DataLocation::SameArg),
+            indexed_item!(3, LongWithData, "ƒƒ", "abc", DataLocation::SameArg),
+            indexed_item!(4, LongWithData, "ƒƒ", "❤️", DataLocation::SameArg),
+            indexed_item!(5, LongWithData, "ǝƃ", "", DataLocation::SameArg),
+            indexed_item!(6, LongWithData, "ǝƃ", "abc", DataLocation::SameArg),
+            indexed_item!(7, LongWithData, "ǝƃ", "❤️", DataLocation::SameArg),
+            indexed_item!(8, LongWithData, "ǝƃ", "", DataLocation::SameArg),
+            indexed_item!(9, LongMissingData, "ƒƒ"),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test short options involving multi-byte chars to check offset calculations in iterating
@@ -1120,51 +1011,47 @@ mod data {
             "-❤Ɛa", "-❤Ɛ❤", "-❤Ɛa❤", "-x❤Ɛb❤",
             "-❤💧a", "-❤💧❤", "-❤💧a❤", "-x❤💧b❤",
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
-                dm_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
-                dm_item!(4, ShortWithData, 'o', "❤", DataLocation::SameArg),
-                dm_item!(5, Short, '❤'),
-                dm_item!(5, ShortWithData, 'o', "a", DataLocation::SameArg),
-                dm_item!(6, Short, '❤'),
-                dm_item!(6, ShortWithData, 'o', "❤", DataLocation::SameArg),
-                dm_item!(7, Short, '❤'),
-                dm_item!(7, ShortWithData, 'o', "❤Ɛ", DataLocation::SameArg),
-                dm_item!(8, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
-                dm_item!(10, ShortWithData, 'p', "❤", DataLocation::SameArg),
-                dm_item!(11, Short, '❤'),
-                dm_item!(11, ShortWithData, 'p', "a", DataLocation::SameArg),
-                dm_item!(12, Short, '❤'),
-                dm_item!(12, ShortWithData, 'p', "❤", DataLocation::SameArg),
-                dm_item!(13, Short, '❤'),
-                dm_item!(13, ShortWithData, 'p', "❤💧", DataLocation::SameArg),
-                dm_item!(14, ShortWithData, '💧', "a", DataLocation::SameArg),
-                dm_item!(15, ShortWithData, '💧', "❤", DataLocation::SameArg),
-                dm_item!(16, Short, '❤'),
-                dm_item!(16, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
-                dm_item!(17, Short, '❤'),
-                dm_item!(17, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
-                dm_item!(18, Short, '❤'),
-                dm_item!(18, ShortWithData, 'Ɛ', "a❤", DataLocation::SameArg),
-                dm_item!(19, Short, 'x'),
-                dm_item!(19, Short, '❤'),
-                dm_item!(19, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
-                dm_item!(20, Short, '❤'),
-                dm_item!(20, ShortWithData, '💧', "a", DataLocation::SameArg),
-                dm_item!(21, Short, '❤'),
-                dm_item!(21, ShortWithData, '💧', "❤", DataLocation::SameArg),
-                dm_item!(22, Short, '❤'),
-                dm_item!(22, ShortWithData, '💧', "a❤", DataLocation::SameArg),
-                dm_item!(23, Short, 'x'),
-                dm_item!(23, Short, '❤'),
-                dm_item!(23, ShortWithData, '💧', "b❤", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, ShortWithData, 'o', "❤", DataLocation::NextArg),
+            indexed_item!(2, ShortWithData, 'Ɛ', "❤", DataLocation::NextArg),
+            indexed_item!(4, ShortWithData, 'o', "❤", DataLocation::SameArg),
+            indexed_item!(5, Short, '❤'),
+            indexed_item!(5, ShortWithData, 'o', "a", DataLocation::SameArg),
+            indexed_item!(6, Short, '❤'),
+            indexed_item!(6, ShortWithData, 'o', "❤", DataLocation::SameArg),
+            indexed_item!(7, Short, '❤'),
+            indexed_item!(7, ShortWithData, 'o', "❤Ɛ", DataLocation::SameArg),
+            indexed_item!(8, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+            indexed_item!(10, ShortWithData, 'p', "❤", DataLocation::SameArg),
+            indexed_item!(11, Short, '❤'),
+            indexed_item!(11, ShortWithData, 'p', "a", DataLocation::SameArg),
+            indexed_item!(12, Short, '❤'),
+            indexed_item!(12, ShortWithData, 'p', "❤", DataLocation::SameArg),
+            indexed_item!(13, Short, '❤'),
+            indexed_item!(13, ShortWithData, 'p', "❤💧", DataLocation::SameArg),
+            indexed_item!(14, ShortWithData, '💧', "a", DataLocation::SameArg),
+            indexed_item!(15, ShortWithData, '💧', "❤", DataLocation::SameArg),
+            indexed_item!(16, Short, '❤'),
+            indexed_item!(16, ShortWithData, 'Ɛ', "a", DataLocation::SameArg),
+            indexed_item!(17, Short, '❤'),
+            indexed_item!(17, ShortWithData, 'Ɛ', "❤", DataLocation::SameArg),
+            indexed_item!(18, Short, '❤'),
+            indexed_item!(18, ShortWithData, 'Ɛ', "a❤", DataLocation::SameArg),
+            indexed_item!(19, Short, 'x'),
+            indexed_item!(19, Short, '❤'),
+            indexed_item!(19, ShortWithData, 'Ɛ', "b❤", DataLocation::SameArg),
+            indexed_item!(20, Short, '❤'),
+            indexed_item!(20, ShortWithData, '💧', "a", DataLocation::SameArg),
+            indexed_item!(21, Short, '❤'),
+            indexed_item!(21, ShortWithData, '💧', "❤", DataLocation::SameArg),
+            indexed_item!(22, Short, '❤'),
+            indexed_item!(22, ShortWithData, '💧', "a❤", DataLocation::SameArg),
+            indexed_item!(23, Short, 'x'),
+            indexed_item!(23, Short, '❤'),
+            indexed_item!(23, ShortWithData, '💧', "b❤", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     /// Test the effect of Utf-8 combinator characters - does this break char iteration or byte
@@ -1181,35 +1068,31 @@ mod data {
             "-x❤\u{fe0f}Ɛ\u{030a}b❤",
             "-x\u{030a}❤\u{fe0f}Ɛ\u{030a}b❤\u{fe0f}",
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Short, '❤'),
-                dm_item!(0, UnknownShort, '\u{fe0f}'),
-                dm_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
-                dm_item!(1, Short, '❤'),
-                dm_item!(1, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
-                dm_item!(2, Short, '❤'),
-                dm_item!(2, ShortWithData, 'o', "a\u{030a}", DataLocation::SameArg),
-                dm_item!(3, Short, '❤'),
-                dm_item!(3, UnknownShort, '\u{fe0f}'),
-                dm_item!(3, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
-                dm_item!(4, Short, '\u{030a}'),
-                dm_item!(4, Short, '❤'),
-                dm_item!(4, ShortWithData, 'o', "a", DataLocation::SameArg),
-                dm_item!(5, Short, 'x'),
-                dm_item!(5, Short, '❤'),
-                dm_item!(5, UnknownShort, '\u{fe0f}'),
-                dm_item!(5, ShortWithData, 'Ɛ', "\u{030a}b❤", DataLocation::SameArg),
-                dm_item!(6, Short, 'x'),
-                dm_item!(6, Short, '\u{030a}'),
-                dm_item!(6, Short, '❤'),
-                dm_item!(6, UnknownShort, '\u{fe0f}'),
-                dm_item!(6, ShortWithData, 'Ɛ', "\u{030a}b❤\u{fe0f}", DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Short, '❤'),
+            indexed_item!(0, UnknownShort, '\u{fe0f}'),
+            indexed_item!(0, ShortWithData, 'o', "a", DataLocation::SameArg),
+            indexed_item!(1, Short, '❤'),
+            indexed_item!(1, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
+            indexed_item!(2, Short, '❤'),
+            indexed_item!(2, ShortWithData, 'o', "a\u{030a}", DataLocation::SameArg),
+            indexed_item!(3, Short, '❤'),
+            indexed_item!(3, UnknownShort, '\u{fe0f}'),
+            indexed_item!(3, ShortWithData, 'o', "\u{030a}a", DataLocation::SameArg),
+            indexed_item!(4, Short, '\u{030a}'),
+            indexed_item!(4, Short, '❤'),
+            indexed_item!(4, ShortWithData, 'o', "a", DataLocation::SameArg),
+            indexed_item!(5, Short, 'x'),
+            indexed_item!(5, Short, '❤'),
+            indexed_item!(5, UnknownShort, '\u{fe0f}'),
+            indexed_item!(5, ShortWithData, 'Ɛ', "\u{030a}b❤", DataLocation::SameArg),
+            indexed_item!(6, Short, 'x'),
+            indexed_item!(6, Short, '\u{030a}'),
+            indexed_item!(6, Short, '❤'),
+            indexed_item!(6, UnknownShort, '\u{fe0f}'),
+            indexed_item!(6, ShortWithData, 'Ɛ', "\u{030a}b❤\u{fe0f}", DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 }
 
@@ -1692,31 +1575,27 @@ mod trimming {
             "-o", "   a  b\t c ",       // Whitespace in in-next-arg short option data value
             "   a  b\t c ",             // Whitespace in positional
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, " --foo"),
-                dm_item!(1, UnknownLong, "foo "),
-                dm_item!(2, UnknownLong, " foo"),
-                dm_item!(3, UnknownLong, "f o\to"),
-                dm_item!(4, Positional, " -a"),
-                dm_item!(5, UnknownShort, 'a'),
-                dm_item!(5, UnknownShort, ' '),
-                dm_item!(6, UnknownShort, ' '),
-                dm_item!(6, UnknownShort, 'a'),
-                dm_item!(7, UnknownShort, 'a'),
-                dm_item!(7, UnknownShort, ' '),
-                dm_item!(7, UnknownShort, '\t'),
-                dm_item!(7, UnknownShort, 'b'),
-                dm_item!(8, LongWithData, "hah", "   a  b\t c ", DataLocation::SameArg),
-                dm_item!(9, LongWithData, "hah", "   a  b\t c ", DataLocation::NextArg),
-                dm_item!(11, ShortWithData, 'o', "   a  b\t c ", DataLocation::SameArg),
-                dm_item!(12, ShortWithData, 'o', "   a  b\t c ", DataLocation::NextArg),
-                dm_item!(14, Positional, "   a  b\t c "),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, " --foo"),
+            indexed_item!(1, UnknownLong, "foo "),
+            indexed_item!(2, UnknownLong, " foo"),
+            indexed_item!(3, UnknownLong, "f o\to"),
+            indexed_item!(4, Positional, " -a"),
+            indexed_item!(5, UnknownShort, 'a'),
+            indexed_item!(5, UnknownShort, ' '),
+            indexed_item!(6, UnknownShort, ' '),
+            indexed_item!(6, UnknownShort, 'a'),
+            indexed_item!(7, UnknownShort, 'a'),
+            indexed_item!(7, UnknownShort, ' '),
+            indexed_item!(7, UnknownShort, '\t'),
+            indexed_item!(7, UnknownShort, 'b'),
+            indexed_item!(8, LongWithData, "hah", "   a  b\t c ", DataLocation::SameArg),
+            indexed_item!(9, LongWithData, "hah", "   a  b\t c ", DataLocation::NextArg),
+            indexed_item!(11, ShortWithData, 'o', "   a  b\t c ", DataLocation::SameArg),
+            indexed_item!(12, ShortWithData, 'o', "   a  b\t c ", DataLocation::NextArg),
+            indexed_item!(14, Positional, "   a  b\t c "),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 }
 
@@ -1752,31 +1631,27 @@ mod alt_mode {
             "--",           // Early term
             "-help",        // Known option, should be positional though due to early terminator
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, "abc"),
-                dm_item!(1, Positional, "-"),
-                dm_item!(2, Long, "help"),
-                dm_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
-                dm_item!(4, LongWithData, "hah", "cba", DataLocation::NextArg),
-                dm_item!(6, LongWithData, "hah", "", DataLocation::SameArg),
-                dm_item!(7, UnknownLong, ""),
-                dm_item!(8, UnknownLong, ""),
-                dm_item!(9, UnknownLong, "bxs"),
-                dm_item!(10, UnknownLong, "-foo"),
-                dm_item!(11, AmbiguousLong, "f"),
-                dm_item!(12, Long, "foo"),
-                dm_item!(13, Long, "foobar"),
-                dm_item!(14, UnknownLong, "❤"),
-                dm_item!(15, EarlyTerminator),
-                dm_item!(16, Positional, "-help"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, Positional, "abc"),
+            indexed_item!(1, Positional, "-"),
+            indexed_item!(2, Long, "help"),
+            indexed_item!(3, LongWithData, "hah", "abc", DataLocation::SameArg),
+            indexed_item!(4, LongWithData, "hah", "cba", DataLocation::NextArg),
+            indexed_item!(6, LongWithData, "hah", "", DataLocation::SameArg),
+            indexed_item!(7, UnknownLong, ""),
+            indexed_item!(8, UnknownLong, ""),
+            indexed_item!(9, UnknownLong, "bxs"),
+            indexed_item!(10, UnknownLong, "-foo"),
+            indexed_item!(11, AmbiguousLong, "f"),
+            indexed_item!(12, Long, "foo"),
+            indexed_item!(13, Long, "foobar"),
+            indexed_item!(14, UnknownLong, "❤"),
+            indexed_item!(15, EarlyTerminator),
+            indexed_item!(16, Positional, "-help"),
+        ]);
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 
     /// Check unexpected and missing data
@@ -1787,18 +1662,14 @@ mod alt_mode {
             "-foo=",    // Same, data is empty though so should just be ignored
             "-hah",     // Known option, takes data, none provided
         );
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithUnexpectedData, "foo", "abc"),
-                dm_item!(1, Long, "foo"),
-                dm_item!(2, LongMissingData, "hah"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, LongWithUnexpectedData, "foo", "abc"),
+            indexed_item!(1, Long, "foo"),
+            indexed_item!(2, LongMissingData, "hah"),
+        ]);
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 
     /// Test argument data that looks like early terminator
@@ -1808,17 +1679,13 @@ mod alt_mode {
             "-hah=--",      // Known option, takes data, in-arg
             "-hah", "--",   // Same, next-arg
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
-                dm_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, LongWithData, "hah", "--", DataLocation::SameArg),
+            indexed_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
+        ]);
         let mut parser = get_parser();
         parser.settings.set_mode(OptionsMode::Alternate);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 
     /// Check command use
@@ -1877,20 +1744,16 @@ mod posixly_correct {
             "--",       // Early terminator, to be taken as positional
             "bar",      // Option, to be taken as positional
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Long, "help"),
-                dm_item!(1, Positional, "abc"),
-                dm_item!(2, Positional, "--foo"),
-                dm_item!(3, Positional, "--"),
-                dm_item!(4, Positional, "bar"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, Positional, "abc"),
+            indexed_item!(2, Positional, "--foo"),
+            indexed_item!(3, Positional, "--"),
+            indexed_item!(4, Positional, "bar"),
+        ]);
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 
     /// Check works with early terminator use, where it should not make any difference
@@ -1902,19 +1765,15 @@ mod posixly_correct {
             "abc",      // Positional
             "--foo",    // Option, to be taken as positional
         );
-        let expected = expected!(
-            problems: false,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Long, "help"),
-                dm_item!(1, EarlyTerminator),
-                dm_item!(2, Positional, "abc"),
-                dm_item!(3, Positional, "--foo"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, EarlyTerminator),
+            indexed_item!(2, Positional, "abc"),
+            indexed_item!(3, Positional, "--foo"),
+        ]);
         let mut parser = get_parser();
         parser.settings.set_posixly_correct(true);
-        check_result!(&Actual(parser.parse(&args)), &expected);
+        check_iter_result!(parser, args, expected);
     }
 }
 
@@ -2027,55 +1886,51 @@ mod invalid_byte_sequences {
             OsStr::from_bytes(b"ar\x84\x85g"),
         ];
 
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, expected_strings[0]),
-                dm_item!(1, UnknownLong, expected_strings[1]),
-                dm_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
-                dm_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
-                dm_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
-                dm_item!(6, UnknownLong, ""),
-                dm_item!(7, UnknownShort, 'm'),
-                // Note, here, it is right that we do not receive the original invalid byte(s) as
-                // the unrecognised short option, since it would be a pain to determine exactly what
-                // byte(s) were turned into each individual unicode replacement char that was
-                // analysed by the inner `str` based parser, which would also potentially involve
-                // merging some of its analysis items. Thus we expect a replacement char here.
-                dm_item!(7, UnknownShort, '�'),
-                dm_item!(7, Short, 'h'),
-                dm_item!(8, ShortWithData, 'o', expected_strings[5], DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'o', expected_strings[6], DataLocation::NextArg),
-                dm_item!(11, UnknownShort, '�'), // Notice three individual instances for arg 11
-                dm_item!(11, UnknownShort, '�'),
-                dm_item!(11, UnknownShort, '�'),
-                dm_item!(12, UnknownShort, '�'), // Note only one instance for arg 12
-                dm_item!(13, UnknownShort, '�'), // Note only one instance for arg 13
-                dm_item!(14, UnknownShort, 'm'),
-                dm_item!(14, Short, '❤'),
-                dm_item!(14, UnknownShort, 'a'),
-                dm_item!(14, UnknownShort, 'ş'),
-                dm_item!(14, UnknownShort, '�'), // This one is from the incomplete multi-byte
-                dm_item!(14, UnknownShort, 'j'),
-                dm_item!(14, UnknownShort, '�'), // This one is from the other invalid byte
-                dm_item!(14, UnknownShort, '�'), // This one is from the actual U+FFFD char
-                dm_item!(14, UnknownShort, 'k'),
-                dm_item!(15, UnknownShort, 'm'),
-                dm_item!(15, UnknownShort, '�'),
-                dm_item!(15, UnknownShort, '�'),
-                dm_item!(15, UnknownShort, '�'),
-                dm_item!(15, ShortWithData, 'o', expected_strings[7], DataLocation::SameArg),
-                dm_item!(16, UnknownShort, 'm'),
-                dm_item!(16, UnknownShort, '�'),
-                dm_item!(16, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
-                dm_item!(17, UnknownShort, '�'),
-                dm_item!(17, UnknownShort, '�'),
-                dm_item!(17, UnknownShort, '�'),
-                dm_item!(17, UnknownShort, '�'),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, expected_strings[0]),
+            indexed_item!(1, UnknownLong, expected_strings[1]),
+            indexed_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
+            indexed_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
+            indexed_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
+            indexed_item!(6, UnknownLong, ""),
+            indexed_item!(7, UnknownShort, 'm'),
+            // Note, here, it is right that we do not receive the original invalid byte(s) as
+            // the unrecognised short option, since it would be a pain to determine exactly what
+            // byte(s) were turned into each individual unicode replacement char that was
+            // analysed by the inner `str` based parser, which would also potentially involve
+            // merging some of its analysis items. Thus we expect a replacement char here.
+            indexed_item!(7, UnknownShort, '�'),
+            indexed_item!(7, Short, 'h'),
+            indexed_item!(8, ShortWithData, 'o', expected_strings[5], DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'o', expected_strings[6], DataLocation::NextArg),
+            indexed_item!(11, UnknownShort, '�'), // Notice three individual instances for arg 11
+            indexed_item!(11, UnknownShort, '�'),
+            indexed_item!(11, UnknownShort, '�'),
+            indexed_item!(12, UnknownShort, '�'), // Note only one instance for arg 12
+            indexed_item!(13, UnknownShort, '�'), // Note only one instance for arg 13
+            indexed_item!(14, UnknownShort, 'm'),
+            indexed_item!(14, Short, '❤'),
+            indexed_item!(14, UnknownShort, 'a'),
+            indexed_item!(14, UnknownShort, 'ş'),
+            indexed_item!(14, UnknownShort, '�'), // This one is from the incomplete multi-byte
+            indexed_item!(14, UnknownShort, 'j'),
+            indexed_item!(14, UnknownShort, '�'), // This one is from the other invalid byte
+            indexed_item!(14, UnknownShort, '�'), // This one is from the actual U+FFFD char
+            indexed_item!(14, UnknownShort, 'k'),
+            indexed_item!(15, UnknownShort, 'm'),
+            indexed_item!(15, UnknownShort, '�'),
+            indexed_item!(15, UnknownShort, '�'),
+            indexed_item!(15, UnknownShort, '�'),
+            indexed_item!(15, ShortWithData, 'o', expected_strings[7], DataLocation::SameArg),
+            indexed_item!(16, UnknownShort, 'm'),
+            indexed_item!(16, UnknownShort, '�'),
+            indexed_item!(16, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
+            indexed_item!(17, UnknownShort, '�'),
+            indexed_item!(17, UnknownShort, '�'),
+            indexed_item!(17, UnknownShort, '�'),
+            indexed_item!(17, UnknownShort, '�'),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 
     #[cfg(windows)]
@@ -2132,42 +1987,38 @@ mod invalid_byte_sequences {
             OsStr::from_bytes(b"ar\xed\xa0\x84\xed\xa0\x85g"),
         ];
 
-        let expected = expected!(
-            problems: true,
-            opt_set: get_base_opts(),
-            [
-                dm_item!(0, Positional, expected_strings[0]),
-                dm_item!(1, UnknownLong, expected_strings[1]),
-                dm_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
-                dm_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
-                dm_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
-                dm_item!(6, UnknownLong, ""),
-                dm_item!(7, UnknownShort, 'm'),
-                dm_item!(7, UnknownShort, '�'),
-                dm_item!(7, Short, 'h'),
-                dm_item!(8, ShortWithData, 'o', expected_strings[5], DataLocation::SameArg),
-                dm_item!(9, ShortWithData, 'o', expected_strings[6], DataLocation::NextArg),
-                dm_item!(11, UnknownShort, '�'), // Notice three individual instances for arg 11
-                dm_item!(11, UnknownShort, '�'),
-                dm_item!(11, UnknownShort, '�'),
-                dm_item!(12, UnknownShort, 'm'),
-                dm_item!(12, Short, '❤'),
-                dm_item!(12, UnknownShort, 'a'),
-                dm_item!(12, UnknownShort, 'ş'),
-                dm_item!(12, UnknownShort, 'j'),
-                dm_item!(12, UnknownShort, '�'),
-                dm_item!(12, UnknownShort, '�'), // This one is from the actual U+FFFD char
-                dm_item!(12, UnknownShort, 'k'),
-                dm_item!(13, UnknownShort, 'm'),
-                dm_item!(13, UnknownShort, '�'),
-                dm_item!(13, UnknownShort, '�'),
-                dm_item!(13, UnknownShort, '�'),
-                dm_item!(13, ShortWithData, 'o', expected_strings[7], DataLocation::SameArg),
-                dm_item!(14, UnknownShort, 'm'),
-                dm_item!(14, UnknownShort, '�'),
-                dm_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
-            ]
-        );
-        check_result!(&Actual(get_parser().parse(&args)), &expected);
+        let expected = expected!([
+            indexed_item!(0, Positional, expected_strings[0]),
+            indexed_item!(1, UnknownLong, expected_strings[1]),
+            indexed_item!(2, LongWithData, "hah", expected_strings[2], DataLocation::SameArg),
+            indexed_item!(3, LongWithData, "hah", expected_strings[3], DataLocation::NextArg),
+            indexed_item!(5, LongWithUnexpectedData, "foo", expected_strings[4]),
+            indexed_item!(6, UnknownLong, ""),
+            indexed_item!(7, UnknownShort, 'm'),
+            indexed_item!(7, UnknownShort, '�'),
+            indexed_item!(7, Short, 'h'),
+            indexed_item!(8, ShortWithData, 'o', expected_strings[5], DataLocation::SameArg),
+            indexed_item!(9, ShortWithData, 'o', expected_strings[6], DataLocation::NextArg),
+            indexed_item!(11, UnknownShort, '�'), // Notice three individual instances for arg 11
+            indexed_item!(11, UnknownShort, '�'),
+            indexed_item!(11, UnknownShort, '�'),
+            indexed_item!(12, UnknownShort, 'm'),
+            indexed_item!(12, Short, '❤'),
+            indexed_item!(12, UnknownShort, 'a'),
+            indexed_item!(12, UnknownShort, 'ş'),
+            indexed_item!(12, UnknownShort, 'j'),
+            indexed_item!(12, UnknownShort, '�'),
+            indexed_item!(12, UnknownShort, '�'), // This one is from the actual U+FFFD char
+            indexed_item!(12, UnknownShort, 'k'),
+            indexed_item!(13, UnknownShort, 'm'),
+            indexed_item!(13, UnknownShort, '�'),
+            indexed_item!(13, UnknownShort, '�'),
+            indexed_item!(13, UnknownShort, '�'),
+            indexed_item!(13, ShortWithData, 'o', expected_strings[7], DataLocation::SameArg),
+            indexed_item!(14, UnknownShort, 'm'),
+            indexed_item!(14, UnknownShort, '�'),
+            indexed_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
+        ]);
+        check_iter_result!(get_parser(), args, expected);
     }
 }

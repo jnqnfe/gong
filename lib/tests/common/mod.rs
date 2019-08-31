@@ -30,10 +30,17 @@ use gong::parser::{Parser, CmdParser};
 macro_rules! arg_list {
     ( $($e:expr),+ ) => { [ $(OsStr::new($e)),+ ] };
     ( $($e:expr,)+ ) => { [ $(OsStr::new($e)),+ ] };
+    () => { [] };
+}
+
+/// Construct a set of expected items
+macro_rules! expected {
+    ( [ $($item:expr),* ] ) => { &[ $($item),* ] };
+    ( [ $($item:expr,)* ] ) => { &[ $($item),* ] };
 }
 
 /// Construct an `Expected`
-macro_rules! expected {
+macro_rules! dm_expected {
     ( problems: $problems:expr, opt_set: $opt_set:expr, $items:expr ) => {
         Expected(item_set!(problems: $problems, opt_set: $opt_set, $items))
     };
@@ -192,6 +199,14 @@ macro_rules! check_result {
             assert!(false, "analysis does not match what was expected!");
         }
     }}
+}
+
+/// Fetch and check iterator based results with expected
+macro_rules! check_iter_result {
+    ( $parser:expr, $args:expr, $expected:expr ) => {{
+        let items: Vec<_> = $parser.parse_iter(&$args).indexed().collect();
+        assert_eq!(&items[..], &$expected[..]);
+    }};
 }
 
 impl<'a, 'b, 'c> Actual<'a, 'b, 'c> {

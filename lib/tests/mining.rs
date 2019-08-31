@@ -86,7 +86,20 @@ fn used() {
         "-o321",        // Known option with data
         "--version=a",  // Known option, with unexpected data
     );
-    let expected = expected!(
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, Long, "help"),
+        indexed_item!(1, UnknownLong, "ooo"),
+        indexed_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+        indexed_item!(3, Short, 'h'),
+        indexed_item!(4, UnknownShort, 'd'),
+        indexed_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
+        indexed_item!(6, LongWithUnexpectedData, "version", "a"),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
         problems: true,
         opt_set: get_base_opts(),
         [
@@ -99,7 +112,6 @@ fn used() {
             dm_item!(6, LongWithUnexpectedData, "version", "a"),
         ]
     );
-    let parser = get_parser();
     let item_set = parser.parse(&args);
     check_result!(&Actual(item_set.clone()), &expected);
 
@@ -139,7 +151,26 @@ fn count() {
         "-o654",        // Known option with data
         "--version=a",  // Known option, with unexpected data
     );
-    let expected = expected!(
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, Long, "help"),
+        indexed_item!(1, UnknownLong, "ooo"),
+        indexed_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(3, Short, 'h'),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(4, Short, 'v'),
+        indexed_item!(5, UnknownShort, 'd'),
+        indexed_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
+        indexed_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
+        indexed_item!(8, Long, "help"),
+        indexed_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
+        indexed_item!(10, LongWithUnexpectedData, "version", "a"),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
         problems: true,
         opt_set: get_base_opts(),
         [
@@ -158,7 +189,6 @@ fn count() {
             dm_item!(10, LongWithUnexpectedData, "version", "a"),
         ]
     );
-    let parser = get_parser();
     let item_set = parser.parse(&args);
     check_result!(&Actual(item_set.clone()), &expected);
 
@@ -193,14 +223,20 @@ mod missing_data {
         let args = arg_list!(
             "--hah",    // Known option with missing data
         );
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, LongMissingData, "hah"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
                 dm_item!(0, LongMissingData, "hah"),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -213,14 +249,20 @@ mod missing_data {
         let args = arg_list!(
             "-o",    // Known option with missing data
         );
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, ShortMissingData, 'o'),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
                 dm_item!(0, ShortMissingData, 'o'),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -235,7 +277,15 @@ fn first_problem() {
         "--why",       // Unknown option
         "--fo",        // Ambiguous option
     );
-    let expected = expected!(
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, UnknownLong, "why"),
+        indexed_item!(1, AmbiguousLong, "fo"),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
         problems: true,
         opt_set: get_base_opts(),
         [
@@ -243,7 +293,6 @@ fn first_problem() {
             dm_item!(1, AmbiguousLong, "fo"),
         ]
     );
-    let parser = get_parser();
     let item_set = parser.parse(&args);
     check_result!(&Actual(item_set.clone()), &expected);
 
@@ -266,7 +315,18 @@ mod iter {
             "--foo",       // Known option
             "--help=blah", // Known option with unexpected data
         );
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Positional, "abc"),
+            indexed_item!(1, UnknownLong, "why"),
+            indexed_item!(2, AmbiguousLong, "fo"),
+            indexed_item!(3, Long, "foo"),
+            indexed_item!(4, LongWithUnexpectedData, "help", "blah"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -277,7 +337,6 @@ mod iter {
                 dm_item!(4, LongWithUnexpectedData, "help", "blah"),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -318,7 +377,22 @@ mod iter {
             "nop",          // Positional
             "--help",       // Positional
         );
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Positional, "abc"),
+            indexed_item!(1, Long, "help"),
+            indexed_item!(2, Positional, "def"),
+            indexed_item!(3, Positional, "hij"),
+            indexed_item!(4, UnknownLong, "jjj"),
+            indexed_item!(5, Positional, "klm"),
+            indexed_item!(6, EarlyTerminator),
+            indexed_item!(7, Positional, "nop"),
+            indexed_item!(8, Positional, "--help"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -333,7 +407,6 @@ mod iter {
                 dm_item!(8, Positional, "--help"),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -364,7 +437,25 @@ fn last_value() {
         "--help",       // Known option
         "-o654",        // Known option with data
     );
-    let expected = expected!(
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, Long, "help"),
+        indexed_item!(1, UnknownLong, "ooo"),
+        indexed_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(3, Short, 'h'),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(4, Short, 'v'),
+        indexed_item!(5, UnknownShort, 'd'),
+        indexed_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
+        indexed_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
+        indexed_item!(8, Long, "help"),
+        indexed_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
         problems: true,
         opt_set: get_base_opts(),
         [
@@ -382,7 +473,6 @@ fn last_value() {
             dm_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
         ]
     );
-    let parser = get_parser();
     let item_set = parser.parse(&args);
     check_result!(&Actual(item_set.clone()), &expected);
 
@@ -422,7 +512,26 @@ fn all_values() {
         "--help",       // Known option
         "-o987",        // Known option with data
     );
-    let expected = expected!(
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, Long, "help"),
+        indexed_item!(1, UnknownLong, "ooo"),
+        indexed_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(3, Short, 'h'),
+        indexed_item!(3, Short, 'v'),
+        indexed_item!(4, Short, 'v'),
+        indexed_item!(5, UnknownShort, 'd'),
+        indexed_item!(6, ShortWithData, 'o', "321", DataLocation::SameArg),
+        indexed_item!(7, ShortWithData, 'o', "654", DataLocation::SameArg),
+        indexed_item!(8, LongWithData, "hah", "456", DataLocation::SameArg),
+        indexed_item!(9, Long, "help"),
+        indexed_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
         problems: true,
         opt_set: get_base_opts(),
         [
@@ -441,7 +550,6 @@ fn all_values() {
             dm_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
         ]
     );
-    let parser = get_parser();
     let item_set = parser.parse(&args);
     check_result!(&Actual(item_set.clone()), &expected);
 
@@ -489,7 +597,25 @@ mod last_used {
             "-dC",
             "--version=a",
         );
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "color"),
+            indexed_item!(1, Long, "help"),
+            indexed_item!(2, Short, 'C'),
+            indexed_item!(3, UnknownLong, "ooo"),
+            indexed_item!(4, Long, "no-color"),
+            indexed_item!(5, Short, 'C'),
+            indexed_item!(5, Short, 'h'),
+            indexed_item!(6, Long, "no-color"),
+            indexed_item!(7, Long, "color"),
+            indexed_item!(8, UnknownShort, 'd'),
+            indexed_item!(8, Short, 'C'),
+            indexed_item!(9, LongWithUnexpectedData, "version", "a"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -507,7 +633,6 @@ mod last_used {
                 dm_item!(9, LongWithUnexpectedData, "version", "a"),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -535,7 +660,18 @@ mod last_used {
     #[test]
     fn long_pos_is_last() {
         let args = arg_list!("--help", "-C", "--no-color", "--color", "-d");
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, Short, 'C'),
+            indexed_item!(2, Long, "no-color"),
+            indexed_item!(3, Long, "color"),
+            indexed_item!(4, UnknownShort, 'd'),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -546,7 +682,6 @@ mod last_used {
                 dm_item!(4, UnknownShort, 'd'),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -574,7 +709,18 @@ mod last_used {
     #[test]
     fn long_neg_is_last() {
         let args = arg_list!("--help", "-C", "--color", "--no-color", "-d");
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, Short, 'C'),
+            indexed_item!(2, Long, "color"),
+            indexed_item!(3, Long, "no-color"),
+            indexed_item!(4, UnknownShort, 'd'),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -585,7 +731,6 @@ mod last_used {
                 dm_item!(4, UnknownShort, 'd'),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -608,7 +753,18 @@ mod last_used {
     #[test]
     fn long_with_unexpected_data_is_last() {
         let args = arg_list!("--help", "-C", "--no-color", "--color=data", "-d");
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, Short, 'C'),
+            indexed_item!(2, Long, "no-color"),
+            indexed_item!(3, LongWithUnexpectedData, "color", "data"),
+            indexed_item!(4, UnknownShort, 'd'),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: true,
             opt_set: get_base_opts(),
             [
@@ -619,7 +775,6 @@ mod last_used {
                 dm_item!(4, UnknownShort, 'd'),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -642,14 +797,20 @@ mod last_used {
     #[test]
     fn not_present() {
         let args = arg_list!("--help");
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: false,
             opt_set: get_base_opts(),
             [
                 dm_item!(0, Long, "help"),
             ]
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
@@ -672,12 +833,16 @@ mod last_used {
     #[test]
     fn no_args() {
         let args: Vec<&OsStr> = Vec::new();
-        let expected = expected!(
+        let parser = get_parser();
+
+        let expected = expected!([]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
             problems: false,
             opt_set: get_base_opts(),
             []
         );
-        let parser = get_parser();
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 

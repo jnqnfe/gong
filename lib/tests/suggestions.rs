@@ -21,7 +21,6 @@ mod options {
     use gong::{longopt, option_set};
     use gong::analysis::*;
     use gong::parser::Parser;
-    use self::super::common::{Actual, Expected};
 
     #[test]
     fn basic() {
@@ -34,27 +33,23 @@ mod options {
         assert!(opts.is_valid());
 
         let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
-        let expected = expected!(
-            problems: true,
-            opt_set: &opts,
-            [
-                dm_item!(0, UnknownLong, "a"),
-                dm_item!(1, UnknownLong, "foo"),
-                dm_item!(2, UnknownLong, "hellp"),
-                dm_item!(3, UnknownLong, "but_i_digest"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, UnknownLong, "a"),
+            indexed_item!(1, UnknownLong, "foo"),
+            indexed_item!(2, UnknownLong, "hellp"),
+            indexed_item!(3, UnknownLong, "but_i_digest"),
+        ]);
 
         let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
-        check_result!(&actual_results, &expected);
+        let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
+        assert_eq!(&items[..], &expected[..]);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.items {
+        for item in &items {
             match item {
-                Err(ProblemItem::UnknownLong(name)) => {
-                    suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
+                (_, Err(ProblemItem::UnknownLong(name)), _) => {
+                    suggestions.push((*name, opts.suggest(name)));
                 },
                 _ => unreachable!(),
             }
@@ -84,26 +79,22 @@ mod options {
         assert!(opts.is_valid());
 
         let args = arg_list!("--hellp", "--bard", "--fooa");
-        let expected = expected!(
-            problems: true,
-            opt_set: &opts,
-            [
-                dm_item!(0, UnknownLong, "hellp"),
-                dm_item!(1, UnknownLong, "bard"),
-                dm_item!(2, UnknownLong, "fooa"),
-            ]
-        );
+        let expected = expected!([
+            indexed_item!(0, UnknownLong, "hellp"),
+            indexed_item!(1, UnknownLong, "bard"),
+            indexed_item!(2, UnknownLong, "fooa"),
+        ]);
 
         let mut parser = Parser::new(&opts);
         parser.settings.set_stop_on_problem(false);
-        let actual_results = Actual(parser.parse(&args));
-        check_result!(&actual_results, &expected);
+        let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
+        assert_eq!(&items[..], &expected[..]);
 
         let mut suggestions = Vec::new();
-        for item in &actual_results.0.items {
+        for item in &items {
             match item {
-                Err(ProblemItem::UnknownLong(name)) => {
-                    suggestions.push((*name, actual_results.0.opt_set.suggest(name)));
+                (_, Err(ProblemItem::UnknownLong(name)), _) => {
+                    suggestions.push((*name, opts.suggest(name)));
                 },
                 _ => unreachable!(),
             }
