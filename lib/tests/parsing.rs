@@ -19,6 +19,7 @@ use std::ffi::{OsStr, OsString};
 use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{CmdParser, OptionsMode};
+use gong::positionals::Policy as PositionalsPolicy;
 use self::common::{get_parser, get_parser_cmd, get_base_opts, get_base_cmds, CmdActual, CmdExpected};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,6 +242,147 @@ fn repetition() {
         indexed_item!(7, Short, 'h'),
     ]);
     check_iter_result!(get_parser(), args, expected);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Positionals policy
+//
+// Note: These tests typically need to check both with non-command and command based parsers, since
+// their is potentially a difference in how the engine keeps track of its count of the number of
+// positionals encountered, on top of the need for command handling to handle both normal positional
+// item variants **and** unexpected.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod positionals {
+    use super::*;
+
+    /// Policy of unlimited
+    #[test]
+    fn unlimited() {
+        let args = arg_list!("a", "b", "c");
+
+        // Non-command parser
+        eprintln!("trying with non-command parser");
+        let expected = expected!([
+            indexed_item!(0, Positional, "a"),
+            indexed_item!(1, Positional, "b"),
+            indexed_item!(2, Positional, "c"),
+        ]);
+        let mut parser = get_parser();
+        parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+        check_iter_result!(parser, args, expected);
+
+        // Command parser
+        eprintln!("trying with command parser");
+        let expected = cmd_expected!(
+            problems: true,
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: get_base_opts(),
+                [
+                    dm_item!(0, UnknownCommand, "a"),
+                    dm_item!(1, Positional, "b"),
+                    dm_item!(2, Positional, "c"),
+                ])
+            ),
+            cmd_set: Some(get_base_cmds())
+        );
+        let mut parser = get_parser_cmd();
+        parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
+    }
+
+    /// Policy limited, where providing too many
+    #[test]
+    fn unexpected1() {
+        let args = arg_list!("a", "--foo", "b", "c", "d", "--bar", "e", "f");
+
+        // Non-command parser
+        eprintln!("trying with non-command parser");
+        let expected = expected!([
+            indexed_item!(0, Positional, "a"),
+            indexed_item!(1, Long, "foo"),
+            indexed_item!(2, Positional, "b"),
+            indexed_item!(3, UnexpectedPositional, "c"),
+            indexed_item!(4, UnexpectedPositional, "d"),
+            indexed_item!(5, UnknownLong, "bar"),
+            indexed_item!(6, UnexpectedPositional, "e"),
+            indexed_item!(7, UnexpectedPositional, "f"),
+        ]);
+        let mut parser = get_parser();
+        parser.set_positionals_policy(PositionalsPolicy::Max(2));
+        check_iter_result!(parser, args, expected);
+
+        // Command parser
+        eprintln!("trying with command parser");
+        let expected = cmd_expected!(
+            problems: true,
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: get_base_opts(),
+                [
+                    dm_item!(0, UnknownCommand, "a"),
+                    dm_item!(1, Long, "foo"),
+                    dm_item!(2, Positional, "b"),
+                    dm_item!(3, Positional, "c"),
+                    dm_item!(4, UnexpectedPositional, "d"),
+                    dm_item!(5, UnknownLong, "bar"),
+                    dm_item!(6, UnexpectedPositional, "e"),
+                    dm_item!(7, UnexpectedPositional, "f"),
+                ])
+            ),
+            cmd_set: Some(get_base_cmds())
+        );
+        let mut parser = get_parser_cmd();
+        parser.set_positionals_policy(PositionalsPolicy::Max(2));
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
+    }
+
+    /// Policy limited, where providing too many
+    #[test]
+    fn unexpected2() {
+        let args = arg_list!("a", "--foo", "b", "c", "d", "--bar", "e", "f");
+
+        // Non-command parser
+        eprintln!("trying with non-command parser");
+        let expected = expected!([
+            indexed_item!(0, UnexpectedPositional, "a"),
+            indexed_item!(1, Long, "foo"),
+            indexed_item!(2, UnexpectedPositional, "b"),
+            indexed_item!(3, UnexpectedPositional, "c"),
+            indexed_item!(4, UnexpectedPositional, "d"),
+            indexed_item!(5, UnknownLong, "bar"),
+            indexed_item!(6, UnexpectedPositional, "e"),
+            indexed_item!(7, UnexpectedPositional, "f"),
+        ]);
+        let mut parser = get_parser();
+        parser.set_positionals_policy(PositionalsPolicy::Max(0));
+        check_iter_result!(parser, args, expected);
+
+        // Command parser
+        eprintln!("trying with command parser");
+        let expected = cmd_expected!(
+            problems: true,
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: get_base_opts(),
+                [
+                    dm_item!(0, UnknownCommand, "a"),
+                    dm_item!(1, Long, "foo"),
+                    dm_item!(2, UnexpectedPositional, "b"),
+                    dm_item!(3, UnexpectedPositional, "c"),
+                    dm_item!(4, UnexpectedPositional, "d"),
+                    dm_item!(5, UnknownLong, "bar"),
+                    dm_item!(6, UnexpectedPositional, "e"),
+                    dm_item!(7, UnexpectedPositional, "f"),
+                ])
+            ),
+            cmd_set: Some(get_base_cmds())
+        );
+        let mut parser = get_parser_cmd();
+        parser.set_positionals_policy(PositionalsPolicy::Max(0));
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1753,6 +1895,20 @@ mod posixly_correct {
         ]);
         let mut parser = get_parser();
         parser.settings().set_posixly_correct(true);
+        parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+        check_iter_result!(parser, args, expected);
+
+        // Also need to check what happens with respect to unexpected-positional handling
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, UnexpectedPositional, "abc"),
+            indexed_item!(2, UnexpectedPositional, "--foo"),
+            indexed_item!(3, UnexpectedPositional, "--"),
+            indexed_item!(4, UnexpectedPositional, "bar"),
+        ]);
+        let mut parser = get_parser();
+        parser.settings().set_posixly_correct(true);
+        parser.set_positionals_policy(PositionalsPolicy::Max(0));
         check_iter_result!(parser, args, expected);
     }
 
@@ -1773,6 +1929,19 @@ mod posixly_correct {
         ]);
         let mut parser = get_parser();
         parser.settings().set_posixly_correct(true);
+        parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+        check_iter_result!(parser, args, expected);
+
+        // Also need to check what happens with respect to unexpected-positional handling
+        let expected = expected!([
+            indexed_item!(0, Long, "help"),
+            indexed_item!(1, EarlyTerminator),
+            indexed_item!(2, UnexpectedPositional, "abc"),
+            indexed_item!(3, UnexpectedPositional, "--foo"),
+        ]);
+        let mut parser = get_parser();
+        parser.settings().set_posixly_correct(true);
+        parser.set_positionals_policy(PositionalsPolicy::Max(0));
         check_iter_result!(parser, args, expected);
     }
 }
@@ -2020,5 +2189,79 @@ mod invalid_byte_sequences {
             indexed_item!(14, ShortWithData, 'o', expected_strings[8], DataLocation::SameArg),
         ]);
         check_iter_result!(get_parser(), args, expected);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Limits
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod limits {
+    use super::*;
+
+    /// Limits of positionals counting
+    ///
+    /// The parser has a counter for the number of positionals accepted so far, for use with policy
+    /// enforcement. This is aliased as the `positionals::Quantity` type (currently `u16`). If we
+    /// were to encounter more positionals than this, there is a potential that the parser would
+    /// crash due to the overflow in incrementing the counter.
+    ///
+    /// We assert here the behaviour to be expected - currently we expect that the internal counter
+    /// will do a saturating addition and thus not crash with an overflow with an unlimited policy.
+    #[test]
+    fn positionals_counting() {
+        use gong::positionals::Quantity;
+        const MAX: usize = Quantity::max_value() as usize; //65535
+
+        // Let’s construct a set of arguments with a greater quantity of positionals than the limit
+        // of the counter.
+        const NUM: usize = MAX + 2; // Going a couple over (65537)
+        let mut args = Vec::with_capacity(NUM);
+        for _ in 1..=NUM { // Args 1-65537 (inclusive), so 65537 args
+            args.push("a");
+        }
+
+        let mut parser = get_parser();
+
+        let gen_ok = |i| { Some(indexed_item!(i, Positional, "a")) };
+        let gen_err = |i| { Some(indexed_item!(i, UnexpectedPositional, "a")) };
+
+        /* -- Test counting with unlimited policy -- */
+
+        parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+        let mut iter = parser.parse_iter(&args).indexed();
+
+        // Remember, indexes 0-(n-1) for args 1-n
+        assert_eq!(gen_ok(0), iter.next()); // Arg #1
+        assert_eq!(gen_ok(1), iter.next()); // Arg #2
+        assert_eq!(gen_ok(2), iter.next()); // Arg #3
+        for _ in 0..65530 {
+            iter.next();
+        }
+        assert_eq!(gen_ok(MAX - 2),  iter.next()); // Arg #65534
+        assert_eq!(gen_ok(MAX - 1),  iter.next()); // Arg #65535
+        // Will **not** fail having reached MAX counter value, will just serve as normal
+        assert_eq!(gen_ok(MAX    ),  iter.next()); // Arg #65536
+        assert_eq!(gen_ok(MAX + 1),  iter.next()); // Arg #65537
+        assert_eq!(None,             iter.next());
+
+        /* -- Test counting with max policy -- */
+
+        parser.set_positionals_policy(PositionalsPolicy::Max(Quantity::max_value()));
+        let mut iter = parser.parse_iter(&args).indexed();
+
+        // Remember, indexes 0-(n-1) for args 1-n
+        assert_eq!(gen_ok(0), iter.next()); // Arg #1
+        assert_eq!(gen_ok(1), iter.next()); // Arg #2
+        assert_eq!(gen_ok(2), iter.next()); // Arg #3
+        for _ in 0..65530 {
+            iter.next();
+        }
+        assert_eq!(gen_ok(MAX - 2),  iter.next()); // Arg #65534
+        assert_eq!(gen_ok(MAX - 1),  iter.next()); // Arg #65535
+        // Will **not** fail having reached MAX counter value, will just serve as unexpected
+        assert_eq!(gen_err(MAX    ), iter.next()); // Arg #65536
+        assert_eq!(gen_err(MAX + 1), iter.next()); // Arg #65537
+        assert_eq!(None,             iter.next());
     }
 }

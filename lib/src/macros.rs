@@ -119,30 +119,48 @@ macro_rules! shortopt {
 /// # Examples
 ///
 /// ```rust
+/// use gong::positionals::Policy;
 /// let opts = gong::option_set!();     // An example (empty) option set
 /// let subcmds = gong::command_set!(); // An example (empty) command set
 ///
 /// let _ = gong::command!("foo");
 /// let _ = gong::command!("foo", @opts &opts);           // With option set
-/// let _ = gong::command!("foo", @cmds subcmds.clone()); // With sub-command set
-/// let _ = gong::command!("foo", @opts &opts, @cmds subcmds.clone());
+/// let _ = gong::command!("foo", @cmds subcmds);         // With sub-command set
+/// let _ = gong::command!("foo", @pp Policy::Unlimited); // With positionals policy
+/// let _ = gong::command!("foo", @opts &opts, @cmds subcmds);
+/// let _ = gong::command!("foo", @opts &opts, @pp Policy::Unlimited);
+/// let _ = gong::command!("foo", @cmds subcmds, @pp Policy::Unlimited);
+/// let _ = gong::command!("foo", @opts &opts, @cmds subcmds, @pp Policy::Unlimited);
 /// ```
 #[macro_export]
 macro_rules! command {
     ( $name:expr ) => {
-        $crate::command!($name, @opts &$crate::option_set!(), @cmds $crate::command_set!())
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $crate::command_set!(), @pp $crate::positionals::DEFAULT_POLICY)
     };
     ( $name:expr, @opts $opts:expr ) => {
-        $crate::command!($name, @opts $opts, @cmds $crate::command_set!())
+        $crate::command!($name, @opts $opts, @cmds $crate::command_set!(), @pp $crate::positionals::DEFAULT_POLICY)
     };
     ( $name:expr, @cmds $sub_cmds:expr ) => {
-        $crate::command!($name, @opts &$crate::option_set!(), @cmds $sub_cmds)
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $sub_cmds, @pp $crate::positionals::DEFAULT_POLICY)
+    };
+    ( $name:expr, @pp $pp:expr ) => {
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $crate::command_set!(), @pp $pp)
     };
     ( $name:expr, @opts $opts:expr, @cmds $sub_cmds:expr ) => {
+        $crate::command!($name, @opts $opts, @cmds $sub_cmds, @pp $crate::positionals::DEFAULT_POLICY)
+    };
+    ( $name:expr, @opts $opts:expr, @pp $pp:expr ) => {
+        $crate::command!($name, @opts $opts, @cmds $crate::command_set!(), @pp $pp)
+    };
+    ( $name:expr, @cmds $sub_cmds:expr, @pp $pp:expr ) => {
+        $crate::command!($name, @opts &$crate::option_set!(), @cmds $sub_cmds, @pp $pp)
+    };
+    ( $name:expr, @opts $opts:expr, @cmds $sub_cmds:expr, @pp $pp:expr ) => {
         $crate::commands::Command {
             name: $name,
             options: $opts,
             sub_commands: $sub_cmds,
+            positionals_policy: $pp,
         }
     };
 }

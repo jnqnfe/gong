@@ -12,18 +12,30 @@
 //!
 //! # How do I specify “positional” arguments?
 //!
-//! You don’t. *Describing* positional arguments would only be useful if something would be done
-//! with that information, which is not the case with this library. If a positional argument is
-//! given, this will be reported as such in the analysis. When it comes to assigning purpose; giving
-//! an error in response to an unexpected instance; and converting strings, this is all left up to
-//! you.
+//! Positionals do not need to be described to the parser in the way that options are. Instead the
+//! parser is only concerned with quantity, such that it can highlight unexpected positionals as a
+//! problem once you go over a maximum number, that is if you choose to set one (you can
+//! alternatively set the maximum to *unlimited*). See the information in the
+//! [usage documentation][usage_doc].
 //!
-//! Why? On the surface it might seem a trivial thing to describe these needs to the library and
-//! have it take care of them for you, but needs can get complex; for instance option relationships
-//! can require some degree of conditional logic to determine actual purpose and expected number of
-//! positionals. In the interest of flexibility, efficiency, and not needlessly complicating things
-//! trying to do everything every user may possibly want, some stuff like that just mentioned is
-//! left for you to take care of with your own code.
+//! # How do I specify conditions where the quantity of positionals change?
+//!
+//! As in where the number of positionals to accept changes depending upon conditions such as the
+//! use of a particular option? You don't. This libary does not provide a framework for expressing
+//! such logic, considering application-specific logic to be better, as discussed below (see the
+//! answer to the question about option relationships).
+//!
+//! However, consider the following: The quantity requirement specified to the parser is a *maximum*
+//! which naturally offers some flexibility on its own. If this is insufficient then note that the
+//! parser iterators provide a method for adjusting the quantity originally set in the parser
+//! inbetween iterations. Currently there is no means of automatically achieving this with
+//! data-mining objects, but you can always use a maximum of unlimited and then just treat some
+//! positionals as unexpected yourself.
+//!
+//! Note that naturally once an argument has been parsed as being either an expected or unexpected
+//! positional, this is effectively set in stone; use of options that may demand reduction of the
+//! maximum quantity of positionals to accept per your application requirements, cannot change the
+//! expected status of positionals already assessed.
 //!
 //! # How do I specify an option as being “required”?
 //!
@@ -162,3 +174,5 @@
 //! unrecognised whitespace short options. Trimming of whitespace in the last example for instance
 //! would place restrictions upon the possible *positional* strings that could be specified to a
 //! program, and the trimming could catch users off guard, being unexpected behaviour.
+//!
+//! [usage_doc]: ../ch6_usage/index.html

@@ -20,6 +20,98 @@ mod common;
 use std::ffi::OsStr;
 use gong::{longopt, command, command_set, option_set};
 use gong::analysis::*;
+use self::common::{CmdActual, CmdExpected};
+
+/// Testing changing positionals policy during iterating
+mod change_positionals_policy {
+    use super::*;
+    use gong::parser::{Parser, CmdParser};
+    use gong::positionals::Policy;
+
+    #[test]
+    fn test() {
+        let args = arg_list!("a", "b", "c", "d");
+
+        let opts = option_set!();
+        let mut parser = Parser::new(&opts);
+        parser.set_positionals_policy(Policy::Max(1));
+
+        let mut parse_iter = parser.parse_iter(&args).indexed();
+
+        assert_eq!(parse_iter.next(), Some(indexed_item!(0, Positional, "a")));
+
+        // You can freely change the policy now, though of course reducing the number of accepted
+        // positionals below the number so far returned would make little sense.
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Unlimited));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(0)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(1)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(3)));
+
+        // Actual to use from this point
+        let _ = parse_iter.set_positionals_policy(Policy::Max(2));
+
+        assert_eq!(parse_iter.next(), Some(indexed_item!(1, Positional, "b")));
+        assert_eq!(parse_iter.next(), Some(indexed_item!(2, UnexpectedPositional, "c")));
+
+        // Changing the policy now (after an unexpected-positional) should fail, no matter what you
+        // try to change it to
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Unlimited));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(0)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(1)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(3)));
+
+        // Actual to use from this point
+        let _ = parse_iter.set_positionals_policy(Policy::Unlimited);
+
+        // Should still be rejected as unexpected since changing policy should have failed
+        assert_eq!(parse_iter.next(), Some(indexed_item!(3, UnexpectedPositional, "d")));
+    }
+
+    /// Checking that policy gets changed per-command
+    #[test]
+    fn commands() {
+        let opts = option_set!();
+        let cmds = command_set!([ command!("pull", @pp Policy::Max(3)) ]);
+        let mut parser = CmdParser::new(&opts, &cmds);
+        parser.set_positionals_policy(Policy::Max(1));
+        parser.settings().set_stop_on_problem(false);
+
+        let args = arg_list!("a", "b", "c", "d");
+        let expected = cmd_expected!(
+            problems: true,
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    dm_item!(0, UnknownCommand, "a"),
+                    dm_item!(1, Positional, "b"),
+                    dm_item!(2, UnexpectedPositional, "c"),
+                    dm_item!(3, UnexpectedPositional, "d"),
+                ])
+            ),
+            cmd_set: Some(&cmds)
+        );
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
+
+        let args = arg_list!("pull", "a", "b", "c", "d");
+        let expected = cmd_expected!(
+            problems: true,
+            @part cmd_part!(command: 0, "pull"),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                opt_set: &opts,
+                [
+                    dm_item!(1, Positional, "a"),
+                    dm_item!(2, Positional, "b"),
+                    dm_item!(3, Positional, "c"),
+                    dm_item!(4, UnexpectedPositional, "d"),
+                ])
+            ),
+            cmd_set: None
+        );
+        check_result!(&CmdActual(parser.parse(&args)), &expected);
+    }
+}
 
 /// Testing change of option/command set and settings during iterations, and with passing iterator
 /// to a command-specific handling function.

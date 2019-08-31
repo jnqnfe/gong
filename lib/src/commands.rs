@@ -23,6 +23,7 @@
 use std::ffi::OsStr;
 use crate::option_set;
 use crate::options::{self, OptionSet, OptionFlaw};
+use crate::positionals::Policy as PositionalsPolicy;
 
 /// Description of an available command
 ///
@@ -37,6 +38,8 @@ pub struct Command<'r, 's: 'r> {
     pub options: &'r OptionSet<'r, 's>,
     /// Sub-commands
     pub sub_commands: CommandSet<'r, 's>,
+    /// Policy for *positionals*
+    pub positionals_policy: PositionalsPolicy,
 }
 
 /// Extendible command set
@@ -129,7 +132,13 @@ impl<'r, 's: 'r> Command<'r, 's> {
     {
         debug_assert!(Self::validate(name).is_ok());
         let opts_actual = options.unwrap_or(&option_set!());
-        Self { name, options: opts_actual, sub_commands }
+        Self { name, options: opts_actual, sub_commands, positionals_policy: PositionalsPolicy::default() }
+    }
+
+    /// Set the policy for positionals
+    #[inline]
+    pub fn set_positional_reqs(&mut self, policy: PositionalsPolicy) {
+        self.positionals_policy = policy;
     }
 
     /// Validate a given name as a possible command

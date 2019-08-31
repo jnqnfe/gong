@@ -26,12 +26,29 @@
 //! # Step #1: Create a parser
 //!
 //! A parser holds: a description of the available [*options*][options_doc]; a description of the
-//! available [*commands*][commands_doc] (where applicable); and settings to control parsing. It
-//! also provides the methods for performing the actual parsing.
+//! available [*commands*][commands_doc] (where applicable); a description of *positional* argument
+//! quantity requirements; and settings to control parsing. It also provides the methods for
+//! performing the actual parsing.
 //!
 //! One of the first things you need to do therefore is construct a [`Parser`] or, if your program
 //! will make use of *command arguments*, a [`CmdParser`]. We will begin here by creating
 //! descriptions of the data that the parser object will need to hold.
+//!
+//! ## Choose *positional* argument quantity
+//!
+//! You can choose to either allow an unlimited quantity of *positional* arguments, or you can
+//! specify a maximum quantity; In the latter case, any provided past that number will be reported
+//! as unexpected.
+//!
+//! ```rust
+//! use gong::positionals::Policy;
+//! // Choosing to allow an unlimited quantity
+//! let policy = Policy::Unlimited;
+//! // Choosing to set a specific maximum
+//! let policy = Policy::Max(2);
+//! ```
+//!
+//! We will pass this on to the parser later.
 //!
 //! ## Describe the available options
 //!
@@ -119,12 +136,15 @@
 //! ## Create the parser itself
 //!
 //! Creating a [`Parser`] (or [`CmdParser`]) requires providing an *option set* reference (and in
-//! the [`CmdParser`] case, also a *command set* reference).
+//! the [`CmdParser`] case, also a *command set* reference). Note that we also use an available
+//! method to set a specific requirement for the quantity of positional arguments.
 //!
 //! ```rust
 //! use gong::parser::Parser;
+//! # use gong::positionals::Policy;
 //! # let opts = gong::options::OptionSet::default();
-//! let parser = Parser::new(&opts);
+//! let mut parser = Parser::new(&opts);
+//! parser.set_positionals_policy(Policy::Max(2));
 //! debug_assert!(parser.is_valid());
 //! ```
 //!

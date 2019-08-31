@@ -29,6 +29,7 @@ use gong::{longopt, shortopt, option_set};
 use gong::analysis::{Item, ProblemItem, DataLocation};
 use gong::options::OptionType;
 use gong::parser::{Parser, OptionsMode};
+use gong::positionals::Policy as PositionalsPolicy;
 
 const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
 const COL_O: &str = colours::fg::GREEN;  //okay
@@ -66,6 +67,8 @@ macro_rules! c {
 fn main() {
     config::init();
 
+    const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Max(2);
+
     // Set up valid option descriptions
     let opts = option_set!(
         @long [
@@ -88,6 +91,7 @@ fn main() {
         ]
     );
     let mut parser = Parser::new(&opts);
+    parser.set_positionals_policy(POSITIONALS_POLICY);
 
     match cfg!(feature = "alt_mode") {
         true => { parser.settings().set_mode(OptionsMode::Alternate); },
@@ -128,6 +132,10 @@ fn main() {
 
     println!("\nCompile with different features to change the config!\n");
 
+    println!("[ {}Quantity of positionals for test{} ]\n", c!(COL_HEADER), c!(RESET));
+
+    println!("{:?}\n", POSITIONALS_POLICY);
+
     println!("[ {}Available options for test{} ]\n", c!(COL_HEADER), c!(RESET));
 
     for item in opts.long {
@@ -149,12 +157,16 @@ fn main() {
     println!("\nNote: Short options will be ignored in `alternative` mode. They are still printed \
               so you can test and see this is so!");
 
+    println!("\n[ {}Available commands for test{} ]\n", c!(COL_HEADER), c!(RESET));
+
+    println!("None!\n");
+
     #[cfg(feature = "keep_prog_name")]
     let args: Vec<_> = std::env::args_os().collect();
     #[cfg(not(feature = "keep_prog_name"))]
     let args: Vec<_> = std::env::args_os().skip(1).collect();
 
-    println!("\n[ {}Your input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
+    println!("[ {}Your input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
 
     match args.len() {
         0 => println!("None!"),
@@ -194,6 +206,7 @@ fn main() {
                 printer(i, "LongWithData", OsStr::new(&n));
                 print_data(l.unwrap(), Some(d));
             },
+            Err(ProblemItem::UnexpectedPositional(s)) => printer(i, "UnexpectedPositional", s),
             Err(ProblemItem::LongMissingData(n)) => printer(i, "LongMissingData", OsStr::new(&n)),
             Err(ProblemItem::LongWithUnexpectedData(n, d)) => {
                 printer(i, "LongWithUnexpectedData", OsStr::new(&n));

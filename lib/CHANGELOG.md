@@ -9,6 +9,9 @@
    Although program designs incorporating “command” arguments could use this crate, it was not easy
    to make use of them. Direct understanding has now been built in, trading very little overhead for
    significant user simplification.
+ * Added a positionals policy mechanism such that you can optionally have positionals treated as
+   unexpected or missing, rather than the simple model previously of just accepting an unlimited
+   number only.
  * Redesigned things based upon a new `Parser` type.
     - The settings that lived within option set objects have been moved into a separate `Settings`
       struct, found in the `parser` mod.

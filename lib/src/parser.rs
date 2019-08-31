@@ -57,6 +57,7 @@ use crate::{option_set, command_set};
 use crate::analysis::{ItemSet, CommandAnalysis};
 use crate::commands::{CommandSet, CommandFlaw};
 use crate::options::{OptionSet, OptionFlaw};
+use crate::positionals::Policy as PositionalsPolicy;
 
 // NB: We export this in the public API here (the `engine` mod is private)
 pub use crate::engine::{ParseIter, ParseIterIndexed, CmdParseIter, CmdParseIterIndexed};
@@ -74,6 +75,8 @@ pub struct Parser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
     /// The main (top level) option set
     pub options: &'r OptionSet<'r, 'set>,
+    /// Policy for *positionals*
+    pub positionals_policy: PositionalsPolicy,
     /// Settings
     pub settings: Settings,
 }
@@ -99,6 +102,7 @@ impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
     fn default() -> Self {
         Self {
             options: &option_set!(),
+            positionals_policy: PositionalsPolicy::default(),
             settings: Settings::default(),
         }
     }
@@ -237,7 +241,7 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     pub fn new(options: &'r OptionSet<'r, 'set>) -> Self {
         Self {
             options: options,
-            settings: Settings::default(),
+            .. Self::default()
         }
     }
 
@@ -245,6 +249,12 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     #[inline(always)]
     pub fn settings(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    /// Set the policy for positionals
+    #[inline]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) {
+        self.positionals_policy = policy;
     }
 
     /// Checks validity of the option set
@@ -333,6 +343,12 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     #[inline(always)]
     pub fn settings(&mut self) -> &mut Settings {
         self.inner.settings()
+    }
+
+    /// Set the policy for positionals
+    #[inline]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) {
+        self.inner.set_positionals_policy(policy);
     }
 
     /// Checks validity of the option set and command set

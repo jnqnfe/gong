@@ -21,6 +21,7 @@ use crate::commands::CommandSet;
 use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
+use crate::positionals::{Quantity as PositionalsQuantity, Policy as PositionalsPolicy};
 
 /// An argument list parsing iterator
 ///
@@ -47,6 +48,12 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// positional item (since positionals can only occur **after** commands); and if
     /// `rest_are_positionals` is `false` of course.
     try_command_matching: bool,
+    /// Whether or not we have gone beyond the maximum number of positionals allowed per policy
+    too_many_positionals: bool,
+    /// Requirements of positionals
+    positionals_policy: PositionalsPolicy,
+    /// Number of positionals encounterd
+    positionals_count: PositionalsQuantity,
     /// Cached index of previous item
     last_index: usize,
     /// Cached data-location of previous item
@@ -175,11 +182,10 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                     NameSearchResult::AbbreviatedMatch(matched) => {
                         self.commands = &matched.sub_commands;
                         self.inner.options = matched.options;
-                        self.inner.rest_are_positionals = false; // Reverse
+                        self.inner.positionals_policy = matched.positionals_policy;
                         return Some(Ok(Item::Command(matched.name)));
                     },
                     NameSearchResult::AmbiguousMatch => {
-                        self.inner.rest_are_positionals = false; // Reverse
                         return Some(Err(ProblemItem::AmbiguousCmd(arg)));
                     },
                     NameSearchResult::NoMatch => {
@@ -189,6 +195,10 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                         }
                         /* fall through */
                     },
+                }
+                self.inner.register_positional();
+                if self.inner.too_many_positionals {
+                    return Some(Err(ProblemItem::UnexpectedPositional(arg)));
                 }
             }
         }
@@ -233,6 +243,9 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             settings: parser.settings,
             rest_are_positionals: false,
             try_command_matching: command_mode,
+            too_many_positionals: false,
+            positionals_policy: parser.positionals_policy,
+            positionals_count: 0,
             last_index: 0,
             last_data_loc: None,
             short_set_iter: None,
@@ -271,6 +284,35 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         self.last_data_loc
     }
 
+    /// Update the policy for positionals
+    ///
+    /// This is provided to assist in situations where the policy needs to change dynamically, for
+    /// instance in response to use of a particular option.
+    ///
+    /// This replaces the policy against which the number of positionals encountered is assessed
+    /// upon encountering each positional item, so numbers need to be adjusted **without**
+    /// accounting for the number returned so far. Thus, if your original policy was say `Fixed(3)`
+    /// and you need to allow for an additional instance, and one has already been returned, you
+    /// ignore the last fact and set to `Fixed(4)`.
+    ///
+    /// This will fail and return `Err` if used after an unexpected-positional item has already been
+    /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
+    /// the number of positionals that should be accepted below the number already returned (though
+    /// it would make no sense to do so).
+    #[inline(always)]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
+        // Check that it is acceptable to make a change. If the number of positionals has already
+        // gone over the max-limit, if there was one, then we cannot allow this to be changed, else
+        // it just messes with the correctness of the output; it could allow subsequent positionals
+        // to start being issued in good (expected) form again, which would be wrong, or if lowered
+        // then it just has no impact and makes no sense. Ultimately it just comes down to there
+        // being no valid case of making an update in such circumstances.
+        match self.too_many_positionals {
+            false => { self.positionals_policy = policy; Ok(()) },
+            true => Err(()),
+        }
+    }
+
     /// Get a copy of the *option set*
     ///
     /// This is useful for suggestion matching of unknown options
@@ -301,10 +343,16 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
         match arg_type {
             ArgTypeBasic::NonOption => {
-                if self.settings.posixly_correct {
-                    self.rest_are_positionals = true;
+                match self.try_command_matching {
+                    true => Some(Ok(Item::Positional(arg))), // Defer to command handling wrapper
+                    false => {
+                        self.register_positional();
+                        match self.too_many_positionals {
+                            false => Some(Ok(Item::Positional(arg))),
+                            true => Some(Err(ProblemItem::UnexpectedPositional(arg))),
+                        }
+                    },
                 }
-                Some(Ok(Item::Positional(arg)))
             },
             ArgTypeBasic::EarlyTerminator => {
                 self.rest_are_positionals = true;
@@ -398,6 +446,26 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                     },
                 }
             },
+        }
+    }
+
+    #[inline]
+    fn register_positional(&mut self) {
+        // Do not bother to assess things if we have already determined that we have encountered too
+        // many positionals; that would mean that we have already been through this once, and we do
+        // not want to increment the counter for those unexpected.
+        //
+        // Note that policy cannot be updated once an unexpected-positional item has been served,
+        // and that once one has been served, all remaining must also therefore be unexpected.
+        if !self.too_many_positionals {
+            if self.settings.posixly_correct {
+                self.rest_are_positionals = true;
+            }
+            self.too_many_positionals =
+                self.positionals_policy.is_next_unexpected(self.positionals_count);
+            if !self.too_many_positionals {
+                self.positionals_count = self.positionals_count.saturating_add(1);
+            }
         }
     }
 
@@ -661,6 +729,26 @@ fn get_urc_bytes(string: &OsStr) -> usize {
 impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Update the policy for positionals
+    ///
+    /// This is provided to assist in situations where the policy needs to change dynamically, for
+    /// instance in response to use of a particular option.
+    ///
+    /// This replaces the policy against which the number of positionals encountered is assessed
+    /// upon encountering each positional item, so numbers need to be adjusted **without**
+    /// accounting for the number returned so far. Thus, if your original policy was say `Fixed(3)`
+    /// and you need to allow for an additional instance, and one has already been returned, you
+    /// ignore the last fact and set to `Fixed(4)`.
+    ///
+    /// This will fail and return `Err` if used after an unexpected-positional item has already been
+    /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
+    /// the number of positionals that should be accepted below the number already returned (though
+    /// it would make no sense to do so).
+    #[inline(always)]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
+        self.inner.set_positionals_policy(policy)
+    }
+
     /// Get a copy of the *option set*
     ///
     /// This is useful for suggestion matching of unknown options
@@ -720,6 +808,26 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
         self.inner.last_data_loc
     }
 
+    /// Update the policy for positionals
+    ///
+    /// This is provided to assist in situations where the policy needs to change dynamically, for
+    /// instance in response to use of a particular option.
+    ///
+    /// This replaces the policy against which the number of positionals encountered is assessed
+    /// upon encountering each positional item, so numbers need to be adjusted **without**
+    /// accounting for the number returned so far. Thus, if your original policy was say `Fixed(3)`
+    /// and you need to allow for an additional instance, and one has already been returned, you
+    /// ignore the last fact and set to `Fixed(4)`.
+    ///
+    /// This will fail and return `Err` if used after an unexpected-positional item has already been
+    /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
+    /// the number of positionals that should be accepted below the number already returned (though
+    /// it would make no sense to do so).
+    #[inline(always)]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
+        self.inner.set_positionals_policy(policy)
+    }
+
     /// Get the *option set* currently in use for parsing
     ///
     /// This is useful for suggestion matching of unknown options
@@ -775,6 +883,26 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Update the policy for positionals
+    ///
+    /// This is provided to assist in situations where the policy needs to change dynamically, for
+    /// instance in response to use of a particular option.
+    ///
+    /// This replaces the policy against which the number of positionals encountered is assessed
+    /// upon encountering each positional item, so numbers need to be adjusted **without**
+    /// accounting for the number returned so far. Thus, if your original policy was say `Fixed(3)`
+    /// and you need to allow for an additional instance, and one has already been returned, you
+    /// ignore the last fact and set to `Fixed(4)`.
+    ///
+    /// This will fail and return `Err` if used after an unexpected-positional item has already been
+    /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
+    /// the number of positionals that should be accepted below the number already returned (though
+    /// it would make no sense to do so).
+    #[inline(always)]
+    pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
+        self.inner.set_positionals_policy(policy)
+    }
+
     /// Get the *option set* currently in use for parsing
     ///
     /// This is useful for suggestion matching of unknown options

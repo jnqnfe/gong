@@ -15,6 +15,7 @@ pub use self::base::{get_base_opts, get_base_cmds};
 
 use gong::analysis::{ItemSet, CommandAnalysis, CommandBlockPart};
 use gong::parser::{Parser, CmdParser};
+use gong::positionals::Policy as PositionalsPolicy;
 
 /// Wrapper for actual analysis result
 #[derive(Debug)] pub struct Actual<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
@@ -95,6 +96,7 @@ macro_rules! item {
     ( ShortMissingData, $c:expr )       => { Err(ProblemItem::ShortMissingData($c)) };
     ( AmbiguousLong, $n:expr )          => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
     ( AmbiguousCmd, $n:expr )           => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
+    ( UnexpectedPositional, $s:expr )   => { Err(ProblemItem::UnexpectedPositional(OsStr::new($s))) };
 }
 
 /// Construct an `ItemResultIndexed`.
@@ -123,6 +125,8 @@ macro_rules! indexed_item {
     ( $i:expr, ShortMissingData, $c:expr ) => { indexed_item!(@n $i, item!(ShortMissingData, $c)) };
     ( $i:expr, AmbiguousLong, $n:expr )    => { indexed_item!(@n $i, item!(AmbiguousLong, $n)) };
     ( $i:expr, AmbiguousCmd, $n:expr )     => { indexed_item!(@n $i, item!(AmbiguousCmd, $n)) };
+    ( $i:expr, UnexpectedPositional, $s:expr )
+                                           => { indexed_item!(@n $i, item!(UnexpectedPositional, $s)) };
 
     // Inner: @n and @s are short for `None` and `Some(<data-location>)` respectively
     ( @n $i:expr, $item:expr )          => { ($i, $item, Option::<DataLocation>::None) };
@@ -155,6 +159,8 @@ macro_rules! dm_item {
     ( $i:expr, ShortMissingData, $c:expr ) => { item!(ShortMissingData, $c) };
     ( $i:expr, AmbiguousLong, $n:expr )    => { item!(AmbiguousLong, $n) };
     ( $i:expr, AmbiguousCmd, $n:expr )     => { item!(AmbiguousCmd, $n) };
+    ( $i:expr, UnexpectedPositional, $s:expr )
+                                           => { item!(UnexpectedPositional, $s) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set
@@ -184,6 +190,7 @@ macro_rules! cmdset_subcmdset_ref {
 /// Get common base `Parser` set with common base option set and an empty command set
 pub fn get_parser() -> Parser<'static, 'static> {
     let mut parser = Parser::new(base::get_base_opts());
+    parser.set_positionals_policy(PositionalsPolicy::Unlimited);
     parser.settings().set_stop_on_problem(false);
     parser
 }
@@ -191,6 +198,7 @@ pub fn get_parser() -> Parser<'static, 'static> {
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser_cmd() -> CmdParser<'static, 'static> {
     let mut parser = CmdParser::new(base::get_base_opts(), base::get_base_cmds());
+    parser.set_positionals_policy(PositionalsPolicy::Unlimited);
     parser.settings().set_stop_on_problem(false);
     parser
 }

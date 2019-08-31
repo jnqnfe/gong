@@ -20,6 +20,7 @@ mod common;
 use std::ffi::OsStr;
 use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
+use gong::positionals::Policy as PositionalsPolicy;
 use self::common::{get_parser, get_base_opts, Actual, Expected};
 
 /// Some of the tests here expect certain options to exist in the common options set, where such
@@ -377,18 +378,19 @@ mod iter {
             "nop",          // Positional
             "--help",       // Positional
         );
-        let parser = get_parser();
+        let mut parser = get_parser();
+        parser.set_positionals_policy(PositionalsPolicy::Max(2));
 
         let expected = expected!([
             indexed_item!(0, Positional, "abc"),
             indexed_item!(1, Long, "help"),
             indexed_item!(2, Positional, "def"),
-            indexed_item!(3, Positional, "hij"),
+            indexed_item!(3, UnexpectedPositional, "hij"),
             indexed_item!(4, UnknownLong, "jjj"),
-            indexed_item!(5, Positional, "klm"),
+            indexed_item!(5, UnexpectedPositional, "klm"),
             indexed_item!(6, EarlyTerminator),
-            indexed_item!(7, Positional, "nop"),
-            indexed_item!(8, Positional, "--help"),
+            indexed_item!(7, UnexpectedPositional, "nop"),
+            indexed_item!(8, UnexpectedPositional, "--help"),
         ]);
         check_iter_result!(parser, args, expected);
 
@@ -399,22 +401,27 @@ mod iter {
                 dm_item!(0, Positional, "abc"),
                 dm_item!(1, Long, "help"),
                 dm_item!(2, Positional, "def"),
-                dm_item!(3, Positional, "hij"),
+                dm_item!(3, UnexpectedPositional, "hij"),
                 dm_item!(4, UnknownLong, "jjj"),
-                dm_item!(5, Positional, "klm"),
+                dm_item!(5, UnexpectedPositional, "klm"),
                 dm_item!(6, EarlyTerminator),
-                dm_item!(7, Positional, "nop"),
-                dm_item!(8, Positional, "--help"),
+                dm_item!(7, UnexpectedPositional, "nop"),
+                dm_item!(8, UnexpectedPositional, "--help"),
             ]
         );
         let item_set = parser.parse(&args);
         check_result!(&Actual(item_set.clone()), &expected);
 
-        assert_eq!(6, item_set.get_positionals().count());
+        assert_eq!(2, item_set.get_positionals().count());
 
         let mut iter = item_set.get_positionals();
         assert_eq!(iter.next(), Some(OsStr::new("abc")));
         assert_eq!(iter.next(), Some(OsStr::new("def")));
+        assert_eq!(iter.next(), None);
+
+        assert_eq!(4, item_set.get_unexpected_positionals().count());
+
+        let mut iter = item_set.get_unexpected_positionals();
         assert_eq!(iter.next(), Some(OsStr::new("hij")));
         assert_eq!(iter.next(), Some(OsStr::new("klm")));
         assert_eq!(iter.next(), Some(OsStr::new("nop")));

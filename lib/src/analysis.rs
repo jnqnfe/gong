@@ -129,6 +129,8 @@ pub enum Item<'set, 'arg> {
 /// [`LongWithUnexpectedData`]: #variant.LongWithUnexpectedData
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ProblemItem<'set, 'arg> {
+    /// An unexpected positional
+    UnexpectedPositional(&'arg OsStr),
     /// Looked like a long option, but no match
     UnknownLong(&'arg OsStr),
     /// Unknown short option `char`
@@ -417,6 +419,17 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
         self.items.iter()
             .filter_map(|i| match i {
                 Ok(Item::Positional(s)) => Some(*s),
+                _ => None,
+            })
+    }
+
+    /// Gives an iterator over any unexpected *positional* arguments
+    ///
+    /// Should you want them for any reason.
+    pub fn get_unexpected_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
+        self.items.iter()
+            .filter_map(|i| match i {
+                Err(ProblemItem::UnexpectedPositional(s)) => Some(*s),
                 _ => None,
             })
     }

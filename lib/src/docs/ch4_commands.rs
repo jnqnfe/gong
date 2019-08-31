@@ -18,10 +18,11 @@
 //! this parsing library).
 //!
 //! *Command* arguments each have a command *name*, an associated *option set* (which may be empty),
-//! and a set of *sub-commands* (which also may be empty). Each *sub-command* is simply just a
-//! command in its own right, with the exact same set of attributes. There is no fixed limit to the
-//! size and depth of the tree of *commands* and nested *sub-commands* that can be built for a
-//! program, though typically it is only every a depth of just one or two.
+//! a set of *sub-commands* (which also may be empty), and a *positionals policy*. Each
+//! *sub-command* is simply just a command in its own right, with the exact same set of attributes.
+//! There is no fixed limit to the size and depth of the tree of *commands* and nested
+//! *sub-commands* that can be built for a program, though typically it is only every a depth of
+//! just one or two.
 //!
 //! The command-oriented parser has all of the very same component attributes, minus only the
 //! command name. This set of data is considered the “main” or “top-level” stuff.
@@ -33,11 +34,11 @@
 //! be looked for, and it will either thus be recognised as a known command, or otherwise reported
 //! as an unknown command. In the case of a known command, all subsequent arguments from that point
 //! forward will be parsed within the “context” of that command, i.e. against the alternate set of
-//! parsing data (*option set* and *sub-command set*) it defines. If a command has no sub-command
-//! set, then all *non-options* will be taken to be *positionals*. In the case of an unknown
-//! command, parsing of remaining arguments will continue with the same parsing data as before of
-//! course, but naturally the results will be incorrect if it genuinely was intended as a command
-//! (you are free to reinterpret the unknown command argument to be a positional instead if
+//! parsing data (*option set*, *sub-command set* and *positionals policy*) it defines. If a command
+//! has no sub-command set, then all *non-options* will be taken to be *positionals*. In the case of
+//! an unknown command, parsing of remaining arguments will continue with the same parsing data as
+//! before of course, but naturally the results will be incorrect if it genuinely was intended as a
+//! command (you are free to reinterpret the unknown command argument to be a positional instead if
 //! applicable to your program, in which case ignore that). Upon encountering an unknown command, no
 //! further attempt will be made to interpret *non-options* as *commands* in subsequent arguments,
 //! they will be taken to be *positionals*.
