@@ -182,18 +182,12 @@ fn main() {
             Ok(Item::Positional(s)) => printer(i, "Positional", s),
             Ok(Item::EarlyTerminator) => printer(i, "EarlyTerminator", OsStr::new("")),
             Ok(Item::Long(n, None)) => {
-                for opt in opts.long.iter() {
-                    if opt.name == n {
-                        match opt.opt_type {
-                            OptionType::Flag => printer(i, "Long", OsStr::new(&n)),
-                            OptionType::OptionalData => {
-                                printer(i, "LongWithoutData", OsStr::new(&n));
-                                print_data(DataLocation::SameArg, None);
-                            },
-                            OptionType::Data => unreachable!(),
-                        }
-                        break;
-                    }
+                match l.is_none() {
+                    true => printer(i, "Long", OsStr::new(&n)),
+                    false => {
+                        printer(i, "LongWithoutData", OsStr::new(&n));
+                        print_data(l.unwrap(), None);
+                    },
                 }
             },
             Ok(Item::Long(n, Some(d))) => {
@@ -210,18 +204,12 @@ fn main() {
             Err(ProblemItem::UnknownLong(n)) => printer(i, "UnknownLong", OsStr::new(&n)),
             Ok(Item::Short(c, None)) => {
                 let desc = desc_char(c);
-                for opt in opts.short.iter() {
-                    if opt.ch == c {
-                        match opt.opt_type {
-                            OptionType::Flag => printer(i, "Short", OsStr::new(&desc)),
-                            OptionType::OptionalData => {
-                                printer(i, "ShortWithoutData", OsStr::new(&desc));
-                                print_data(DataLocation::SameArg, None);
-                            },
-                            OptionType::Data => unreachable!(),
-                        }
-                        break;
-                    }
+                match l.is_none() {
+                    true => printer(i, "Short", OsStr::new(&desc)),
+                    false => {
+                        printer(i, "ShortWithoutData", OsStr::new(&desc));
+                        print_data(l.unwrap(), None);
+                    },
                 }
             },
             Ok(Item::Short(c, Some(d))) => {
