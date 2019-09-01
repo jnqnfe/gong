@@ -181,10 +181,24 @@ fn main() {
         match item {
             Ok(Item::Positional(s)) => printer(i, "Positional", s),
             Ok(Item::EarlyTerminator) => printer(i, "EarlyTerminator", OsStr::new("")),
-            Ok(Item::Long(n, None)) => printer(i, "Long", OsStr::new(&n)),
+            Ok(Item::Long(n, None)) => {
+                for opt in opts.long.iter() {
+                    if opt.name == n {
+                        match opt.opt_type {
+                            OptionType::Flag => printer(i, "Long", OsStr::new(&n)),
+                            OptionType::OptionalData => {
+                                printer(i, "LongWithoutData", OsStr::new(&n));
+                                print_data(DataLocation::SameArg, None);
+                            },
+                            OptionType::Data => unreachable!(),
+                        }
+                        break;
+                    }
+                }
+            },
             Ok(Item::Long(n, Some(d))) => {
                 printer(i, "LongWithData", OsStr::new(&n));
-                print_data(l.unwrap(), d);
+                print_data(l.unwrap(), Some(d));
             },
             Err(ProblemItem::LongMissingData(n)) => printer(i, "LongMissingData", OsStr::new(&n)),
             Err(ProblemItem::LongWithUnexpectedData(n, d)) => {
@@ -196,12 +210,24 @@ fn main() {
             Err(ProblemItem::UnknownLong(n)) => printer(i, "UnknownLong", OsStr::new(&n)),
             Ok(Item::Short(c, None)) => {
                 let desc = desc_char(c);
-                printer(i, "Short", OsStr::new(&desc));
+                for opt in opts.short.iter() {
+                    if opt.ch == c {
+                        match opt.opt_type {
+                            OptionType::Flag => printer(i, "Short", OsStr::new(&desc)),
+                            OptionType::OptionalData => {
+                                printer(i, "ShortWithoutData", OsStr::new(&desc));
+                                print_data(DataLocation::SameArg, None);
+                            },
+                            OptionType::Data => unreachable!(),
+                        }
+                        break;
+                    }
+                }
             },
             Ok(Item::Short(c, Some(d))) => {
                 let desc = desc_char(c);
                 printer(i, "ShortWithData", OsStr::new(&desc));
-                print_data(l.unwrap(), d);
+                print_data(l.unwrap(), Some(d));
             },
             Err(ProblemItem::ShortMissingData(c)) => {
                 let desc = desc_char(c);
@@ -252,15 +278,18 @@ fn desc_char(ch: char) -> String {
     format!("{} {}({}){}", ch, c!(COL_CHAR), ch.escape_unicode(), c!(RESET))
 }
 
-fn print_data(loc: DataLocation, data: &OsStr) {
+fn print_data(loc: DataLocation, data: Option<&OsStr>) {
     match loc {
         DataLocation::SameArg =>
             println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
         DataLocation::NextArg =>
             println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
     }
-    match data.is_empty() {
-        true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
-        false => println!("    data: {:?}", data),
+    match data {
+        Some(d) => match d.is_empty() {
+            true => println!("    {}empty-data{}", c!(effects::ITALIC), c!(RESET)),
+            false => println!("    data: {:?}", d),
+        },
+        None => println!("    {}no-data{}", c!(effects::ITALIC), c!(RESET)),
     }
 }
