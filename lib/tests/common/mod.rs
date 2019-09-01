@@ -83,6 +83,8 @@ macro_rules! item {
     ( Short, $c:expr )                  => { Ok(Item::Short($c, None)) };
     ( LongWithData, $n:expr, $d:expr )  => { Ok(Item::Long($n, Some(OsStr::new($d)))) };
     ( ShortWithData, $c:expr, $d:expr ) => { Ok(Item::Short($c, Some(OsStr::new($d)))) };
+    ( LongWithoutData, $n:expr )        => { Ok(Item::Long($n, None)) };
+    ( ShortWithoutData, $c:expr )       => { Ok(Item::Short($c, None)) };
     ( Command, $n:expr )                => { Ok(Item::Command($n)) };
     ( UnknownLong, $n:expr )            => { Err(ProblemItem::UnknownLong(OsStr::new($n))) };
     ( UnknownShort, $c:expr )           => { Err(ProblemItem::UnknownShort($c)) };
@@ -109,6 +111,8 @@ macro_rules! indexed_item {
                                            => { indexed_item!(@s $i, item!(LongWithData, $n, $d), $l) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
                                            => { indexed_item!(@s $i, item!(ShortWithData, $c, $d), $l) };
+    ( $i:expr, LongWithoutData, $n:expr )  => { indexed_item!(@n $i, item!(LongWithoutData, $n)) };
+    ( $i:expr, ShortWithoutData, $c:expr ) => { indexed_item!(@n $i, item!(ShortWithoutData, $c)) };
     ( $i:expr, Command, $n:expr )          => { indexed_item!(@n $i, item!(Command, $n)) };
     ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!(@n $i, item!(UnknownLong, $n)) };
     ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!(@n $i, item!(UnknownShort, $c)) };
@@ -139,6 +143,8 @@ macro_rules! dm_item {
                                            => { item!(LongWithData, $n, $d) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
                                            => { item!(ShortWithData, $c, $d) };
+    ( $i:expr, LongWithoutData, $n:expr )  => { item!(LongWithoutData, $n) };
+    ( $i:expr, ShortWithoutData, $c:expr ) => { item!(ShortWithoutData, $c) };
     ( $i:expr, Command, $n:expr )          => { item!(Command, $n) };
     ( $i:expr, UnknownLong, $n:expr )      => { item!(UnknownLong, $n) };
     ( $i:expr, UnknownShort, $c:expr )     => { item!(UnknownShort, $c) };

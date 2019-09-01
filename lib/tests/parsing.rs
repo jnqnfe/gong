@@ -551,7 +551,7 @@ mod data {
             indexed_item!(2, Long, "help"),
             indexed_item!(3, LongWithData, "hah", "def", DataLocation::SameArg),
             indexed_item!(4, Long, "help"),
-            indexed_item!(5, Long, "delay"), // Non-data variant!
+            indexed_item!(5, LongWithoutData, "delay"),
             indexed_item!(6, Positional, "def"),
             indexed_item!(7, Long, "help"),
             indexed_item!(8, LongWithData, "delay", "def", DataLocation::SameArg),
@@ -701,7 +701,7 @@ mod data {
     fn missing_long_optional() {
         let args = arg_list!("--delay");
         let expected = expected!([
-            indexed_item!(0, Long, "delay"), // Non-data variant!
+            indexed_item!(0, LongWithoutData, "delay"),
         ]);
         check_iter_result!(get_parser(), args, expected);
     }
@@ -715,7 +715,7 @@ mod data {
             indexed_item!(0, UnknownShort, 'b'),
             indexed_item!(0, Short, 'x'),
             indexed_item!(0, UnknownShort, 's'),
-            indexed_item!(0, Short, 'p'), // Non-data variant!
+            indexed_item!(0, ShortWithoutData, 'p'),
         ]);
         check_iter_result!(get_parser(), args, expected);
     }
@@ -837,9 +837,9 @@ mod data {
         let expected = expected!([
             indexed_item!(0, LongWithData, "hah", "", DataLocation::NextArg),
             indexed_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
-            indexed_item!(4, Long, "delay"), // Non-data variant!
+            indexed_item!(4, LongWithoutData, "delay"),
             indexed_item!(5, Positional, ""),
-            indexed_item!(6, Short, 'p'), // Non-data variant!
+            indexed_item!(6, ShortWithoutData, 'p'),
             indexed_item!(7, Positional, ""),
         ]);
         check_iter_result!(get_parser(), args, expected);
@@ -986,7 +986,7 @@ mod data {
             indexed_item!(5, LongWithData, "ǝƃ", "", DataLocation::SameArg),
             indexed_item!(6, LongWithData, "ǝƃ", "abc", DataLocation::SameArg),
             indexed_item!(7, LongWithData, "ǝƃ", "❤️", DataLocation::SameArg),
-            indexed_item!(8, Long, "ǝƃ"), // Non-data variant!
+            indexed_item!(8, LongWithoutData, "ǝƃ"),
             indexed_item!(9, LongMissingData, "ƒƒ"),
         ]);
         check_iter_result!(get_parser(), args, expected);
