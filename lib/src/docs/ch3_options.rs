@@ -114,8 +114,9 @@
 //!     - For optional data-taking options (those where supplying a value is optional), remember
 //!       that a value can only be provided “in-same-argument” style. If an “in-same-argument”
 //!       *data value* component was present, this is consumed as such in an identical manner to the
-//!       mandatory type. If no “in-same-argument” value was supplied, this is treated the same as
-//!       if an empty string was supplied.
+//!       mandatory type. If no “in-same-argument” value was supplied, no value is returned with the
+//!       item, in the same way as with flag type options, allowing this case to be distinguished
+//!       from an empty string (i.e. `--foo` and `--foo=` are treated differently).
 //!
 //! ## With short options
 //!

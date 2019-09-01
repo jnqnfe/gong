@@ -527,6 +527,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'arg OsStr> {
         for item in self.items.iter().rev() {
             match *item {
+//TODO: for optional-data taking options, we have `None` when no data given (e.g. `--foo`); if this was the last instance, do we want to return `None` to signal that the last use was without a value? but then of course how to distinuish between used without a value and option not used at all? should we expect users to do an option-used check for that?
                 Ok(Item::Long(n, Some(ref d))) => {
                     if option.matches_long(n) { return Some(d.clone()); }
                 },
@@ -560,6 +561,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     pub fn get_all_values(&'r self, option: FindOption<'r>)
         -> impl Iterator<Item = &'arg OsStr> + 'r
     {
+//TODO: for optional-data taking options, we have `None` when no data given (e.g. `--foo`); such instances would now be completely ignored here, but is this really what is wanted? what if lack of value signals 'use default', and user program needs to know that this was signalled here?
         self.items.iter()
             .filter_map(move |i| match i {
                 Ok(Item::Long(n, Some(d))) => {

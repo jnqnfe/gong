@@ -367,8 +367,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             }
                             // Data consumption is optional
                             else if matched.opt_type == OptionType::OptionalData {
-                                self.last_data_loc = Some(DataLocation::SameArg);
-                                Some(Ok(Item::Long(opt_name, Some(OsStr::new("")))))
+                                Some(Ok(Item::Long(opt_name, None)))
                             }
                             // Data included in next argument
                             else if let Some((_, next_arg)) = self.arg_iter.next() {
