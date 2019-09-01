@@ -715,7 +715,7 @@ mod data {
             indexed_item!(0, UnknownShort, 'b'),
             indexed_item!(0, Short, 'x'),
             indexed_item!(0, UnknownShort, 's'),
-            indexed_item!(0, ShortWithData, 'p', "", DataLocation::SameArg),
+            indexed_item!(0, Short, 'p'), // Non-data variant!
         ]);
         check_iter_result!(get_parser(), args, expected);
     }
@@ -839,7 +839,7 @@ mod data {
             indexed_item!(2, ShortWithData, 'o', "", DataLocation::NextArg),
             indexed_item!(4, Long, "delay"), // Non-data variant!
             indexed_item!(5, Positional, ""),
-            indexed_item!(6, ShortWithData, 'p', "", DataLocation::SameArg),
+            indexed_item!(6, Short, 'p'), // Non-data variant!
             indexed_item!(7, Positional, ""),
         ]);
         check_iter_result!(get_parser(), args, expected);

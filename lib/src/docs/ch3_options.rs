@@ -137,8 +137,8 @@
 //!    **requires** a value, then the next argument is consumed (for example with `-o val` the value
 //!    is `val`). If in an “in-next-argument” situation there is no next argument, then the *data
 //!    value* is reported as missing. If supplying a value is optional (remember that this can only
-//!    be done “in-same-argument” style) and no value is supplied, the value is considered to be an
-//!    empty string.
+//!    be done “in-same-argument” style) and no value is supplied, no data value is returned with
+//!    the item, in the same way as with flag type options.
 //!
 //! Note that it is not possible to supply an empty string as an “in-same-argument” data value, and
 //! thus not possible at all with an option where supplying a value is optional.
