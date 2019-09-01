@@ -140,7 +140,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings.set_stop_on_problem(false);
+        parser.inner.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -186,7 +186,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings.set_stop_on_problem(false);
+        parser.inner.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -232,7 +232,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings.set_stop_on_problem(false);
+        parser.inner.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -278,7 +278,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings.set_stop_on_problem(false);
+        parser.inner.settings.set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 

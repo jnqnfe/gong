@@ -89,12 +89,10 @@ pub struct Parser<'r, 'set: 'r> {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct CmdParser<'r, 'set: 'r> {
     /* NOTE: these have been left public to allow efficient static creation */
-    /// The main (top level) option set
-    pub options: &'r OptionSet<'r, 'set>,
     /// Command set
     pub commands: &'r CommandSet<'r, 'set>,
-    /// Settings
-    pub settings: Settings,
+    /// Normal parser
+    pub inner: Parser<'r, 'set>,
 }
 
 impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
@@ -109,9 +107,8 @@ impl<'r, 'set: 'r> Default for Parser<'r, 'set> {
 impl<'r, 'set: 'r> Default for CmdParser<'r, 'set> {
     fn default() -> Self {
         Self {
-            options: &option_set!(),
             commands: &command_set!(),
-            settings: Settings::default(),
+            inner: Parser::default(),
         }
     }
 }
@@ -327,16 +324,15 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// Create a new parser
     pub fn new(options: &'r OptionSet<'r, 'set>, commands: &'r CommandSet<'r, 'set>) -> Self {
         Self {
-            options: options,
             commands: commands,
-            settings: Settings::default(),
+            inner: Parser::new(options),
         }
     }
 
     /// Get a mutable reference to settings
     #[inline(always)]
     pub fn settings(&mut self) -> &mut Settings {
-        &mut self.settings
+        self.inner.settings()
     }
 
     /// Checks validity of the option set and command set
@@ -352,7 +348,7 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     #[inline]
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.options.is_valid() && self.commands.is_valid()
+        self.inner.is_valid() && self.commands.is_valid()
     }
 
     /// Checks validity of the option set and command set, returning details of any problems
@@ -366,7 +362,7 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// that the command or option identifiers used are all sensible or otherwise entirely free of
     /// issues.
     pub fn validate(&self) -> Result<(), (Vec<OptionFlaw<'set>>, Vec<CommandFlaw<'set>>)> {
-        let option_set_flaws = self.options.validate();
+        let option_set_flaws = self.inner.options.validate();
         let command_set_flaws = self.commands.validate();
         match (option_set_flaws, command_set_flaws) {
             (Ok(_), Ok(_)) => Ok(()),

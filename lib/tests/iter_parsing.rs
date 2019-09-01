@@ -43,7 +43,7 @@ mod change_data {
         let main_cmd_set = command_set!([ command!("c1") ]);
 
         let mut parser = CmdParser::new(&main_opt_set, &main_cmd_set);
-        parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
+        parser.inner.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
         let mut parse_iter = parser.parse_iter(&args).indexed();
 

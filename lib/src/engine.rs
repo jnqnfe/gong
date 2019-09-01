@@ -682,13 +682,9 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// Create a new instance
     #[inline]
     pub(crate) fn new(args: &'arg [A], parser: &CmdParser<'r, 'set>) -> Self {
-        let tmp_parser = Parser {
-            options: parser.options,
-            settings: parser.settings,
-        };
         Self {
             commands: parser.commands,
-            inner: ParseIter::new_inner(args, &tmp_parser, true),
+            inner: ParseIter::new_inner(args, &parser.inner, true),
         }
     }
 
