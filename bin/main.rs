@@ -269,9 +269,9 @@ fn desc_char(ch: char) -> String {
 fn print_data(loc: DataLocation, data: Option<&OsStr>) {
     match loc {
         DataLocation::SameArg =>
-            println!("    {}data found in SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
+            println!("    {}data from SAME arg!{}", c!(effects::ITALIC), c!(RESET)),
         DataLocation::NextArg =>
-            println!("    {}data found in NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
+            println!("    {}data from NEXT arg!{}", c!(effects::ITALIC), c!(RESET)),
     }
     match data {
         Some(d) => match d.is_empty() {
