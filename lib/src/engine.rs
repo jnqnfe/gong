@@ -367,6 +367,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             }
                             // Data consumption is optional
                             else if matched.opt_type == OptionType::OptionalData {
+                                self.last_data_loc = Some(DataLocation::SameArg);
                                 Some(Ok(Item::Long(opt_name, None)))
                             }
                             // Data included in next argument
@@ -413,8 +414,11 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             SearchResult::NoMatch => Err(ProblemItem::UnknownShort(ch)),
             SearchResult::Match(matched) => {
                 match matched.opt_type {
-                    OptionType::Flag |
-                    OptionType::OptionalData => Ok(Item::Short(ch, None)),
+                    OptionType::Flag => Ok(Item::Short(ch, None)),
+                    OptionType::OptionalData => {
+                        self.last_data_loc = Some(DataLocation::SameArg);
+                        Ok(Item::Short(ch, None))
+                    },
                     OptionType::Data => {
                         if let Some((_, next_arg)) = self.arg_iter.next()
                         {
@@ -532,6 +536,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
                         }
                         // Data consumption is optional
                         else if matched.opt_type == OptionType::OptionalData {
+                            parent.last_data_loc = Some(DataLocation::SameArg);
                             Some(Ok(Item::Short(ch, None)))
                         }
                         // Data included in next argument

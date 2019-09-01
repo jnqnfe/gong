@@ -111,8 +111,8 @@ macro_rules! indexed_item {
                                            => { indexed_item!(@s $i, item!(LongWithData, $n, $d), $l) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
                                            => { indexed_item!(@s $i, item!(ShortWithData, $c, $d), $l) };
-    ( $i:expr, LongWithoutData, $n:expr )  => { indexed_item!(@n $i, item!(LongWithoutData, $n)) };
-    ( $i:expr, ShortWithoutData, $c:expr ) => { indexed_item!(@n $i, item!(ShortWithoutData, $c)) };
+    ( $i:expr, LongWithoutData, $n:expr )  => { indexed_item!(@s $i, item!(LongWithoutData, $n), DataLocation::SameArg) };
+    ( $i:expr, ShortWithoutData, $c:expr ) => { indexed_item!(@s $i, item!(ShortWithoutData, $c), DataLocation::SameArg) };
     ( $i:expr, Command, $n:expr )          => { indexed_item!(@n $i, item!(Command, $n)) };
     ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!(@n $i, item!(UnknownLong, $n)) };
     ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!(@n $i, item!(UnknownShort, $c)) };
