@@ -41,7 +41,7 @@ mod options {
         ]);
 
         let mut parser = Parser::new(&opts);
-        parser.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
         assert_eq!(&items[..], &expected[..]);
 
@@ -86,7 +86,7 @@ mod options {
         ]);
 
         let mut parser = Parser::new(&opts);
-        parser.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
         assert_eq!(&items[..], &expected[..]);
 
@@ -140,7 +140,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.inner.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -186,7 +186,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.inner.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -232,7 +232,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.inner.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 
@@ -278,7 +278,7 @@ mod commands {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.inner.settings.set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
 

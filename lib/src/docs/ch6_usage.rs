@@ -128,6 +128,9 @@
 //! debug_assert!(parser.is_valid());
 //! ```
 //!
+//! If you want to change any parser settings, you can control this now via the parser’s `settings`
+//! method.
+//!
 //! Understand that with a command-based program design, the *option set* specified in parser
 //! creation is the *top-level* set of *options* (see the *[command arguments documentation][commands_doc]*
 //! for more information on this).
@@ -145,10 +148,6 @@
 //! let parser = CmdParser::new(&opts_fixed, &cmds_fixed);
 //! debug_assert!(parser.is_valid());
 //! ```
-//!
-//! If you want to change any parser settings, e.g. choose which *option* mode (*standard* or
-//! *alternate*) is used, or whether or not abbreviated long option name matching is allowed, you
-//! can control this now via the parser’s `settings` attribute.
 //!
 //! ### Validation
 //!

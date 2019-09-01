@@ -90,12 +90,12 @@ fn main() {
     let mut parser = Parser::new(&opts);
 
     match cfg!(feature = "alt_mode") {
-        true => { parser.settings.set_mode(OptionsMode::Alternate); },
-        false => { parser.settings.set_mode(OptionsMode::Standard); },
+        true => { parser.settings().set_mode(OptionsMode::Alternate); },
+        false => { parser.settings().set_mode(OptionsMode::Standard); },
     }
-    parser.settings.set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
-                   .set_posixly_correct(cfg!(feature = "posixly_correct"))
-                   .set_stop_on_problem(!cfg!(feature = "no_stop_on_problem"));
+    parser.settings().set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
+                     .set_posixly_correct(cfg!(feature = "posixly_correct"))
+                     .set_stop_on_problem(!cfg!(feature = "no_stop_on_problem"));
 
     debug_assert!(parser.is_valid());
 

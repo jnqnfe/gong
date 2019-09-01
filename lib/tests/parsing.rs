@@ -62,9 +62,9 @@ fn stop_on_problems() {
         indexed_item!(1, UnknownLong, "fake2"),
     ]);
     let mut parser = get_parser();
-    parser.settings.set_stop_on_problem(true);
+    parser.settings().set_stop_on_problem(true);
     check_iter_result!(parser, args, expected);
-    parser.settings.set_stop_on_problem(false);
+    parser.settings().set_stop_on_problem(false);
     check_iter_result!(parser, args, expected);
 }
 
@@ -87,7 +87,7 @@ fn stop_on_problems_off_cmd() {
         cmd_set: None
     );
     let mut parser = get_parser_cmd();
-    parser.inner.settings.set_stop_on_problem(false);
+    parser.inner.settings().set_stop_on_problem(false);
     check_result!(&CmdActual(parser.parse(&args)), &expected);
 }
 
@@ -109,7 +109,7 @@ fn stop_on_problems_on_cmd() {
         cmd_set: None
     );
     let mut parser = get_parser_cmd();
-    parser.inner.settings.set_stop_on_problem(true);
+    parser.inner.settings().set_stop_on_problem(true);
     check_result!(&CmdActual(parser.parse(&args)), &expected);
 }
 
@@ -382,7 +382,7 @@ mod abbreviations {
             cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser_cmd();
-        parser.inner.settings.set_allow_cmd_abbreviations(true);
+        parser.inner.settings().set_allow_cmd_abbreviations(true);
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
@@ -414,7 +414,7 @@ mod abbreviations {
             cmd_set: None
         );
         let mut parser = get_parser_cmd();
-        parser.inner.settings.set_allow_cmd_abbreviations(true);
+        parser.inner.settings().set_allow_cmd_abbreviations(true);
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
@@ -440,7 +440,7 @@ mod abbreviations {
             cmd_set: Some(get_base_cmds())
         );
         let mut parser = get_parser_cmd();
-        parser.inner.settings.set_allow_opt_abbreviations(false);
+        parser.inner.settings().set_allow_opt_abbreviations(false);
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 
@@ -516,12 +516,12 @@ mod abbreviations {
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.inner.settings.set_stop_on_problem(false);
-        parser.inner.settings.set_allow_opt_abbreviations(true);
-        parser.inner.settings.set_allow_cmd_abbreviations(false);
+        parser.inner.settings().set_stop_on_problem(false)
+                               .set_allow_opt_abbreviations(true)
+                               .set_allow_cmd_abbreviations(false);
         check_result!(&CmdActual(parser.parse(&args)), &expected1);
-        parser.inner.settings.set_allow_opt_abbreviations(false);
-        parser.inner.settings.set_allow_cmd_abbreviations(true);
+        parser.inner.settings().set_allow_opt_abbreviations(false)
+                               .set_allow_cmd_abbreviations(true);
         check_result!(&CmdActual(parser.parse(&args)), &expected2);
     }
 }
@@ -1650,7 +1650,7 @@ mod alt_mode {
             indexed_item!(16, Positional, "-help"),
         ]);
         let mut parser = get_parser();
-        parser.settings.set_mode(OptionsMode::Alternate);
+        parser.settings().set_mode(OptionsMode::Alternate);
         check_iter_result!(parser, args, expected);
     }
 
@@ -1668,7 +1668,7 @@ mod alt_mode {
             indexed_item!(2, LongMissingData, "hah"),
         ]);
         let mut parser = get_parser();
-        parser.settings.set_mode(OptionsMode::Alternate);
+        parser.settings().set_mode(OptionsMode::Alternate);
         check_iter_result!(parser, args, expected);
     }
 
@@ -1684,7 +1684,7 @@ mod alt_mode {
             indexed_item!(1, LongWithData, "hah", "--", DataLocation::NextArg),
         ]);
         let mut parser = get_parser();
-        parser.settings.set_mode(OptionsMode::Alternate);
+        parser.settings().set_mode(OptionsMode::Alternate);
         check_iter_result!(parser, args, expected);
     }
 
@@ -1722,7 +1722,7 @@ mod alt_mode {
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
         );
         let mut parser = get_parser_cmd();
-        parser.inner.settings.set_mode(OptionsMode::Alternate);
+        parser.inner.settings().set_mode(OptionsMode::Alternate);
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
 }
@@ -1752,7 +1752,7 @@ mod posixly_correct {
             indexed_item!(4, Positional, "bar"),
         ]);
         let mut parser = get_parser();
-        parser.settings.set_posixly_correct(true);
+        parser.settings().set_posixly_correct(true);
         check_iter_result!(parser, args, expected);
     }
 
@@ -1772,7 +1772,7 @@ mod posixly_correct {
             indexed_item!(3, Positional, "--foo"),
         ]);
         let mut parser = get_parser();
-        parser.settings.set_posixly_correct(true);
+        parser.settings().set_posixly_correct(true);
         check_iter_result!(parser, args, expected);
     }
 }

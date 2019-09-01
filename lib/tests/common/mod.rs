@@ -184,14 +184,14 @@ macro_rules! cmdset_subcmdset_ref {
 /// Get common base `Parser` set with common base option set and an empty command set
 pub fn get_parser() -> Parser<'static, 'static> {
     let mut parser = Parser::new(base::get_base_opts());
-    parser.settings.set_stop_on_problem(false);
+    parser.settings().set_stop_on_problem(false);
     parser
 }
 
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser_cmd() -> CmdParser<'static, 'static> {
     let mut parser = CmdParser::new(base::get_base_opts(), base::get_base_cmds());
-    parser.inner.settings.set_stop_on_problem(false);
+    parser.settings().set_stop_on_problem(false);
     parser
 }
 
