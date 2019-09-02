@@ -181,7 +181,7 @@ fn main() {
             ItemClass::Err(ItemE::LongMissingData(i, n)) => printer(i, "LongMissingData", n),
             ItemClass::Warn(ItemW::LongWithUnexpectedData { i, n, d }) => {
                 printer(i, "LongWithUnexpectedData", n);
-                println!("\n    data: {}", d)
+                println!("    data: {}", d)
             },
             ItemClass::Err(ItemE::AmbiguousLong(i, n)) => printer(i, "AmbiguousLong", n),
             ItemClass::Warn(ItemW::LongWithNoName(i)) => printer(i, "LongWithNoName", ""),
