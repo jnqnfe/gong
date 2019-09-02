@@ -201,7 +201,7 @@ pub fn get_parser() -> Parser<'static, 'static> {
 /// Get common base `Parser` set with common base option and command sets
 pub fn get_parser_cmd() -> CmdParser<'static, 'static> {
     let mut parser = CmdParser::new(base::get_base_opts(), base::get_base_cmds());
-    parser.set_positionals_policy(PositionalsPolicy::Unlimited);
+    parser.set_positionals_policy(PositionalsPolicy::Fixed(0));
     parser.settings().set_stop_on_problem(false);
     parser
 }

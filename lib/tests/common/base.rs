@@ -13,6 +13,7 @@
 use gong::{longopt, shortopt, command, command_set, option_set};
 use gong::options::OptionSet;
 use gong::commands::CommandSet;
+use gong::positionals::Policy;
 
 /// A base set of options for common usage in tests
 static BASE_OPTS: OptionSet = option_set!(
@@ -46,9 +47,9 @@ static BASE_OPTS: OptionSet = option_set!(
 
 /// A base set of commands for common usage in tests
 static BASE_CMDS: CommandSet = command_set!([
-    command!("foo"), // For command/option name clash testing
-    command!("add"),
-    command!("commit"),
+    command!("foo", @pp Policy::Unlimited), // For command/option name clash testing
+    command!("add", @pp Policy::Unlimited),
+    command!("commit", @pp Policy::Unlimited),
     command!("push",
         @opts &option_set!(
             @long [
@@ -67,10 +68,12 @@ static BASE_CMDS: CommandSet = command_set!([
                         longopt!(@flag "force"),
                         longopt!(@flag "foo"),
                     ]
-                )
+                ),
+                @pp Policy::Unlimited
             ),
-            command!("remote"),
-        ])
+            command!("remote", @pp Policy::Unlimited),
+        ]),
+        @pp Policy::Fixed(0)
     ),
     command!("branch",
         @opts &option_set!(
@@ -83,15 +86,16 @@ static BASE_CMDS: CommandSet = command_set!([
             ]
         ),
         @cmds command_set!([
-            command!("add"),
+            command!("add", @pp Policy::Unlimited),
             command!("del",
                 @opts &option_set!(),
                 @cmds command_set!([
                     // Note, the names here are chosen to be different to those below for greater
                     // assurance that a match is made from this set, not the sibling below.
-                    command!("locally"),
-                    command!("remotely"),
-                ])
+                    command!("locally", @pp Policy::Unlimited),
+                    command!("remotely", @pp Policy::Unlimited),
+                ]),
+                @pp Policy::Fixed(0)
             ),
             command!("list",
                 @opts &option_set!(
@@ -102,21 +106,24 @@ static BASE_CMDS: CommandSet = command_set!([
                     ]
                 ),
                 @cmds command_set!([
-                    command!("local"),
-                    command!("remote"),
-                ])
+                    command!("local", @pp Policy::Unlimited),
+                    command!("remote", @pp Policy::Unlimited),
+                ]),
+                @pp Policy::Fixed(0)
             ),
-        ])
+        ]),
+        @pp Policy::Fixed(0)
     ),
     // For abbreviation ambiguity
     command!("put",
         @opts &option_set!(),
         @cmds command_set!([
-            command!("beep"),
-            command!("boop"),
-        ])
+            command!("beep", @pp Policy::Unlimited),
+            command!("boop", @pp Policy::Unlimited),
+        ]),
+        @pp Policy::Fixed(0)
     ),
-    command!("pull"),
+    command!("pull", @pp Policy::Unlimited),
 ]);
 
 /// Provides a base set of options for common usage in tests

@@ -1415,13 +1415,13 @@ mod commands {
     fn after_early_term() {
         let args = arg_list!("--", "commit");
         let expected = cmd_expected!(
-            problems: false,
+            problems: true,
             @part cmd_part!(item_set: item_set!(
-                problems: false,
+                problems: true,
                 opt_set: get_base_opts(),
                 [
                     dm_item!(0, EarlyTerminator),
-                    dm_item!(1, Positional, "commit"),
+                    dm_item!(1, UnexpectedPositional, "commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1533,7 +1533,7 @@ mod commands {
         let args = arg_list!(
             "--hah", "foo",     // Option taking data
             "blah",             // Unknown command
-            "commit"            // A known command, but one or more non-options already given
+            "commit"            // A known command, but a non-option already given
         );
         let expected = cmd_expected!(
             problems: true,
@@ -1543,7 +1543,7 @@ mod commands {
                 [
                     dm_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
                     dm_item!(2, UnknownCommand, "blah"),
-                    dm_item!(3, Positional, "commit"),
+                    dm_item!(3, UnexpectedPositional, "commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1725,10 +1725,10 @@ mod commands {
                 [
                     dm_item!(6, UnknownLong, "foo"),
                     dm_item!(7, EarlyTerminator),
-                    dm_item!(8, Positional, "--show-current"),
-                    dm_item!(9, Positional, "remotely"),
-                    dm_item!(10, Positional, "--foo"),
-                    dm_item!(11, Positional, "blah"),
+                    dm_item!(8, UnexpectedPositional, "--show-current"),
+                    dm_item!(9, UnexpectedPositional, "remotely"),
+                    dm_item!(10, UnexpectedPositional, "--foo"),
+                    dm_item!(11, UnexpectedPositional, "blah"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
@@ -1776,7 +1776,7 @@ mod commands {
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
                     dm_item!(1, UnknownCommand, "blah"),
-                    dm_item!(2, Positional, "list"),
+                    dm_item!(2, UnexpectedPositional, "list"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))

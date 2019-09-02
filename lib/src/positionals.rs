@@ -18,7 +18,7 @@ pub const MAX: Quantity = Quantity::max_value();
 
 /// Default to use with parsers
 #[doc(hidden)]
-pub const DEFAULT_POLICY: Policy = Policy::Unlimited;
+pub const DEFAULT_POLICY: Policy = Policy::Fixed(0);
 
 /// Positionals policy
 ///

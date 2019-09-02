@@ -11,7 +11,8 @@
    significant user simplification.
  * Added a positionals policy mechanism such that you can optionally have positionals treated as
    unexpected or missing, rather than the simple model previously of just accepting an unlimited
-   number only.
+   number only. By default the policy is set to allow zero, so if you want to allow some
+   positionals then you must explicitly specify a different policy.
  * Redesigned things based upon a new `Parser` type.
     - The settings that lived within option set objects have been moved into a separate `Settings`
       struct, found in the `parser` mod.
