@@ -43,6 +43,7 @@ The test program has the following features that can be enabled/disabled when co
     positional argument are also taken to be positionals, per the POSIX standard.
  - `no_opt_abbreviations` disables `gong`’s abbreviated long option name matching feature.
  - `no_stop_on_problem` disables stopping parsing upon encountering a problem.
+ - `pos_policy2` selects an alternate policy regarding positionals.
  - `keep_prog_name` avoids skipping over the first (“program name”) argument when outputting
     analysis.
  - `color` enables formatted (color/bold/etc) analysis output.

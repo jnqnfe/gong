@@ -67,7 +67,10 @@ macro_rules! c {
 fn main() {
     config::init();
 
+    #[cfg(not(feature = "pos_policy2"))]
     const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Max(2);
+    #[cfg(feature = "pos_policy2")]
+    const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Min(2);
 
     // Set up valid option descriptions
     let opts = option_set!(
@@ -129,6 +132,8 @@ fn main() {
     println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
     #[cfg(feature = "no_stop_on_problem")]
     println!("Stop parsing upon problem: {}off{}", c!(COL_MODE), c!(RESET));
+
+    println!("Positionals policy: {}{:?}{}", c!(COL_MODE), POSITIONALS_POLICY, c!(RESET));
 
     println!("\nCompile with different features to change the config!\n");
 
