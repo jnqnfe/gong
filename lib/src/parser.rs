@@ -252,12 +252,15 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     }
 
     /// Set the policy for positionals
+    ///
+    /// Panics on invalid policy.
     #[inline]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) {
+        policy.assert_valid();
         self.positionals_policy = policy;
     }
 
-    /// Checks validity of the option set
+    /// Checks validity of the option set and positionals policy
     ///
     /// Returns `true` if valid.
     ///
@@ -269,7 +272,7 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     #[inline]
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.options.is_valid()
+        self.options.is_valid() && self.positionals_policy.is_valid()
     }
 
     /// Checks validity of the option set, returning details of any problems
@@ -346,12 +349,14 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     }
 
     /// Set the policy for positionals
+    ///
+    /// Panics on invalid policy.
     #[inline]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) {
         self.inner.set_positionals_policy(policy);
     }
 
-    /// Checks validity of the option set and command set
+    /// Checks validity of the option set, command set and positionals policy
     ///
     /// Returns `true` if valid.
     ///

@@ -161,8 +161,6 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
         // Do next argument, if there is one
         match self.get_next() {
             Some(item) => Some(item),
-            // If already encountered too many positionals, just ignore minimum property
-            None if self.too_many_positionals => None,
             // Ensure that we issue a missing-positionals item if necessary
             None => match self.positionals_policy.get_remaining_min(self.positionals_count) {
                 0 => None,
@@ -257,6 +255,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
     /// Create a new instance
     fn new_inner(args: &'arg [A], parser: &Parser<'r, 'set>, command_mode: bool) -> Self {
+        parser.positionals_policy.assert_valid();
         Self {
             arg_iter: args.iter().enumerate(),
             options: parser.options,
@@ -319,8 +318,11 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
     /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
     /// the number of positionals that should be accepted below the number already returned (though
     /// it would make no sense to do so).
+    ///
+    /// Panics on invalid policy.
     #[inline(always)]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
+        policy.assert_valid();
         // Check that it is acceptable to make a change. If the number of positionals has already
         // gone over the max-limit, if there was one, then we cannot allow this to be changed, else
         // it just messes with the correctness of the output; it could allow subsequent positionals
@@ -764,6 +766,8 @@ impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
     /// the number of positionals that should be accepted below the number already returned (though
     /// it would make no sense to do so).
+    ///
+    /// Panics on invalid policy.
     #[inline(always)]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
         self.inner.set_positionals_policy(policy)
@@ -843,6 +847,8 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
     /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
     /// the number of positionals that should be accepted below the number already returned (though
     /// it would make no sense to do so).
+    ///
+    /// Panics on invalid policy.
     #[inline(always)]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
         self.inner.set_positionals_policy(policy)
@@ -918,6 +924,8 @@ impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     /// issued; otherwise it will return `Ok`. You can freely change otherwise, even if lowering
     /// the number of positionals that should be accepted below the number already returned (though
     /// it would make no sense to do so).
+    ///
+    /// Panics on invalid policy.
     #[inline(always)]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
         self.inner.set_positionals_policy(policy)

@@ -462,39 +462,21 @@ mod positionals {
 
     /// Invalid policy (min > max)
     #[test]
+    #[should_panic]
     fn invalid() {
-        let args = arg_list!("a", "b", "c", "d", "e");
-
         let mut parser = get_parser();
-
-        let expected = expected!([
-            indexed_item!(0, Positional, "a"),
-            indexed_item!(1, Positional, "b"),
-            indexed_item!(2, UnexpectedPositional, "c"),
-            indexed_item!(3, UnexpectedPositional, "d"),
-            indexed_item!(4, UnexpectedPositional, "e"),
-        ]);
         parser.set_positionals_policy(PositionalsPolicy::MinMax(3, 2));
-        check_iter_result!(parser, args, expected);
+    }
 
-        let expected = expected!([
-            indexed_item!(0, UnexpectedPositional, "a"),
-            indexed_item!(1, UnexpectedPositional, "b"),
-            indexed_item!(2, UnexpectedPositional, "c"),
-            indexed_item!(3, UnexpectedPositional, "d"),
-            indexed_item!(4, UnexpectedPositional, "e"),
-        ]);
-        parser.set_positionals_policy(PositionalsPolicy::MinMax(3, 0));
-        check_iter_result!(parser, args, expected);
-
-        let args = arg_list!("a", "b");
-
-        let expected = expected!([
-            indexed_item!(0, Positional, "a"),
-            indexed_item!(1, UnexpectedPositional, "b"),
-        ]);
-        parser.set_positionals_policy(PositionalsPolicy::MinMax(7, 1));
-        check_iter_result!(parser, args, expected);
+    /// Invalid policy (min > max), bypassing initial check by setting in parser directly
+    #[test]
+    #[should_panic]
+    fn invalid_bypass() {
+        let args = arg_list!("a");
+        let expected = expected!([]);
+        let mut parser = get_parser();
+        parser.positionals_policy = PositionalsPolicy::MinMax(3, 2); // Setting directly
+        check_iter_result!(parser, args, expected); // Should fail to create iterator
     }
 }
 

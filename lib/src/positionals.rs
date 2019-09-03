@@ -116,6 +116,24 @@ impl Policy {
             Some(max) => accepted >= max,
         }
     }
+
+    /// Check valid
+    ///
+    /// If setting a min+max policy, you could set min to be greater than max, which would not make
+    /// sense and thus would be invalid. This is all this checks for.
+    #[inline]
+    pub fn is_valid(&self) -> bool {
+        match *self {
+            Policy::MinMax(min, max) => min <= max,
+            _ => true,
+        }
+    }
+
+    /// Internal helper
+    #[inline]
+    pub(crate) fn assert_valid(&self) {
+        assert!(self.is_valid(), "Invalid positionals policy: {:?}", *self);
+    }
 }
 
 impl From<Policy> for SimplePolicy {
@@ -537,5 +555,29 @@ mod tests {
         assert_eq!(SimplePolicy::new(2, 0),   Policy::MinMax(2, 0).into());
         assert_eq!(SimplePolicy::new(3, 6),   Policy::MinMax(3, 6).into());
         assert_eq!(SimplePolicy::new(6, 3),   Policy::MinMax(6, 3).into()); //Invalid of course
+    }
+
+    #[test]
+    fn is_valid() {
+        assert_eq!(true,  Policy::Unlimited.is_valid());
+        assert_eq!(true,  Policy::Fixed(0).is_valid());
+        assert_eq!(true,  Policy::Fixed(2).is_valid());
+        assert_eq!(true,  Policy::Fixed(Quantity::max_value()).is_valid());
+        assert_eq!(true,  Policy::Max(0).is_valid());
+        assert_eq!(true,  Policy::Max(2).is_valid());
+        assert_eq!(true,  Policy::Max(Quantity::max_value()).is_valid());
+        assert_eq!(true,  Policy::Min(0).is_valid());
+        assert_eq!(true,  Policy::Min(2).is_valid());
+        assert_eq!(true,  Policy::Min(Quantity::max_value()).is_valid());
+        assert_eq!(true,  Policy::MinMax(0, 0).is_valid());
+        assert_eq!(true,  Policy::MinMax(0, 2).is_valid());
+        assert_eq!(true,  Policy::MinMax(0, Quantity::max_value()).is_valid());
+        assert_eq!(true,  Policy::MinMax(3, 6).is_valid());
+        assert_eq!(true,  Policy::MinMax(3, Quantity::max_value()).is_valid());
+        assert_eq!(true,  Policy::MinMax(Quantity::max_value(), Quantity::max_value()).is_valid());
+        assert_eq!(false, Policy::MinMax(2, 0).is_valid());
+        assert_eq!(false, Policy::MinMax(6, 3).is_valid());
+        assert_eq!(false, Policy::MinMax(Quantity::max_value(), 0).is_valid());
+        assert_eq!(false, Policy::MinMax(Quantity::max_value(), 2).is_valid());
     }
 }
