@@ -860,6 +860,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
     fn from(mut iter: crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
         let mut item_set = ItemSet::new(iter.get_option_set());
+        item_set.items = Vec::with_capacity(iter.size_hint().0);
         while let Some((_index, item, _dataloc)) = iter.next() {
             if let Err(_) = item {
                 item_set.problems = true;
