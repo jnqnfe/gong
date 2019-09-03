@@ -178,6 +178,28 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
             },
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // Note that the `Iterator` documentation for implementation of this method states that
+        // although the hint should not be absolutely relied upon to be accurate and there is no
+        // enforcement that it gives up the stated number, an iterator would be considered to be
+        // buggy if it did not conform to its stated bounds.
+        //
+        // Hence, while it might be nice to just return the arg-iter lower bound as our lower bound
+        // here, as a best-estimate hint (for collecting into a `Vec`), assuming most arguments will
+        // not consume an in-next-arg data value argument, this would go against the specification.
+
+        let arg_iter_size_hint = self.arg_iter.size_hint();
+        // The absolute minimum lower bound is influenced by the fact that option arguments can
+        // potentially consume a single additional argument as an in-next-arg data value; we can
+        // thus be certain that it will be no lower than (n/2 + n%2).
+        let lower = (arg_iter_size_hint.0 / 2) + (arg_iter_size_hint.0 % 2);
+        // We cannot give any sort of reliable upper bound since short option set arguments can
+        // expand potentially to very large numbers of short options, which is completely
+        // unpredictable prior to actual parsing. (Also missing-positionals adds one).
+        let upper = None;
+        (lower, upper)
+    }
 }
 
 impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
@@ -222,6 +244,11 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
         }
         next
     }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 impl<'r, 'set, 'arg, A> Iterator for ParseIterIndexed<'r, 'set, 'arg, A>
@@ -232,6 +259,11 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIterIndexed<'r, 'set, 'arg, A>
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|item| (self.inner.get_last_index(), item, self.inner.get_last_dataloc()))
     }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 impl<'r, 'set, 'arg, A> Iterator for CmdParseIterIndexed<'r, 'set, 'arg, A>
@@ -241,6 +273,11 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIterIndexed<'r, 'set, 'arg, A>
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|item| (self.inner.get_last_index(), item, self.inner.get_last_dataloc()))
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
     }
 }
 
