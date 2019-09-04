@@ -467,37 +467,31 @@ mod positionals {
 
         let mut parser = get_parser();
 
-        // This of course is non-sensical
         let expected = expected!([
             indexed_item!(0, Positional, "a"),
             indexed_item!(1, Positional, "b"),
             indexed_item!(2, UnexpectedPositional, "c"),
             indexed_item!(3, UnexpectedPositional, "d"),
             indexed_item!(4, UnexpectedPositional, "e"),
-            indexed_item!(4, MissingPositionals, 1), //Note, same arg index as last
         ]);
         parser.set_positionals_policy(PositionalsPolicy::MinMax(3, 2));
         check_iter_result!(parser, args, expected);
 
-        // This of course is non-sensical
         let expected = expected!([
             indexed_item!(0, UnexpectedPositional, "a"),
             indexed_item!(1, UnexpectedPositional, "b"),
             indexed_item!(2, UnexpectedPositional, "c"),
             indexed_item!(3, UnexpectedPositional, "d"),
             indexed_item!(4, UnexpectedPositional, "e"),
-            indexed_item!(4, MissingPositionals, 3), //Note, same arg index as last
         ]);
         parser.set_positionals_policy(PositionalsPolicy::MinMax(3, 0));
         check_iter_result!(parser, args, expected);
 
         let args = arg_list!("a", "b");
 
-        // This of course is non-sensical
         let expected = expected!([
             indexed_item!(0, Positional, "a"),
             indexed_item!(1, UnexpectedPositional, "b"),
-            indexed_item!(1, MissingPositionals, 6), //Note, same arg index as last
         ]);
         parser.set_positionals_policy(PositionalsPolicy::MinMax(7, 1));
         check_iter_result!(parser, args, expected);

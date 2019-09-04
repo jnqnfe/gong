@@ -161,6 +161,8 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
         // Do next argument, if there is one
         match self.get_next() {
             Some(item) => Some(item),
+            // If already encountered too many positionals, just ignore minimum property
+            None if self.too_many_positionals => None,
             // Ensure that we issue a missing-positionals item if necessary
             None => match self.positionals_policy.get_remaining_min(self.positionals_count) {
                 0 => None,
