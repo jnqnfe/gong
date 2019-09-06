@@ -283,11 +283,11 @@ mod iter {
 
         // All items
         let mut iter = item_set.get_items();
-        assert_eq!(iter.next(), Some(&expected_item!(0, Positional, "abc")));
-        assert_eq!(iter.next(), Some(&expected_item!(1, UnknownLong, "why")));
-        assert_eq!(iter.next(), Some(&expected_item!(2, AmbiguousLong, "fo")));
-        assert_eq!(iter.next(), Some(&expected_item!(3, Long, "foo")));
-        assert_eq!(iter.next(), Some(&expected_item!(4, LongWithUnexpectedData, "help", "blah")));
+        assert_eq!(iter.next(), Some(&dm_item!(0, Positional, "abc")));
+        assert_eq!(iter.next(), Some(&dm_item!(1, UnknownLong, "why")));
+        assert_eq!(iter.next(), Some(&dm_item!(2, AmbiguousLong, "fo")));
+        assert_eq!(iter.next(), Some(&dm_item!(3, Long, "foo")));
+        assert_eq!(iter.next(), Some(&dm_item!(4, LongWithUnexpectedData, "help", "blah")));
         assert_eq!(iter.next(), None);
 
         // Good items

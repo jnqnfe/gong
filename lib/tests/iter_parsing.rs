@@ -39,16 +39,16 @@ fn basic() {
         "-Ɛ", "456",    // Data taking short option, in-next-arg
     );
     let parser = get_parser_cmd();
-    let mut parse_iter = parser.parse_iter(&args);
-    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownCommand, "abc").1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(1, Long, "help").1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 'b').1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, Short, 'x').1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(2, UnknownShort, 's').1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(3, LongWithData, "hah", "xyz", DataLocation::SameArg).1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(4, LongWithData, "ƒƒ", "cba", DataLocation::NextArg).1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(6, ShortWithData, 'o', "123", DataLocation::SameArg).1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(7, ShortWithData, 'Ɛ', "456", DataLocation::NextArg).1));
+    let mut parse_iter = parser.parse_iter(&args).indexed();
+    assert_eq!(parse_iter.next(), Some(indexed_item!(0, UnknownCommand, "abc")));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(1, Long, "help")));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(2, UnknownShort, 'b')));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(2, Short, 'x')));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(2, UnknownShort, 's')));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(3, LongWithData, "hah", "xyz", DataLocation::SameArg)));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(4, LongWithData, "ƒƒ", "cba", DataLocation::NextArg)));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(6, ShortWithData, 'o', "123", DataLocation::SameArg)));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(7, ShortWithData, 'Ɛ', "456", DataLocation::NextArg)));
     assert_eq!(parse_iter.next(), None);
     assert_eq!(parse_iter.next(), None);
 }
@@ -57,7 +57,7 @@ fn basic() {
 /// to a command-specific handling function.
 mod change_data {
     use super::*;
-    use gong::parser::{CmdParser, OptionsMode, CmdParseIter};
+    use gong::parser::{CmdParser, OptionsMode, CmdParseIterIndexed};
 
     #[test]
     fn main() {
@@ -77,10 +77,10 @@ mod change_data {
         let mut parser = CmdParser::new(&main_opt_set, &main_cmd_set);
         parser.settings.set_mode(OptionsMode::Standard); // Explicitly enforce right starting state
 
-        let mut parse_iter = parser.parse_iter(&args);
+        let mut parse_iter = parser.parse_iter(&args).indexed();
 
-        assert_eq!(parse_iter.next(), Some(expected_item!(0, Long, "foo").1));
-        assert_eq!(parse_iter.next(), Some(expected_item!(1, Command, "c1").1));
+        assert_eq!(parse_iter.next(), Some(indexed_item!(0, Long, "foo")));
+        assert_eq!(parse_iter.next(), Some(indexed_item!(1, Command, "c1")));
 
         // Here we pretend that the application responds to the `c1` command by passing the iterator
         // on to a function dedicated to handling a `c1` command situation, which is responsible for
@@ -88,7 +88,7 @@ mod change_data {
         c1(&parse_iter);
     }
 
-    fn c1(parse_iter: &CmdParseIter<&OsStr>) {
+    fn c1(parse_iter: &CmdParseIterIndexed<&OsStr>) {
         let c1_opt_set = option_set!(@long [ longopt!(@flag "bar") ]);
         let c1_cmd_set = command_set!([ command!("c2") ]);
 
@@ -104,8 +104,8 @@ mod change_data {
         // NB: We confirm change of settings took place successfully by the fact that we’re matching
         // the next option in alternate mode.
 
-        assert_eq!(parse_iter.next(), Some(expected_item!(2, Long, "bar").1));
-        assert_eq!(parse_iter.next(), Some(expected_item!(3, Command, "c2").1));
+        assert_eq!(parse_iter.next(), Some(indexed_item!(2, Long, "bar")));
+        assert_eq!(parse_iter.next(), Some(indexed_item!(3, Command, "c2")));
         assert_eq!(parse_iter.next(), None);
     }
 }
@@ -116,8 +116,8 @@ fn stop_on_error() {
     let args = arg_list!("--fake1", "--fake2");
     let mut parser = get_parser();
     parser.settings.set_stop_on_problem(true);
-    let mut parse_iter = parser.parse_iter(&args);
-    assert_eq!(parse_iter.next(), Some(expected_item!(0, UnknownLong, "fake1").1));
-    assert_eq!(parse_iter.next(), Some(expected_item!(1, UnknownLong, "fake2").1));
+    let mut parse_iter = parser.parse_iter(&args).indexed();
+    assert_eq!(parse_iter.next(), Some(indexed_item!(0, UnknownLong, "fake1")));
+    assert_eq!(parse_iter.next(), Some(indexed_item!(1, UnknownLong, "fake2")));
     assert_eq!(parse_iter.next(), None);
 }

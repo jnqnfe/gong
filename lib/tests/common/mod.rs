@@ -118,33 +118,6 @@ macro_rules! indexed_item {
     ( @s $i:expr, $item:expr, $l:expr ) => { ($i, $item, Some($l)) };
 }
 
-//TODO: remove, switching everything over to `item` and `indexed_item`
-/// Construct an `ItemResultIndexed`.
-///
-/// There is one matcher for each item type. The first param for each is the index to expect it to
-/// be found at in the analysis. The second param is the label of the unique type. The final params
-/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
-macro_rules! expected_item {
-    ( $i:expr, Positional, $s:expr )       => { indexed_item!($i, Positional, $s) };
-    ( $i:expr, EarlyTerminator )           => { indexed_item!($i, EarlyTerminator) };
-    ( $i:expr, Long, $n:expr )             => { indexed_item!($i, Long, $n) };
-    ( $i:expr, Short, $c:expr )            => { indexed_item!($i, Short, $c) };
-    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
-                                           => { indexed_item!($i, LongWithData, $n, $d, $l) };
-    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
-                                           => { indexed_item!($i, ShortWithData, $c, $d, $l) };
-    ( $i:expr, Command, $n:expr )          => { indexed_item!($i, Command, $n) };
-    ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!($i, UnknownLong, $n) };
-    ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!($i, UnknownShort, $c) };
-    ( $i:expr, UnknownCommand, $n:expr )   => { indexed_item!($i, UnknownCommand, $n) };
-    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
-                                           => { indexed_item!($i, LongWithUnexpectedData, $n, $d) };
-    ( $i:expr, LongMissingData, $n:expr )  => { indexed_item!($i, LongMissingData, $n) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { indexed_item!($i, ShortMissingData, $c) };
-    ( $i:expr, AmbiguousLong, $n:expr )    => { indexed_item!($i, AmbiguousLong, $n) };
-    ( $i:expr, AmbiguousCmd, $n:expr )     => { indexed_item!($i, AmbiguousCmd, $n) };
-}
-
 /// Construct an expected item for use in constructing data-mining objects.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to
