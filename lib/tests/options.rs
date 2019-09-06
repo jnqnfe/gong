@@ -89,12 +89,12 @@ mod short_dash {
             problems: true,
             opt_set: &opts,
             [
-                expected_item!(0, UnknownLong, "abc"),
-                expected_item!(1, UnknownShort, 'a'),
-                expected_item!(1, Short, '-'),
-                expected_item!(1, UnknownShort, 'b'),
-                expected_item!(1, UnknownShort, 'c'),
-                expected_item!(2, EarlyTerminator),
+                dm_item!(0, UnknownLong, "abc"),
+                dm_item!(1, UnknownShort, 'a'),
+                dm_item!(1, Short, '-'),
+                dm_item!(1, UnknownShort, 'b'),
+                dm_item!(1, UnknownShort, 'c'),
+                dm_item!(2, EarlyTerminator),
             ]
         );
 
@@ -241,8 +241,8 @@ mod long_equals {
             problems: true,
             opt_set: &opts,
             [
-                expected_item!(0, Long, "a=b"),
-                expected_item!(1, LongWithUnexpectedData, "a=b", "b"),
+                dm_item!(0, Long, "a=b"),
+                dm_item!(1, LongWithUnexpectedData, "a=b", "b"),
             ]
         );
 

@@ -38,10 +38,10 @@ mod options {
             problems: true,
             opt_set: &opts,
             [
-                expected_item!(0, UnknownLong, "a"),
-                expected_item!(1, UnknownLong, "foo"),
-                expected_item!(2, UnknownLong, "hellp"),
-                expected_item!(3, UnknownLong, "but_i_digest"),
+                dm_item!(0, UnknownLong, "a"),
+                dm_item!(1, UnknownLong, "foo"),
+                dm_item!(2, UnknownLong, "hellp"),
+                dm_item!(3, UnknownLong, "but_i_digest"),
             ]
         );
 
@@ -88,9 +88,9 @@ mod options {
             problems: true,
             opt_set: &opts,
             [
-                expected_item!(0, UnknownLong, "hellp"),
-                expected_item!(1, UnknownLong, "bard"),
-                expected_item!(2, UnknownLong, "fooa"),
+                dm_item!(0, UnknownLong, "hellp"),
+                dm_item!(1, UnknownLong, "bard"),
+                dm_item!(2, UnknownLong, "fooa"),
             ]
         );
 
@@ -142,7 +142,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    expected_item!(0, UnknownCommand, "but_i_digest"),
+                    dm_item!(0, UnknownCommand, "but_i_digest"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -188,7 +188,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    expected_item!(0, UnknownCommand, "bard"),
+                    dm_item!(0, UnknownCommand, "bard"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -234,7 +234,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    expected_item!(0, UnknownCommand, "hellp"),
+                    dm_item!(0, UnknownCommand, "hellp"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -280,7 +280,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    expected_item!(0, UnknownCommand, "fooa"),
+                    dm_item!(0, UnknownCommand, "fooa"),
                 ])
             ),
             cmd_set: Some(&cmds)

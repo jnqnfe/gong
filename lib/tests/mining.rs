@@ -90,13 +90,13 @@ fn used() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            expected_item!(0, Long, "help"),
-            expected_item!(1, UnknownLong, "ooo"),
-            expected_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            expected_item!(3, Short, 'h'),
-            expected_item!(4, UnknownShort, 'd'),
-            expected_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
-            expected_item!(6, LongWithUnexpectedData, "version", "a"),
+            dm_item!(0, Long, "help"),
+            dm_item!(1, UnknownLong, "ooo"),
+            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+            dm_item!(3, Short, 'h'),
+            dm_item!(4, UnknownShort, 'd'),
+            dm_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
+            dm_item!(6, LongWithUnexpectedData, "version", "a"),
         ]
     );
     let parser = get_parser();
@@ -143,19 +143,19 @@ fn count() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            expected_item!(0, Long, "help"),
-            expected_item!(1, UnknownLong, "ooo"),
-            expected_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            expected_item!(3, Short, 'v'),
-            expected_item!(3, Short, 'h'),
-            expected_item!(3, Short, 'v'),
-            expected_item!(4, Short, 'v'),
-            expected_item!(5, UnknownShort, 'd'),
-            expected_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
-            expected_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
-            expected_item!(8, Long, "help"),
-            expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
-            expected_item!(10, LongWithUnexpectedData, "version", "a"),
+            dm_item!(0, Long, "help"),
+            dm_item!(1, UnknownLong, "ooo"),
+            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+            dm_item!(3, Short, 'v'),
+            dm_item!(3, Short, 'h'),
+            dm_item!(3, Short, 'v'),
+            dm_item!(4, Short, 'v'),
+            dm_item!(5, UnknownShort, 'd'),
+            dm_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
+            dm_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
+            dm_item!(8, Long, "help"),
+            dm_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
+            dm_item!(10, LongWithUnexpectedData, "version", "a"),
         ]
     );
     let parser = get_parser();
@@ -197,7 +197,7 @@ mod missing_data {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, LongMissingData, "hah"),
+                dm_item!(0, LongMissingData, "hah"),
             ]
         );
         let parser = get_parser();
@@ -217,7 +217,7 @@ mod missing_data {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, ShortMissingData, 'o'),
+                dm_item!(0, ShortMissingData, 'o'),
             ]
         );
         let parser = get_parser();
@@ -239,8 +239,8 @@ fn first_problem() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            expected_item!(0, UnknownLong, "why"),
-            expected_item!(1, AmbiguousLong, "fo"),
+            dm_item!(0, UnknownLong, "why"),
+            dm_item!(1, AmbiguousLong, "fo"),
         ]
     );
     let parser = get_parser();
@@ -270,11 +270,11 @@ mod iter {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Positional, "abc"),
-                expected_item!(1, UnknownLong, "why"),
-                expected_item!(2, AmbiguousLong, "fo"),
-                expected_item!(3, Long, "foo"),
-                expected_item!(4, LongWithUnexpectedData, "help", "blah"),
+                dm_item!(0, Positional, "abc"),
+                dm_item!(1, UnknownLong, "why"),
+                dm_item!(2, AmbiguousLong, "fo"),
+                dm_item!(3, Long, "foo"),
+                dm_item!(4, LongWithUnexpectedData, "help", "blah"),
             ]
         );
         let parser = get_parser();
@@ -322,15 +322,15 @@ mod iter {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Positional, "abc"),
-                expected_item!(1, Long, "help"),
-                expected_item!(2, Positional, "def"),
-                expected_item!(3, Positional, "hij"),
-                expected_item!(4, UnknownLong, "jjj"),
-                expected_item!(5, Positional, "klm"),
-                expected_item!(6, EarlyTerminator),
-                expected_item!(7, Positional, "nop"),
-                expected_item!(8, Positional, "--help"),
+                dm_item!(0, Positional, "abc"),
+                dm_item!(1, Long, "help"),
+                dm_item!(2, Positional, "def"),
+                dm_item!(3, Positional, "hij"),
+                dm_item!(4, UnknownLong, "jjj"),
+                dm_item!(5, Positional, "klm"),
+                dm_item!(6, EarlyTerminator),
+                dm_item!(7, Positional, "nop"),
+                dm_item!(8, Positional, "--help"),
             ]
         );
         let parser = get_parser();
@@ -368,18 +368,18 @@ fn last_value() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            expected_item!(0, Long, "help"),
-            expected_item!(1, UnknownLong, "ooo"),
-            expected_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            expected_item!(3, Short, 'v'),
-            expected_item!(3, Short, 'h'),
-            expected_item!(3, Short, 'v'),
-            expected_item!(4, Short, 'v'),
-            expected_item!(5, UnknownShort, 'd'),
-            expected_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
-            expected_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
-            expected_item!(8, Long, "help"),
-            expected_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
+            dm_item!(0, Long, "help"),
+            dm_item!(1, UnknownLong, "ooo"),
+            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+            dm_item!(3, Short, 'v'),
+            dm_item!(3, Short, 'h'),
+            dm_item!(3, Short, 'v'),
+            dm_item!(4, Short, 'v'),
+            dm_item!(5, UnknownShort, 'd'),
+            dm_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
+            dm_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
+            dm_item!(8, Long, "help"),
+            dm_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
         ]
     );
     let parser = get_parser();
@@ -426,19 +426,19 @@ fn all_values() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            expected_item!(0, Long, "help"),
-            expected_item!(1, UnknownLong, "ooo"),
-            expected_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            expected_item!(3, Short, 'v'),
-            expected_item!(3, Short, 'h'),
-            expected_item!(3, Short, 'v'),
-            expected_item!(4, Short, 'v'),
-            expected_item!(5, UnknownShort, 'd'),
-            expected_item!(6, ShortWithData, 'o', "321", DataLocation::SameArg),
-            expected_item!(7, ShortWithData, 'o', "654", DataLocation::SameArg),
-            expected_item!(8, LongWithData, "hah", "456", DataLocation::SameArg),
-            expected_item!(9, Long, "help"),
-            expected_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
+            dm_item!(0, Long, "help"),
+            dm_item!(1, UnknownLong, "ooo"),
+            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
+            dm_item!(3, Short, 'v'),
+            dm_item!(3, Short, 'h'),
+            dm_item!(3, Short, 'v'),
+            dm_item!(4, Short, 'v'),
+            dm_item!(5, UnknownShort, 'd'),
+            dm_item!(6, ShortWithData, 'o', "321", DataLocation::SameArg),
+            dm_item!(7, ShortWithData, 'o', "654", DataLocation::SameArg),
+            dm_item!(8, LongWithData, "hah", "456", DataLocation::SameArg),
+            dm_item!(9, Long, "help"),
+            dm_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
         ]
     );
     let parser = get_parser();
@@ -493,18 +493,18 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Long, "color"),
-                expected_item!(1, Long, "help"),
-                expected_item!(2, Short, 'C'),
-                expected_item!(3, UnknownLong, "ooo"),
-                expected_item!(4, Long, "no-color"),
-                expected_item!(5, Short, 'C'),
-                expected_item!(5, Short, 'h'),
-                expected_item!(6, Long, "no-color"),
-                expected_item!(7, Long, "color"),
-                expected_item!(8, UnknownShort, 'd'),
-                expected_item!(8, Short, 'C'),
-                expected_item!(9, LongWithUnexpectedData, "version", "a"),
+                dm_item!(0, Long, "color"),
+                dm_item!(1, Long, "help"),
+                dm_item!(2, Short, 'C'),
+                dm_item!(3, UnknownLong, "ooo"),
+                dm_item!(4, Long, "no-color"),
+                dm_item!(5, Short, 'C'),
+                dm_item!(5, Short, 'h'),
+                dm_item!(6, Long, "no-color"),
+                dm_item!(7, Long, "color"),
+                dm_item!(8, UnknownShort, 'd'),
+                dm_item!(8, Short, 'C'),
+                dm_item!(9, LongWithUnexpectedData, "version", "a"),
             ]
         );
         let parser = get_parser();
@@ -539,11 +539,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Long, "help"),
-                expected_item!(1, Short, 'C'),
-                expected_item!(2, Long, "no-color"),
-                expected_item!(3, Long, "color"),
-                expected_item!(4, UnknownShort, 'd'),
+                dm_item!(0, Long, "help"),
+                dm_item!(1, Short, 'C'),
+                dm_item!(2, Long, "no-color"),
+                dm_item!(3, Long, "color"),
+                dm_item!(4, UnknownShort, 'd'),
             ]
         );
         let parser = get_parser();
@@ -578,11 +578,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Long, "help"),
-                expected_item!(1, Short, 'C'),
-                expected_item!(2, Long, "color"),
-                expected_item!(3, Long, "no-color"),
-                expected_item!(4, UnknownShort, 'd'),
+                dm_item!(0, Long, "help"),
+                dm_item!(1, Short, 'C'),
+                dm_item!(2, Long, "color"),
+                dm_item!(3, Long, "no-color"),
+                dm_item!(4, UnknownShort, 'd'),
             ]
         );
         let parser = get_parser();
@@ -612,11 +612,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Long, "help"),
-                expected_item!(1, Short, 'C'),
-                expected_item!(2, Long, "no-color"),
-                expected_item!(3, LongWithUnexpectedData, "color", "data"),
-                expected_item!(4, UnknownShort, 'd'),
+                dm_item!(0, Long, "help"),
+                dm_item!(1, Short, 'C'),
+                dm_item!(2, Long, "no-color"),
+                dm_item!(3, LongWithUnexpectedData, "color", "data"),
+                dm_item!(4, UnknownShort, 'd'),
             ]
         );
         let parser = get_parser();
@@ -646,7 +646,7 @@ mod last_used {
             problems: false,
             opt_set: get_base_opts(),
             [
-                expected_item!(0, Long, "help"),
+                dm_item!(0, Long, "help"),
             ]
         );
         let parser = get_parser();
