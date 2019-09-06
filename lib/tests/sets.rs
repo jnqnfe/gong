@@ -31,36 +31,36 @@ mod options {
         let mut opts = OptionSetEx::new();
         opts.add_short('h', OptionType::Flag)
             .add_short('o', OptionType::Data)
-            .add_short('g', OptionType::OptionalData)
+            .add_short('g', OptionType::Mixed)
             .add_existing_short(shortopt!(@flag 'a'))
             .add_long("foo", OptionType::Flag)
             .add_long("bar", OptionType::Data)
-            .add_long("hello", OptionType::OptionalData)
+            .add_long("hello", OptionType::Mixed)
             .add_existing_long(longopt!(@flag "foobar"))
             .add_pair('V', "version", OptionType::Flag)
             .add_pair('b', "efgh", OptionType::Data)
-            .add_pair('i', "jklm", OptionType::OptionalData)
+            .add_pair('i', "jklm", OptionType::Mixed)
             .add_existing_pair(shortopt!(@flag 'n'), longopt!(@flag "opqr"));
 
         let expected = OptionSetEx {
             long: vec![
                 longopt!(@flag "foo"),
                 longopt!(@data "bar"),
-                longopt!(@opt_data "hello"),
+                longopt!(@mixed "hello"),
                 longopt!(@flag "foobar"),
                 longopt!(@flag "version"),
                 longopt!(@data "efgh"),
-                longopt!(@opt_data "jklm"),
+                longopt!(@mixed "jklm"),
                 longopt!(@flag "opqr"),
             ],
             short: vec![
                 shortopt!(@flag 'h'),
                 shortopt!(@data 'o'),
-                shortopt!(@opt_data 'g'),
+                shortopt!(@mixed 'g'),
                 shortopt!(@flag 'a'),
                 shortopt!(@flag 'V'),
                 shortopt!(@data 'b'),
-                shortopt!(@opt_data 'i'),
+                shortopt!(@mixed 'i'),
                 shortopt!(@flag 'n'),
             ],
         };
@@ -94,7 +94,7 @@ mod options {
                 shortopt!(@data 'b'),
                 shortopt!(@flag 'c'),
                 shortopt!(@flag 'd'),
-                shortopt!(@opt_data 'e'),
+                shortopt!(@mixed 'e'),
                 shortopt!(@flag 'f'),
             ],
         };
@@ -125,7 +125,7 @@ mod options {
 
         opts.add_shorts_from_str("mn:::op");
         expected.add_short('m', OptionType::Flag)
-                .add_short('n', OptionType::OptionalData)
+                .add_short('n', OptionType::Mixed)
                 .add_short('o', OptionType::Flag)
                 .add_short('p', OptionType::Flag);
         assert_eq!(opts, expected);
@@ -143,7 +143,7 @@ mod options {
                 shortopt!(@data 'b'),
                 shortopt!(@flag 'c'),
                 shortopt!(@flag 'd'),
-                shortopt!(@opt_data 'e'),
+                shortopt!(@mixed 'e'),
                 shortopt!(@flag 'f'),
                 shortopt!(@flag ' '),
                 shortopt!(@data ' '),
@@ -151,7 +151,7 @@ mod options {
                 shortopt!(@flag 'k'),
                 shortopt!(@flag 'l'),
                 shortopt!(@flag 'm'),
-                shortopt!(@opt_data 'n'),
+                shortopt!(@mixed 'n'),
                 shortopt!(@flag 'o'),
                 shortopt!(@flag 'p'),
             ],

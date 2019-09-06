@@ -473,7 +473,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                                 Some(Ok(Item::Long(opt_name, Some(data))))
                             }
                             // Data consumption is optional
-                            else if matched.opt_type == OptionType::OptionalData {
+                            else if matched.opt_type == OptionType::Mixed {
                                 self.last_data_loc = Some(DataLocation::SameArg);
                                 Some(Ok(Item::Long(opt_name, None)))
                             }
@@ -542,7 +542,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             SearchResult::Match(matched) => {
                 match matched.opt_type {
                     OptionType::Flag => Ok(Item::Short(ch, None)),
-                    OptionType::OptionalData => {
+                    OptionType::Mixed => {
                         self.last_data_loc = Some(DataLocation::SameArg);
                         Ok(Item::Short(ch, None))
                     },
@@ -662,7 +662,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
                             Some(Ok(Item::Short(ch, Some(data))))
                         }
                         // Data consumption is optional
-                        else if matched.opt_type == OptionType::OptionalData {
+                        else if matched.opt_type == OptionType::Mixed {
                             parent.last_data_loc = Some(DataLocation::SameArg);
                             Some(Ok(Item::Short(ch, None)))
                         }

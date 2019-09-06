@@ -60,24 +60,24 @@ macro_rules! command_set {
 ///
 ///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
 ///  * `@data` to indicate a data-taking option, which requires a value.
-///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
+///  * `@mixed` to indicate a data-taking option, where providing a data value is optional.
 ///
 /// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::longopt!(@flag "foo");     // A flag type option
-/// let _ = gong::longopt!(@data "bar");     // One that takes mandatory data
-/// let _ = gong::longopt!(@opt_data "cat"); // One that takes optional data
+/// let _ = gong::longopt!(@flag "foo");  // A flag type option
+/// let _ = gong::longopt!(@data "bar");  // One that takes mandatory data
+/// let _ = gong::longopt!(@mixed "cat"); // One that takes optional data
 /// ```
 #[macro_export]
 macro_rules! longopt {
     ( @data $name:expr ) => {
         $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Data }
     };
-    ( @opt_data $name:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::OptionalData }
+    ( @mixed $name:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Mixed }
     };
     ( @flag $name:expr ) => {
         $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Flag }
@@ -90,24 +90,24 @@ macro_rules! longopt {
 ///
 ///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
 ///  * `@data` to indicate a data-taking option, which requires a value.
-///  * `@opt_data` to indicate a data-taking option, where providing a data value is optional.
+///  * `@mixed` to indicate a data-taking option, where providing a data value is optional.
 ///
 /// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::shortopt!(@flag 'a');     // A flag type option
-/// let _ = gong::shortopt!(@data 'b');     // One that takes mandatory data
-/// let _ = gong::shortopt!(@opt_data 'c'); // One that takes optional data
+/// let _ = gong::shortopt!(@flag 'a');  // A flag type option
+/// let _ = gong::shortopt!(@data 'b');  // One that takes mandatory data
+/// let _ = gong::shortopt!(@mixed 'c'); // One that takes optional data
 /// ```
 #[macro_export]
 macro_rules! shortopt {
     ( @data $ch:expr ) => {
         $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Data }
     };
-    ( @opt_data $ch:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::OptionalData }
+    ( @mixed $ch:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Mixed }
     };
     ( @flag $ch:expr ) => {
         $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Flag }

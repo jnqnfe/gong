@@ -81,15 +81,15 @@ fn main() {
             longopt!(@flag "foobar"),
             longopt!(@data "hah"),
             longopt!(@flag "ábc"),
-            longopt!(@opt_data "delay"),
+            longopt!(@mixed "delay"),
         ],
         @short [
             shortopt!(@flag 'h'),
             shortopt!(@flag '❤'),
             shortopt!(@flag 'x'),
             shortopt!(@data 'o'),
-            shortopt!(@opt_data 'p'),
-            shortopt!(@opt_data '💧'),
+            shortopt!(@mixed 'p'),
+            shortopt!(@mixed '💧'),
             shortopt!(@data 'Ɛ'),
         ]
     );
@@ -147,14 +147,14 @@ fn main() {
         match item.opt_type {
             OptionType::Flag => println!("LONG {}", item.name),
             OptionType::Data => println!("LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
-            OptionType::OptionalData => println!("LONG {} {}[Optional-data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("LONG {} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
         }
     }
     for item in opts.short {
         match item.opt_type {
             OptionType::Flag => println!("SHORT {}", desc_char(item.ch)),
             OptionType::Data => println!("SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-            OptionType::OptionalData => println!("SHORT {} {}[Optional-data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("SHORT {} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
         }
     }
 

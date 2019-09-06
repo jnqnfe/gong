@@ -38,8 +38,8 @@ mod available_options {
                 longopt!(@flag "ábc"),
                 longopt!(@data "ƒƒ"),
                 longopt!(@flag "ƒo"),
-                longopt!(@opt_data "delay"),
-                longopt!(@opt_data "ǝƃ"),
+                longopt!(@mixed "delay"),
+                longopt!(@mixed "ǝƃ"),
                 longopt!(@flag "color"),
                 longopt!(@flag "no-color"),
             ],
@@ -52,8 +52,8 @@ mod available_options {
                 shortopt!(@flag '\u{030a}'),
                 shortopt!(@data 'Ɛ'),
                 shortopt!(@flag 'C'),
-                shortopt!(@opt_data '💧'),
-                shortopt!(@opt_data 'p'),
+                shortopt!(@mixed '💧'),
+                shortopt!(@mixed 'p'),
             ]
         };
         assert_eq!(*fixed, non_fixed);
@@ -76,8 +76,8 @@ mod available_options {
                 LongOption { name: "ábc", opt_type: OptionType::Flag },
                 LongOption { name: "ƒƒ", opt_type: OptionType::Data },
                 LongOption { name: "ƒo", opt_type: OptionType::Flag },
-                LongOption { name: "delay", opt_type: OptionType::OptionalData },
-                LongOption { name: "ǝƃ", opt_type: OptionType::OptionalData },
+                LongOption { name: "delay", opt_type: OptionType::Mixed },
+                LongOption { name: "ǝƃ", opt_type: OptionType::Mixed },
                 LongOption { name: "color", opt_type: OptionType::Flag },
                 LongOption { name: "no-color", opt_type: OptionType::Flag },
             ],
@@ -90,8 +90,8 @@ mod available_options {
                 ShortOption { ch: '\u{030A}', opt_type: OptionType::Flag },
                 ShortOption { ch: 'Ɛ', opt_type: OptionType::Data },
                 ShortOption { ch: 'C', opt_type: OptionType::Flag },
-                ShortOption { ch: '💧', opt_type: OptionType::OptionalData },
-                ShortOption { ch: 'p', opt_type: OptionType::OptionalData },
+                ShortOption { ch: '💧', opt_type: OptionType::Mixed },
+                ShortOption { ch: 'p', opt_type: OptionType::Mixed },
             ]
         };
 
@@ -121,13 +121,13 @@ mod available_options {
             .add_long("ƒƒ",OptionType::Data)
             .add_long("ƒo", OptionType::Flag)
             .add_short('Ɛ', OptionType::Data)
-            .add_long("delay", OptionType::OptionalData)
-            .add_long("ǝƃ", OptionType::OptionalData)
+            .add_long("delay", OptionType::Mixed)
+            .add_long("ǝƃ", OptionType::Mixed)
             .add_long("color", OptionType::Flag)
             .add_long("no-color", OptionType::Flag)
             .add_short('C', OptionType::Flag)
-            .add_short('💧', OptionType::OptionalData)
-            .add_short('p', OptionType::OptionalData);
+            .add_short('💧', OptionType::Mixed)
+            .add_short('p', OptionType::Mixed);
 
         assert_eq!(*macro_built, method_built);
     }

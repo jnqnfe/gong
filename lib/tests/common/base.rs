@@ -26,8 +26,8 @@ static BASE_OPTS: OptionSet = option_set!(
         longopt!(@flag "ábc"), // Using a combinator char (accent)
         longopt!(@data "ƒƒ"),  // For multi-byte with-data long option component split checking
         longopt!(@flag "ƒo"),  // For multi-byte abbreviation/ambiguity
-        longopt!(@opt_data "delay"),
-        longopt!(@opt_data "ǝƃ"),
+        longopt!(@mixed "delay"),
+        longopt!(@mixed "ǝƃ"),
         longopt!(@flag "color"),
         longopt!(@flag "no-color"),
     ],
@@ -40,8 +40,8 @@ static BASE_OPTS: OptionSet = option_set!(
         shortopt!(@flag '\u{030a}'), // A lone combinator (“ring above”)
         shortopt!(@data 'Ɛ'),        // For multi-byte with-data calculation checking
         shortopt!(@flag 'C'),        // For analysis data mining, using capital to avoid test conflicts
-        shortopt!(@opt_data '💧'),
-        shortopt!(@opt_data 'p'),
+        shortopt!(@mixed '💧'),
+        shortopt!(@mixed 'p'),
     ]
 );
 

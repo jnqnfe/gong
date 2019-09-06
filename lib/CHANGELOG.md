@@ -23,6 +23,7 @@
       a `parse` method for the “all in one” style, and a `parse_cmd` method providing a suitable
       alternative to `parse` for command-based programs.
  * Added support for “optional” data-values.
+   This option type has been named “mixed”, as it can be used as either flag or data-taking style.
    This means greater flexibility for data-taking options; you can now choose whether providing a
    value to each of them is mandatory or optional. For those mandatory, the behaviour is the same as
    before. For those optional, data is only consumed when provided in-same-argument style, never

@@ -53,11 +53,13 @@ pub enum OptionType {
     /// next argument is consumed as the data value. In the latter scenario, if no next argument
     /// exists, then a missing-data-value problem is reported.
     Data,
-    /// A data-value taking option, where providing the data value is optional
+    /// An option where providing a data-value is optional, thus it can be used in both flag and
+    /// data-taking forms in an input argument, i.e. providing the data value is optional.
     ///
-    /// With the data value being optional, it is only ever taken, when provided, from within the
-    /// same argument. The next argument is never consumed.
-    OptionalData,
+    /// One restriction with this type is that to avoid parsig ambiguity, a data value can only be
+    /// provided within the same argument, never the next argument. If a data value is not provided
+    /// within the same argument as the option `char`/name, then it is considered to be without one.
+    Mixed,
 }
 
 /// Extendible option set
@@ -302,9 +304,9 @@ impl<'s> OptionSetEx<'s> {
     /// Note that the colon (`:`) character has special meaning when used in the provided string;
     /// each `char` may optionally be followed by a colon (`:`) which if present indicates that the
     /// option is a data-taking short option; or two colons, which indicates that providing a data
-    /// argument is optional. (This is the behaviour offered by *getopt*). Unexpected colons (at the
-    /// beginning of the string), are simply ignored. Using more than two is treated as if only two
-    /// were given.
+    /// argument is optional (“mixed” type). (This is the behaviour offered by *getopt*). Unexpected
+    /// colons (at the beginning of the string), are simply ignored. Using more than two is treated
+    /// as if only two were given.
     ///
     /// Also, note that this does nothing to avoid duplicates being added, and white space
     /// characters in the provided string are **not** ignored (not that it is sensible or even makes
@@ -331,7 +333,7 @@ impl<'s> OptionSetEx<'s> {
                     match iter.peek() {
                         Some(':') => {
                             let _ = iter.next();
-                            OptionType::OptionalData
+                            OptionType::Mixed
                         },
                         _ => OptionType::Data,
                     }

@@ -76,7 +76,7 @@
 //!     .add_long("foobar", OptionType::Flag)
 //!     .add_long("ábc", OptionType::Flag)
 //!     .add_long("hah", OptionType::Data)
-//!     .add_long("delay", OptionType::OptionalData)
+//!     .add_long("delay", OptionType::Mixed)
 //!     .add_short('❤', OptionType::Flag)
 //!     .add_short('x', OptionType::Flag)
 //!     .add_short('o', OptionType::Data)
@@ -95,8 +95,8 @@
 //!         longopt!(@flag "version"),
 //!         longopt!(@flag "foobar"),
 //!         longopt!(@flag "ábc"),
-//!         longopt!(@data "hah"),       // This one expects a mandatory data arg
-//!         longopt!(@opt_data "delay"), // This one expects an optional data arg
+//!         longopt!(@data "hah"),    // This one expects a mandatory data arg
+//!         longopt!(@mixed "delay"), // This one takes an optional data arg
 //!     ],
 //!     @short [
 //!         shortopt!(@flag 'h'),
