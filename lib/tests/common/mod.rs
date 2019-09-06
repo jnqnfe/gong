@@ -135,6 +135,68 @@ macro_rules! indexed_item {
     ( @s $i:expr, $item:expr, $l:expr ) => { ($i, $item, Some($l)) };
 }
 
+/// Construct an `ItemResult`, command version.
+///
+/// There is one matcher for each item type. The first param for each is the label of the unique
+/// type. The final params as necessary allow for: [<name/char>[, <data-value>]].
+macro_rules! cmd_item {
+    ( Positional, $s:expr )                      => { item!(Positional, $s) };
+    ( EarlyTerminator )                          => { item!(EarlyTerminator) };
+    ( Long, $n:expr )                            => { item!(Long, $n) };
+    ( Short, $c:expr )                           => { item!(Short, $c) };
+    ( LongWithData, $n:expr, $d:expr )           => { item!(LongWithData, $n, $d) };
+    ( ShortWithData, $c:expr, $d:expr )          => { item!(ShortWithData, $c, $d) };
+    ( LongWithoutData, $n:expr )                 => { item!(LongWithoutData, $n) };
+    ( ShortWithoutData, $c:expr )                => { item!(ShortWithoutData, $c) };
+    ( Command, $n:expr )                         => { item!(Command, $n) };
+    ( UnknownLong, $n:expr )                     => { item!(UnknownLong, $n) };
+    ( UnknownShort, $c:expr )                    => { item!(UnknownShort, $c) };
+    ( UnknownCommand, $n:expr )                  => { item!(UnknownCommand, $n) };
+    ( LongWithUnexpectedData, $n:expr, $d:expr ) => { item!(LongWithUnexpectedData, $n, $d) };
+    ( LongMissingData, $n:expr )                 => { item!(LongMissingData, $n) };
+    ( ShortMissingData, $c:expr )                => { item!(ShortMissingData, $c) };
+    ( AmbiguousLong, $n:expr )                   => { item!(AmbiguousLong, $n) };
+    ( AmbiguousCmd, $n:expr )                    => { item!(AmbiguousCmd, $n) };
+    ( UnexpectedPositional, $s:expr )            => { item!(UnexpectedPositional, $s) };
+    // This does not correspond to an argument, so index not valid, should be index of last item
+    ( MissingPositionals, $c:expr )              => { item!(MissingPositionals, $c) };
+}
+
+/// Construct an `ItemResultIndexed`, command version.
+///
+/// There is one matcher for each item type. The first param for each is the index to expect it to
+/// be found at in the analysis. The second param is the label of the unique type. The final params
+/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
+macro_rules! cmd_indexed_item {
+    ( $i:expr, Positional, $s:expr )           => { cmd_indexed_item!(@n $i, cmd_item!(Positional, $s)) };
+    ( $i:expr, EarlyTerminator )               => { cmd_indexed_item!(@n $i, cmd_item!(EarlyTerminator)) };
+    ( $i:expr, Long, $n:expr )                 => { cmd_indexed_item!(@n $i, cmd_item!(Long, $n)) };
+    ( $i:expr, Short, $c:expr )                => { cmd_indexed_item!(@n $i, cmd_item!(Short, $c)) };
+    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
+                                               => { cmd_indexed_item!(@s $i, cmd_item!(LongWithData, $n, $d), $l) };
+    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
+                                               => { cmd_indexed_item!(@s $i, cmd_item!(ShortWithData, $c, $d), $l) };
+    ( $i:expr, LongWithoutData, $n:expr )      => { cmd_indexed_item!(@s $i, cmd_item!(Long, $n), DataLocation::SameArg) };
+    ( $i:expr, ShortWithoutData, $c:expr )     => { cmd_indexed_item!(@s $i, cmd_item!(Short, $c), DataLocation::SameArg) };
+    ( $i:expr, Command, $n:expr )              => { cmd_indexed_item!(@n $i, cmd_item!(Command, $n)) };
+    ( $i:expr, UnknownLong, $n:expr )          => { cmd_indexed_item!(@n $i, cmd_item!(UnknownLong, $n)) };
+    ( $i:expr, UnknownShort, $c:expr )         => { cmd_indexed_item!(@n $i, cmd_item!(UnknownShort, $c)) };
+    ( $i:expr, UnknownCommand, $n:expr )       => { cmd_indexed_item!(@n $i, cmd_item!(UnknownCommand, $n)) };
+    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
+                                               => { cmd_indexed_item!(@n $i, cmd_item!(LongWithUnexpectedData, $n, $d)) };
+    ( $i:expr, LongMissingData, $n:expr )      => { cmd_indexed_item!(@n $i, cmd_item!(LongMissingData, $n)) };
+    ( $i:expr, ShortMissingData, $c:expr )     => { cmd_indexed_item!(@n $i, cmd_item!(ShortMissingData, $c)) };
+    ( $i:expr, AmbiguousLong, $n:expr )        => { cmd_indexed_item!(@n $i, cmd_item!(AmbiguousLong, $n)) };
+    ( $i:expr, AmbiguousCmd, $n:expr )         => { cmd_indexed_item!(@n $i, cmd_item!(AmbiguousCmd, $n)) };
+    ( $i:expr, UnexpectedPositional, $s:expr ) => { cmd_indexed_item!(@n $i, cmd_item!(UnexpectedPositional, $s)) };
+    // This does not correspond to an argument, so index not valid, should be index of last item
+    ( $i:expr, MissingPositionals, $c:expr )   => { cmd_indexed_item!(@n $i, cmd_item!(MissingPositionals, $c)) };
+
+    // Inner: @n and @s are short for `None` and `Some(<data-location>)` respectively
+    ( @n $i:expr, $item:expr )          => { ($i, $item, Option::<DataLocation>::None) };
+    ( @s $i:expr, $item:expr, $l:expr ) => { ($i, $item, Some($l)) };
+}
+
 /// Construct an expected item for use in constructing data-mining objects.
 ///
 /// There is one matcher for each item type. The first param for each is the index to expect it to

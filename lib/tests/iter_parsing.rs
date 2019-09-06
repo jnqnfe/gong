@@ -20,7 +20,6 @@ mod common;
 use std::ffi::OsStr;
 use gong::{longopt, command, command_set, option_set};
 use gong::analysis::*;
-use self::common::{CmdActual, CmdExpected};
 
 /// Testing changing positionals policy during iterating
 mod change_positionals_policy {
@@ -88,42 +87,25 @@ mod change_positionals_policy {
         let cmds = command_set!([ command!("pull", @pp Policy::Max(3)) ]);
         let mut parser = CmdParser::new(&opts, &cmds);
         parser.set_positionals_policy(Policy::Max(1));
-        parser.settings().set_stop_on_problem(false);
 
         let args = arg_list!("a", "b", "c", "d");
-        let expected = cmd_dm_expected!(
-            problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                opt_set: &opts,
-                [
-                    dm_item!(0, UnknownCommand, "a"),
-                    dm_item!(1, Positional, "b"),
-                    dm_item!(2, UnexpectedPositional, "c"),
-                    dm_item!(3, UnexpectedPositional, "d"),
-                ])
-            ),
-            cmd_set: Some(&cmds)
-        );
-        check_result!(&CmdActual(parser.parse(&args)), &expected);
+        let expected = expected!([
+            cmd_indexed_item!(0, UnknownCommand, "a"),
+            cmd_indexed_item!(1, Positional, "b"),
+            cmd_indexed_item!(2, UnexpectedPositional, "c"),
+            cmd_indexed_item!(3, UnexpectedPositional, "d"),
+        ]);
+        check_iter_result!(parser, args, expected);
 
         let args = arg_list!("pull", "a", "b", "c", "d");
-        let expected = cmd_dm_expected!(
-            problems: true,
-            @part cmd_part!(command: 0, "pull"),
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                opt_set: &opts,
-                [
-                    dm_item!(1, Positional, "a"),
-                    dm_item!(2, Positional, "b"),
-                    dm_item!(3, Positional, "c"),
-                    dm_item!(4, UnexpectedPositional, "d"),
-                ])
-            ),
-            cmd_set: None
-        );
-        check_result!(&CmdActual(parser.parse(&args)), &expected);
+        let expected = expected!([
+            cmd_indexed_item!(0, Command, "pull"),
+            cmd_indexed_item!(1, Positional, "a"),
+            cmd_indexed_item!(2, Positional, "b"),
+            cmd_indexed_item!(3, Positional, "c"),
+            cmd_indexed_item!(4, UnexpectedPositional, "d"),
+        ]);
+        check_iter_result!(parser, args, expected);
     }
 }
 
@@ -153,8 +135,8 @@ mod change_data {
 
         let mut parse_iter = parser.parse_iter(&args).indexed();
 
-        assert_eq!(parse_iter.next(), Some(indexed_item!(0, Long, "foo")));
-        assert_eq!(parse_iter.next(), Some(indexed_item!(1, Command, "c1")));
+        assert_eq!(parse_iter.next(), Some(cmd_indexed_item!(0, Long, "foo")));
+        assert_eq!(parse_iter.next(), Some(cmd_indexed_item!(1, Command, "c1")));
 
         // Here we pretend that the application responds to the `c1` command by passing the iterator
         // on to a function dedicated to handling a `c1` command situation, which is responsible for
@@ -178,8 +160,8 @@ mod change_data {
         // NB: We confirm change of settings took place successfully by the fact that we’re matching
         // the next option in alternate mode.
 
-        assert_eq!(parse_iter.next(), Some(indexed_item!(2, Long, "bar")));
-        assert_eq!(parse_iter.next(), Some(indexed_item!(3, Command, "c2")));
+        assert_eq!(parse_iter.next(), Some(cmd_indexed_item!(2, Long, "bar")));
+        assert_eq!(parse_iter.next(), Some(cmd_indexed_item!(3, Command, "c2")));
         assert_eq!(parse_iter.next(), None);
     }
 }
