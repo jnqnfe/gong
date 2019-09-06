@@ -91,7 +91,7 @@ mod change_positionals_policy {
         parser.settings().set_stop_on_problem(false);
 
         let args = arg_list!("a", "b", "c", "d");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -108,7 +108,7 @@ mod change_positionals_policy {
         check_result!(&CmdActual(parser.parse(&args)), &expected);
 
         let args = arg_list!("pull", "a", "b", "c", "d");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "pull"),
             @part cmd_part!(item_set: item_set!(

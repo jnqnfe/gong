@@ -127,7 +127,7 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("but_i_digest");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -173,7 +173,7 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("bard");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -219,7 +219,7 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("hellp");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -265,7 +265,7 @@ mod commands {
         assert!(cmds.is_valid());
 
         let args = arg_list!("fooa");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,

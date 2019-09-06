@@ -48,7 +48,7 @@ macro_rules! dm_expected {
 }
 
 /// Construct an `CmdExpected`
-macro_rules! cmd_expected {
+macro_rules! cmd_dm_expected {
     ( problems: $problems:expr, $(@part $part:expr),*, cmd_set: $cmd_set:expr ) => {
         CmdExpected(CommandAnalysis {
             parts: vec![ $($part),* ],

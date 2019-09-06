@@ -74,7 +74,7 @@ fn stop_on_problems() {
 #[test]
 fn stop_on_problems_off_cmd() {
     let args = arg_list!("commit", "--fake1", "--fake2");
-    let expected = cmd_expected!(
+    let expected = cmd_dm_expected!(
         problems: true,
         @part cmd_part!(command: 0, "commit"),
         @part cmd_part!(item_set: item_set!(
@@ -97,7 +97,7 @@ fn stop_on_problems_off_cmd() {
 #[test]
 fn stop_on_problems_on_cmd() {
     let args = arg_list!("commit", "--fake1", "--fake2");
-    let expected = cmd_expected!(
+    let expected = cmd_dm_expected!(
         problems: true,
         @part cmd_part!(command: 0, "commit"),
         @part cmd_part!(item_set: item_set!(
@@ -274,7 +274,7 @@ mod positionals {
 
         // Command parser
         eprintln!("trying with command parser");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -324,7 +324,7 @@ mod positionals {
 
         // Command parser
         eprintln!("trying with command parser");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -382,7 +382,7 @@ mod positionals {
 
         // Command parser
         eprintln!("trying with command parser");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -437,7 +437,7 @@ mod positionals {
 
         // Command parser
         eprintln!("trying with command parser");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -605,7 +605,7 @@ mod abbreviations {
             "--fo", // Same
             "pu",   // Abbreviation of `put`, `pull` and `push` commands
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -634,7 +634,7 @@ mod abbreviations {
             "put",      // Exact match for command
             "be",       // Abbreviation of `beep` command only
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -659,7 +659,7 @@ mod abbreviations {
     #[test]
     fn disabled() {
         let args = arg_list!("--f", "--fo", "--foo", "--foob", "--fooba", "--foobar", "pul");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -703,7 +703,7 @@ mod abbreviations {
         ]);
 
         let args = arg_list!("--foo", "put");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -727,7 +727,7 @@ mod abbreviations {
         let cmds = command_set!([ command!("pull") ]);
 
         let args = arg_list!("--fo", "pu");
-        let expected1 = cmd_expected!(
+        let expected1 = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -739,7 +739,7 @@ mod abbreviations {
             ),
             cmd_set: Some(&cmds)
         );
-        let expected2 = cmd_expected!(
+        let expected2 = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -1343,7 +1343,7 @@ mod commands {
     #[test]
     fn basic() {
         let args = arg_list!("commit");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(command: 0, "commit"),
             cmd_set: None
@@ -1355,7 +1355,7 @@ mod commands {
     #[test]
     fn case_sensitivity() {
         let args = arg_list!("Commit");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -1376,7 +1376,7 @@ mod commands {
     #[test]
     fn repeated_same() {
         let args = arg_list!("commit", "commit");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(command: 0, "commit"),
             @part cmd_part!(item_set: item_set!(
@@ -1395,7 +1395,7 @@ mod commands {
     #[test]
     fn repeated_different() {
         let args = arg_list!("push", "commit");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "push"),
             @part cmd_part!(item_set: item_set!(
@@ -1414,7 +1414,7 @@ mod commands {
     #[test]
     fn after_early_term() {
         let args = arg_list!("--", "commit");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -1436,7 +1436,7 @@ mod commands {
             "--foo", "-h",  // Long and short options from the main set
             "commit"        // Our command
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -1459,7 +1459,7 @@ mod commands {
             "--foo", // As long option
             "foo"    // As command
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -1488,7 +1488,7 @@ mod commands {
         ]);
 
         let args = arg_list!("--foo", "--bar");
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -1512,7 +1512,7 @@ mod commands {
             "--hah",    // Long option taking data
             "commit"    // Available command, but should be consumed as option data
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -1535,7 +1535,7 @@ mod commands {
             "blah",             // Unknown command
             "commit"            // A known command, but a non-option already given
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
@@ -1561,7 +1561,7 @@ mod commands {
             "--foo", "-oq"      // Options, some match the main set, but set in use should have
                                 // changed, resulting in them not being recognised.
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -1600,7 +1600,7 @@ mod commands {
             "--tags",           // Option applicable to command
             "-o"                // Option unknown to command, but exists in main set
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
@@ -1647,7 +1647,7 @@ mod commands {
             "--show-current",   // Option unknown to sub-command
             "blah"              // Positional
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "branch"),
             @part cmd_part!(item_set: item_set!(
@@ -1705,7 +1705,7 @@ mod commands {
             "--foo",            // Option unknown to sub-command
             "blah"              // Positional
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "branch"),
             @part cmd_part!(item_set: item_set!(
@@ -1744,7 +1744,7 @@ mod commands {
             "del",      // Sub-command (level 1)
             "list",     // Sub-command from level 1, used at level 2, thus unrecognised
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "branch"),
             @part cmd_part!(command: 1, "del"),
@@ -1768,7 +1768,7 @@ mod commands {
             "blah",     // Unknown sub-command
             "list",     // Known, sub-command, but following unknown, so only positional
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: 0, "branch"),
             @part cmd_part!(item_set: item_set!(
@@ -1937,7 +1937,7 @@ mod alt_mode {
                         // irrelevant here).
             "-tags"     // Option applicable to command
         );
-        let expected = cmd_expected!(
+        let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
