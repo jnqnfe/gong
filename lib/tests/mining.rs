@@ -104,13 +104,13 @@ fn used() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            dm_item!(0, Long, "help"),
-            dm_item!(1, UnknownLong, "ooo"),
-            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            dm_item!(3, Short, 'h'),
-            dm_item!(4, UnknownShort, 'd'),
-            dm_item!(5, ShortWithData, 'o', "321", DataLocation::SameArg),
-            dm_item!(6, LongWithUnexpectedData, "version", "a"),
+            item!(Long, "help"),
+            item!(UnknownLong, "ooo"),
+            item!(LongWithData, "hah", "123"),
+            item!(Short, 'h'),
+            item!(UnknownShort, 'd'),
+            item!(ShortWithData, 'o', "321"),
+            item!(LongWithUnexpectedData, "version", "a"),
         ]
     );
     let item_set = parser.parse(&args);
@@ -175,19 +175,19 @@ fn count() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            dm_item!(0, Long, "help"),
-            dm_item!(1, UnknownLong, "ooo"),
-            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            dm_item!(3, Short, 'v'),
-            dm_item!(3, Short, 'h'),
-            dm_item!(3, Short, 'v'),
-            dm_item!(4, Short, 'v'),
-            dm_item!(5, UnknownShort, 'd'),
-            dm_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
-            dm_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
-            dm_item!(8, Long, "help"),
-            dm_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
-            dm_item!(10, LongWithUnexpectedData, "version", "a"),
+            item!(Long, "help"),
+            item!(UnknownLong, "ooo"),
+            item!(LongWithData, "hah", "123"),
+            item!(Short, 'v'),
+            item!(Short, 'h'),
+            item!(Short, 'v'),
+            item!(Short, 'v'),
+            item!(UnknownShort, 'd'),
+            item!(LongWithData, "hah", "456"),
+            item!(ShortWithData, 'o', "321"),
+            item!(Long, "help"),
+            item!(ShortWithData, 'o', "654"),
+            item!(LongWithUnexpectedData, "version", "a"),
         ]
     );
     let item_set = parser.parse(&args);
@@ -235,7 +235,7 @@ mod missing_data {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, LongMissingData, "hah"),
+                item!(LongMissingData, "hah"),
             ]
         );
         let item_set = parser.parse(&args);
@@ -261,7 +261,7 @@ mod missing_data {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, ShortMissingData, 'o'),
+                item!(ShortMissingData, 'o'),
             ]
         );
         let item_set = parser.parse(&args);
@@ -290,8 +290,8 @@ fn first_problem() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            dm_item!(0, UnknownLong, "why"),
-            dm_item!(1, AmbiguousLong, "fo"),
+            item!(UnknownLong, "why"),
+            item!(AmbiguousLong, "fo"),
         ]
     );
     let item_set = parser.parse(&args);
@@ -331,11 +331,11 @@ mod iter {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Positional, "abc"),
-                dm_item!(1, UnknownLong, "why"),
-                dm_item!(2, AmbiguousLong, "fo"),
-                dm_item!(3, Long, "foo"),
-                dm_item!(4, LongWithUnexpectedData, "help", "blah"),
+                item!(Positional, "abc"),
+                item!(UnknownLong, "why"),
+                item!(AmbiguousLong, "fo"),
+                item!(Long, "foo"),
+                item!(LongWithUnexpectedData, "help", "blah"),
             ]
         );
         let item_set = parser.parse(&args);
@@ -343,11 +343,11 @@ mod iter {
 
         // All items
         let mut iter = item_set.get_items();
-        assert_eq!(iter.next(), Some(&dm_item!(0, Positional, "abc")));
-        assert_eq!(iter.next(), Some(&dm_item!(1, UnknownLong, "why")));
-        assert_eq!(iter.next(), Some(&dm_item!(2, AmbiguousLong, "fo")));
-        assert_eq!(iter.next(), Some(&dm_item!(3, Long, "foo")));
-        assert_eq!(iter.next(), Some(&dm_item!(4, LongWithUnexpectedData, "help", "blah")));
+        assert_eq!(iter.next(), Some(&item!(Positional, "abc")));
+        assert_eq!(iter.next(), Some(&item!(UnknownLong, "why")));
+        assert_eq!(iter.next(), Some(&item!(AmbiguousLong, "fo")));
+        assert_eq!(iter.next(), Some(&item!(Long, "foo")));
+        assert_eq!(iter.next(), Some(&item!(LongWithUnexpectedData, "help", "blah")));
         assert_eq!(iter.next(), None);
 
         // Good items
@@ -398,15 +398,15 @@ mod iter {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Positional, "abc"),
-                dm_item!(1, Long, "help"),
-                dm_item!(2, Positional, "def"),
-                dm_item!(3, UnexpectedPositional, "hij"),
-                dm_item!(4, UnknownLong, "jjj"),
-                dm_item!(5, UnexpectedPositional, "klm"),
-                dm_item!(6, EarlyTerminator),
-                dm_item!(7, UnexpectedPositional, "nop"),
-                dm_item!(8, UnexpectedPositional, "--help"),
+                item!(Positional, "abc"),
+                item!(Long, "help"),
+                item!(Positional, "def"),
+                item!(UnexpectedPositional, "hij"),
+                item!(UnknownLong, "jjj"),
+                item!(UnexpectedPositional, "klm"),
+                item!(EarlyTerminator),
+                item!(UnexpectedPositional, "nop"),
+                item!(UnexpectedPositional, "--help"),
             ]
         );
         let item_set = parser.parse(&args);
@@ -466,18 +466,18 @@ fn last_value() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            dm_item!(0, Long, "help"),
-            dm_item!(1, UnknownLong, "ooo"),
-            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            dm_item!(3, Short, 'v'),
-            dm_item!(3, Short, 'h'),
-            dm_item!(3, Short, 'v'),
-            dm_item!(4, Short, 'v'),
-            dm_item!(5, UnknownShort, 'd'),
-            dm_item!(6, LongWithData, "hah", "456", DataLocation::SameArg),
-            dm_item!(7, ShortWithData, 'o', "321", DataLocation::SameArg),
-            dm_item!(8, Long, "help"),
-            dm_item!(9, ShortWithData, 'o', "654", DataLocation::SameArg),
+            item!(Long, "help"),
+            item!(UnknownLong, "ooo"),
+            item!(LongWithData, "hah", "123"),
+            item!(Short, 'v'),
+            item!(Short, 'h'),
+            item!(Short, 'v'),
+            item!(Short, 'v'),
+            item!(UnknownShort, 'd'),
+            item!(LongWithData, "hah", "456"),
+            item!(ShortWithData, 'o', "321"),
+            item!(Long, "help"),
+            item!(ShortWithData, 'o', "654"),
         ]
     );
     let item_set = parser.parse(&args);
@@ -542,19 +542,19 @@ fn all_values() {
         problems: true,
         opt_set: get_base_opts(),
         [
-            dm_item!(0, Long, "help"),
-            dm_item!(1, UnknownLong, "ooo"),
-            dm_item!(2, LongWithData, "hah", "123", DataLocation::SameArg),
-            dm_item!(3, Short, 'v'),
-            dm_item!(3, Short, 'h'),
-            dm_item!(3, Short, 'v'),
-            dm_item!(4, Short, 'v'),
-            dm_item!(5, UnknownShort, 'd'),
-            dm_item!(6, ShortWithData, 'o', "321", DataLocation::SameArg),
-            dm_item!(7, ShortWithData, 'o', "654", DataLocation::SameArg),
-            dm_item!(8, LongWithData, "hah", "456", DataLocation::SameArg),
-            dm_item!(9, Long, "help"),
-            dm_item!(10, ShortWithData, 'o', "987", DataLocation::SameArg),
+            item!(Long, "help"),
+            item!(UnknownLong, "ooo"),
+            item!(LongWithData, "hah", "123"),
+            item!(Short, 'v'),
+            item!(Short, 'h'),
+            item!(Short, 'v'),
+            item!(Short, 'v'),
+            item!(UnknownShort, 'd'),
+            item!(ShortWithData, 'o', "321"),
+            item!(ShortWithData, 'o', "654"),
+            item!(LongWithData, "hah", "456"),
+            item!(Long, "help"),
+            item!(ShortWithData, 'o', "987"),
         ]
     );
     let item_set = parser.parse(&args);
@@ -626,18 +626,18 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Long, "color"),
-                dm_item!(1, Long, "help"),
-                dm_item!(2, Short, 'C'),
-                dm_item!(3, UnknownLong, "ooo"),
-                dm_item!(4, Long, "no-color"),
-                dm_item!(5, Short, 'C'),
-                dm_item!(5, Short, 'h'),
-                dm_item!(6, Long, "no-color"),
-                dm_item!(7, Long, "color"),
-                dm_item!(8, UnknownShort, 'd'),
-                dm_item!(8, Short, 'C'),
-                dm_item!(9, LongWithUnexpectedData, "version", "a"),
+                item!(Long, "color"),
+                item!(Long, "help"),
+                item!(Short, 'C'),
+                item!(UnknownLong, "ooo"),
+                item!(Long, "no-color"),
+                item!(Short, 'C'),
+                item!(Short, 'h'),
+                item!(Long, "no-color"),
+                item!(Long, "color"),
+                item!(UnknownShort, 'd'),
+                item!(Short, 'C'),
+                item!(LongWithUnexpectedData, "version", "a"),
             ]
         );
         let item_set = parser.parse(&args);
@@ -682,11 +682,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Long, "help"),
-                dm_item!(1, Short, 'C'),
-                dm_item!(2, Long, "no-color"),
-                dm_item!(3, Long, "color"),
-                dm_item!(4, UnknownShort, 'd'),
+                item!(Long, "help"),
+                item!(Short, 'C'),
+                item!(Long, "no-color"),
+                item!(Long, "color"),
+                item!(UnknownShort, 'd'),
             ]
         );
         let item_set = parser.parse(&args);
@@ -731,11 +731,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Long, "help"),
-                dm_item!(1, Short, 'C'),
-                dm_item!(2, Long, "color"),
-                dm_item!(3, Long, "no-color"),
-                dm_item!(4, UnknownShort, 'd'),
+                item!(Long, "help"),
+                item!(Short, 'C'),
+                item!(Long, "color"),
+                item!(Long, "no-color"),
+                item!(UnknownShort, 'd'),
             ]
         );
         let item_set = parser.parse(&args);
@@ -775,11 +775,11 @@ mod last_used {
             problems: true,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Long, "help"),
-                dm_item!(1, Short, 'C'),
-                dm_item!(2, Long, "no-color"),
-                dm_item!(3, LongWithUnexpectedData, "color", "data"),
-                dm_item!(4, UnknownShort, 'd'),
+                item!(Long, "help"),
+                item!(Short, 'C'),
+                item!(Long, "no-color"),
+                item!(LongWithUnexpectedData, "color", "data"),
+                item!(UnknownShort, 'd'),
             ]
         );
         let item_set = parser.parse(&args);
@@ -815,7 +815,7 @@ mod last_used {
             problems: false,
             opt_set: get_base_opts(),
             [
-                dm_item!(0, Long, "help"),
+                item!(Long, "help"),
             ]
         );
         let item_set = parser.parse(&args);

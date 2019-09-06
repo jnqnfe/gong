@@ -69,7 +69,7 @@ macro_rules! item_set {
 
 /// Construct a `CommandBlockPart`
 macro_rules! cmd_part {
-    ( command: $i:expr, $c:expr ) => { CommandBlockPart::Command($c) };
+    ( command: $c:expr ) => { CommandBlockPart::Command($c) };
     ( item_set: $is:expr ) => { CommandBlockPart::ItemSet($is) };
 }
 
@@ -195,37 +195,6 @@ macro_rules! cmd_indexed_item {
     // Inner: @n and @s are short for `None` and `Some(<data-location>)` respectively
     ( @n $i:expr, $item:expr )          => { ($i, $item, Option::<DataLocation>::None) };
     ( @s $i:expr, $item:expr, $l:expr ) => { ($i, $item, Some($l)) };
-}
-
-/// Construct an expected item for use in constructing data-mining objects.
-///
-/// There is one matcher for each item type. The first param for each is the index to expect it to
-/// be found at in the analysis. The second param is the label of the unique type. The final params
-/// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
-macro_rules! dm_item {
-    ( $i:expr, Positional, $s:expr )           => { item!(Positional, $s) };
-    ( $i:expr, EarlyTerminator )               => { item!(EarlyTerminator) };
-    ( $i:expr, Long, $n:expr )                 => { item!(Long, $n) };
-    ( $i:expr, Short, $c:expr )                => { item!(Short, $c) };
-    ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
-                                               => { item!(LongWithData, $n, $d) };
-    ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
-                                               => { item!(ShortWithData, $c, $d) };
-    ( $i:expr, LongWithoutData, $n:expr )      => { item!(LongWithoutData, $n) };
-    ( $i:expr, ShortWithoutData, $c:expr )     => { item!(ShortWithoutData, $c) };
-    ( $i:expr, Command, $n:expr )              => { item!(Command, $n) };
-    ( $i:expr, UnknownLong, $n:expr )          => { item!(UnknownLong, $n) };
-    ( $i:expr, UnknownShort, $c:expr )         => { item!(UnknownShort, $c) };
-    ( $i:expr, UnknownCommand, $n:expr )       => { item!(UnknownCommand, $n) };
-    ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
-                                               => { item!(LongWithUnexpectedData, $n, $d) };
-    ( $i:expr, LongMissingData, $n:expr )      => { item!(LongMissingData, $n) };
-    ( $i:expr, ShortMissingData, $c:expr )     => { item!(ShortMissingData, $c) };
-    ( $i:expr, AmbiguousLong, $n:expr )        => { item!(AmbiguousLong, $n) };
-    ( $i:expr, AmbiguousCmd, $n:expr )         => { item!(AmbiguousCmd, $n) };
-    ( $i:expr, UnexpectedPositional, $s:expr ) => { item!(UnexpectedPositional, $s) };
-    // This does not correspond to an argument, so index not valid, should be index of last item
-    ( $i:expr, MissingPositionals, $c:expr )   => { item!(MissingPositionals, $c) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set

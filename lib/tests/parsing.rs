@@ -86,13 +86,13 @@ fn stop_on_problems_off_cmd() {
 
     let expected_dm = cmd_dm_expected!(
         problems: true,
-        @part cmd_part!(command: 0, "commit"),
+        @part cmd_part!(command: "commit"),
         @part cmd_part!(item_set: item_set!(
             problems: true,
             opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
             [
-                dm_item!(1, UnknownLong, "fake1"),
-                dm_item!(2, UnknownLong, "fake2"),
+                item!(UnknownLong, "fake1"),
+                item!(UnknownLong, "fake2"),
             ])
         ),
         cmd_set: None
@@ -117,12 +117,12 @@ fn stop_on_problems_on_cmd() {
 
     let expected_dm = cmd_dm_expected!(
         problems: true,
-        @part cmd_part!(command: 0, "commit"),
+        @part cmd_part!(command: "commit"),
         @part cmd_part!(item_set: item_set!(
             problems: true,
             opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
             [
-                dm_item!(1, UnknownLong, "fake1"),
+                item!(UnknownLong, "fake1"),
             ])
         ),
         cmd_set: None
@@ -1287,7 +1287,7 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: false,
-            @part cmd_part!(command: 0, "commit"),
+            @part cmd_part!(command: "commit"),
             cmd_set: None
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
@@ -1310,7 +1310,7 @@ mod commands {
                 problems: true,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, UnknownCommand, "Commit"),
+                    item!(UnknownCommand, "Commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1335,12 +1335,12 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: false,
-            @part cmd_part!(command: 0, "commit"),
+            @part cmd_part!(command: "commit"),
             @part cmd_part!(item_set: item_set!(
                 problems: false,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
                 [
-                    dm_item!(1, Positional, "commit"),
+                    item!(Positional, "commit"),
                 ])
             ),
             cmd_set: None
@@ -1362,12 +1362,12 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(command: 0, "push"),
+            @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
-                    dm_item!(1, UnknownCommand, "commit"),
+                    item!(UnknownCommand, "commit"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
@@ -1393,8 +1393,8 @@ mod commands {
                 problems: true,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, EarlyTerminator),
-                    dm_item!(1, UnexpectedPositional, "commit"),
+                    item!(EarlyTerminator),
+                    item!(UnexpectedPositional, "commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1424,11 +1424,11 @@ mod commands {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, Long, "foo"),
-                    dm_item!(1, Short, 'h'),
+                    item!(Long, "foo"),
+                    item!(Short, 'h'),
                 ])
             ),
-            @part cmd_part!(command: 2, "commit"),
+            @part cmd_part!(command: "commit"),
             cmd_set: None
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
@@ -1455,10 +1455,10 @@ mod commands {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, Long, "foo"),
+                    item!(Long, "foo"),
                 ])
             ),
-            @part cmd_part!(command: 1, "foo"),
+            @part cmd_part!(command: "foo"),
             cmd_set: None
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
@@ -1492,8 +1492,8 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    dm_item!(0, Long, "foo"),
-                    dm_item!(1, UnknownLong, "bar"),
+                    item!(Long, "foo"),
+                    item!(UnknownLong, "bar"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -1521,7 +1521,7 @@ mod commands {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, LongWithData, "hah", "commit", DataLocation::NextArg),
+                    item!(LongWithData, "hah", "commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1553,9 +1553,9 @@ mod commands {
                 problems: true,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, LongWithData, "hah", "foo", DataLocation::NextArg),
-                    dm_item!(2, UnknownCommand, "blah"),
-                    dm_item!(3, UnexpectedPositional, "commit"),
+                    item!(LongWithData, "hah", "foo"),
+                    item!(UnknownCommand, "blah"),
+                    item!(UnexpectedPositional, "commit"),
                 ])
             ),
             cmd_set: Some(get_base_cmds())
@@ -1591,18 +1591,18 @@ mod commands {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, Long, "foo"),
-                    dm_item!(1, Short, 'h'),
+                    item!(Long, "foo"),
+                    item!(Short, 'h'),
                 ])
             ),
-            @part cmd_part!(command: 2, "commit"),
+            @part cmd_part!(command: "commit"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
                 [
-                    dm_item!(3, UnknownLong, "foo"),
-                    dm_item!(4, UnknownShort, 'o'),
-                    dm_item!(4, UnknownShort, 'q'),
+                    item!(UnknownLong, "foo"),
+                    item!(UnknownShort, 'o'),
+                    item!(UnknownShort, 'q'),
                 ])
             ),
             cmd_set: None
@@ -1643,19 +1643,19 @@ mod commands {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, Long, "foo"),
-                    dm_item!(1, Short, 'h'),
+                    item!(Long, "foo"),
+                    item!(Short, 'h'),
                 ])
             ),
-            @part cmd_part!(command: 2, "push"),
+            @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
-                    dm_item!(3, UnknownLong, "foo"),
-                    dm_item!(4, Long, "help"),
-                    dm_item!(5, Long, "tags"),
-                    dm_item!(6, UnknownShort, 'o'),
+                    item!(UnknownLong, "foo"),
+                    item!(Long, "help"),
+                    item!(Long, "tags"),
+                    item!(UnknownShort, 'o'),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
@@ -1708,38 +1708,38 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(command: 0, "branch"),
+            @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
-                    dm_item!(1, UnknownLong, "foo"),
-                    dm_item!(2, Long, "help"),
-                    dm_item!(3, Long, "sorted"),
-                    dm_item!(4, UnknownLong, "show-current"),
+                    item!(UnknownLong, "foo"),
+                    item!(Long, "help"),
+                    item!(Long, "sorted"),
+                    item!(UnknownLong, "show-current"),
                 ])
             ),
-            @part cmd_part!(command: 5, "list"),
+            @part cmd_part!(command: "list"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2),
                 [
-                    dm_item!(6, Long, "foo"),
-                    dm_item!(7, Long, "help"),
-                    dm_item!(8, UnknownLong, "sorted"),
-                    dm_item!(9, Long, "show-current"),
+                    item!(Long, "foo"),
+                    item!(Long, "help"),
+                    item!(UnknownLong, "sorted"),
+                    item!(Long, "show-current"),
                 ])
             ),
-            @part cmd_part!(command: 10, "remote"),
+            @part cmd_part!(command: "remote"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2, 1),
                 [
-                    dm_item!(11, UnknownLong, "foo"),
-                    dm_item!(12, UnknownLong, "help"),
-                    dm_item!(13, UnknownLong, "nope"),
-                    dm_item!(14, UnknownLong, "show-current"),
-                    dm_item!(15, Positional, "blah"),
+                    item!(UnknownLong, "foo"),
+                    item!(UnknownLong, "help"),
+                    item!(UnknownLong, "nope"),
+                    item!(UnknownLong, "show-current"),
+                    item!(Positional, "blah"),
                 ])
             ),
             cmd_set: None
@@ -1784,28 +1784,28 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(command: 0, "branch"),
+            @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
-                    dm_item!(1, UnknownLong, "foo"),
-                    dm_item!(2, Long, "help"),
-                    dm_item!(3, Long, "sorted"),
-                    dm_item!(4, UnknownLong, "show-current"),
+                    item!(UnknownLong, "foo"),
+                    item!(Long, "help"),
+                    item!(Long, "sorted"),
+                    item!(UnknownLong, "show-current"),
                 ])
             ),
-            @part cmd_part!(command: 5, "del"),
+            @part cmd_part!(command: "del"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
                 [
-                    dm_item!(6, UnknownLong, "foo"),
-                    dm_item!(7, EarlyTerminator),
-                    dm_item!(8, UnexpectedPositional, "--show-current"),
-                    dm_item!(9, UnexpectedPositional, "remotely"),
-                    dm_item!(10, UnexpectedPositional, "--foo"),
-                    dm_item!(11, UnexpectedPositional, "blah"),
+                    item!(UnknownLong, "foo"),
+                    item!(EarlyTerminator),
+                    item!(UnexpectedPositional, "--show-current"),
+                    item!(UnexpectedPositional, "remotely"),
+                    item!(UnexpectedPositional, "--foo"),
+                    item!(UnexpectedPositional, "blah"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
@@ -1832,13 +1832,13 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(command: 0, "branch"),
-            @part cmd_part!(command: 1, "del"),
+            @part cmd_part!(command: "branch"),
+            @part cmd_part!(command: "del"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
                 [
-                    dm_item!(2, UnknownCommand, "list"),
+                    item!(UnknownCommand, "list"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
@@ -1865,13 +1865,13 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(command: 0, "branch"),
+            @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
-                    dm_item!(1, UnknownCommand, "blah"),
-                    dm_item!(2, UnexpectedPositional, "list"),
+                    item!(UnknownCommand, "blah"),
+                    item!(UnexpectedPositional, "list"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
@@ -2050,17 +2050,17 @@ mod alt_mode {
                 problems: false,
                 opt_set: get_base_opts(),
                 [
-                    dm_item!(0, Long, "foo"),
+                    item!(Long, "foo"),
                 ])
             ),
-            @part cmd_part!(command: 1, "push"),
+            @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
-                    dm_item!(2, UnknownLong, "foo"),
-                    dm_item!(3, Long, "help"),
-                    dm_item!(4, Long, "tags"),
+                    item!(UnknownLong, "foo"),
+                    item!(Long, "help"),
+                    item!(Long, "tags"),
                 ])
             ),
             cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))

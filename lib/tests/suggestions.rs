@@ -133,7 +133,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    dm_item!(0, UnknownCommand, "but_i_digest"),
+                    item!(UnknownCommand, "but_i_digest"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -179,7 +179,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    dm_item!(0, UnknownCommand, "bard"),
+                    item!(UnknownCommand, "bard"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -225,7 +225,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    dm_item!(0, UnknownCommand, "hellp"),
+                    item!(UnknownCommand, "hellp"),
                 ])
             ),
             cmd_set: Some(&cmds)
@@ -271,7 +271,7 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    dm_item!(0, UnknownCommand, "fooa"),
+                    item!(UnknownCommand, "fooa"),
                 ])
             ),
             cmd_set: Some(&cmds)
