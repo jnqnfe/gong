@@ -27,7 +27,7 @@ use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
 use gong::analysis::{Item, ProblemItem, DataLocation};
-use gong::options::OptionType;
+use gong::options::{OptionType, OptionSet};
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
 
@@ -64,6 +64,27 @@ macro_rules! c {
     ( $code:expr ) => { if config::formatted_stdout() { $code } else { "" } };
 }
 
+static OPTIONS: OptionSet = option_set!(
+    @long [
+        longopt!(@flag "help"),
+        longopt!(@flag "foo"),
+        longopt!(@flag "version"),
+        longopt!(@flag "foobar"),
+        longopt!(@data "hah"),
+        longopt!(@flag "ábc"),
+        longopt!(@mixed "delay"),
+    ],
+    @short [
+        shortopt!(@flag 'h'),
+        shortopt!(@flag '❤'),
+        shortopt!(@flag 'x'),
+        shortopt!(@data 'o'),
+        shortopt!(@mixed 'p'),
+        shortopt!(@mixed '💧'),
+        shortopt!(@data 'Ɛ'),
+    ]
+);
+
 fn main() {
     config::init();
 
@@ -72,28 +93,7 @@ fn main() {
     #[cfg(feature = "pos_policy2")]
     const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Min(2);
 
-    // Set up valid option descriptions
-    let opts = option_set!(
-        @long [
-            longopt!(@flag "help"),
-            longopt!(@flag "foo"),
-            longopt!(@flag "version"),
-            longopt!(@flag "foobar"),
-            longopt!(@data "hah"),
-            longopt!(@flag "ábc"),
-            longopt!(@mixed "delay"),
-        ],
-        @short [
-            shortopt!(@flag 'h'),
-            shortopt!(@flag '❤'),
-            shortopt!(@flag 'x'),
-            shortopt!(@data 'o'),
-            shortopt!(@mixed 'p'),
-            shortopt!(@mixed '💧'),
-            shortopt!(@data 'Ɛ'),
-        ]
-    );
-    let mut parser = Parser::new(&opts);
+    let mut parser = Parser::new(&OPTIONS);
     parser.set_positionals_policy(POSITIONALS_POLICY);
 
     match cfg!(feature = "alt_mode") {
@@ -143,14 +143,14 @@ fn main() {
 
     println!("Available options:");
 
-    for item in opts.long {
+    for item in OPTIONS.long {
         match item.opt_type {
             OptionType::Flag => println!("    LONG {}", item.name),
             OptionType::Data => println!("    LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
             OptionType::Mixed => println!("    LONG {} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
         }
     }
-    for item in opts.short {
+    for item in OPTIONS.short {
         match item.opt_type {
             OptionType::Flag => println!("    SHORT {}", desc_char(item.ch)),
             OptionType::Data => println!("    SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
