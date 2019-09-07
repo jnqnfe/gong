@@ -64,20 +64,36 @@ macro_rules! c {
     ( $code:expr ) => { if config::formatted_stdout() { $code } else { "" } };
 }
 
-static OPTIONS: OptionSet = option_set!(
+static REAL_OPTIONS: OptionSet = option_set!(
     @long [
         longopt!(@flag "help"),
-        longopt!(@flag "foo"),
         longopt!(@flag "version"),
+        longopt!(@flag "config"),
+        longopt!(@flag "verbose"),
+    ],
+    @short [
+        shortopt!(@flag 'h'),
+        shortopt!(@flag 'V'),
+        shortopt!(@flag 'c'),
+        shortopt!(@flag 'v'),
+    ]
+);
+
+static OPTIONS: OptionSet = option_set!(
+    @long [
+        longopt!(@flag "foo"),
+        longopt!(@flag "verbose"), // Needed so verbose mode does not give error
+        longopt!(@flag "joker"),
         longopt!(@flag "foobar"),
         longopt!(@data "hah"),
         longopt!(@flag "ábc"),
         longopt!(@mixed "delay"),
     ],
     @short [
-        shortopt!(@flag 'h'),
+        shortopt!(@flag 'k'),
         shortopt!(@flag '❤'),
         shortopt!(@flag 'x'),
+        shortopt!(@flag 'v'), // Needed so verbose mode does not give error
         shortopt!(@data 'o'),
         shortopt!(@mixed 'p'),
         shortopt!(@mixed '💧'),
@@ -85,13 +101,47 @@ static OPTIONS: OptionSet = option_set!(
     ]
 );
 
+#[cfg(not(feature = "pos_policy2"))]
+const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Max(2);
+#[cfg(feature = "pos_policy2")]
+const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Min(2);
+
 fn main() {
     config::init();
 
-    #[cfg(not(feature = "pos_policy2"))]
-    const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Max(2);
-    #[cfg(feature = "pos_policy2")]
-    const POSITIONALS_POLICY: PositionalsPolicy = PositionalsPolicy::Min(2);
+    let mut verbose = false;
+
+    /* -- Handle real options -- */
+
+    let args: Vec<_> = std::env::args_os().skip(1).collect();
+
+    let mut real_parser = Parser::new(&REAL_OPTIONS);
+    real_parser.set_positionals_policy(PositionalsPolicy::Fixed(0));
+    real_parser.settings().set_mode(OptionsMode::Standard);
+    debug_assert!(real_parser.is_valid());
+
+    let mut iter = real_parser.parse_iter(&args[..]);
+
+    while let Some(item) = iter.next() {
+        match item {
+            Ok(Item::Short('h', None)) |
+            Ok(Item::Long("help", None)) => { help(); return; },
+            Ok(Item::Short('V', None)) |
+            Ok(Item::Long("version", None)) => { version(); return; },
+            Ok(Item::Short('c', None)) |
+            Ok(Item::Long("config", None)) => { config(); return; },
+            Ok(Item::Short('v', None)) |
+            Ok(Item::Long("verbose", None)) => { verbose = true; },
+            // Could only happen with early terminator
+            Ok(_) => { continue; },
+            // If an error returns, it is likely just that user is not trying to use with real args
+            // but instead use test mode, so fallthrough. Afterall, if a problem occurred, we could
+            // not trust further parsing results to keep looking out for one of these options.
+            Err(_) => { break; },
+        }
+    }
+
+    /* -- Enter test parsing -- */
 
     let mut parser = Parser::new(&OPTIONS);
     parser.set_positionals_policy(POSITIONALS_POLICY);
@@ -106,71 +156,18 @@ fn main() {
 
     debug_assert!(parser.is_valid());
 
-    println!("\n[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
-
-    #[cfg(not(feature = "alt_mode"))]
-    println!("Option style: {}Standard{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "alt_mode")]
-    println!("Option style: {}Alternate{}", c!(COL_MODE), c!(RESET));
-
-    #[cfg(not(feature = "posixly_correct"))]
-    println!("Posixly correct?: {}No{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "posixly_correct")]
-    println!("Posixly correct?: {}Yes{}", c!(COL_MODE), c!(RESET));
-
-    #[cfg(not(feature = "keep_prog_name"))]
-    println!("Skip first argument (program name): {}true{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "keep_prog_name")]
-    println!("Skip first argument (program name): {}false{}", c!(COL_MODE), c!(RESET));
-
-    #[cfg(not(feature = "no_opt_abbreviations"))]
-    println!("Abbreviated option name matching: {}on{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "no_opt_abbreviations")]
-    println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
-
-    #[cfg(not(feature = "no_stop_on_problem"))]
-    println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "no_stop_on_problem")]
-    println!("Stop parsing upon problem: {}off{}", c!(COL_MODE), c!(RESET));
-
-    println!("Positionals policy: {}{:?}{}", c!(COL_MODE), POSITIONALS_POLICY, c!(RESET));
-
-    println!("\nCompile with different features to change the config!\n");
-
-    println!("[ {}Test conditions{} ]\n", c!(COL_HEADER), c!(RESET));
-
-    println!("Positionals policy: {:?}", POSITIONALS_POLICY);
-
-    println!("Available options:");
-
-    for item in OPTIONS.long {
-        match item.opt_type {
-            OptionType::Flag => println!("    LONG {}", item.name),
-            OptionType::Data => println!("    LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("    LONG {} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
-        }
+    if verbose {
+        println!();
+        config();
+        println!();
     }
-    for item in OPTIONS.short {
-        match item.opt_type {
-            OptionType::Flag => println!("    SHORT {}", desc_char(item.ch)),
-            OptionType::Data => println!("    SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("    SHORT {} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-        }
-    }
-
-    #[cfg(feature = "alt_mode")]
-    println!("Note: Short options will be ignored in `alternative` mode. They are still printed \
-              so you can test and see this is so!");
-
-    println!("Available commands:");
-    println!("    None!\n");
 
     #[cfg(feature = "keep_prog_name")]
     let args: Vec<_> = std::env::args_os().collect();
     #[cfg(not(feature = "keep_prog_name"))]
     let args: Vec<_> = std::env::args_os().skip(1).collect();
 
-    println!("[ {}Your input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
+    println!("[ {}Input arguments{} ]\n", c!(COL_HEADER), c!(RESET));
 
     match args.len() {
         0 => println!("None!"),
@@ -264,9 +261,9 @@ fn main() {
     }
 
     match problems {
-        true => { println!("Problems: {}true{}\n", c!(COL_E), c!(RESET)); },
+        true => { println!("Problems: {}true{}", c!(COL_E), c!(RESET)); },
         false => {
-            println!("Problems: {}false{}\n", c!(COL_O), c!(RESET));
+            println!("Problems: {}false{}", c!(COL_O), c!(RESET));
         },
     }
 }
@@ -305,4 +302,96 @@ fn print_data(loc: DataLocation, data: Option<&OsStr>) {
         },
         None => println!("    {}no-data{}", c!(effects::ITALIC), c!(RESET)),
     }
+}
+
+fn help() {
+    println!("\
+Playground test app for the `gong` argument parser.
+
+This test app has an example application parser configuration (a built-in set of options and a
+positionals policy). It parses any given input arguments against this and simply outputs the results
+of parsing. Its purpose is for playing with the `gong` parser being used behind the scenes, testing
+its capabilities.
+
+USAGE:
+    gong-playground [REAL-OPTIONS]
+    gong-playground [-v|--verbose] [ARGUMENTS]
+
+REAL-OPTIONS:
+    -h, --help      Outputs this usage info.
+    -c, --config    Outputs info regarding compile-time configuration and
+                    the built-in options and such to test against.
+    -V, --version   Outputs the version number of this test app.
+    -v, --verbose   Include the config details with the main output.");
+}
+
+fn version() {
+    println!("{}", env!("CARGO_PKG_VERSION"));
+}
+
+fn config() {
+    println!("[ {}Config{} ]\n", c!(COL_HEADER), c!(RESET));
+
+    #[cfg(not(feature = "alt_mode"))]
+    println!("Option style: {}Standard{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "alt_mode")]
+    println!("Option style: {}Alternate{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "posixly_correct"))]
+    println!("Posixly correct?: {}No{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "posixly_correct")]
+    println!("Posixly correct?: {}Yes{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "keep_prog_name"))]
+    println!("Skip first argument (program name): {}true{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "keep_prog_name")]
+    println!("Skip first argument (program name): {}false{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "no_opt_abbreviations"))]
+    println!("Abbreviated option name matching: {}on{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "no_opt_abbreviations")]
+    println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
+
+    #[cfg(not(feature = "no_stop_on_problem"))]
+    println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "no_stop_on_problem")]
+    println!("Stop parsing upon problem: {}off{}", c!(COL_MODE), c!(RESET));
+
+    println!("Positionals policy: {}{:?}{}", c!(COL_MODE), POSITIONALS_POLICY, c!(RESET));
+
+    println!("\nCompile with different features to change the config!\n");
+
+    println!("[ {}Test conditions{} ]\n", c!(COL_HEADER), c!(RESET));
+
+    println!("Positionals policy: {:?}", POSITIONALS_POLICY);
+
+    println!("Available options:");
+
+    #[cfg(not(feature = "alt_mode"))]
+    for item in OPTIONS.long {
+        match item.opt_type {
+            OptionType::Flag => println!("    --{}", item.name),
+            OptionType::Data => println!("    --{} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    --{} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
+        }
+    }
+    #[cfg(feature = "alt_mode")]
+    for item in OPTIONS.long {
+        match item.opt_type {
+            OptionType::Flag => println!("    -{}", item.name),
+            OptionType::Data => println!("    -{} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    -{} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
+        }
+    }
+    #[cfg(not(feature = "alt_mode"))]
+    for item in OPTIONS.short {
+        match item.opt_type {
+            OptionType::Flag => println!("    -{}", desc_char(item.ch)),
+            OptionType::Data => println!("    -{} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    -{} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+        }
+    }
+
+    println!("Available commands:");
+    println!("    None!");
 }
