@@ -137,34 +137,33 @@ fn main() {
 
     println!("\nCompile with different features to change the config!\n");
 
-    println!("[ {}Quantity of positionals for test{} ]\n", c!(COL_HEADER), c!(RESET));
+    println!("[ {}Test conditions{} ]\n", c!(COL_HEADER), c!(RESET));
 
-    println!("{:?}\n", POSITIONALS_POLICY);
+    println!("Positionals policy: {:?}", POSITIONALS_POLICY);
 
-    println!("[ {}Available options for test{} ]\n", c!(COL_HEADER), c!(RESET));
+    println!("Available options:");
 
     for item in opts.long {
         match item.opt_type {
-            OptionType::Flag => println!("LONG {}", item.name),
-            OptionType::Data => println!("LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("LONG {} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::Flag => println!("    LONG {}", item.name),
+            OptionType::Data => println!("    LONG {} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    LONG {} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
         }
     }
     for item in opts.short {
         match item.opt_type {
-            OptionType::Flag => println!("SHORT {}", desc_char(item.ch)),
-            OptionType::Data => println!("SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("SHORT {} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+            OptionType::Flag => println!("    SHORT {}", desc_char(item.ch)),
+            OptionType::Data => println!("    SHORT {} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    SHORT {} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
         }
     }
 
     #[cfg(feature = "alt_mode")]
-    println!("\nNote: Short options will be ignored in `alternative` mode. They are still printed \
+    println!("Note: Short options will be ignored in `alternative` mode. They are still printed \
               so you can test and see this is so!");
 
-    println!("\n[ {}Available commands for test{} ]\n", c!(COL_HEADER), c!(RESET));
-
-    println!("None!\n");
+    println!("Available commands:");
+    println!("    None!\n");
 
     #[cfg(feature = "keep_prog_name")]
     let args: Vec<_> = std::env::args_os().collect();
