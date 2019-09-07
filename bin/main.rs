@@ -151,8 +151,7 @@ fn main() {
         false => { parser.settings().set_mode(OptionsMode::Standard); },
     }
     parser.settings().set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
-                     .set_posixly_correct(cfg!(feature = "posixly_correct"))
-                     .set_stop_on_problem(!cfg!(feature = "no_stop_on_problem"));
+                     .set_posixly_correct(cfg!(feature = "posixly_correct"));
 
     debug_assert!(parser.is_valid());
 
@@ -246,6 +245,11 @@ fn main() {
             Ok(Item::Command(n)) => printer(i, "Command", OsStr::new(&n)),
             Err(ProblemItem::UnknownCommand(n)) => printer(i, "UnknownCommand", OsStr::new(&n)),
         }
+        #[cfg(feature = "stop_on_problem")] {
+            if problems {
+                break;
+            }
+        }
     }
     if !count_zero {
         println!();
@@ -254,7 +258,7 @@ fn main() {
         println!("No arguments given!\n");
     }
 
-    #[cfg(not(feature = "no_stop_on_problem"))] {
+    #[cfg(feature = "stop_on_problem")] {
         if problems {
             println!("Problem found, stopped early!\n");
         }
@@ -352,10 +356,10 @@ fn config() {
     #[cfg(feature = "no_opt_abbreviations")]
     println!("Abbreviated option name matching: {}off{}", c!(COL_MODE), c!(RESET));
 
-    #[cfg(not(feature = "no_stop_on_problem"))]
-    println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
-    #[cfg(feature = "no_stop_on_problem")]
+    #[cfg(not(feature = "stop_on_problem"))]
     println!("Stop parsing upon problem: {}off{}", c!(COL_MODE), c!(RESET));
+    #[cfg(feature = "stop_on_problem")]
+    println!("Stop parsing upon problem: {}on{}", c!(COL_MODE), c!(RESET));
 
     println!("Positionals policy: {}{:?}{}", c!(COL_MODE), POSITIONALS_POLICY, c!(RESET));
 
