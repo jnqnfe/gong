@@ -20,7 +20,7 @@ use gong::{option_set, longopt, command_set, command};
 use gong::analysis::*;
 use gong::parser::{CmdParser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
-use self::common::{get_parser, get_parser_cmd, get_base_opts, get_base_cmds, CmdActual, CmdExpected};
+use self::common::{get_parser, get_parser_cmd, CmdActual, CmdExpected};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Arg list string types
@@ -89,13 +89,11 @@ fn stop_on_problems_off_cmd() {
         @part cmd_part!(command: "commit"),
         @part cmd_part!(item_set: item_set!(
             problems: true,
-            opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
             [
                 item!(UnknownLong, "fake1"),
                 item!(UnknownLong, "fake2"),
             ])
-        ),
-        cmd_set: None
+        )
     );
     check_result!(&CmdActual(parser.parse(&args)), &expected_dm);
 }
@@ -120,12 +118,10 @@ fn stop_on_problems_on_cmd() {
         @part cmd_part!(command: "commit"),
         @part cmd_part!(item_set: item_set!(
             problems: true,
-            opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
             [
                 item!(UnknownLong, "fake1"),
             ])
-        ),
-        cmd_set: None
+        )
     );
     check_result!(&CmdActual(parser.parse(&args)), &expected_dm);
 }
@@ -1289,8 +1285,7 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: false,
-            @part cmd_part!(command: "commit"),
-            cmd_set: None
+            @part cmd_part!(command: "commit")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1310,12 +1305,10 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: get_base_opts(),
                 [
                     item!(UnknownCommand, "Commit"),
                 ])
-            ),
-            cmd_set: Some(get_base_cmds())
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1340,12 +1333,10 @@ mod commands {
             @part cmd_part!(command: "commit"),
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
                 [
                     item!(Positional, "commit"),
                 ])
-            ),
-            cmd_set: None
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1367,12 +1358,10 @@ mod commands {
             @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
                     item!(UnknownCommand, "commit"),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1393,13 +1382,11 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: get_base_opts(),
                 [
                     item!(EarlyTerminator),
                     item!(UnexpectedPositional, "commit"),
                 ])
-            ),
-            cmd_set: Some(get_base_cmds())
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1424,14 +1411,12 @@ mod commands {
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(Long, "foo"),
                     item!(Short, 'h'),
                 ])
             ),
-            @part cmd_part!(command: "commit"),
-            cmd_set: None
+            @part cmd_part!(command: "commit")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1455,13 +1440,11 @@ mod commands {
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(Long, "foo"),
                 ])
             ),
-            @part cmd_part!(command: "foo"),
-            cmd_set: None
+            @part cmd_part!(command: "foo")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1492,13 +1475,11 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
                 [
                     item!(Long, "foo"),
                     item!(UnknownLong, "bar"),
                 ])
-            ),
-            cmd_set: Some(&cmds)
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1521,12 +1502,10 @@ mod commands {
             problems: false,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(LongWithData, "hah", "commit"),
                 ])
-            ),
-            cmd_set: Some(get_base_cmds())
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1553,14 +1532,12 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: get_base_opts(),
                 [
                     item!(LongWithData, "hah", "foo"),
                     item!(UnknownCommand, "blah"),
                     item!(UnexpectedPositional, "commit"),
                 ])
-            ),
-            cmd_set: Some(get_base_cmds())
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1591,7 +1568,6 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(Long, "foo"),
                     item!(Short, 'h'),
@@ -1600,14 +1576,12 @@ mod commands {
             @part cmd_part!(command: "commit"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 1),
                 [
                     item!(UnknownLong, "foo"),
                     item!(UnknownShort, 'o'),
                     item!(UnknownShort, 'q'),
                 ])
-            ),
-            cmd_set: None
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1643,7 +1617,6 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(Long, "foo"),
                     item!(Short, 'h'),
@@ -1652,15 +1625,13 @@ mod commands {
             @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
                     item!(UnknownLong, "foo"),
                     item!(Long, "help"),
                     item!(Long, "tags"),
                     item!(UnknownShort, 'o'),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1713,7 +1684,6 @@ mod commands {
             @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
                     item!(UnknownLong, "foo"),
                     item!(Long, "help"),
@@ -1724,7 +1694,6 @@ mod commands {
             @part cmd_part!(command: "list"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2),
                 [
                     item!(Long, "foo"),
                     item!(Long, "help"),
@@ -1735,7 +1704,6 @@ mod commands {
             @part cmd_part!(command: "remote"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 2, 1),
                 [
                     item!(UnknownLong, "foo"),
                     item!(UnknownLong, "help"),
@@ -1743,8 +1711,7 @@ mod commands {
                     item!(UnknownLong, "show-current"),
                     item!(Positional, "blah"),
                 ])
-            ),
-            cmd_set: None
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1789,7 +1756,6 @@ mod commands {
             @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
                     item!(UnknownLong, "foo"),
                     item!(Long, "help"),
@@ -1800,7 +1766,6 @@ mod commands {
             @part cmd_part!(command: "del"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
                 [
                     item!(UnknownLong, "foo"),
                     item!(EarlyTerminator),
@@ -1809,8 +1774,7 @@ mod commands {
                     item!(UnexpectedPositional, "--foo"),
                     item!(UnexpectedPositional, "blah"),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1838,12 +1802,10 @@ mod commands {
             @part cmd_part!(command: "del"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4, 1),
                 [
                     item!(UnknownCommand, "list"),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4, 1))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1870,13 +1832,11 @@ mod commands {
             @part cmd_part!(command: "branch"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 4),
                 [
                     item!(UnknownCommand, "blah"),
                     item!(UnexpectedPositional, "list"),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 4))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -2050,7 +2010,6 @@ mod alt_mode {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: false,
-                opt_set: get_base_opts(),
                 [
                     item!(Long, "foo"),
                 ])
@@ -2058,14 +2017,12 @@ mod alt_mode {
             @part cmd_part!(command: "push"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: cmdset_optset_ref!(get_base_cmds(), 3),
                 [
                     item!(UnknownLong, "foo"),
                     item!(Long, "help"),
                     item!(Long, "tags"),
                 ])
-            ),
-            cmd_set: Some(cmdset_subcmdset_ref!(get_base_cmds(), 3))
+            )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }

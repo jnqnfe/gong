@@ -91,8 +91,6 @@
 //! [commands]: ../docs/ch4_commands/index.html
 
 use std::ffi::OsStr;
-use crate::commands::CommandSet;
-use crate::options::OptionSet;
 use crate::positionals::Quantity as PositionalsQuantity;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
@@ -172,34 +170,29 @@ pub enum DataLocation {
 /// This type provides a set of “data-mining” methods for extracting information from the set of
 /// wrapped items. Note that most such methods ignore problem items.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ItemSet<'r, 'set: 'r, 'arg: 'r> {
+pub struct ItemSet<'set, 'arg> {
     /// Set of items describing what was found
     pub items: Vec<ItemResult<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown options, or missing arg data)
     pub problems: bool,
-    /// Pointer to the option set, for use with suggestion matching of unknown options
-    pub opt_set: &'r OptionSet<'r, 'set>,
 }
 
 /// Used for breaking up an analysis by command use
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CommandBlockPart<'r, 'set: 'r, 'arg: 'r> {
+pub enum CommandBlockPart<'set, 'arg> {
     /// A command
     Command(&'set str),
     /// Set of items describing what was found, up to the next use of a command
-    ItemSet(ItemSet<'r, 'set, 'arg>),
+    ItemSet(ItemSet<'set, 'arg>),
 }
 
 /// Analysis of parsing arguments, partitioned per command use
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CommandAnalysis<'r, 'set: 'r, 'arg: 'r> {
+pub struct CommandAnalysis<'set, 'arg> {
     /// Partitioned analysis
-    pub parts: Vec<CommandBlockPart<'r, 'set, 'arg>>,
+    pub parts: Vec<CommandBlockPart<'set, 'arg>>,
     /// Quick indication of problems (e.g. unknown option, or missing arg data)
     pub problems: bool,
-    /// Pointer to the final command set, for use with suggestion matching an unknown command (which
-    /// only applies to the first positional).
-    pub cmd_set: Option<&'r CommandSet<'r, 'set>>,
 }
 
 /// A *to find* option description
@@ -319,14 +312,13 @@ impl From<super::options::ShortOption> for FindOption<'_> {
     }
 }
 
-impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
+impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
-    pub fn new(opt_set: &'r OptionSet<'r, 'set>) -> Self {
+    pub fn new() -> Self {
         Self {
             items: Vec::new(),
             problems: false,
-            opt_set: opt_set,
         }
     }
 
@@ -334,14 +326,6 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     #[inline(always)]
     pub fn has_problems(&self) -> bool {
         self.problems
-    }
-
-    /// Get the recorded option set
-    ///
-    /// Useful for suggestion matching with unknown options.
-    #[inline(always)]
-    pub fn get_optset(&self) -> &'r OptionSet<'r, 'set> {
-        self.opt_set
     }
 
     /// Gives an iterator over all items in the set
@@ -396,7 +380,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// if let Some(problem) = item_set.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
@@ -417,7 +401,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let positionals: Vec<_> = item_set.get_positionals().collect();
     /// ```
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
@@ -451,7 +435,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// if item_set.option_used(gong::findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
@@ -490,7 +474,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let count = item_set.count_instances(gong::findopt!(@short 'v'));
     /// ```
     ///
@@ -536,7 +520,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let last_value = item_set.get_last_value(gong::findopt!(@long "output-format"));
     /// ```
     ///
@@ -570,7 +554,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// for val in item_set.get_all_values(gong::findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
@@ -606,7 +590,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
     /// match item_set.get_last_used(&find) {
     ///     Some(gong::foundopt!(@short 'c')) |
@@ -676,7 +660,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let val = item_set.get_bool_flag_state(
     ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
     ///         gong::findopt!(@long "no-color")    // Negative (false)
@@ -723,7 +707,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new(&opt_set);
+    /// # let item_set = gong::analysis::ItemSet::new();
     /// let val = item_set.get_bool_flag_state_multi(
     ///         &[ gong::findopt!(@pair 'c', "color") ],
     ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
@@ -808,14 +792,13 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'r, 'set, 'arg> {
     }
 }
 
-impl<'r, 'set: 'r, 'arg: 'r> CommandAnalysis<'r, 'set, 'arg> {
+impl<'set, 'arg> CommandAnalysis<'set, 'arg> {
     /// Create a new result set (mostly only useful internally and in test suite)
     #[doc(hidden)]
     pub fn new() -> Self {
         Self {
             parts: Vec::with_capacity(2), //Would not normally expect more than 2 or 3
             problems: false,
-            cmd_set: None,
         }
     }
 
@@ -824,18 +807,10 @@ impl<'r, 'set: 'r, 'arg: 'r> CommandAnalysis<'r, 'set, 'arg> {
     pub fn has_problems(&self) -> bool {
         self.problems
     }
-
-    /// Get the recorded command set
-    ///
-    /// Useful for suggestion matching with unknown commands.
-    #[inline(always)]
-    pub fn get_cmdset(&self) -> Option<&'r CommandSet<'r, 'set>> {
-        self.cmd_set
-    }
 }
 
 impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
-    for ItemSet<'r, 'set, 'arg>
+    for ItemSet<'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     #[inline]
@@ -846,7 +821,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIter<'r, 'set, 'arg, A>>
 
 
 impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
-    for CommandAnalysis<'r, 'set, 'arg>
+    for CommandAnalysis<'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     #[inline]
@@ -856,12 +831,12 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIter<'r, 'set, 'arg, A>>
 }
 
 impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
-    for ItemSet<'r, 'set, 'arg>
+    for ItemSet<'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     fn from(mut iter: crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
-        let mut item_set = ItemSet::new(iter.get_option_set());
+        let mut item_set = ItemSet::new();
         item_set.items = Vec::with_capacity(iter.size_hint().0);
         while let Some((_index, item, _dataloc)) = iter.next() {
             if let Err(_) = item {
@@ -877,7 +852,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
 }
 
 impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, A>>
-    for CommandAnalysis<'r, 'set, 'arg>
+    for CommandAnalysis<'set, 'arg>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
     fn from(mut iter: crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
@@ -892,7 +867,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
                 analysis.parts.push(CommandBlockPart::Command(name));
             }
             else {
-                let item_set_ref = item_set.get_or_insert(ItemSet::new(iter.get_option_set()));
+                let item_set_ref = item_set.get_or_insert(ItemSet::new());
                 if let Err(_) = item {
                     item_set_ref.problems = true;
                     analysis.problems = true;
@@ -906,11 +881,6 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
         if item_set.is_some() {
             analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
         }
-        let cmd_set = iter.get_command_set();
-        analysis.cmd_set = match cmd_set.is_empty() {
-            false => Some(cmd_set),
-            true => None,
-        };
         analysis
     }
 }

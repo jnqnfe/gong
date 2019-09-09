@@ -21,7 +21,7 @@ use std::ffi::OsStr;
 use gong::{shortopt, longopt, findopt, foundopt};
 use gong::analysis::*;
 use gong::positionals::Policy as PositionalsPolicy;
-use self::common::{get_parser, get_base_opts, Actual, Expected};
+use self::common::{get_parser, Actual, Expected};
 
 /// Some of the tests here expect certain options to exist in the common options set, where such
 /// options are **not** being used in the test arguments, so we need to assert that they definitely
@@ -102,7 +102,6 @@ fn used() {
 
     let expected = dm_expected!(
         problems: true,
-        opt_set: get_base_opts(),
         [
             item!(Long, "help"),
             item!(UnknownLong, "ooo"),
@@ -173,7 +172,6 @@ fn count() {
 
     let expected = dm_expected!(
         problems: true,
-        opt_set: get_base_opts(),
         [
             item!(Long, "help"),
             item!(UnknownLong, "ooo"),
@@ -233,7 +231,6 @@ mod missing_data {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(LongMissingData, "hah"),
             ]
@@ -259,7 +256,6 @@ mod missing_data {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(ShortMissingData, 'o'),
             ]
@@ -288,7 +284,6 @@ fn first_problem() {
 
     let expected = dm_expected!(
         problems: true,
-        opt_set: get_base_opts(),
         [
             item!(UnknownLong, "why"),
             item!(AmbiguousLong, "fo"),
@@ -329,7 +324,6 @@ mod iter {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Positional, "abc"),
                 item!(UnknownLong, "why"),
@@ -396,7 +390,6 @@ mod iter {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Positional, "abc"),
                 item!(Long, "help"),
@@ -464,7 +457,6 @@ fn last_value() {
 
     let expected = dm_expected!(
         problems: true,
-        opt_set: get_base_opts(),
         [
             item!(Long, "help"),
             item!(UnknownLong, "ooo"),
@@ -540,7 +532,6 @@ fn all_values() {
 
     let expected = dm_expected!(
         problems: true,
-        opt_set: get_base_opts(),
         [
             item!(Long, "help"),
             item!(UnknownLong, "ooo"),
@@ -624,7 +615,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Long, "color"),
                 item!(Long, "help"),
@@ -680,7 +670,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Long, "help"),
                 item!(Short, 'C'),
@@ -729,7 +718,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Long, "help"),
                 item!(Short, 'C'),
@@ -773,7 +761,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: true,
-            opt_set: get_base_opts(),
             [
                 item!(Long, "help"),
                 item!(Short, 'C'),
@@ -813,7 +800,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: false,
-            opt_set: get_base_opts(),
             [
                 item!(Long, "help"),
             ]
@@ -847,7 +833,6 @@ mod last_used {
 
         let expected = dm_expected!(
             problems: false,
-            opt_set: get_base_opts(),
             []
         );
         let item_set = parser.parse(&args);

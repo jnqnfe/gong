@@ -102,12 +102,10 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
                 [
                     item!(UnknownCommand, "but_i_digest", Some("but_i_digress")),
                 ])
-            ),
-            cmd_set: Some(&cmds)
+            )
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -133,12 +131,10 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
                 [
                     item!(UnknownCommand, "bard", Some("bar")),
                 ])
-            ),
-            cmd_set: Some(&cmds)
+            )
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -164,12 +160,10 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
                 [
                     item!(UnknownCommand, "hellp", Some("help")),
                 ])
-            ),
-            cmd_set: Some(&cmds)
+            )
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -195,12 +189,10 @@ mod commands {
             problems: true,
             @part cmd_part!(item_set: item_set!(
                 problems: true,
-                opt_set: &opts,
                 [
                     item!(UnknownCommand, "fooa", Some("foob")),
                 ])
-            ),
-            cmd_set: Some(&cmds)
+            )
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);

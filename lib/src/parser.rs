@@ -340,9 +340,7 @@ impl<'r, 'set: 'r, 'arg: 'r> Parser<'r, 'set> {
     /// [`parse_iter`]: #method.parse_iter
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'r, 'set, 'arg>
-        where A: AsRef<OsStr> + 'arg
-    {
+    pub fn parse<A>(&self, args: &'arg [A]) -> ItemSet<'set, 'arg> where A: AsRef<OsStr> + 'arg {
         ItemSet::from(ParseIter::new(args, self))
     }
 }
@@ -455,7 +453,7 @@ impl<'r, 'set: 'r, 'arg: 'r> CmdParser<'r, 'set> {
     /// [`Parser::parse`]: struct.Parser.html#method.parse
     #[inline(always)]
     #[must_use]
-    pub fn parse<A>(&self, args: &'arg [A]) -> CommandAnalysis<'r, 'set, 'arg>
+    pub fn parse<A>(&self, args: &'arg [A]) -> CommandAnalysis<'set, 'arg>
         where A: AsRef<OsStr> + 'arg
     {
         CommandAnalysis::from(CmdParseIter::new(args, self))

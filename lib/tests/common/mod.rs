@@ -18,13 +18,13 @@ use gong::parser::{Parser, CmdParser};
 use gong::positionals::Policy as PositionalsPolicy;
 
 /// Wrapper for actual analysis result
-#[derive(Debug)] pub struct Actual<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
+#[derive(Debug)] pub struct Actual<'a, 'b>(pub ItemSet<'a, 'b>);
 /// Wrapper for expected result, for comparison
-#[derive(Debug)] pub struct Expected<'a, 'b, 'c>(pub ItemSet<'a, 'b, 'c>);
+#[derive(Debug)] pub struct Expected<'a, 'b>(pub ItemSet<'a, 'b>);
 /// Wrapper for actual analysis result (command partitioned)
-#[derive(Debug)] pub struct CmdActual<'a, 'b, 'c>(pub CommandAnalysis<'a, 'b, 'c>);
+#[derive(Debug)] pub struct CmdActual<'a, 'b>(pub CommandAnalysis<'a, 'b>);
 /// Wrapper for expected result, for comparison (command partitioned)
-#[derive(Debug)] pub struct CmdExpected<'a, 'b, 'c>(pub CommandAnalysis<'a, 'b, 'c>);
+#[derive(Debug)] pub struct CmdExpected<'a, 'b>(pub CommandAnalysis<'a, 'b>);
 
 /// Used for cleaner creation of set of test arguments
 #[macro_export]
@@ -42,28 +42,27 @@ macro_rules! expected {
 
 /// Construct an `Expected`
 macro_rules! dm_expected {
-    ( problems: $problems:expr, opt_set: $opt_set:expr, $items:expr ) => {
-        Expected(item_set!(problems: $problems, opt_set: $opt_set, $items))
+    ( problems: $problems:expr, $items:expr ) => {
+        Expected(item_set!(problems: $problems, $items))
     };
 }
 
 /// Construct an `CmdExpected`
 macro_rules! cmd_dm_expected {
-    ( problems: $problems:expr, $(@part $part:expr),*, cmd_set: $cmd_set:expr ) => {
+    ( problems: $problems:expr, $(@part $part:expr),* ) => {
         CmdExpected(CommandAnalysis {
             parts: vec![ $($part),* ],
             problems: $problems,
-            cmd_set: $cmd_set,
         })
     };
 }
 
 /// Construct an `ItemSet`
 macro_rules! item_set {
-    ( problems: $problems:expr, opt_set: $opt_set:expr, $items:expr ) => {{
+    ( problems: $problems:expr, $items:expr ) => {{
         let mut temp_vec = Vec::new();
         temp_vec.extend_from_slice(&$items);
-        ItemSet { items: temp_vec, problems: $problems, opt_set: $opt_set }
+        ItemSet { items: temp_vec, problems: $problems }
     }};
 }
 
@@ -215,30 +214,6 @@ macro_rules! cmd_indexed_item {
     ( @s $i:expr, $item:expr, $l:expr ) => { ($i, $item, Some($l)) };
 }
 
-/// Construct a reference to an option set within a nested structure, from a base command set
-///
-/// E.g. ```cmdset_optset_ref!(get_base_cmds(), 2, 0)``` should give:
-/// get_base_cmds().commands[2].sub_commands.commands[0].options
-macro_rules! cmdset_optset_ref {
-    ( @inner $base:expr, $index_last:expr ) => {
-        $base.commands[$index_last].options
-    };
-    ( @inner $base:expr, $index_first:expr, $($index:expr),* ) => {
-        cmdset_optset_ref!(@inner $base.commands[$index_first].sub_commands, $($index),*)
-    };
-    ( $base:expr, $($index:expr),* ) => {
-        cmdset_optset_ref!(@inner $base, $($index),*)
-    };
-}
-
-/// Construct a reference to a command set within a nested structure, from a base command set
-///
-/// E.g. ```cmdset_subcmdset_ref!(get_base_cmds(), 2, 0)``` should give:
-/// &get_base_cmds().commands[2].sub_commands.commands[0].sub_commands
-macro_rules! cmdset_subcmdset_ref {
-    ( $base:expr, $($index:expr),* ) => { &$base$(.commands[$index].sub_commands)* }
-}
-
 /// Get common base `Parser` set with common base option set and an empty command set
 pub fn get_parser() -> Parser<'static, 'static> {
     let mut parser = Parser::new(base::get_base_opts());
@@ -279,7 +254,7 @@ macro_rules! check_iter_result {
     }};
 }
 
-impl<'a, 'b, 'c> Actual<'a, 'b, 'c> {
+impl<'a, 'b> Actual<'a, 'b> {
     pub fn as_expected(&self, expected: &Expected) -> bool {
         let equal = self.0 == expected.0;
         if !equal {
@@ -292,7 +267,7 @@ impl<'a, 'b, 'c> Actual<'a, 'b, 'c> {
     }
 }
 
-impl<'a, 'b, 'c> CmdActual<'a, 'b, 'c> {
+impl<'a, 'b> CmdActual<'a, 'b> {
     pub fn as_expected(&self, expected: &CmdExpected) -> bool {
         let equal = self.0 == expected.0;
         if !equal {
@@ -320,9 +295,8 @@ ItemSet {{
     items: [{}
     ],
     problems: {},
-    opt_set: {:p},
 }}",
-    items, analysis.problems, analysis.opt_set);
+    items, analysis.problems);
 }
 
 /// Prints a pretty description of an `Analysis` struct, used in debugging for easier comparison
@@ -347,21 +321,15 @@ fn pretty_print_cmd_results(analysis: &CommandAnalysis) {
             items: [{}
             ],
             problems: {},
-            opt_set: {:p},
         }}",
-                    items, s.problems, s.opt_set));
+                    items, s.problems));
             },
         }
     }
-    let cmd_set = match analysis.cmd_set {
-        Some(cs) => format!("{:p}", cs),
-        None => String::from("none"),
-    };
     eprintln!("\
 CommandAnalysis {{
     parts: [{}
     ],
     problems: {},
-    cmd_set: {},
-}}", parts, analysis.problems, cmd_set);
+}}", parts, analysis.problems);
 }
