@@ -319,15 +319,6 @@ impl From<super::options::ShortOption> for FindOption<'_> {
 }
 
 impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
-    /// Create a new result set (mostly only useful internally and in test suite)
-    #[doc(hidden)]
-    pub fn new() -> Self {
-        Self {
-            items: Vec::new(),
-            problems: false,
-        }
-    }
-
     /// Is the problems indicator attribute `true`?
     #[inline(always)]
     pub fn has_problems(&self) -> bool {
@@ -386,7 +377,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// if let Some(problem) = item_set.get_first_problem() {
     ///     // Deal with it (print error and end program)
     /// }
@@ -407,7 +398,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let positionals: Vec<_> = item_set.get_positionals().collect();
     /// ```
     pub fn get_positionals(&'r self) -> impl Iterator<Item = &'arg OsStr> + 'r {
@@ -441,7 +432,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// if item_set.option_used(gong::findopt!(@pair 'h', "help")) {
     ///     // Print help output and exit...
     /// }
@@ -480,7 +471,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let count = item_set.count_instances(gong::findopt!(@short 'v'));
     /// ```
     ///
@@ -526,7 +517,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let last_value = item_set.get_last_value(gong::findopt!(@long "output-format"));
     /// ```
     ///
@@ -560,7 +551,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// for val in item_set.get_all_values(gong::findopt!(@pair 'f', "foo")) {
     ///     // Do something with it...
     /// }
@@ -596,7 +587,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
     /// match item_set.get_last_used(&find) {
     ///     Some(gong::foundopt!(@short 'c')) |
@@ -666,7 +657,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let val = item_set.get_bool_flag_state(
     ///         gong::findopt!(@pair 'c', "color"), // Positive (true)
     ///         gong::findopt!(@long "no-color")    // Negative (false)
@@ -713,7 +704,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///
     /// ```rust
     /// # let opt_set = gong::option_set!();
-    /// # let item_set = gong::analysis::ItemSet::new();
+    /// # let item_set = gong::analysis::ItemSet::default();
     /// let val = item_set.get_bool_flag_state_multi(
     ///         &[ gong::findopt!(@pair 'c', "color") ],
     ///         &[ gong::findopt!(@long "no-color"), gong::findopt!(@long "nocolor") ]
@@ -842,7 +833,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>>
 {
     fn from(mut iter: crate::engine::ParseIterIndexed<'r, 'set, 'arg, A>) -> Self {
         let stop_on_problem = iter.get_parse_settings().stop_on_problem;
-        let mut item_set = ItemSet::new();
+        let mut item_set = ItemSet::default();
         item_set.items = Vec::with_capacity(iter.size_hint().0);
         while let Some((_index, item, _dataloc)) = iter.next() {
             if let Err(_) = item {
@@ -873,7 +864,7 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
                 analysis.parts.push(CommandBlockPart::Command(name));
             }
             else {
-                let item_set_ref = item_set.get_or_insert(ItemSet::new());
+                let item_set_ref = item_set.get_or_insert(ItemSet::default());
                 if let Err(_) = item {
                     item_set_ref.problems = true;
                     analysis.problems = true;
