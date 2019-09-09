@@ -177,6 +177,12 @@ pub struct ItemSet<'set, 'arg> {
     pub problems: bool,
 }
 
+impl<'set, 'arg> Default for ItemSet<'set, 'arg> {
+    fn default() -> Self {
+        Self { items: Vec::new(), problems: false, }
+    }
+}
+
 /// Used for breaking up an analysis by command use
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommandBlockPart<'set, 'arg> {
