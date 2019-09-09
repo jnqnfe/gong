@@ -34,32 +34,17 @@ mod options {
 
         let args = arg_list!("--a", "--foo", "--hellp", "--but_i_digest");
         let expected = expected!([
-            indexed_item!(0, UnknownLong, "a"),
-            indexed_item!(1, UnknownLong, "foo"),
-            indexed_item!(2, UnknownLong, "hellp"),
-            indexed_item!(3, UnknownLong, "but_i_digest"),
+            indexed_item!(0, UnknownLong, "a", None),
+            indexed_item!(1, UnknownLong, "foo", None),
+            indexed_item!(2, UnknownLong, "hellp", Some("help")),
+            indexed_item!(3, UnknownLong, "but_i_digest", Some("but_i_digress")),
         ]);
 
         let mut parser = Parser::new(&opts);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
         assert_eq!(&items[..], &expected[..]);
-
-        let mut suggestions = Vec::new();
-        for item in &items {
-            match item {
-                (_, Err(ProblemItem::UnknownLong(name)), _) => {
-                    suggestions.push((*name, opts.suggest(name)));
-                },
-                _ => unreachable!(),
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("a"), None),
-            (OsStr::new("foo"), None),
-            (OsStr::new("hellp"), Some("help")),
-            (OsStr::new("but_i_digest"), Some("but_i_digress")),
-        ));
     }
 
     /// Check searching respects best match, i.e. keeping track works in algorithm
@@ -80,30 +65,16 @@ mod options {
 
         let args = arg_list!("--hellp", "--bard", "--fooa");
         let expected = expected!([
-            indexed_item!(0, UnknownLong, "hellp"),
-            indexed_item!(1, UnknownLong, "bard"),
-            indexed_item!(2, UnknownLong, "fooa"),
+            indexed_item!(0, UnknownLong, "hellp", Some("help")),
+            indexed_item!(1, UnknownLong, "bard", Some("bar")),
+            indexed_item!(2, UnknownLong, "fooa", Some("foob")),
         ]);
 
         let mut parser = Parser::new(&opts);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let items: Vec<_> = parser.parse_iter(&args).indexed().collect();
         assert_eq!(&items[..], &expected[..]);
-
-        let mut suggestions = Vec::new();
-        for item in &items {
-            match item {
-                (_, Err(ProblemItem::UnknownLong(name)), _) => {
-                    suggestions.push((*name, opts.suggest(name)));
-                },
-                _ => unreachable!(),
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("hellp"), Some("help")),
-            (OsStr::new("bard"), Some("bar")),
-            (OsStr::new("fooa"), Some("foob")),
-        ));
     }
 }
 
@@ -133,32 +104,17 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    item!(UnknownCommand, "but_i_digest"),
+                    item!(UnknownCommand, "but_i_digest", Some("but_i_digress")),
                 ])
             ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
-
-        let mut suggestions = Vec::new();
-        for part in &actual_results.0.parts {
-            if let CommandBlockPart::ItemSet(is) = part {
-                for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(name)) = item {
-                        if let Some(cmd_set) = actual_results.0.cmd_set {
-                            suggestions.push((*name, cmd_set.suggest(name)));
-                        }
-                    }
-                }
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("but_i_digest"), Some("but_i_digress")),
-        ));
     }
 
     /// Check searching respects best match, i.e. keeping track works in algorithm
@@ -179,32 +135,17 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    item!(UnknownCommand, "bard"),
+                    item!(UnknownCommand, "bard", Some("bar")),
                 ])
             ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
-
-        let mut suggestions = Vec::new();
-        for part in &actual_results.0.parts {
-            if let CommandBlockPart::ItemSet(is) = part {
-                for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(name)) = item {
-                        if let Some(cmd_set) = actual_results.0.cmd_set {
-                            suggestions.push((*name, cmd_set.suggest(name)));
-                        }
-                    }
-                }
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("bard"), Some("bar")),
-        ));
     }
 
     /// Check searching respects best match, i.e. keeping track works in algorithm
@@ -225,32 +166,17 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    item!(UnknownCommand, "hellp"),
+                    item!(UnknownCommand, "hellp", Some("help")),
                 ])
             ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
-
-        let mut suggestions = Vec::new();
-        for part in &actual_results.0.parts {
-            if let CommandBlockPart::ItemSet(is) = part {
-                for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(name)) = item {
-                        if let Some(cmd_set) = actual_results.0.cmd_set {
-                            suggestions.push((*name, cmd_set.suggest(name)));
-                        }
-                    }
-                }
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("hellp"), Some("help")),
-        ));
     }
 
     /// Check searching respects best match, i.e. keeping track works in algorithm
@@ -271,31 +197,16 @@ mod commands {
                 problems: true,
                 opt_set: &opts,
                 [
-                    item!(UnknownCommand, "fooa"),
+                    item!(UnknownCommand, "fooa", Some("foob")),
                 ])
             ),
             cmd_set: Some(&cmds)
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_serve_suggestions(true);
         let actual_results = CmdActual(parser.parse(&args));
         check_result!(&actual_results, &expected);
-
-        let mut suggestions = Vec::new();
-        for part in &actual_results.0.parts {
-            if let CommandBlockPart::ItemSet(is) = part {
-                for item in &is.items {
-                    if let Err(ProblemItem::UnknownCommand(name)) = item {
-                        if let Some(cmd_set) = actual_results.0.cmd_set {
-                            suggestions.push((*name, cmd_set.suggest(name)));
-                        }
-                    }
-                }
-            }
-        }
-        assert_eq!(suggestions, vec!(
-            (OsStr::new("fooa"), Some("foob")),
-        ));
     }
 }

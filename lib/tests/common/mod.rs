@@ -78,26 +78,30 @@ macro_rules! cmd_part {
 /// There is one matcher for each item type. The first param for each is the label of the unique
 /// type. The final params as necessary allow for: [<name/char>[, <data-value>]].
 macro_rules! item {
-    ( Positional, $s:expr )             => { Ok(Item::Positional(OsStr::new($s))) };
-    ( EarlyTerminator )                 => { Ok(Item::EarlyTerminator) };
-    ( Long, $n:expr )                   => { Ok(Item::Long($n, None)) };
-    ( Short, $c:expr )                  => { Ok(Item::Short($c, None)) };
-    ( LongWithData, $n:expr, $d:expr )  => { Ok(Item::Long($n, Some(OsStr::new($d)))) };
-    ( ShortWithData, $c:expr, $d:expr ) => { Ok(Item::Short($c, Some(OsStr::new($d)))) };
-    ( LongWithoutData, $n:expr )        => { Ok(Item::Long($n, None)) };
-    ( ShortWithoutData, $c:expr )       => { Ok(Item::Short($c, None)) };
-    ( Command, $n:expr )                => { Ok(Item::Command($n)) };
-    ( UnknownLong, $n:expr )            => { Err(ProblemItem::UnknownLong(OsStr::new($n))) };
-    ( UnknownShort, $c:expr )           => { Err(ProblemItem::UnknownShort($c)) };
-    ( UnknownCommand, $n:expr )         => { Err(ProblemItem::UnknownCommand(OsStr::new($n))) };
+    ( Positional, $s:expr )              => { Ok(Item::Positional(OsStr::new($s))) };
+    ( EarlyTerminator )                  => { Ok(Item::EarlyTerminator) };
+    ( Long, $n:expr )                    => { Ok(Item::Long($n, None)) };
+    ( Short, $c:expr )                   => { Ok(Item::Short($c, None)) };
+    ( LongWithData, $n:expr, $d:expr )   => { Ok(Item::Long($n, Some(OsStr::new($d)))) };
+    ( ShortWithData, $c:expr, $d:expr )  => { Ok(Item::Short($c, Some(OsStr::new($d)))) };
+    ( LongWithoutData, $n:expr )         => { Ok(Item::Long($n, None)) };
+    ( ShortWithoutData, $c:expr )        => { Ok(Item::Short($c, None)) };
+    ( Command, $n:expr )                 => { Ok(Item::Command($n)) };
+    ( UnknownLong, $n:expr )             => { Err(ProblemItem::UnknownLong(OsStr::new($n), None)) };
+    // Variant for specifying suggestion
+    ( UnknownLong, $n:expr, $s:expr )    => { Err(ProblemItem::UnknownLong(OsStr::new($n), $s)) };
+    ( UnknownShort, $c:expr )            => { Err(ProblemItem::UnknownShort($c)) };
+    ( UnknownCommand, $n:expr )          => { Err(ProblemItem::UnknownCommand(OsStr::new($n), None)) };
+    // Variant for specifying suggestion
+    ( UnknownCommand, $n:expr, $s:expr ) => { Err(ProblemItem::UnknownCommand(OsStr::new($n), $s)) };
     ( LongWithUnexpectedData, $n:expr, $d:expr )
-                                        => { Err(ProblemItem::LongWithUnexpectedData($n, OsStr::new($d))) };
-    ( LongMissingData, $n:expr )        => { Err(ProblemItem::LongMissingData($n)) };
-    ( ShortMissingData, $c:expr )       => { Err(ProblemItem::ShortMissingData($c)) };
-    ( AmbiguousLong, $n:expr )          => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
-    ( AmbiguousCmd, $n:expr )           => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
-    ( UnexpectedPositional, $s:expr )   => { Err(ProblemItem::UnexpectedPositional(OsStr::new($s))) };
-    ( MissingPositionals, $c:expr )     => { Err(ProblemItem::MissingPositionals($c)) };
+                                         => { Err(ProblemItem::LongWithUnexpectedData($n, OsStr::new($d))) };
+    ( LongMissingData, $n:expr )         => { Err(ProblemItem::LongMissingData($n)) };
+    ( ShortMissingData, $c:expr )        => { Err(ProblemItem::ShortMissingData($c)) };
+    ( AmbiguousLong, $n:expr )           => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
+    ( AmbiguousCmd, $n:expr )            => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
+    ( UnexpectedPositional, $s:expr )    => { Err(ProblemItem::UnexpectedPositional(OsStr::new($s))) };
+    ( MissingPositionals, $c:expr )      => { Err(ProblemItem::MissingPositionals($c)) };
 }
 
 /// Construct an `ItemResultIndexed`.
@@ -118,8 +122,13 @@ macro_rules! indexed_item {
     ( $i:expr, ShortWithoutData, $c:expr )     => { indexed_item!(@s $i, item!(Short, $c), DataLocation::SameArg) };
     ( $i:expr, Command, $n:expr )              => { indexed_item!(@n $i, item!(Command, $n)) };
     ( $i:expr, UnknownLong, $n:expr )          => { indexed_item!(@n $i, item!(UnknownLong, $n)) };
+    // Variant for specifying suggestion
+    ( $i:expr, UnknownLong, $n:expr, $s:expr ) => { indexed_item!(@n $i, item!(UnknownLong, $n, $s)) };
     ( $i:expr, UnknownShort, $c:expr )         => { indexed_item!(@n $i, item!(UnknownShort, $c)) };
     ( $i:expr, UnknownCommand, $n:expr )       => { indexed_item!(@n $i, item!(UnknownCommand, $n)) };
+    // Variant for specifying suggestion
+    ( $i:expr, UnknownCommand, $n:expr, $s:expr )
+                                               => { indexed_item!(@n $i, item!(UnknownCommand, $n, $s)) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
                                                => { indexed_item!(@n $i, item!(LongWithUnexpectedData, $n, $d)) };
     ( $i:expr, LongMissingData, $n:expr )      => { indexed_item!(@n $i, item!(LongMissingData, $n)) };
@@ -150,8 +159,12 @@ macro_rules! cmd_item {
     ( ShortWithoutData, $c:expr )                => { item!(ShortWithoutData, $c) };
     ( Command, $n:expr )                         => { item!(Command, $n) };
     ( UnknownLong, $n:expr )                     => { item!(UnknownLong, $n) };
+    // Variant for specifying suggestion
+    ( UnknownLong, $n:expr, $s:expr )            => { item!(UnknownLong, $n, $s) };
     ( UnknownShort, $c:expr )                    => { item!(UnknownShort, $c) };
     ( UnknownCommand, $n:expr )                  => { item!(UnknownCommand, $n) };
+    // Variant for specifying suggestion
+    ( UnknownCommand, $n:expr, $s:expr )         => { item!(UnknownCommand, $n, $s) };
     ( LongWithUnexpectedData, $n:expr, $d:expr ) => { item!(LongWithUnexpectedData, $n, $d) };
     ( LongMissingData, $n:expr )                 => { item!(LongMissingData, $n) };
     ( ShortMissingData, $c:expr )                => { item!(ShortMissingData, $c) };
@@ -180,8 +193,13 @@ macro_rules! cmd_indexed_item {
     ( $i:expr, ShortWithoutData, $c:expr )     => { cmd_indexed_item!(@s $i, cmd_item!(Short, $c), DataLocation::SameArg) };
     ( $i:expr, Command, $n:expr )              => { cmd_indexed_item!(@n $i, cmd_item!(Command, $n)) };
     ( $i:expr, UnknownLong, $n:expr )          => { cmd_indexed_item!(@n $i, cmd_item!(UnknownLong, $n)) };
+    // Variant for specifying suggestion
+    ( $i:expr, UnknownLong, $n:expr, $s:expr ) => { cmd_indexed_item!(@n $i, cmd_item!(UnknownLong, $n, $s)) };
     ( $i:expr, UnknownShort, $c:expr )         => { cmd_indexed_item!(@n $i, cmd_item!(UnknownShort, $c)) };
     ( $i:expr, UnknownCommand, $n:expr )       => { cmd_indexed_item!(@n $i, cmd_item!(UnknownCommand, $n)) };
+    // Variant for specifying suggestion
+    ( $i:expr, UnknownCommand, $n:expr, $s:expr )
+                                               => { cmd_indexed_item!(@n $i, cmd_item!(UnknownCommand, $n, $s)) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
                                                => { cmd_indexed_item!(@n $i, cmd_item!(LongWithUnexpectedData, $n, $d)) };
     ( $i:expr, LongMissingData, $n:expr )      => { cmd_indexed_item!(@n $i, cmd_item!(LongMissingData, $n)) };
@@ -226,6 +244,8 @@ pub fn get_parser() -> Parser<'static, 'static> {
     let mut parser = Parser::new(base::get_base_opts());
     parser.set_positionals_policy(PositionalsPolicy::Unlimited);
     parser.settings().set_stop_on_problem(false);
+    #[cfg(feature = "suggestions")]
+    parser.settings().set_serve_suggestions(false);
     parser
 }
 
@@ -234,6 +254,8 @@ pub fn get_parser_cmd() -> CmdParser<'static, 'static> {
     let mut parser = CmdParser::new(base::get_base_opts(), base::get_base_cmds());
     parser.set_positionals_policy(PositionalsPolicy::Fixed(0));
     parser.settings().set_stop_on_problem(false);
+    #[cfg(feature = "suggestions")]
+    parser.settings().set_serve_suggestions(false);
     parser
 }
 

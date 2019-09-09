@@ -125,7 +125,9 @@ pub enum Item<'set, 'arg> {
 ///
 /// Long option variants hold a string slice reference of the matched/unmatched option name. Short
 /// option variants hold the matched/unmatched short option `char`. The [`LongWithUnexpectedData`]
-/// variant holds a string slice reference (in `OsStr` form) to the data string matched.
+/// variant holds a string slice reference (in `OsStr` form) to the data string matched. Unknown
+/// long option and command variants additionally come with a possible mismatch suggestion (if
+/// the relevant setting and feature are enabled, and if a suitable suggestion is found).
 ///
 /// [`LongWithUnexpectedData`]: #variant.LongWithUnexpectedData
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -134,12 +136,12 @@ pub enum ProblemItem<'set, 'arg> {
     UnexpectedPositional(&'arg OsStr),
     /// Missing positionals (quantity)
     MissingPositionals(PositionalsQuantity),
-    /// Looked like a long option, but no match
-    UnknownLong(&'arg OsStr),
+    /// Looked like a long option, but no match (mismatch suggestion possibly provided)
+    UnknownLong(&'arg OsStr, Option<&'set str>),
     /// Unknown short option `char`
     UnknownShort(char),
-    /// Unknown command
-    UnknownCommand(&'arg OsStr),
+    /// Unknown command (mismatch suggestion possibly provided)
+    UnknownCommand(&'arg OsStr, Option<&'set str>),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
     /// found, but multiple  abbreviated possible matches were found.
     AmbiguousLong(&'arg OsStr),

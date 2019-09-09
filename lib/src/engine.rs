@@ -231,7 +231,12 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                     NameSearchResult::NoMatch => {
                         self.inner.try_command_matching = false;
                         if !self.commands.commands.is_empty() {
-                            return Some(Err(ProblemItem::UnknownCommand(arg)));
+                            let suggestion = match self.inner.serve_suggestions() {
+                                #[cfg(feature = "suggestions")]
+                                true => self.commands.suggest(arg),
+                                _ => None,
+                            };
+                            return Some(Err(ProblemItem::UnknownCommand(arg, suggestion)));
                         }
                         /* fall through */
                     },
@@ -449,7 +454,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(Err(ProblemItem::UnknownLong(OsStr::new(""))));
+                    return Some(Err(ProblemItem::UnknownLong(OsStr::new(""), None)));
                 }
 
                 let lookup = match self.settings.allow_opt_abbreviations {
@@ -497,8 +502,13 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                         }
                     },
                     NameSearchResult::NoMatch => {
+                        let suggestion = match self.serve_suggestions() {
+                            #[cfg(feature = "suggestions")]
+                            true => self.options.suggest(name),
+                            _ => None,
+                        };
                         // Again, we ignore any possibly included data in the argument
-                        Some(Err(ProblemItem::UnknownLong(name)))
+                        Some(Err(ProblemItem::UnknownLong(name, suggestion)))
                     },
                     NameSearchResult::AmbiguousMatch => {
                         Some(Err(ProblemItem::AmbiguousLong(name)))
@@ -506,6 +516,14 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                 }
             },
         }
+    }
+
+    #[inline(always)]
+    fn serve_suggestions(&self) -> bool {
+        #[cfg(not(feature = "suggestions"))]
+        { false }
+        #[cfg(feature = "suggestions")]
+        { self.settings.serve_suggestions }
     }
 
     #[inline]

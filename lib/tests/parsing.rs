@@ -688,6 +688,8 @@ mod abbreviations {
         ]);
 
         let mut parser = CmdParser::new(&opts, &cmds);
+        #[cfg(feature = "suggestions")]
+        parser.inner.settings().set_serve_suggestions(false);
         parser.inner.settings().set_stop_on_problem(false)
                                .set_allow_opt_abbreviations(true)
                                .set_allow_cmd_abbreviations(false);

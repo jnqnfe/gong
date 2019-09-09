@@ -140,6 +140,10 @@ pub struct Settings {
     /// arguments will be interpreted correctly; this, when `true`, allows parsing to immediately
     /// stop, allowing you to avoid potentially wasted effort.
     pub stop_on_problem: bool,
+    /// Whether or not to automatically include mismatch suggestion results in unknown long option
+    /// and unknown command item variants.
+    #[cfg(feature = "suggestions")]
+    pub serve_suggestions: bool,
 }
 
 impl Default for Settings {
@@ -150,6 +154,8 @@ impl Default for Settings {
             allow_cmd_abbreviations: false,
             posixly_correct: false,
             stop_on_problem: true,
+            #[cfg(feature = "suggestions")]
+            serve_suggestions: true,
         }
     }
 }
@@ -232,6 +238,14 @@ impl Settings {
     #[inline(always)]
     pub fn set_stop_on_problem(&mut self, enable: bool) -> &mut Self {
         self.stop_on_problem = enable;
+        self
+    }
+
+    /// Control whether or not mismatch suggestions are included
+    #[cfg(feature = "suggestions")]
+    #[inline(always)]
+    pub fn set_serve_suggestions(&mut self, serve: bool) -> &mut Self {
+        self.serve_suggestions = serve;
         self
     }
 }

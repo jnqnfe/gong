@@ -218,7 +218,7 @@ fn main() {
             },
             Err(ProblemItem::AmbiguousLong(n)) => printer(i, "AmbiguousLong", n),
             Err(ProblemItem::AmbiguousCmd(n)) => printer(i, "AmbiguousCmd", n),
-            Err(ProblemItem::UnknownLong(n)) => printer(i, "UnknownLong", OsStr::new(&n)),
+            Err(ProblemItem::UnknownLong(n, _)) => printer(i, "UnknownLong", OsStr::new(&n)),
             Ok(Item::Short(c, None)) => {
                 let desc = desc_char(c);
                 match l.is_none() {
@@ -243,7 +243,7 @@ fn main() {
                 printer(i, "UnknownShort", OsStr::new(&desc));
             },
             Ok(Item::Command(n)) => printer(i, "Command", OsStr::new(&n)),
-            Err(ProblemItem::UnknownCommand(n)) => printer(i, "UnknownCommand", OsStr::new(&n)),
+            Err(ProblemItem::UnknownCommand(n, _)) => printer(i, "UnknownCommand", OsStr::new(&n)),
         }
         #[cfg(feature = "stop_on_problem")] {
             if problems {
