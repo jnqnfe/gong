@@ -390,6 +390,23 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         self.get_problem_items().next()
     }
 
+    /// Get a specific *positional*
+    ///
+    /// The `index` to provide relates to the set of *positionals* only, it is **not** the argument
+    /// index. I.e. use `0` to get the first *positional*, `1` for the second, etc. Note that the
+    /// indexing order is identical to the order in which they were given by the user.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::default();
+    /// let _3rd_positional = item_set.get_positional(2);
+    /// ```
+    pub fn get_positional(&'r self, index: usize) -> Option<&'arg OsStr> {
+        self.get_positionals().skip(index).next()
+    }
+
     /// Gives an iterator over any *positional* arguments
     ///
     /// They are served in the order given by the user.

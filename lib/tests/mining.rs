@@ -423,6 +423,59 @@ mod iter {
     }
 }
 
+/// Test that fetching specific positionals by index works
+#[test]
+fn positional_by_index() {
+    let args = arg_list!(
+        "abc",          // Positional
+        "--help",       // Known option
+        "def",          // Positional
+        "hij",          // Positional
+        "--jjj",        // Unknown option
+        "klm",          // Positional
+        "--",           // Early terminator
+        "nop",          // Positional
+        "--help",       // Positional
+    );
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, Positional, "abc"),
+        indexed_item!(1, Long, "help"),
+        indexed_item!(2, Positional, "def"),
+        indexed_item!(3, Positional, "hij"),
+        indexed_item!(4, UnknownLong, "jjj"),
+        indexed_item!(5, Positional, "klm"),
+        indexed_item!(6, EarlyTerminator),
+        indexed_item!(7, Positional, "nop"),
+        indexed_item!(8, Positional, "--help"),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
+        problems: true,
+        [
+            item!(Positional, "abc"),
+            item!(Long, "help"),
+            item!(Positional, "def"),
+            item!(Positional, "hij"),
+            item!(UnknownLong, "jjj"),
+            item!(Positional, "klm"),
+            item!(EarlyTerminator),
+            item!(Positional, "nop"),
+            item!(Positional, "--help"),
+        ]
+    );
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
+
+    assert_eq!(Some(OsStr::new("abc")), item_set.get_positional(0));
+    assert_eq!(Some(OsStr::new("klm")), item_set.get_positional(3));
+    assert_eq!(None, item_set.get_positional(9));
+    assert_eq!(Some(OsStr::new("--help")), item_set.get_positional(5));
+    assert_eq!(Some(OsStr::new("hij")), item_set.get_positional(2));
+}
+
 /// Test retrieving last value for an option
 #[test]
 fn last_value() {
