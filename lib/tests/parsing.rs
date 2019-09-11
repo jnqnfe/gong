@@ -1303,12 +1303,7 @@ mod commands {
 
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "Commit"),
-                ])
-            )
+            @part cmd_part!(uk_command: "Commit")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1356,12 +1351,7 @@ mod commands {
         let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: "push"),
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "commit"),
-                ])
-            )
+            @part cmd_part!(uk_command: "commit")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1531,10 +1521,15 @@ mod commands {
         let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(item_set: item_set!(
-                problems: true,
+                problems: false,
                 [
                     item!(LongWithData, "hah", "foo"),
-                    item!(UnknownCommand, "blah"),
+                ])
+            ),
+            @part cmd_part!(uk_command: "blah"),
+            @part cmd_part!(item_set: item_set!(
+                problems: true,
+                [
                     item!(UnexpectedPositional, "commit"),
                 ])
             )
@@ -1800,12 +1795,7 @@ mod commands {
             problems: true,
             @part cmd_part!(command: "branch"),
             @part cmd_part!(command: "del"),
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "list"),
-                ])
-            )
+            @part cmd_part!(uk_command: "list")
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
     }
@@ -1830,10 +1820,10 @@ mod commands {
         let expected = cmd_dm_expected!(
             problems: true,
             @part cmd_part!(command: "branch"),
+            @part cmd_part!(uk_command: "blah"),
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 [
-                    item!(UnknownCommand, "blah"),
                     item!(UnexpectedPositional, "list"),
                 ])
             )

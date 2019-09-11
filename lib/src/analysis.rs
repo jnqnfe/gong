@@ -186,13 +186,24 @@ impl<'set, 'arg> Default for ItemSet<'set, 'arg> {
 /// Used for breaking up an analysis by command use
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommandBlockPart<'set, 'arg> {
-    /// A command
+    /// A matched command
     Command(&'set str),
-    /// Set of items describing what was found, up to the next use of a command
+    /// A failed match against known commands - unknown (mismatch suggestion possibly provided)
+    UnknownCommand(&'arg OsStr, Option<&'set str>),
+    /// A failed abbreviated match against known commands - ambiguous
+    AmbiguousCmd(&'arg OsStr),
+    /// Set of all items that were found, up to the next use of a command name
     ItemSet(ItemSet<'set, 'arg>),
 }
 
 /// Analysis of parsing arguments, partitioned per command use
+///
+/// Note that:
+///
+///  - You will never see a sequence of two or more [`CommandBlockPart::ItemSet`]s; there will
+///    always be a command name item inbetween.
+///  - An unknown or ambiguous command name match variant will only ever be followed by an item set,
+///    and only if the `stop_on_problem` setting is `false`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandAnalysis<'set, 'arg> {
     /// Partitioned analysis
@@ -870,22 +881,41 @@ impl<'r, 'set, 'arg, A> From<crate::engine::CmdParseIterIndexed<'r, 'set, 'arg, 
         let mut analysis = CommandAnalysis::new();
         let mut item_set = None;
         while let Some((_index, item, _dataloc)) = iter.next() {
-            if let Ok(Item::Command(name)) = item {
-                if item_set.is_some() {
-                    analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
-                }
-                analysis.parts.push(CommandBlockPart::Command(name));
-            }
-            else {
-                let item_set_ref = item_set.get_or_insert(ItemSet::default());
-                if let Err(_) = item {
-                    item_set_ref.problems = true;
-                    analysis.problems = true;
-                }
-                item_set_ref.items.push(item);
-                if stop_on_problem && item_set_ref.problems {
-                    break;
-                }
+            match item {
+                Ok(Item::Command(_)) |
+                Err(ProblemItem::UnknownCommand(_, _)) |
+                Err(ProblemItem::AmbiguousCmd(_)) => {
+                    if item_set.is_some() {
+                        analysis.parts.push(CommandBlockPart::ItemSet(item_set.take().unwrap()));
+                    }
+
+                    if let Ok(Item::Command(name)) = item {
+                        analysis.parts.push(CommandBlockPart::Command(name));
+                    }
+                    else {
+                        analysis.problems = true;
+                        if let Err(ProblemItem::UnknownCommand(name, sug)) = item {
+                            analysis.parts.push(CommandBlockPart::UnknownCommand(name, sug));
+                        }
+                        else if let Err(ProblemItem::AmbiguousCmd(name)) = item {
+                            analysis.parts.push(CommandBlockPart::AmbiguousCmd(name));
+                        }
+                        if stop_on_problem {
+                            break;
+                        }
+                    }
+                },
+                _ => {
+                    let item_set_ref = item_set.get_or_insert(ItemSet::default());
+                    if let Err(_) = item {
+                        item_set_ref.problems = true;
+                        analysis.problems = true;
+                    }
+                    item_set_ref.items.push(item);
+                    if stop_on_problem && item_set_ref.problems {
+                        break;
+                    }
+                },
             }
         }
         if item_set.is_some() {

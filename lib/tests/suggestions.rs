@@ -100,12 +100,7 @@ mod commands {
         let args = arg_list!("but_i_digest");
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "but_i_digest", Some("but_i_digress")),
-                ])
-            )
+            @part cmd_part!(uk_command: "but_i_digest", Some("but_i_digress"))
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -129,12 +124,7 @@ mod commands {
         let args = arg_list!("bard");
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "bard", Some("bar")),
-                ])
-            )
+            @part cmd_part!(uk_command: "bard", Some("bar"))
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -158,12 +148,7 @@ mod commands {
         let args = arg_list!("hellp");
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "hellp", Some("help")),
-                ])
-            )
+            @part cmd_part!(uk_command: "hellp", Some("help"))
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);
@@ -187,12 +172,7 @@ mod commands {
         let args = arg_list!("fooa");
         let expected = cmd_dm_expected!(
             problems: true,
-            @part cmd_part!(item_set: item_set!(
-                problems: true,
-                [
-                    item!(UnknownCommand, "fooa", Some("foob")),
-                ])
-            )
+            @part cmd_part!(uk_command: "fooa", Some("foob"))
         );
 
         let mut parser = CmdParser::new(&opts, &cmds);

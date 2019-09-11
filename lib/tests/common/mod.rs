@@ -69,6 +69,10 @@ macro_rules! item_set {
 /// Construct a `CommandBlockPart`
 macro_rules! cmd_part {
     ( command: $c:expr ) => { CommandBlockPart::Command($c) };
+    ( uk_command: $c:expr ) => { CommandBlockPart::UnknownCommand(OsStr::new($c), None) };
+    // Variant for specifying suggestion
+    ( uk_command: $c:expr, $s:expr ) => { CommandBlockPart::UnknownCommand(OsStr::new($c), $s) };
+    ( am_command: $c:expr ) => { CommandBlockPart::AmbiguousCmd(OsStr::new($c)) };
     ( item_set: $is:expr ) => { CommandBlockPart::ItemSet($is) };
 }
 
@@ -310,6 +314,12 @@ fn pretty_print_cmd_results(analysis: &CommandAnalysis) {
         match part {
             CommandBlockPart::Command(c) => {
                 parts.push_str(&format!("\n        Command: {},", c));
+            },
+            CommandBlockPart::UnknownCommand(c, _) => {
+                parts.push_str(&format!("\n        UnknownCommand: {:?},", c));
+            },
+            CommandBlockPart::AmbiguousCmd(c) => {
+                parts.push_str(&format!("\n        AmbiguousCmd: {:?},", c));
             },
             CommandBlockPart::ItemSet(s) => {
                 let mut items = String::new();
