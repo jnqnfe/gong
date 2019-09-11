@@ -18,10 +18,44 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
-use gong::{option_set, longopt, shortopt};
+use gong::{option_set, longopt, shortopt, optpair};
 use gong::analysis::*;
 use gong::options::*;
 use gong::parser::Parser;
+
+mod macros {
+    use super::*;
+
+    #[test]
+    fn long() {
+        assert_eq!(LongOption { name: "foo", opt_type: OptionType::Flag },  longopt!(@flag "foo"));
+        assert_eq!(LongOption { name: "bar", opt_type: OptionType::Data },  longopt!(@data "bar"));
+        assert_eq!(LongOption { name: "cat", opt_type: OptionType::Mixed }, longopt!(@mixed "cat"));
+    }
+
+    #[test]
+    fn short() {
+        assert_eq!(ShortOption { ch: 'a', opt_type: OptionType::Flag },  shortopt!(@flag 'a'));
+        assert_eq!(ShortOption { ch: 'b', opt_type: OptionType::Data },  shortopt!(@data 'b'));
+        assert_eq!(ShortOption { ch: 'c', opt_type: OptionType::Mixed }, shortopt!(@mixed 'c'));
+    }
+
+    #[test]
+    fn pair() {
+        assert_eq!(OptionPair { name: "foo", ch: 'a', opt_type: OptionType::Flag },  optpair!(@flag 'a', "foo"));
+        assert_eq!(OptionPair { name: "bar", ch: 'b', opt_type: OptionType::Data },  optpair!(@data 'b', "bar"));
+        assert_eq!(OptionPair { name: "cat", ch: 'c', opt_type: OptionType::Mixed }, optpair!(@mixed 'c', "cat"));
+
+        assert_eq!(optpair!(@flag 'a', "foo"),
+                   OptionPair::from_separate(shortopt!(@flag 'a'), longopt!(@flag "foo")));
+    }
+}
+
+#[test]
+fn pair_conversions() {
+    assert_eq!(longopt!(@flag "help"), optpair!(@flag 'h', "help").as_long());
+    assert_eq!(shortopt!(@flag 'h'), optpair!(@flag 'h', "help").as_short());
+}
 
 /// Dash (`-`) is an invalid short option (clashes with early terminator if it were given on its own
 /// (`--`), and would be misinterpreted as a long option if given as the first in a short option set

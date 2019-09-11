@@ -73,14 +73,14 @@ macro_rules! command_set {
 /// ```
 #[macro_export]
 macro_rules! longopt {
+    ( @flag $name:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Flag }
+    };
     ( @data $name:expr ) => {
         $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Data }
     };
     ( @mixed $name:expr ) => {
         $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Mixed }
-    };
-    ( @flag $name:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Flag }
     };
 }
 
@@ -103,14 +103,45 @@ macro_rules! longopt {
 /// ```
 #[macro_export]
 macro_rules! shortopt {
+    ( @flag $ch:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Flag }
+    };
     ( @data $ch:expr ) => {
         $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Data }
     };
     ( @mixed $ch:expr ) => {
         $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Mixed }
     };
-    ( @flag $ch:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Flag }
+}
+
+/// Constructs an [`OptionPair`](options/struct.OptionPair.html)
+///
+/// Takes both a short option `char` and a long option name as a related pair after one of the
+/// following annotations:
+///
+///  * `@flag` to indicate a flag type option, i.e. one which does not take a data value.
+///  * `@data` to indicate a data-taking option, which requires a value.
+///  * `@mixed` to indicate a data-taking option, where providing a data value is optional.
+///
+/// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
+///
+/// # Examples
+///
+/// ```rust
+/// let _ = gong::optpair!(@flag  'h', "help");  // A flag type option
+/// let _ = gong::optpair!(@data  'i', "input"); // One that takes mandatory data
+/// let _ = gong::optpair!(@mixed 'C', "color"); // One that takes optional data
+/// ```
+#[macro_export]
+macro_rules! optpair {
+    ( @flag $ch:expr, $name:expr ) => {
+        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Flag }
+    };
+    ( @data $ch:expr, $name:expr ) => {
+        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Data }
+    };
+    ( @mixed $ch:expr, $name:expr ) => {
+        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Mixed }
     };
 }
 

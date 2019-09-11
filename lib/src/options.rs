@@ -42,6 +42,24 @@ pub struct ShortOption {
     pub opt_type: OptionType,
 }
 
+/// Description of an available option with both a long and short identifier
+///
+/// This is not used in option sets directly, but can be useful where you have a pair of related
+/// long and short option identifiers, in terms of being able to spawn individual long and short
+/// option types from this single definition, as well as [`FindOption`]s.
+///
+/// [`FindOption`]: ../analysis/enum.FindOption.html
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct OptionPair<'a> {
+    /* NOTE: these have been left public to allow efficient static creation of options */
+    /// Long option name, excluding the `--` prefix
+    pub name: &'a str,
+    /// Short option character
+    pub ch: char,
+    /// Option type
+    pub opt_type: OptionType,
+}
+
 /// Type of option (flag or data-value taking)
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum OptionType {
@@ -209,6 +227,34 @@ impl ShortOption {
     }
 }
 
+impl<'a> OptionPair<'a> {
+    /// Create a corresponding long option type
+    #[inline(always)]
+    pub const fn as_long(&self) -> LongOption<'a> {
+        LongOption { name: self.name, opt_type: self.opt_type }
+    }
+
+    /// Create a corresponding short option type
+    #[inline(always)]
+    pub const fn as_short(&self) -> ShortOption {
+        ShortOption { ch: self.ch, opt_type: self.opt_type }
+    }
+
+    /// Create a corresponding `FindOption`
+    #[inline(always)]
+    pub const fn as_findopt(&self) -> crate::analysis::FindOption<'a> {
+        crate::analysis::FindOption::Pair(self.ch, self.name)
+    }
+
+    /// Create from corresponding separate short and long types
+    #[inline]
+    pub const fn from_separate(short: ShortOption, long: LongOption<'a>) -> Self {
+        //TODO: cannot use this assertion in const functions yet...
+        //assert_eq!(short.opt_type, long.opt_type);
+        Self { name: long.name, ch: short.ch, opt_type: long.opt_type }
+    }
+}
+
 impl<'s> OptionSetEx<'s> {
     /// Create a new object
     ///
@@ -287,12 +333,12 @@ impl<'s> OptionSetEx<'s> {
         self
     }
 
-    /// Add an existing (ready-made) long option and short option pair
+    /// Add an existing (ready-made) option pair
     ///
     /// No validation is performed here; the item given should be valid though.
     #[inline]
-    pub fn add_existing_pair(&mut self, short: ShortOption, long: LongOption<'s>) -> &mut Self {
-        self.add_existing_short(short).add_existing_long(long)
+    pub fn add_existing_pair(&mut self, pair: OptionPair<'s>) -> &mut Self {
+        self.add_existing_long(pair.as_long()).add_existing_short(pair.as_short())
     }
 
     /// Add multiple short options from string

@@ -19,7 +19,7 @@ extern crate gong;
 #[macro_use]
 mod common;
 
-use gong::{longopt, shortopt, command, command_set, option_set};
+use gong::{longopt, shortopt, optpair, command, command_set, option_set};
 
 mod options {
     use super::*;
@@ -40,7 +40,7 @@ mod options {
             .add_pair('V', "version", OptionType::Flag)
             .add_pair('b', "efgh", OptionType::Data)
             .add_pair('i', "jklm", OptionType::Mixed)
-            .add_existing_pair(shortopt!(@flag 'n'), longopt!(@flag "opqr"));
+            .add_existing_pair(optpair!(@flag 'n', "opqr"));
 
         let expected = OptionSetEx {
             long: vec![

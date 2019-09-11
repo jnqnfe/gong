@@ -318,6 +318,13 @@ impl From<super::options::ShortOption> for FindOption<'_> {
     }
 }
 
+impl<'a> From<super::options::OptionPair<'a>> for FindOption<'a> {
+    #[inline(always)]
+    fn from(o: super::options::OptionPair<'a>) -> Self {
+        o.as_findopt()
+    }
+}
+
 impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// Is the problems indicator attribute `true`?
     #[inline(always)]
@@ -449,7 +456,8 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// ```rust
     /// # let opt_set = gong::option_set!();
     /// # let item_set = gong::analysis::ItemSet::default();
-    /// if item_set.option_used(gong::findopt!(@pair 'h', "help")) {
+    /// let help_opt = gong::optpair!(@flag 'h', "help");
+    /// if item_set.option_used(help_opt.into()) {
     ///     // Print help output and exit...
     /// }
     /// ```

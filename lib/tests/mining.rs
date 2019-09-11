@@ -18,7 +18,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
-use gong::{shortopt, longopt, findopt, foundopt};
+use gong::{shortopt, longopt, findopt, foundopt, optpair};
 use gong::analysis::*;
 use gong::positionals::Policy as PositionalsPolicy;
 use self::common::{get_parser, Actual, Expected};
@@ -53,6 +53,11 @@ mod findopt {
     #[cfg(compile_fail)]
     fn search_params_fail() {
         let _ = findopt!(@pair "help", 'h'); // Wrong order
+    }
+
+    #[test]
+    fn from_optpair() {
+        assert_eq!(findopt!(@pair 'h', "help"), optpair!(@flag 'h', "help").as_findopt());
     }
 }
 
