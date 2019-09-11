@@ -121,7 +121,7 @@ fn used() {
     assert_eq!(true, item_set.option_used(FindOption::Short('h')));
     assert_eq!(true, item_set.option_used(FindOption::Short('o')));
     assert_eq!(true, item_set.option_used(FindOption::Pair('h', "help")));
-    assert_eq!(true, item_set.option_used(FindOption::Long("version"))); //Positive, ignoring unexpected data
+    assert_eq!(false, item_set.option_used(FindOption::Long("version"))); //Negative, being strict with unexpected data
     // Check known and unused
     assert_eq!(false, item_set.option_used(FindOption::Long("foo")));
     assert_eq!(false, item_set.option_used(FindOption::Short('x')));
@@ -198,7 +198,7 @@ fn count() {
     assert_eq!(3, item_set.count_instances(FindOption::Short('v')));
     assert_eq!(2, item_set.count_instances(FindOption::Short('o')));
     assert_eq!(3, item_set.count_instances(FindOption::Pair('h', "help")));
-    assert_eq!(1, item_set.count_instances(FindOption::Long("version")));
+    assert_eq!(0, item_set.count_instances(FindOption::Long("version"))); //Being strict about the problem
     // Check known and unused
     assert_eq!(0, item_set.count_instances(FindOption::Long("foo")));
     assert_eq!(0, item_set.count_instances(FindOption::Short('x')));
@@ -797,9 +797,9 @@ mod last_used {
         assert_eq!(Some(false), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
 
-    /// Testing that a long with unexpected data is considered
+    /// Testing that a long with unexpected data is not considered
     #[test]
-    fn long_with_unexpected_data_is_last() {
+    fn long_with_unexpected_data_is_not_last() {
         let args = arg_list!("--help", "-C", "--no-color", "--color=data", "-d");
         let parser = get_parser();
 
@@ -835,9 +835,9 @@ mod last_used {
         let find_pos_list = [ FindOption::Long("color"), FindOption::Short('C') ];
         let find_neg_list = [ FindOption::Long("no-color") ];
 
-        assert_eq!(Some(FoundOption::Long("color")), item_set.get_last_used(&find));
-        assert_eq!(Some(true), item_set.get_bool_flag_state(find_pos, find_neg));
-        assert_eq!(Some(true), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
+        assert_eq!(Some(FoundOption::Long("no-color")), item_set.get_last_used(&find));
+        assert_eq!(Some(false), item_set.get_bool_flag_state(find_pos, find_neg));
+        assert_eq!(Some(false), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
 
     /// No searched for items given

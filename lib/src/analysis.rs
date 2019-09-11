@@ -442,8 +442,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// This is useful for instance to ask if a *flag* type option (e.g. `--help`) was used, though
     /// it is not restricted to *flag* type options.
     ///
-//TODO: update if changing the corresponding functionality
-    /// Note that problematic items are ignored. [`LongWithUnexpectedData`] is an exception.
+    /// Note that problematic items are ignored, including [`LongWithUnexpectedData`].
     ///
     /// # Example
     ///
@@ -460,9 +459,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
-                Ok(Item::Long(n, _)) |
-//TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(n, _)) => {
+                Ok(Item::Long(n, _)) => {
                     if option.matches_long(n) { return true; }
                 },
                 Ok(Item::Short(c, _)) => {
@@ -481,8 +478,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// used, the greater the verbosity (up to a limit), hence the need to count how many times it
     /// occurred.
     ///
-//TODO: update if changing the corresponding functionality
-    /// Note that problematic items are ignored. [`LongWithUnexpectedData`] is an exception.
+    /// Note that problematic items are ignored, including [`LongWithUnexpectedData`].
     ///
     /// # Example
     ///
@@ -504,9 +500,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Long(n, _)) |
-//TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(n, _)) => {
+                Ok(Item::Long(n, _)) => {
                     if option.matches_long(n) { count += 1; }
                 },
                 Ok(Item::Short(c, _)) => {
@@ -620,9 +614,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(n, _)) |
-//TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(n, _)) => {
+                Ok(Item::Long(n, _)) => {
                     for o in options.clone() {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
@@ -663,9 +655,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///    `without-foo`; and you can obviously change the style used per search.
     ///  - Only flag type options should be used with this. Use with other option types is undefined
     ///    behaviour.
-//TODO: update if changing the corresponding functionality
-    ///  - With the potential [`LongWithUnexpectedData`] problematic item variant, the problem is
-    ///    ignored, considering it a clean match.
+    ///  - The [`LongWithUnexpectedData`] problematic item variant does not count as a match.
     ///  - It is *undefined behaviour* for the positive and negative forms to specify the same short
     ///    option character or long option name. This function *may* **panic** in such situations
     ///    (currently only with a debug assertion and only in certain cases).
@@ -787,9 +777,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // since not stored in the data-mining objects). We just have to put this down to
                 // being a quirk of this function. Nothing can be done unless the extra data were
                 // stored in the data-mining objects and we cared to check it.
-                Ok(Item::Long(n, None)) |
-//TODO: possibly remove, if we take a strict stance against all problems
-                Err(ProblemItem::LongWithUnexpectedData(n, _)) => {
+                Ok(Item::Long(n, None)) => {
                     for (o, tag) in options.clone() {
                         if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
                     }
