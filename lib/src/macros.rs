@@ -64,6 +64,9 @@ macro_rules! command_set {
 ///
 /// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
+/// Alternatively the annotation can be dropped in favour of providing the type explicitly as an
+/// additional parameter.
+///
 /// # Examples
 ///
 /// ```rust
@@ -73,14 +76,11 @@ macro_rules! command_set {
 /// ```
 #[macro_export]
 macro_rules! longopt {
-    ( @flag $name:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Flag }
-    };
-    ( @data $name:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Data }
-    };
-    ( @mixed $name:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $crate::options::OptionType::Mixed }
+    ( @flag $name:expr ) => { $crate::longopt!($name, $crate::options::OptionType::Flag) };
+    ( @data $name:expr ) => { $crate::longopt!($name, $crate::options::OptionType::Data) };
+    ( @mixed $name:expr ) => { $crate::longopt!($name, $crate::options::OptionType::Mixed) };
+    ( $name:expr, $ty:expr ) => {
+        $crate::options::LongOption { name: $name, opt_type: $ty }
     };
 }
 
@@ -94,6 +94,9 @@ macro_rules! longopt {
 ///
 /// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
+/// Alternatively the annotation can be dropped in favour of providing the type explicitly as an
+/// additional parameter.
+///
 /// # Examples
 ///
 /// ```rust
@@ -103,14 +106,11 @@ macro_rules! longopt {
 /// ```
 #[macro_export]
 macro_rules! shortopt {
-    ( @flag $ch:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Flag }
-    };
-    ( @data $ch:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Data }
-    };
-    ( @mixed $ch:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $crate::options::OptionType::Mixed }
+    ( @flag $ch:expr ) => { $crate::shortopt!($ch, $crate::options::OptionType::Flag) };
+    ( @data $ch:expr ) => { $crate::shortopt!($ch, $crate::options::OptionType::Data) };
+    ( @mixed $ch:expr ) => { $crate::shortopt!($ch, $crate::options::OptionType::Mixed) };
+    ( $ch:expr, $ty:expr ) => {
+        $crate::options::ShortOption { ch: $ch, opt_type: $ty }
     };
 }
 
@@ -125,6 +125,9 @@ macro_rules! shortopt {
 ///
 /// See the [options documentation](docs/ch3_options/index.html) for discussion of the differences.
 ///
+/// Alternatively the annotation can be dropped in favour of providing the type explicitly as an
+/// additional parameter.
+///
 /// # Examples
 ///
 /// ```rust
@@ -134,14 +137,11 @@ macro_rules! shortopt {
 /// ```
 #[macro_export]
 macro_rules! optpair {
-    ( @flag $ch:expr, $name:expr ) => {
-        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Flag }
-    };
-    ( @data $ch:expr, $name:expr ) => {
-        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Data }
-    };
-    ( @mixed $ch:expr, $name:expr ) => {
-        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $crate::options::OptionType::Mixed }
+    ( @flag $ch:expr, $name:expr ) => { $crate::optpair!($ch, $name, $crate::options::OptionType::Flag) };
+    ( @data $ch:expr, $name:expr ) => { $crate::optpair!($ch, $name, $crate::options::OptionType::Data) };
+    ( @mixed $ch:expr, $name:expr ) => { $crate::optpair!($ch, $name, $crate::options::OptionType::Mixed) };
+    ( $ch:expr, $name:expr, $ty:expr ) => {
+        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $ty }
     };
 }
 
