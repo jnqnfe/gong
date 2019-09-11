@@ -17,23 +17,32 @@
 
 extern crate gong;
 
-use gong::{longopt, shortopt, option_set, findopt};
+use gong::{option_set, optpair};
 use gong::analysis::ProblemItem;
-use gong::options::OptionSet;
+use gong::options::{OptionSet, OptionPair};
 use gong::parser::{Parser, OptionsMode};
 use gong::positionals::Policy as PositionalsPolicy;
+
+// Define our option constants
+//
+// This is a good idea for pairs of long and short options in particular. We can both generate the
+// specific long and short option structs for the static option set via the `const` function methods
+// it offers for doing so, and we can also generate the correct corresponding `FindOption` object
+// for data-mining. All whilst also only declaring the type of option just once.
+const HELP_OPT: OptionPair = optpair!(@flag 'h', "help");
+const VERSION_OPT: OptionPair = optpair!(@flag 'V', "version");
 
 // Our options
 //
 // These are divided up into two lists, one for long options and one for short, for efficiency.
 static OPTIONS: OptionSet = option_set!(
     @long [
-        longopt!(@flag "help"),
-        longopt!(@flag "version"),
+        HELP_OPT.as_long(),
+        VERSION_OPT.as_long(),
     ],
     @short [
-        shortopt!(@flag 'h'),
-        shortopt!(@flag 'V'),
+        HELP_OPT.as_short(),
+        VERSION_OPT.as_short(),
     ]
 );
 
@@ -119,11 +128,11 @@ fn main() {
     // help is output not version). If we cared about respecting order, i.e. reacting to which ever
     // came first or which ever came last, then the `get_last_used` method would help with the
     // latter, but nothing exists for the former; you would have to scan the set of items directly.
-    if analysis.option_used(findopt!(@pair 'h', "help")) {
+    if analysis.option_used(HELP_OPT.into()) {
         println!("{}", HELP_TEXT);
         return;
     }
-    if analysis.option_used(findopt!(@pair 'V', "version")) {
+    if analysis.option_used(VERSION_OPT.into()) {
         println!("{}", env!("CARGO_PKG_VERSION"));
         return;
     }
