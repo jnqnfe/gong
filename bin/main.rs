@@ -373,26 +373,26 @@ fn config() {
 
     #[cfg(not(feature = "alt_mode"))]
     for item in OPTIONS.long {
-        match item.opt_type {
-            OptionType::Flag => println!("    --{}", item.name),
-            OptionType::Data => println!("    --{} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("    --{} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
+        match item.ty() {
+            OptionType::Flag => println!("    --{}", item.ident()),
+            OptionType::Data => println!("    --{} {}[Data-taking]{}", item.ident(), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    --{} {}[Mixed]{}", item.ident(), c!(COL_DATA), c!(RESET)),
         }
     }
     #[cfg(feature = "alt_mode")]
     for item in OPTIONS.long {
-        match item.opt_type {
-            OptionType::Flag => println!("    -{}", item.name),
-            OptionType::Data => println!("    -{} {}[Data-taking]{}", item.name, c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("    -{} {}[Mixed]{}", item.name, c!(COL_DATA), c!(RESET)),
+        match item.ty() {
+            OptionType::Flag => println!("    -{}", item.ident()),
+            OptionType::Data => println!("    -{} {}[Data-taking]{}", item.ident(), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    -{} {}[Mixed]{}", item.ident(), c!(COL_DATA), c!(RESET)),
         }
     }
     #[cfg(not(feature = "alt_mode"))]
     for item in OPTIONS.short {
-        match item.opt_type {
-            OptionType::Flag => println!("    -{}", desc_char(item.ch)),
-            OptionType::Data => println!("    -{} {}[Data-taking]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
-            OptionType::Mixed => println!("    -{} {}[Mixed]{}", desc_char(item.ch), c!(COL_DATA), c!(RESET)),
+        match item.ty() {
+            OptionType::Flag => println!("    -{}", desc_char(item.ident())),
+            OptionType::Data => println!("    -{} {}[Data-taking]{}", desc_char(item.ident()), c!(COL_DATA), c!(RESET)),
+            OptionType::Mixed => println!("    -{} {}[Mixed]{}", desc_char(item.ident()), c!(COL_DATA), c!(RESET)),
         }
     }
 

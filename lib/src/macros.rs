@@ -80,7 +80,7 @@ macro_rules! longopt {
     ( @data $name:expr ) => { $crate::longopt!($name, $crate::options::OptionType::Data) };
     ( @mixed $name:expr ) => { $crate::longopt!($name, $crate::options::OptionType::Mixed) };
     ( $name:expr, $ty:expr ) => {
-        $crate::options::LongOption { name: $name, opt_type: $ty }
+        $crate::options::LongOption($name, $ty)
     };
 }
 
@@ -110,7 +110,7 @@ macro_rules! shortopt {
     ( @data $ch:expr ) => { $crate::shortopt!($ch, $crate::options::OptionType::Data) };
     ( @mixed $ch:expr ) => { $crate::shortopt!($ch, $crate::options::OptionType::Mixed) };
     ( $ch:expr, $ty:expr ) => {
-        $crate::options::ShortOption { ch: $ch, opt_type: $ty }
+        $crate::options::ShortOption($ch, $ty)
     };
 }
 
@@ -141,7 +141,7 @@ macro_rules! optpair {
     ( @data $ch:expr, $name:expr ) => { $crate::optpair!($ch, $name, $crate::options::OptionType::Data) };
     ( @mixed $ch:expr, $name:expr ) => { $crate::optpair!($ch, $name, $crate::options::OptionType::Mixed) };
     ( $ch:expr, $name:expr, $ty:expr ) => {
-        $crate::options::OptionPair { name: $name, ch: $ch, opt_type: $ty }
+        $crate::options::OptionPair($name, $ch, $ty)
     };
 }
 

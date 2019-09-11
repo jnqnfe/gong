@@ -23,26 +23,21 @@
 use std::ffi::OsStr;
 
 /// Description of an available long option
+///
+/// This consist of the long option name (excluding the `--` prefix) and the type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct LongOption<'a> {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Long option name, excluding the `--` prefix
-    pub name: &'a str,
-    /// Option type
-    pub opt_type: OptionType,
-}
+pub struct LongOption<'a>(pub &'a str, pub OptionType);
 
 /// Description of an available short option
+///
+/// This consist of the short option `char` and the type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ShortOption {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Short option character
-    pub ch: char,
-    /// Option type
-    pub opt_type: OptionType,
-}
+pub struct ShortOption(pub char, pub OptionType);
 
 /// Description of an available option with both a long and short identifier
+///
+/// This consist of the long option name (excluding the `--` prefix), the short option `char` and
+/// the type.
 ///
 /// This is not used in option sets directly, but can be useful where you have a pair of related
 /// long and short option identifiers, in terms of being able to spawn individual long and short
@@ -50,15 +45,7 @@ pub struct ShortOption {
 ///
 /// [`FindOption`]: ../analysis/enum.FindOption.html
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct OptionPair<'a> {
-    /* NOTE: these have been left public to allow efficient static creation of options */
-    /// Long option name, excluding the `--` prefix
-    pub name: &'a str,
-    /// Short option character
-    pub ch: char,
-    /// Option type
-    pub opt_type: OptionType,
-}
+pub struct OptionPair<'a>(pub &'a str, pub char, pub OptionType);
 
 /// Type of option (flag or data-value taking)
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -165,9 +152,21 @@ impl<'a> LongOption<'a> {
     ///
     /// Panics (debug only) if the given name is invalid.
     #[inline]
-    fn new(name: &'a str, opt_type: OptionType) -> Self {
+    fn new(name: &'a str, ty: OptionType) -> Self {
         debug_assert!(Self::validate(name).is_ok());
-        Self { name, opt_type, }
+        Self(name, ty)
+    }
+
+    /// Get the option identifier
+    #[inline(always)]
+    pub const fn ident(&self) -> &'a str {
+        self.0
+    }
+
+    /// Get the option type
+    #[inline(always)]
+    pub const fn ty(&self) -> OptionType {
+        self.1
     }
 
     /// Validate a given name as a possible long option
@@ -200,9 +199,21 @@ impl ShortOption {
     ///
     /// Panics (debug only) if the given `char` is invalid.
     #[inline]
-    fn new(ch: char, opt_type: OptionType) -> Self {
+    fn new(ch: char, ty: OptionType) -> Self {
         debug_assert!(Self::validate(ch).is_ok());
-        Self { ch, opt_type, }
+        Self(ch, ty)
+    }
+
+    /// Get the option identifier
+    #[inline(always)]
+    pub const fn ident(&self) -> char {
+        self.0
+    }
+
+    /// Get the option type
+    #[inline(always)]
+    pub const fn ty(&self) -> OptionType {
+        self.1
     }
 
     /// Validate a given character as a possible short option
@@ -228,30 +239,48 @@ impl ShortOption {
 }
 
 impl<'a> OptionPair<'a> {
+    /// Get the long option identifier
+    #[inline(always)]
+    pub const fn ident_long(&self) -> &'a str {
+        self.0
+    }
+
+    /// Get the short option identifier
+    #[inline(always)]
+    pub const fn ident_short(&self) -> char {
+        self.1
+    }
+
+    /// Get the option type
+    #[inline(always)]
+    pub const fn ty(&self) -> OptionType {
+        self.2
+    }
+
     /// Create a corresponding long option type
     #[inline(always)]
     pub const fn as_long(&self) -> LongOption<'a> {
-        LongOption { name: self.name, opt_type: self.opt_type }
+        LongOption(self.ident_long(), self.ty())
     }
 
     /// Create a corresponding short option type
     #[inline(always)]
     pub const fn as_short(&self) -> ShortOption {
-        ShortOption { ch: self.ch, opt_type: self.opt_type }
+        ShortOption(self.ident_short(), self.ty())
     }
 
     /// Create a corresponding `FindOption`
     #[inline(always)]
     pub const fn as_findopt(&self) -> crate::analysis::FindOption<'a> {
-        crate::analysis::FindOption::Pair(self.ch, self.name)
+        crate::analysis::FindOption::Pair(self.ident_short(), self.ident_long())
     }
 
     /// Create from corresponding separate short and long types
     #[inline]
     pub const fn from_separate(short: ShortOption, long: LongOption<'a>) -> Self {
         //TODO: cannot use this assertion in const functions yet...
-        //assert_eq!(short.opt_type, long.opt_type);
-        Self { name: long.name, ch: short.ch, opt_type: long.opt_type }
+        //assert_eq!(short.ty(), long.ty());
+        Self(long.ident(), short.ident(), long.ty())
     }
 }
 
@@ -373,7 +402,7 @@ impl<'s> OptionSetEx<'s> {
             let _ = iter.next();
         }
         while let Some(ch) = iter.next() {
-            let opt_type = match iter.peek() {
+            let ty = match iter.peek() {
                 Some(':') => {
                     let _ = iter.next();
                     match iter.peek() {
@@ -387,7 +416,7 @@ impl<'s> OptionSetEx<'s> {
                 _ => OptionType::Flag,
             };
             // Note, we deliberately use a method known to panic on invalid `char` here!
-            self.short.push(ShortOption::new(ch, opt_type));
+            self.short.push(ShortOption::new(ch, ty));
             while let Some(':') = iter.peek() {
                 let _ = iter.next();
             }
@@ -488,7 +517,7 @@ impl<'r, 's: 'r> OptionSet<'r, 's> {
     #[cfg(feature = "suggestions")]
     pub fn suggest(&self, unknown: &OsStr) -> Option<&'s str> {
         let unknown_lossy = unknown.to_string_lossy();
-        crate::matching::suggest(&unknown_lossy, self.long.iter(), |&o| o.name)
+        crate::matching::suggest(&unknown_lossy, self.long.iter(), |&o| o.ident())
     }
 }
 
@@ -510,7 +539,7 @@ pub(crate) mod validation {
         let mut flaws: Vec<OptionFlaw<'s>> = Vec::new();
 
         for candidate in set.long {
-            if let Err(f) = LongOption::validate(candidate.name) {
+            if let Err(f) = LongOption::validate(candidate.ident()) {
                 match detail {
                     true => { flaws.push(f); },
                     false => { return Err(flaws); },
@@ -519,7 +548,7 @@ pub(crate) mod validation {
         }
 
         for candidate in set.short {
-            if let Err(f) = ShortOption::validate(candidate.ch) {
+            if let Err(f) = ShortOption::validate(candidate.ident()) {
                 match detail {
                     true => { flaws.push(f); },
                     false => { return Err(flaws); },
@@ -550,10 +579,10 @@ pub(crate) mod validation {
         if opts.is_empty() { return; }
         let mut duplicates = Vec::new();
         for (i, short) in opts[..opts.len()-1].iter().enumerate() {
-            let ch = short.ch;
+            let ch = short.ident();
             if !duplicates.contains(&OptionFlaw::ShortDuplicated(ch)) {
                 for short2 in opts[i+1..].iter() {
-                    if ch == short2.ch {
+                    if ch == short2.ident() {
                         match detail {
                             true => {
                                 duplicates.push(OptionFlaw::ShortDuplicated(ch));
@@ -577,10 +606,10 @@ pub(crate) mod validation {
         if opts.is_empty() { return; }
         let mut duplicates = Vec::new();
         for (i, long) in opts[..opts.len()-1].iter().enumerate() {
-            let name = long.name.clone();
+            let name = long.ident().clone();
             if !duplicates.contains(&OptionFlaw::LongDuplicated(name)) {
                 for long2 in opts[i+1..].iter() {
-                    if name == long2.name {
+                    if name == long2.ident() {
                         match detail {
                             true => {
                                 duplicates.push(OptionFlaw::LongDuplicated(name));

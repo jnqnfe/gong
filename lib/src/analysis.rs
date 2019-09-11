@@ -307,14 +307,14 @@ impl<'a> FindOption<'a> {
 impl<'a> From<super::options::LongOption<'a>> for FindOption<'a> {
     #[inline(always)]
     fn from(o: super::options::LongOption<'a>) -> Self {
-        FindOption::Long(o.name)
+        FindOption::Long(o.ident())
     }
 }
 
 impl From<super::options::ShortOption> for FindOption<'_> {
     #[inline(always)]
     fn from(o: super::options::ShortOption) -> Self {
-        FindOption::Short(o.ch)
+        FindOption::Short(o.ident())
     }
 }
 

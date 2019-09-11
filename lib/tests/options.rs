@@ -28,23 +28,23 @@ mod macros {
 
     #[test]
     fn long() {
-        assert_eq!(LongOption { name: "foo", opt_type: OptionType::Flag },  longopt!(@flag "foo"));
-        assert_eq!(LongOption { name: "bar", opt_type: OptionType::Data },  longopt!(@data "bar"));
-        assert_eq!(LongOption { name: "cat", opt_type: OptionType::Mixed }, longopt!(@mixed "cat"));
+        assert_eq!(LongOption("foo", OptionType::Flag),  longopt!(@flag "foo"));
+        assert_eq!(LongOption("bar", OptionType::Data),  longopt!(@data "bar"));
+        assert_eq!(LongOption("cat", OptionType::Mixed), longopt!(@mixed "cat"));
     }
 
     #[test]
     fn short() {
-        assert_eq!(ShortOption { ch: 'a', opt_type: OptionType::Flag },  shortopt!(@flag 'a'));
-        assert_eq!(ShortOption { ch: 'b', opt_type: OptionType::Data },  shortopt!(@data 'b'));
-        assert_eq!(ShortOption { ch: 'c', opt_type: OptionType::Mixed }, shortopt!(@mixed 'c'));
+        assert_eq!(ShortOption('a', OptionType::Flag),  shortopt!(@flag 'a'));
+        assert_eq!(ShortOption('b', OptionType::Data),  shortopt!(@data 'b'));
+        assert_eq!(ShortOption('c', OptionType::Mixed), shortopt!(@mixed 'c'));
     }
 
     #[test]
     fn pair() {
-        assert_eq!(OptionPair { name: "foo", ch: 'a', opt_type: OptionType::Flag },  optpair!(@flag 'a', "foo"));
-        assert_eq!(OptionPair { name: "bar", ch: 'b', opt_type: OptionType::Data },  optpair!(@data 'b', "bar"));
-        assert_eq!(OptionPair { name: "cat", ch: 'c', opt_type: OptionType::Mixed }, optpair!(@mixed 'c', "cat"));
+        assert_eq!(OptionPair("foo", 'a', OptionType::Flag),  optpair!(@flag 'a', "foo"));
+        assert_eq!(OptionPair("bar", 'b', OptionType::Data),  optpair!(@data 'b', "bar"));
+        assert_eq!(OptionPair("cat", 'c', OptionType::Mixed), optpair!(@mixed 'c', "cat"));
 
         assert_eq!(optpair!(@flag 'a', "foo"),
                    OptionPair::from_separate(shortopt!(@flag 'a'), longopt!(@flag "foo")));

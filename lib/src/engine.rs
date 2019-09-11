@@ -459,18 +459,18 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
                 let lookup = match self.settings.allow_opt_abbreviations {
                     false => crate::matching::find_by_name(name,
-                        self.options.long.iter(), |&o| { o.name }).into(),
+                        self.options.long.iter(), |&o| { o.ident() }).into(),
                     true => crate::matching::find_by_abbrev_name(name,
-                        self.options.long.iter(), |&o| { o.name }),
+                        self.options.long.iter(), |&o| { o.ident() }),
                 };
 
                 match lookup {
                     NameSearchResult::Match(matched) |
                     NameSearchResult::AbbreviatedMatch(matched) => {
                         // Use option’s full name, not the possibly abbreviated user provided one
-                        let opt_name = matched.name;
+                        let opt_name = matched.ident();
 
-                        if matched.opt_type != OptionType::Flag {
+                        if matched.ty() != OptionType::Flag {
                             // Data included in same argument
                             // We accept it even if it’s an empty string
                             if let Some(data) = data_included {
@@ -478,7 +478,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                                 Some(Ok(Item::Long(opt_name, Some(data))))
                             }
                             // Data consumption is optional
-                            else if matched.opt_type == OptionType::Mixed {
+                            else if matched.ty() == OptionType::Mixed {
                                 self.last_data_loc = Some(DataLocation::SameArg);
                                 Some(Ok(Item::Long(opt_name, None)))
                             }
@@ -553,12 +553,12 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         let ch = char::from(byte);
 
         let lookup: SearchResult<ShortOption> = crate::matching::find_by_char(ch,
-            self.options.short.iter(), |&o| { o.ch }).into();
+            self.options.short.iter(), |&o| { o.ident() }).into();
 
         match lookup {
             SearchResult::NoMatch => Err(ProblemItem::UnknownShort(ch)),
             SearchResult::Match(matched) => {
-                match matched.opt_type {
+                match matched.ty() {
                     OptionType::Flag => Ok(Item::Short(ch, None)),
                     OptionType::Mixed => {
                         self.last_data_loc = Some(DataLocation::SameArg);
@@ -651,7 +651,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
             // Not a Unicode replacement character, so lets try to match it
             _ => {
                 lookup = crate::matching::find_by_char(ch,
-                    parent.options.short.iter(), |&o| { o.ch }).into();
+                    parent.options.short.iter(), |&o| { o.ident() }).into();
 
                 // Tracking?
                 if self.bytes_consumed != 0 {
@@ -663,7 +663,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
         match lookup {
             SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(ch))),
             SearchResult::Match(matched) => {
-                match matched.opt_type {
+                match matched.ty() {
                     OptionType::Flag => Some(Ok(Item::Short(ch, None))),
                     _ => {
                         let bytes_consumed_updated = byte_pos + ch.len_utf8();
@@ -680,7 +680,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
                             Some(Ok(Item::Short(ch, Some(data))))
                         }
                         // Data consumption is optional
-                        else if matched.opt_type == OptionType::Mixed {
+                        else if matched.ty() == OptionType::Mixed {
                             parent.last_data_loc = Some(DataLocation::SameArg);
                             Some(Ok(Item::Short(ch, None)))
                         }
