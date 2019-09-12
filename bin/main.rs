@@ -151,7 +151,8 @@ fn main() {
         false => { parser.settings().set_mode(OptionsMode::Standard); },
     }
     parser.settings().set_allow_opt_abbreviations(!cfg!(feature = "no_opt_abbreviations"))
-                     .set_posixly_correct(cfg!(feature = "posixly_correct"));
+                     .set_posixly_correct(cfg!(feature = "posixly_correct"))
+                     .set_report_earlyterm(true);
 
     debug_assert!(parser.is_valid());
 

@@ -173,7 +173,7 @@ fn basic() {
         indexed_item!(8, UnknownShort, '-'),
         indexed_item!(9, Short, 'h'),
         indexed_item!(9, UnknownShort, '-'),
-        indexed_item!(10, EarlyTerminator),
+        // <early term item not served per setting>
         indexed_item!(11, Positional, "--foo"),
         indexed_item!(12, Positional, "jkl"),
     ]);
@@ -206,7 +206,7 @@ fn early_term() {
     );
     let expected = expected!([
         indexed_item!(0, Long, "foo"),
-        indexed_item!(1, EarlyTerminator),
+        // <early term item not served per setting>
         indexed_item!(2, Positional, "--help"),
         indexed_item!(3, Positional, "--"),
         indexed_item!(4, Positional, "-o"),
@@ -1387,7 +1387,7 @@ mod commands {
         let parser = get_parser_cmd();
 
         let expected = expected!([
-            cmd_indexed_item!(0, EarlyTerminator),
+            // <early term item not served per setting>
             cmd_indexed_item!(1, UnexpectedPositional, "commit"),
         ]);
         check_iter_result!(parser, args, expected);
@@ -1397,7 +1397,7 @@ mod commands {
             @part cmd_part!(item_set: item_set!(
                 problems: true,
                 [
-                    item!(EarlyTerminator),
+                    // <early term item not served per setting>
                     item!(UnexpectedPositional, "commit"),
                 ])
             )
@@ -1762,7 +1762,7 @@ mod commands {
             cmd_indexed_item!(4, UnknownLong, "show-current"),
             cmd_indexed_item!(5, Command, "del"),
             cmd_indexed_item!(6, UnknownLong, "foo"),
-            cmd_indexed_item!(7, EarlyTerminator),
+            // <early term item not served per setting>
             cmd_indexed_item!(8, UnexpectedPositional, "--show-current"),
             cmd_indexed_item!(9, UnexpectedPositional, "remotely"),
             cmd_indexed_item!(10, UnexpectedPositional, "--foo"),
@@ -1787,7 +1787,7 @@ mod commands {
                 problems: true,
                 [
                     item!(UnknownLong, "foo"),
-                    item!(EarlyTerminator),
+                    // <early term item not served per setting>
                     item!(UnexpectedPositional, "--show-current"),
                     item!(UnexpectedPositional, "remotely"),
                     item!(UnexpectedPositional, "--foo"),
@@ -1954,7 +1954,7 @@ mod alt_mode {
             indexed_item!(12, Long, "foo"),
             indexed_item!(13, Long, "foobar"),
             indexed_item!(14, UnknownLong, "❤"),
-            indexed_item!(15, EarlyTerminator),
+            // <early term item not served per setting>
             indexed_item!(16, Positional, "-help"),
         ]);
         let mut parser = get_parser();
@@ -2096,7 +2096,7 @@ mod posixly_correct {
         );
         let expected = expected!([
             indexed_item!(0, Long, "help"),
-            indexed_item!(1, EarlyTerminator),
+            // <early term item not served per setting>
             indexed_item!(2, Positional, "abc"),
             indexed_item!(3, Positional, "--foo"),
         ]);
@@ -2108,7 +2108,7 @@ mod posixly_correct {
         // Also need to check what happens with respect to unexpected-positional handling
         let expected = expected!([
             indexed_item!(0, Long, "help"),
-            indexed_item!(1, EarlyTerminator),
+            // <early term item not served per setting>
             indexed_item!(2, UnexpectedPositional, "abc"),
             indexed_item!(3, UnexpectedPositional, "--foo"),
         ]);

@@ -159,7 +159,7 @@ impl Default for Settings {
             stop_on_problem: true,
             #[cfg(feature = "suggestions")]
             serve_suggestions: true,
-            report_earlyterm: true,
+            report_earlyterm: false,
         }
     }
 }

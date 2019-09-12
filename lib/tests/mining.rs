@@ -417,7 +417,7 @@ mod iter {
             indexed_item!(3, UnexpectedPositional, "hij"),
             indexed_item!(4, UnknownLong, "jjj"),
             indexed_item!(5, UnexpectedPositional, "klm"),
-            indexed_item!(6, EarlyTerminator),
+            // <early term item not served per setting>
             indexed_item!(7, UnexpectedPositional, "nop"),
             indexed_item!(8, UnexpectedPositional, "--help"),
         ]);
@@ -432,7 +432,7 @@ mod iter {
                 item!(UnexpectedPositional, "hij"),
                 item!(UnknownLong, "jjj"),
                 item!(UnexpectedPositional, "klm"),
-                item!(EarlyTerminator),
+                // <early term item not served per setting>
                 item!(UnexpectedPositional, "nop"),
                 item!(UnexpectedPositional, "--help"),
             ]
@@ -481,7 +481,7 @@ fn positional_by_index() {
         indexed_item!(3, Positional, "hij"),
         indexed_item!(4, UnknownLong, "jjj"),
         indexed_item!(5, Positional, "klm"),
-        indexed_item!(6, EarlyTerminator),
+        // <early term item not served per setting>
         indexed_item!(7, Positional, "nop"),
         indexed_item!(8, Positional, "--help"),
     ]);
@@ -496,7 +496,7 @@ fn positional_by_index() {
             item!(Positional, "hij"),
             item!(UnknownLong, "jjj"),
             item!(Positional, "klm"),
-            item!(EarlyTerminator),
+            // <early term item not served per setting>
             item!(Positional, "nop"),
             item!(Positional, "--help"),
         ]

@@ -128,7 +128,8 @@ mod short_dash {
         ]);
 
         let mut parser = Parser::new(&opts);
-        parser.settings().set_stop_on_problem(false);
+        parser.settings().set_stop_on_problem(false)
+                         .set_report_earlyterm(true);
         check_iter_result!(parser, args, expected);
     }
 }
