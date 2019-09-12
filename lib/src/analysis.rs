@@ -336,6 +336,20 @@ impl<'a> From<super::options::OptionPair<'a>> for FindOption<'a> {
     }
 }
 
+impl<'a> From<super::options::LongOption<'a>> for FoundOption<'a> {
+    #[inline(always)]
+    fn from(o: super::options::LongOption<'a>) -> Self {
+        FoundOption::Long(o.ident())
+    }
+}
+
+impl From<super::options::ShortOption> for FoundOption<'_> {
+    #[inline(always)]
+    fn from(o: super::options::ShortOption) -> Self {
+        FoundOption::Short(o.ident())
+    }
+}
+
 impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// Is the problems indicator attribute `true`?
     #[inline(always)]

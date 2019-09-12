@@ -78,6 +78,13 @@ mod foundopt {
     fn search_results_fail() {
         let _ = foundopt!(@pair 'h', "help"); // `FoundOption` does not capture a pair
     }
+
+    /// Test creation from options
+    #[test]
+    fn opt_conv() {
+        assert_eq!(foundopt!(@long "help"), FoundOption::from(longopt!(@flag "help")));
+        assert_eq!(foundopt!(@short 'h'), FoundOption::from(shortopt!(@flag 'h')));
+    }
 }
 
 /// Test that checking option use works
