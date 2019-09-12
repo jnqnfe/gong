@@ -159,9 +159,16 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
             }
         }
         // Do next argument, if there is one
-        match self.get_next() {
+        let mut next = self.get_next();
+        // Throw away early terminator item if not wanted
+        if !self.settings.report_earlyterm {
+            if let Some(Ok(Item::EarlyTerminator)) = next {
+                next = self.get_next();
+            }
+        }
+        // Ensure that we issue a missing-positionals item if necessary
+        match next {
             Some(item) => Some(item),
-            // Ensure that we issue a missing-positionals item if necessary
             None => match self.positionals_policy.get_remaining_min(self.positionals_count) {
                 0 => None,
                 r => {

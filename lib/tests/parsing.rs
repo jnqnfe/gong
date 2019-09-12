@@ -224,6 +224,30 @@ fn early_term() {
     check_iter_result!(get_parser(), args, expected);
 }
 
+/// Testing the setting controlling reporting of an item for the early terminator
+#[test]
+fn early_term_reporting() {
+    let args = arg_list!("--foo", "--", "--foo");
+    let mut parser = get_parser();
+
+    // Enabled
+    parser.settings().set_report_earlyterm(true);
+    let expected = expected!([
+        indexed_item!(0, Long, "foo"),
+        indexed_item!(1, EarlyTerminator),
+        indexed_item!(2, Positional, "--foo"),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    // Disabled
+    parser.settings().set_report_earlyterm(false);
+    let expected = expected!([
+        indexed_item!(0, Long, "foo"),
+        indexed_item!(2, Positional, "--foo"),
+    ]);
+    check_iter_result!(parser, args, expected);
+}
+
 /// Test empty long option names with data param (-- on it’s own is obviously picked up as early
 /// terminator, but what happens when an `=` is added?).
 #[test]

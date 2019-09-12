@@ -53,7 +53,8 @@ fn main() {
     let mut parser = Parser::new(&OPTIONS);
     parser.set_positionals_policy(PositionalsPolicy::Fixed(0));
     parser.settings().set_mode(OptionsMode::Standard)
-                     .set_allow_opt_abbreviations(true);
+                     .set_allow_opt_abbreviations(true)
+                     .set_report_earlyterm(false);
     debug_assert!(parser.is_valid());
 
     // Create the parsing iterator for our arguments
@@ -75,9 +76,6 @@ fn main() {
             Ok(Item::Long("version", None)) => {
                 println!("{}", env!("CARGO_PKG_VERSION"));
                 return;
-            },
-            Ok(Item::EarlyTerminator) => {
-                // Do nothing (some programs may want to which is why it is explicitly reported)
             },
             Err(ProblemItem::UnexpectedPositional(arg)) => {
                 eprintln!("Error: Unexpected argument {:?}", arg);
@@ -101,6 +99,7 @@ fn main() {
             },
             Ok(Item::Short(_, _))                   |   // All real ones covered above
             Ok(Item::Long(_, _))                    |   // All real ones covered above
+            Ok(Item::EarlyTerminator)               |   // Do not need to know
             Err(ProblemItem::LongMissingData(_))    |   // No data taking options!
             Err(ProblemItem::ShortMissingData(_))   |   // No data taking options!
             Ok(Item::Positional(_))                 |   // We do not take any here!

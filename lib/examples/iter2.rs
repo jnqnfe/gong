@@ -58,7 +58,8 @@ fn main() {
     let mut parser = Parser::new(&OPTIONS);
     parser.set_positionals_policy(PositionalsPolicy::Fixed(2));
     parser.settings().set_mode(OptionsMode::Standard)
-                     .set_allow_opt_abbreviations(true);
+                     .set_allow_opt_abbreviations(true)
+                     .set_report_earlyterm(false);
     debug_assert!(parser.is_valid());
 
     // Create the parsing iterator for our arguments
@@ -94,9 +95,6 @@ fn main() {
                 }
                 num_positionals += 1;
             },
-            Ok(Item::EarlyTerminator) => {
-                // Do nothing (some programs may want to which is why it is explicitly reported)
-            },
             Err(ProblemItem::UnexpectedPositional(arg)) => {
                 eprintln!("Error: Unexpected argument {:?}", arg);
                 return;
@@ -123,6 +121,7 @@ fn main() {
             },
             Ok(Item::Short(_, _))                   |   // All real ones covered above
             Ok(Item::Long(_, _))                    |   // All real ones covered above
+            Ok(Item::EarlyTerminator)               |   // Do not need to know
             Err(ProblemItem::LongMissingData(_))    |   // No data taking options!
             Err(ProblemItem::ShortMissingData(_))   |   // No data taking options!
             Ok(Item::Command(_))                    |   // No commands here!

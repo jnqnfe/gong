@@ -144,6 +144,9 @@ pub struct Settings {
     /// and unknown command item variants.
     #[cfg(feature = "suggestions")]
     pub serve_suggestions: bool,
+    /// Whether or not to actually report an early terminator as an item. It will be honored either
+    /// way, but most programs will not care for it to actually be returned in the item set.
+    pub report_earlyterm: bool,
 }
 
 impl Default for Settings {
@@ -156,6 +159,7 @@ impl Default for Settings {
             stop_on_problem: true,
             #[cfg(feature = "suggestions")]
             serve_suggestions: true,
+            report_earlyterm: true,
         }
     }
 }
@@ -246,6 +250,16 @@ impl Settings {
     #[inline(always)]
     pub fn set_serve_suggestions(&mut self, serve: bool) -> &mut Self {
         self.serve_suggestions = serve;
+        self
+    }
+
+    /// Control whether or not to actually report the early terminator as an item
+    ///
+    /// Note that either way the engine will still react to it the same, this only controls
+    /// reporting that one was found (some users may wish to take additional action). 
+    #[inline(always)]
+    pub fn set_report_earlyterm(&mut self, report: bool) -> &mut Self {
+        self.report_earlyterm = report;
         self
     }
 }
