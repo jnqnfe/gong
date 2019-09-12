@@ -350,6 +350,60 @@ impl From<super::options::ShortOption> for FoundOption<'_> {
     }
 }
 
+impl<'a> PartialEq<super::options::LongOption<'a>> for FoundOption<'a> {
+    /// Tests that a `FoundOption` result matches a given long option
+    #[inline]
+    fn eq(&self, o: &super::options::LongOption<'a>) -> bool {
+        match *self {
+            FoundOption::Short(_) => false,
+            FoundOption::Long(name) => name == o.ident(),
+        }
+    }
+}
+
+impl PartialEq<super::options::ShortOption> for FoundOption<'_> {
+    /// Tests that a `FoundOption` result matches a given short option
+    #[inline]
+    fn eq(&self, o: &super::options::ShortOption) -> bool {
+        match *self {
+            FoundOption::Long(_) => false,
+            FoundOption::Short(ch) => ch == o.ident(),
+        }
+    }
+}
+
+impl<'a> PartialEq<super::options::OptionPair<'a>> for FoundOption<'a> {
+    /// Tests that a `FoundOption` result matches the corresponding identifier in a given option pair
+    #[inline]
+    fn eq(&self, o: &super::options::OptionPair<'a>) -> bool {
+        match *self {
+            FoundOption::Long(name) => name == o.ident_long(),
+            FoundOption::Short(ch) => ch == o.ident_short(),
+        }
+    }
+}
+
+impl<'a> PartialEq<FoundOption<'a>> for super::options::LongOption<'a> {
+    #[inline(always)]
+    fn eq(&self, f: &FoundOption<'a>) -> bool {
+        f.eq(self)
+    }
+}
+
+impl PartialEq<FoundOption<'_>> for super::options::ShortOption {
+    #[inline]
+    fn eq(&self, f: &FoundOption<'_>) -> bool {
+        f.eq(self)
+    }
+}
+
+impl<'a> PartialEq<FoundOption<'a>> for super::options::OptionPair<'a> {
+    #[inline]
+    fn eq(&self, f: &FoundOption<'a>) -> bool {
+        f.eq(self)
+    }
+}
+
 impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// Is the problems indicator attribute `true`?
     #[inline(always)]

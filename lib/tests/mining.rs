@@ -85,6 +85,29 @@ mod foundopt {
         assert_eq!(foundopt!(@long "help"), FoundOption::from(longopt!(@flag "help")));
         assert_eq!(foundopt!(@short 'h'), FoundOption::from(shortopt!(@flag 'h')));
     }
+
+    #[test]
+    fn opt_equality() {
+        // foundopt to opt
+        assert!(foundopt!(@long "help") == longopt!(@flag "help"));
+        assert!(foundopt!(@long "help") != longopt!(@flag "version"));
+        assert!(foundopt!(@long "help") == optpair!(@flag 'h', "help"));
+        assert!(foundopt!(@long "help") != optpair!(@flag 'V', "version"));
+        assert!(foundopt!(@short 'h')   == shortopt!(@flag 'h'));
+        assert!(foundopt!(@short 'h')   != shortopt!(@flag 'V'));
+        assert!(foundopt!(@short 'h')   == optpair!(@flag 'h', "help"));
+        assert!(foundopt!(@short 'h')   != optpair!(@flag 'V', "version"));
+
+        // opt to foundopt
+        assert!(longopt!(@flag "help")         == foundopt!(@long "help"));
+        assert!(longopt!(@flag "version")      != foundopt!(@long "help"));
+        assert!(optpair!(@flag 'h', "help")    == foundopt!(@long "help"));
+        assert!(optpair!(@flag 'V', "version") != foundopt!(@long "help"));
+        assert!(shortopt!(@flag 'h')           == foundopt!(@short 'h'));
+        assert!(shortopt!(@flag 'V')           != foundopt!(@short 'h'));
+        assert!(optpair!(@flag 'h', "help")    == foundopt!(@short 'h'));
+        assert!(optpair!(@flag 'V', "version") != foundopt!(@short 'h'));
+    }
 }
 
 /// Test that checking option use works

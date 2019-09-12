@@ -111,10 +111,10 @@ fn main() {
     // Note, we choose here to honor the first request
     let info_opts = [ HELP_OPT.into(), VERSION_OPT.into() ];
     if let Some(first) = analysis.get_first_used(&info_opts) {
-        if first == HELP_OPT.as_long().into() || first == HELP_OPT.as_short().into() {
+        if first == HELP_OPT {
             println!("{}", HELP_TEXT);
         }
-        else if first == VERSION_OPT.as_long().into() || first == VERSION_OPT.as_short().into() {
+        else if first == VERSION_OPT {
             println!("{}", env!("CARGO_PKG_VERSION"));
         }
         return;
