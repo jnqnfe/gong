@@ -404,6 +404,23 @@ impl<'a> PartialEq<FoundOption<'a>> for super::options::OptionPair<'a> {
     }
 }
 
+impl<'a> PartialEq<FindOption<'a>> for FoundOption<'a> {
+    /// Tests that a `FoundOption` result matches the corresponding identifier in a given `FindOption`
+    fn eq(&self, f: &FindOption<'a>) -> bool {
+        match *self {
+            FoundOption::Long(name) => f.matches_long(name),
+            FoundOption::Short(ch) => f.matches_short(ch),
+        }
+    }
+}
+
+impl<'a> PartialEq<FoundOption<'a>> for FindOption<'a> {
+    #[inline(always)]
+    fn eq(&self, f: &FoundOption<'a>) -> bool {
+        f.eq(self)
+    }
+}
+
 impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// Is the problems indicator attribute `true`?
     #[inline(always)]
@@ -686,12 +703,18 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// ```rust
     /// # let opt_set = gong::option_set!();
     /// # let item_set = gong::analysis::ItemSet::default();
-    /// let find = [ gong::findopt!(@pair 'c', "color"), gong::findopt!(@long "no-color") ];
-    /// match item_set.get_last_used(&find) {
-    ///     Some(gong::foundopt!(@short 'c')) |
-    ///     Some(gong::foundopt!(@long "color")) => { /* positive flag used... */ },
-    ///     Some(gong::foundopt!(@long "no-color")) => { /* negative flag used... */ },
-    ///     _ => { /* None of those were used... */ },
+    /// let col_pos_opt = gong::findopt!(@pair 'c', "color");
+    /// let col_neg_opt = gong::findopt!(@long "no-color");
+    /// if let Some(last) = item_set.get_last_used(&[ col_pos_opt, col_neg_opt ]) {
+    ///     if last == col_pos_opt {
+    ///         // positive flag used...
+    ///     }
+    ///     else if last == col_neg_opt {
+    ///         // negative flag used...
+    ///     }
+    /// }
+    /// else {
+    ///     // None of those were used...
     /// }
     /// ```
     ///
@@ -732,13 +755,18 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// ```rust
     /// # let opt_set = gong::option_set!();
     /// # let item_set = gong::analysis::ItemSet::default();
-    /// let find = [ gong::findopt!(@pair 'h', "help"), gong::findopt!(@pair 'V', "version") ];
-    /// match item_set.get_first_used(&find) {
-    ///     Some(gong::foundopt!(@short 'h')) |
-    ///     Some(gong::foundopt!(@long "help")) => { /* print help and exit */ },
-    ///     Some(gong::foundopt!(@short 'V')) |
-    ///     Some(gong::foundopt!(@long "version")) => { /* print version and exit */ },
-    ///     _ => { /* None of those were used... */ },
+    /// let help_opt = gong::findopt!(@pair 'h', "help");
+    /// let ver_opt = gong::findopt!(@pair 'V', "version");
+    /// if let Some(first) = item_set.get_first_used(&[ help_opt, ver_opt ]) {
+    ///     if first == help_opt {
+    ///         // print help and exit
+    ///     }
+    ///     else if first == ver_opt {
+    ///         // print version and exit
+    ///     }
+    /// }
+    /// else {
+    ///     // None of those were used...
     /// }
     /// ```
     ///

@@ -108,6 +108,33 @@ mod foundopt {
         assert!(optpair!(@flag 'h', "help")    == foundopt!(@short 'h'));
         assert!(optpair!(@flag 'V', "version") != foundopt!(@short 'h'));
     }
+
+    #[test]
+    fn find_equality() {
+        // foundopt to findopt
+        assert!(foundopt!(@long "help") == findopt!(@long "help"));
+        assert!(foundopt!(@long "help") != findopt!(@long "version"));
+        assert!(foundopt!(@long "help") == findopt!(@pair 'h', "help"));
+        assert!(foundopt!(@long "help") != findopt!(@pair 'V', "version"));
+        assert!(foundopt!(@long "help") != findopt!(@short 'h'));
+        assert!(foundopt!(@short 'h')   != findopt!(@long "help"));
+        assert!(foundopt!(@short 'h')   == findopt!(@pair 'h', "help"));
+        assert!(foundopt!(@short 'h')   != findopt!(@pair 'V', "version"));
+        assert!(foundopt!(@short 'h')   == findopt!(@short 'h'));
+        assert!(foundopt!(@short 'h')   != findopt!(@short 'V'));
+
+        // findopt to foundopt
+        assert!(findopt!(@long "help")         == foundopt!(@long "help"));
+        assert!(findopt!(@long "version")      != foundopt!(@long "help"));
+        assert!(findopt!(@pair 'h', "help")    == foundopt!(@long "help"));
+        assert!(findopt!(@pair 'V', "version") != foundopt!(@long "help"));
+        assert!(findopt!(@short 'h')           != foundopt!(@long "help"));
+        assert!(findopt!(@long "help")         != foundopt!(@short 'h'));
+        assert!(findopt!(@pair 'h', "help")    == foundopt!(@short 'h'));
+        assert!(findopt!(@pair 'V', "version") != foundopt!(@short 'h'));
+        assert!(findopt!(@short 'h')           == foundopt!(@short 'h'));
+        assert!(findopt!(@short 'V')           != foundopt!(@short 'h'));
+    }
 }
 
 /// Test that checking option use works
