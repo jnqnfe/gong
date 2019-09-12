@@ -42,6 +42,7 @@ static BASE_OPTS: OptionSet = option_set!(
         shortopt!(@flag 'C'),        // For analysis data mining, using capital to avoid test conflicts
         shortopt!(@mixed '💧'),
         shortopt!(@mixed 'p'),
+        shortopt!(@flag 'V'),
     ]
 );
 

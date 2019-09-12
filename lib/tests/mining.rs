@@ -918,3 +918,253 @@ mod last_used {
         assert_eq!(None, item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
 }
+
+/// Test that checking first option used in list works
+mod first_used {
+    use super::*;
+
+    /// This tests basic handling within other options and with multiple instances, and with a long
+    /// being the first
+    #[test]
+    fn basic_and_long_is_first() {
+        let args = arg_list!(
+            "--color",
+            "--help",
+            "-C",
+            "--ooo",
+            "--no-color",
+            "-Ch",
+            "--version",
+            "--color",
+            "-dVC",
+            "--version=a",
+        );
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Long, "color"),
+            indexed_item!(1, Long, "help"),
+            indexed_item!(2, Short, 'C'),
+            indexed_item!(3, UnknownLong, "ooo"),
+            indexed_item!(4, Long, "no-color"),
+            indexed_item!(5, Short, 'C'),
+            indexed_item!(5, Short, 'h'),
+            indexed_item!(6, Long, "version"),
+            indexed_item!(7, Long, "color"),
+            indexed_item!(8, UnknownShort, 'd'),
+            indexed_item!(8, Short, 'V'),
+            indexed_item!(8, Short, 'C'),
+            indexed_item!(9, LongWithUnexpectedData, "version", "a"),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
+            problems: true,
+            [
+                item!(Long, "color"),
+                item!(Long, "help"),
+                item!(Short, 'C'),
+                item!(UnknownLong, "ooo"),
+                item!(Long, "no-color"),
+                item!(Short, 'C'),
+                item!(Short, 'h'),
+                item!(Long, "version"),
+                item!(Long, "color"),
+                item!(UnknownShort, 'd'),
+                item!(Short, 'V'),
+                item!(Short, 'C'),
+                item!(LongWithUnexpectedData, "version", "a"),
+            ]
+        );
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
+
+        let find = [
+            FindOption::Long("help"),
+            FindOption::Long("version"),
+            FindOption::Short('h'),
+            FindOption::Short('V'),
+        ];
+        let find2 = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+
+        assert_eq!(Some(FoundOption::Long("help")), item_set.get_first_used(&find));
+        assert_eq!(Some(FoundOption::Long("help")), item_set.get_first_used(&find2));
+    }
+
+    /// Short is first
+    #[test]
+    fn short_is_first() {
+        let args = arg_list!("-Ch", "--help", "-V", "--no-color", "--color", "-d");
+        let parser = get_parser();
+
+        let expected = expected!([
+            indexed_item!(0, Short, 'C'),
+            indexed_item!(0, Short, 'h'),
+            indexed_item!(1, Long, "help"),
+            indexed_item!(2, Short, 'V'),
+            indexed_item!(3, Long, "no-color"),
+            indexed_item!(4, Long, "color"),
+            indexed_item!(5, UnknownShort, 'd'),
+        ]);
+        check_iter_result!(parser, args, expected);
+
+        let expected = dm_expected!(
+            problems: true,
+            [
+                item!(Short, 'C'),
+                item!(Short, 'h'),
+                item!(Long, "help"),
+                item!(Short, 'V'),
+                item!(Long, "no-color"),
+                item!(Long, "color"),
+                item!(UnknownShort, 'd'),
+            ]
+        );
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
+
+        let find = [
+            FindOption::Long("help"),
+            FindOption::Long("version"),
+            FindOption::Short('h'),
+            FindOption::Short('V'),
+        ];
+        let find2 = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+        assert_eq!(Some(FoundOption::Short('h')), item_set.get_first_used(&find));
+        assert_eq!(Some(FoundOption::Short('h')), item_set.get_first_used(&find2));
+    }
+
+    /// Tests that a different long can be reported other than the first in the set
+    #[test]
+    fn long_is_first2() {
+        let args = arg_list!(
+            "--color",
+            "--version",
+            "-C",
+            "--ooo",
+            "--no-color",
+            "-Ch",
+            "--help",
+            "--color",
+            "-dVC",
+            "--version=a",
+        );
+
+        // Skipping the overall expectation check here for brevity
+
+        let parser = get_parser();
+        let item_set = parser.parse(&args);
+
+        let find = [
+            FindOption::Long("help"),
+            FindOption::Long("version"),
+            FindOption::Short('h'),
+            FindOption::Short('V'),
+        ];
+        let find2 = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+
+        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find));
+        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find2));
+    }
+
+    /// Short is first
+    #[test]
+    fn short_is_first2() {
+        let args = arg_list!("-CV", "--help", "-h", "--no-color", "--color", "-d");
+
+        // Skipping the overall expectation check here for brevity
+
+        let parser = get_parser();
+        let item_set = parser.parse(&args);
+
+        let find = [
+            FindOption::Long("help"),
+            FindOption::Long("version"),
+            FindOption::Short('h'),
+            FindOption::Short('V'),
+        ];
+        let find2 = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+        assert_eq!(Some(FoundOption::Short('V')), item_set.get_first_used(&find));
+        assert_eq!(Some(FoundOption::Short('V')), item_set.get_first_used(&find2));
+    }
+
+    /// Testing that a long with unexpected data is not considered
+    #[test]
+    fn long_with_unexpected_data_is_not_first() {
+        let args = arg_list!("--help=data", "--version");
+        let parser = get_parser();
+
+        let expected = dm_expected!(
+            problems: true,
+            [
+                item!(LongWithUnexpectedData, "help", "data"),
+                item!(Long, "version"),
+            ]
+        );
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
+
+        let find = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+
+        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find));
+    }
+
+    /// No searched for items given
+    #[test]
+    fn not_present() {
+        let args = arg_list!("--color");
+        let parser = get_parser();
+
+        let expected = dm_expected!(
+            problems: false,
+            [
+                item!(Long, "color"),
+            ]
+        );
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
+
+        let find = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+
+        assert_eq!(None, item_set.get_first_used(&find));
+    }
+
+    /// Empty argument list
+    #[test]
+    fn no_args() {
+        let args: Vec<&OsStr> = Vec::new();
+        let parser = get_parser();
+
+        let expected = dm_expected!(
+            problems: false,
+            []
+        );
+        let item_set = parser.parse(&args);
+        check_result!(&Actual(item_set.clone()), &expected);
+
+        let find = [
+            FindOption::Pair('h', "help"),
+            FindOption::Pair('V', "version"),
+        ];
+
+        assert_eq!(None, item_set.get_first_used(&find));
+    }
+}

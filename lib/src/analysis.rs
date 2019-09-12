@@ -648,12 +648,59 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         for item in self.items.iter().rev() {
             match *item {
                 Ok(Item::Long(n, _)) => {
-                    for o in options.clone() {
+                    for o in options {
                         if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
                     }
                 },
                 Ok(Item::Short(c, _)) => {
-                    for o in options.clone() {
+                    for o in options {
+                        if o.matches_short(c) { return Some(FoundOption::Short(c)); }
+                    }
+                },
+                _ => {},
+            }
+        }
+        None
+    }
+
+    /// Determines which of the specified options was used first
+    ///
+    /// This is the same as the [`get_last_used`] method except that it obviously finds the first
+    /// used instead of the last. It may be useful for instance in finding out which info option was
+    /// requested first, if any, out of help and version, in order to respond to the first
+    /// requested.
+    ///
+    /// Note that if a pair of a short and a long option are described together within a single
+    /// [`FindOption`], and one of these are matched, only the one actually matched will be returned.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::default();
+    /// let find = [ gong::findopt!(@pair 'h', "help"), gong::findopt!(@pair 'V', "version") ];
+    /// match item_set.get_first_used(&find) {
+    ///     Some(gong::foundopt!(@short 'h')) |
+    ///     Some(gong::foundopt!(@long "help")) => { /* print help and exit */ },
+    ///     Some(gong::foundopt!(@short 'V')) |
+    ///     Some(gong::foundopt!(@long "version")) => { /* print version and exit */ },
+    ///     _ => { /* None of those were used... */ },
+    /// }
+    /// ```
+    ///
+    /// [`FindOption`]: enum.FindOption.html
+    /// [`get_last_used`]: #method.get_last_used
+    #[must_use]
+    pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
+        for item in self.items.iter() {
+            match *item {
+                Ok(Item::Long(n, _)) => {
+                    for o in options {
+                        if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
+                    }
+                },
+                Ok(Item::Short(c, _)) => {
+                    for o in options {
                         if o.matches_short(c) { return Some(FoundOption::Short(c)); }
                     }
                 },

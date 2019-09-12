@@ -108,17 +108,15 @@ fn main() {
 
     // Handle help and version info requests
     //
-    // Note, here help takes precedence over version such that even if the flag for version was used
-    // first, help is output not version (i.e. in both `--help --version` and `--version --help`
-    // help is output not version). If we cared about respecting order, i.e. reacting to which ever
-    // came first or which ever came last, then the `get_last_used` method would help with the
-    // latter, but nothing exists for the former; you would have to scan the set of items directly.
-    if analysis.option_used(HELP_OPT.into()) {
-        println!("{}", HELP_TEXT);
-        return;
-    }
-    if analysis.option_used(VERSION_OPT.into()) {
-        println!("{}", env!("CARGO_PKG_VERSION"));
+    // Note, we choose here to honor the first request
+    let info_opts = [ HELP_OPT.into(), VERSION_OPT.into() ];
+    if let Some(first) = analysis.get_first_used(&info_opts) {
+        if first == HELP_OPT.as_long().into() || first == HELP_OPT.as_short().into() {
+            println!("{}", HELP_TEXT);
+        }
+        else if first == VERSION_OPT.as_long().into() || first == VERSION_OPT.as_short().into() {
+            println!("{}", env!("CARGO_PKG_VERSION"));
+        }
         return;
     }
 

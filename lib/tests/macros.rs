@@ -54,6 +54,7 @@ mod available_options {
                 shortopt!(@flag 'C'),
                 shortopt!(@mixed '💧'),
                 shortopt!(@mixed 'p'),
+                shortopt!(@flag 'V'),
             ]
         };
         assert_eq!(*fixed, non_fixed);
@@ -92,6 +93,7 @@ mod available_options {
                 ShortOption('C', OptionType::Flag),
                 ShortOption('💧', OptionType::Mixed),
                 ShortOption('p', OptionType::Mixed),
+                ShortOption('V', OptionType::Flag),
             ]
         };
 
@@ -127,7 +129,8 @@ mod available_options {
             .add_long("no-color", OptionType::Flag)
             .add_short('C', OptionType::Flag)
             .add_short('💧', OptionType::Mixed)
-            .add_short('p', OptionType::Mixed);
+            .add_short('p', OptionType::Mixed)
+            .add_short('V', OptionType::Flag);
 
         assert_eq!(*macro_built, method_built);
     }
