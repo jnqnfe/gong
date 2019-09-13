@@ -37,7 +37,9 @@ mod change_positionals_policy {
 
         let mut parse_iter = parser.parse_iter(&args).indexed();
 
+        assert_eq!(0, parse_iter.get_positionals_count());
         assert_eq!(parse_iter.next(), Some(indexed_item!(0, Positional, "a")));
+        assert_eq!(1, parse_iter.get_positionals_count());
 
         // You can freely change the policy now, though of course reducing the number of accepted
         // positionals below the number so far returned would make little sense.
@@ -57,7 +59,9 @@ mod change_positionals_policy {
         let _ = parse_iter.set_positionals_policy(Policy::Fixed(2));
 
         assert_eq!(parse_iter.next(), Some(indexed_item!(1, Positional, "b")));
+        assert_eq!(2, parse_iter.get_positionals_count());
         assert_eq!(parse_iter.next(), Some(indexed_item!(2, UnexpectedPositional, "c")));
+        assert_eq!(2, parse_iter.get_positionals_count()); // No change expected!
 
         // Changing the policy now (after an unexpected-positional) should fail, no matter what you
         // try to change it to
@@ -78,6 +82,7 @@ mod change_positionals_policy {
 
         // Should still be rejected as unexpected since changing policy should have failed
         assert_eq!(parse_iter.next(), Some(indexed_item!(3, UnexpectedPositional, "d")));
+        assert_eq!(2, parse_iter.get_positionals_count()); // No change expected!
     }
 
     /// Checking that policy gets changed per-command

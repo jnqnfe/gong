@@ -352,6 +352,15 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         self.last_data_loc
     }
 
+    /// Get the count of the number of positionals so far
+    ///
+    /// The counter is incremented on serving each positional, but **not** when serving an
+    /// unexpected-positional problem item.
+    #[inline(always)]
+    pub fn get_positionals_count(&self) -> PositionalsQuantity {
+        self.positionals_count
+    }
+
     /// Update the policy for positionals
     ///
     /// This is provided to assist in situations where the policy needs to change dynamically, for
@@ -813,6 +822,15 @@ fn get_urc_bytes(string: &OsStr) -> usize {
 impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Get the count of the number of positionals so far
+    ///
+    /// The counter is incremented on serving each positional, but **not** when serving an
+    /// unexpected-positional problem item.
+    #[inline(always)]
+    pub fn get_positionals_count(&self) -> PositionalsQuantity {
+        self.inner.get_positionals_count()
+    }
+
     /// Update the policy for positionals
     ///
     /// This is provided to assist in situations where the policy needs to change dynamically, for
@@ -894,6 +912,15 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
         self.inner.last_data_loc
     }
 
+    /// Get the count of the number of positionals so far
+    ///
+    /// The counter is incremented on serving each positional, but **not** when serving an
+    /// unexpected-positional problem item.
+    #[inline(always)]
+    pub fn get_positionals_count(&self) -> PositionalsQuantity {
+        self.inner.get_positionals_count()
+    }
+
     /// Update the policy for positionals
     ///
     /// This is provided to assist in situations where the policy needs to change dynamically, for
@@ -971,6 +998,15 @@ impl<'r, 'set, 'arg, A> CmdParseIter<'r, 'set, 'arg, A>
 impl<'r, 'set, 'arg, A> CmdParseIterIndexed<'r, 'set, 'arg, A>
     where A: AsRef<OsStr> + 'arg, 'set: 'r, 'arg: 'r
 {
+    /// Get the count of the number of positionals so far
+    ///
+    /// The counter is incremented on serving each positional, but **not** when serving an
+    /// unexpected-positional problem item.
+    #[inline(always)]
+    pub fn get_positionals_count(&self) -> PositionalsQuantity {
+        self.inner.get_positionals_count()
+    }
+
     /// Update the policy for positionals
     ///
     /// This is provided to assist in situations where the policy needs to change dynamically, for

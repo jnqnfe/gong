@@ -66,7 +66,6 @@ fn main() {
     let mut iter = parser.parse_iter(&args[..]);
 
     // For collecting positionals
-    let mut num_positionals = 0;
     let mut input_file = OsStr::new("");
     let mut output_file = OsStr::new("");
 
@@ -88,12 +87,11 @@ fn main() {
                 return;
             },
             Ok(Item::Positional(pos)) => {
-                match num_positionals {
+                match iter.get_positionals_count() {
                     0 => { input_file = pos; },
                     1 => { output_file = pos; },
                     _ => unreachable!(),
                 }
-                num_positionals += 1;
             },
             Err(ProblemItem::UnexpectedPositional(arg)) => {
                 eprintln!("Error: Unexpected argument {:?}", arg);
