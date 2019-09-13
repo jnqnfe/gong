@@ -611,6 +611,48 @@ fn last_value() {
     assert_eq!(None, item_set.get_last_value(FindOption::Pair('w', "aaa")));
 }
 
+/// Test retrieving last value for an option with a mixed (optional data) type option with no data
+#[test]
+fn last_value_mixed() {
+    let args = arg_list!(
+        "--delay=",         // Used with a value (empty string)
+        "--delay=bar",      // Used with a value
+        "--delay",          // Used without a value
+        "--ǝƃ=abc",         // Alternative, used with a value
+    );
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, LongWithData, "delay", "", DataLocation::SameArg),
+        indexed_item!(1, LongWithData, "delay", "bar", DataLocation::SameArg),
+        indexed_item!(2, LongWithoutData, "delay"),
+        indexed_item!(3, LongWithData, "ǝƃ", "abc", DataLocation::SameArg),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
+        problems: false,
+        [
+            item!(LongWithData, "delay", ""),
+            item!(LongWithData, "delay", "bar"),
+            item!(LongWithoutData, "delay"),
+            item!(LongWithData, "ǝƃ", "abc"),
+        ]
+    );
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
+
+    // The normal method should ignore the non-value instance
+    assert_eq!(None, item_set.get_last_value(FindOption::Long("help")));
+    assert_eq!(Some(OsStr::new("bar")), item_set.get_last_value(FindOption::Long("delay")));
+    assert_eq!(Some(OsStr::new("abc")), item_set.get_last_value(FindOption::Long("ǝƃ")));
+
+    // The alternate method should not ignore it
+    assert_eq!(None, item_set.get_last_value_mixed(FindOption::Long("help")));
+    assert_eq!(Some(None), item_set.get_last_value_mixed(FindOption::Long("delay")));
+    assert_eq!(Some(Some(OsStr::new("abc"))), item_set.get_last_value_mixed(FindOption::Long("ǝƃ")));
+}
+
 /// Test retrieving all values for an option
 #[test]
 fn all_values() {
@@ -688,6 +730,57 @@ fn all_values() {
     assert_eq!(empty_vec, item_set.get_all_values(FindOption::Long("aaa")).collect::<Vec<&OsStr>>());
     assert_eq!(empty_vec, item_set.get_all_values(FindOption::Short('w')).collect::<Vec<&OsStr>>());
     assert_eq!(empty_vec, item_set.get_all_values(FindOption::Pair('w', "aaa")).collect::<Vec<&OsStr>>());
+}
+
+/// Test retrieving all values for an option with a mixed (optional data) type option with no data
+#[test]
+fn all_values_mixed() {
+    let args = arg_list!(
+        "--delay=",         // Used with a value (empty string)
+        "--delay=foo",      // Used with a value
+        "--delay",          // Used without a value
+        "--delay=bar",      // Used with a value
+    );
+    let parser = get_parser();
+
+    let expected = expected!([
+        indexed_item!(0, LongWithData, "delay", "", DataLocation::SameArg),
+        indexed_item!(1, LongWithData, "delay", "foo", DataLocation::SameArg),
+        indexed_item!(2, LongWithoutData, "delay"),
+        indexed_item!(3, LongWithData, "delay", "bar", DataLocation::SameArg),
+    ]);
+    check_iter_result!(parser, args, expected);
+
+    let expected = dm_expected!(
+        problems: false,
+        [
+            item!(LongWithData, "delay", ""),
+            item!(LongWithData, "delay", "foo"),
+            item!(LongWithoutData, "delay"),
+            item!(LongWithData, "delay", "bar"),
+        ]
+    );
+    let item_set = parser.parse(&args);
+    check_result!(&Actual(item_set.clone()), &expected);
+
+    // The normal method should ignore the non-value instance
+    let mut iter = item_set.get_all_values(FindOption::Long("help"));
+    assert_eq!(None, iter.next());
+    let mut iter = item_set.get_all_values(FindOption::Long("delay"));
+    assert_eq!(Some(OsStr::new("")), iter.next());
+    assert_eq!(Some(OsStr::new("foo")), iter.next());
+    assert_eq!(Some(OsStr::new("bar")), iter.next());
+    assert_eq!(None, iter.next());
+
+    // The alternate method should not ignore it
+    let mut iter = item_set.get_all_values_mixed(FindOption::Long("help"));
+    assert_eq!(None, iter.next());
+    let mut iter = item_set.get_all_values_mixed(FindOption::Long("delay"));
+    assert_eq!(Some(Some(OsStr::new(""))), iter.next());
+    assert_eq!(Some(Some(OsStr::new("foo"))), iter.next());
+    assert_eq!(Some(None), iter.next());
+    assert_eq!(Some(Some(OsStr::new("bar"))), iter.next());
+    assert_eq!(None, iter.next());
 }
 
 /// Test that checking last option used in list works, as well as getting boolean state

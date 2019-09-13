@@ -625,6 +625,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// any value provided earlier in the argument list, and thus you are only interested in the
     /// final (last) value. Contrast this with [`get_all_values`].
     ///
+    /// Note that with *mixed* type options (those where providing a value is optional) instances
+    /// where no value is provided will be ignored and only the last actual value returned. If this
+    /// is not what you want, use [`get_last_value_mixed`] instead.
+    ///
     /// This is a faster and more efficient option than calling `last()` on the iterator returned by
     /// the [`get_all_values`] method, since this hunts in reverse for the last instance then stops.
     ///
@@ -637,15 +641,58 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// ```
     ///
     /// [`get_all_values`]: #method.get_all_values
+    /// [`get_last_value_mixed`]: #method.get_last_value_mixed
     #[must_use]
     pub fn get_last_value(&'r self, option: FindOption<'r>) -> Option<&'arg OsStr> {
         for item in self.items.iter().rev() {
+            // Note, this deliberately ignores mixed type options used without a value
             match *item {
-//TODO: for optional-data taking options, we have `None` when no data given (e.g. `--foo`); if this was the last instance, do we want to return `None` to signal that the last use was without a value? but then of course how to distinuish between used without a value and option not used at all? should we expect users to do an option-used check for that?
                 Ok(Item::Long(n, Some(ref d))) => {
                     if option.matches_long(n) { return Some(d.clone()); }
                 },
                 Ok(Item::Short(c, Some(ref d))) => {
+                    if option.matches_short(c) { return Some(d.clone()); }
+                },
+                _ => {},
+            }
+        }
+        None
+    }
+
+    /// Gets the last value provided for the specified *mixed* type option
+    ///
+    /// This is identical to the [`get_last_value`] method except in one key respect: it takes a
+    /// different approach to items that represent matches of *mixed* type options (those that
+    /// optionally take data), where no data was provided. While the [`get_last_value`] method would
+    /// ignore such items and retrieve the actual last value given, if any, this does not ignore
+    /// such items and will consider the non-value of such an item to be the result sought.
+    ///
+    /// Note the double-`Option` wrapper on the return type:
+    ///
+    ///  - `None` signals that the given option was not used at all.
+    ///  - `Some(None)` signals that the option was used and the last use was without a value.
+    ///  - `Some(Some(_))` signals that the option was used and the last use was with the given
+    ///     value.
+    ///
+    /// To clarify with an example, with arguments of `--foo=bar --foo` for a mixed type option
+    /// `foo`, this method will return `Some(None)`, whilst [`get_last_value`] will return
+    /// `Some("bar")`.
+    ///
+    /// Only use this method for *mixed* type options, and only if the above is what you seek. If
+    /// you want non-value instances to be ignored then use [`get_last_value`] instead.
+    ///
+    /// Use of this function with *flag* type options is undefined behaviour. Use with mandatory
+    /// data-taking options is less efficient.
+    ///
+    /// [`get_last_value`]: #method.get_last_value
+    #[must_use]
+    pub fn get_last_value_mixed(&'r self, option: FindOption<'r>) -> Option<Option<&'arg OsStr>> {
+        for item in self.items.iter().rev() {
+            match *item {
+                Ok(Item::Long(n, d)) => {
+                    if option.matches_long(n) { return Some(d.clone()); }
+                },
+                Ok(Item::Short(c, d)) => {
                     if option.matches_short(c) { return Some(d.clone()); }
                 },
                 _ => {},
@@ -660,6 +707,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// collect the *data values* of all instances. In other words, this is to be used for options
     /// that are *multi-use*. Contrast this with [`get_last_value`](#method.get_last_value).
     ///
+    /// Note that with *mixed* type options (those where providing a value is optional) instances
+    /// where no value is provided will be ignored. If this is not what you want, use
+    /// [`get_all_values_mixed`] instead.
+    ///
     /// Values are returned in the order given by the user.
     ///
     /// # Example
@@ -671,18 +722,61 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     ///     // Do something with it...
     /// }
     /// ```
+    ///
+    /// [`get_all_values_mixed`]: #method.get_all_values_mixed
     #[must_use]
     pub fn get_all_values(&'r self, option: FindOption<'r>)
         -> impl Iterator<Item = &'arg OsStr> + 'r
     {
-//TODO: for optional-data taking options, we have `None` when no data given (e.g. `--foo`); such instances would now be completely ignored here, but is this really what is wanted? what if lack of value signals 'use default', and user program needs to know that this was signalled here?
         self.items.iter()
+            // Note, this deliberately ignores mixed type options used without a value
             .filter_map(move |i| match i {
                 Ok(Item::Long(n, Some(d))) => {
                     if option.matches_long(n) { Some(*d) } else { None }
                 },
                 Ok(Item::Short(c, Some(d))) => {
                     if option.matches_short(*c) { Some(*d) } else { None }
+                },
+                _ => None,
+            })
+    }
+
+    /// Gives an iterator over any and all values for the specified *mixed* type option
+    ///
+    /// This is a variation of [`get_all_values`] in exactly the same respect as how
+    /// [`get_last_value_mixed`] is a variation of [`get_last_value`], i.e this does not ignore
+    /// instances of *mixed* type options used without a value. Note the `Option` wrapper around the
+    /// string in the return type.
+    ///
+    /// For each iteration of the iterator:
+    ///
+    ///  - `None` indicates that there are no more results, i.e. the iterator is consumed, naturally.
+    ///  - `Some(None)` indicates a use of the option without a value.
+    ///  - `Some(Some(_))` indicates a use of the option with the provided value.
+    ///
+    /// Use of this function with *flag* type options is undefined behaviour. Use with mandatory
+    /// data-taking options is less efficient.
+    ///
+    /// [`get_all_values`]: #method.get_all_values
+    /// [`get_last_value_mixed`]: #method.get_last_value_mixed
+    /// [`get_last_value`]: #method.get_last_value
+    #[must_use]
+    pub fn get_all_values_mixed(&'r self, option: FindOption<'r>)
+        -> impl Iterator<Item = Option<&'arg OsStr>> + 'r
+    {
+        self.items.iter()
+            .filter_map(move |i| match i {
+                Ok(Item::Long(n, None)) => {
+                    if option.matches_long(n) { Some(None) } else { None }
+                },
+                Ok(Item::Short(c, None)) => {
+                    if option.matches_short(*c) { Some(None) } else { None }
+                },
+                Ok(Item::Long(n, Some(d))) => {
+                    if option.matches_long(n) { Some(Some(*d)) } else { None }
+                },
+                Ok(Item::Short(c, Some(d))) => {
+                    if option.matches_short(*c) { Some(Some(*d)) } else { None }
                 },
                 _ => None,
             })
