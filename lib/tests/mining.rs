@@ -273,6 +273,23 @@ fn count() {
     assert_eq!(0, item_set.count_instances(FindOption::Long("aaa")));
     assert_eq!(0, item_set.count_instances(FindOption::Short('w')));
     assert_eq!(0, item_set.count_instances(FindOption::Pair('w', "aaa")));
+
+    // Check capped count
+    assert_eq!(0, item_set.count_instances_capped(FindOption::Long("help"), 0));
+    assert_eq!(1, item_set.count_instances_capped(FindOption::Long("help"), 1));
+    assert_eq!(2, item_set.count_instances_capped(FindOption::Long("help"), 2));
+    assert_eq!(2, item_set.count_instances_capped(FindOption::Long("help"), 3));
+    assert_eq!(2, item_set.count_instances_capped(FindOption::Long("help"), 100));
+    assert_eq!(0, item_set.count_instances_capped(FindOption::Short('h'), 0));
+    assert_eq!(1, item_set.count_instances_capped(FindOption::Short('h'), 1));
+    assert_eq!(1, item_set.count_instances_capped(FindOption::Short('h'), 2));
+    assert_eq!(1, item_set.count_instances_capped(FindOption::Short('h'), 3));
+    assert_eq!(0, item_set.count_instances_capped(FindOption::Pair('h', "help"), 0));
+    assert_eq!(1, item_set.count_instances_capped(FindOption::Pair('h', "help"), 1));
+    assert_eq!(2, item_set.count_instances_capped(FindOption::Pair('h', "help"), 2));
+    assert_eq!(3, item_set.count_instances_capped(FindOption::Pair('h', "help"), 3));
+    assert_eq!(3, item_set.count_instances_capped(FindOption::Pair('h', "help"), 4));
+    assert_eq!(3, item_set.count_instances_capped(FindOption::Pair('h', "help"), 100));
 }
 
 mod missing_data {

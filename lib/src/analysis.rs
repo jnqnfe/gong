@@ -616,6 +616,53 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         count
     }
 
+    /// Count the number of times a specified option was used, up to a limit
+    ///
+    /// This is identical to [`count_instances`] except once the specified cap is reached, it stops
+    /// counting.
+    ///
+    /// This if useful if you only need an accurate count up to a certain limit. For instance,
+    /// revisiting the example of the common use of short option `-v` for verbosity, where multiple
+    /// uses increases the amount of verbosity requested, there is naturally going to be a limit to
+    /// the levels of verbosity possible, thus you may be interested in whether `-v` was used zero,
+    /// one, two or three times, but three represents the maximum verbosity offered by your program
+    /// and it would be pointless to keep counting beyond this. While [`count_instances`] would just
+    /// keep pointlessly counting, this alternative will stop once the cap is reached.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # let opt_set = gong::option_set!();
+    /// # let item_set = gong::analysis::ItemSet::default();
+    /// let cap = 3;
+    /// let count = item_set.count_instances_capped(gong::findopt!(@short 'v'), cap);
+    /// ```
+    ///
+    /// [`count_instances`]: #method.count_instances
+    #[must_use]
+    pub fn count_instances_capped(&self, option: FindOption<'_>, cap: usize) -> usize {
+        let mut count = 0;
+        for item in &self.items {
+            if count == cap { break; } // Must be done fist to cover cap=0
+            match *item {
+                // Reminder: one use of this function may be for users who actually want to enforce
+                // a single-use option property, giving users of their program an error if certain
+                // options are used multiple times. They may use this function to retrieve a count,
+                // thus we must keep that in mind with what item types we respond to here, even
+                // though we discourage such enforcement, prefering to just ignore for
+                // non-data-taking options and just taking the last value provided otherwise.
+                Ok(Item::Long(n, _)) => {
+                    if option.matches_long(n) { count += 1; }
+                },
+                Ok(Item::Short(c, _)) => {
+                    if option.matches_short(c) { count += 1; }
+                },
+                _ => {},
+            }
+        }
+        count
+    }
+
     /// Gets the last value provided for the specified option
     ///
     /// An option could appear more than once within an argument list; This function allows you to
