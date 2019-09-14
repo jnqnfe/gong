@@ -394,14 +394,6 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         }
     }
 
-    /// Get a copy of the *option set*
-    ///
-    /// This is useful for suggestion matching of unknown options
-    #[inline(always)]
-    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
-        self.options
-    }
-
     // Used by creation of `ItemSet` from iterator only
     #[inline(always)]
     pub(crate) fn get_parse_settings(&self) -> &Settings {
@@ -852,14 +844,6 @@ impl<'r, 'set, 'arg, A> ParseIterIndexed<'r, 'set, 'arg, A>
     #[inline(always)]
     pub fn set_positionals_policy(&mut self, policy: PositionalsPolicy) -> Result<(), ()> {
         self.inner.set_positionals_policy(policy)
-    }
-
-    /// Get a copy of the *option set*
-    ///
-    /// This is useful for suggestion matching of unknown options
-    #[inline(always)]
-    pub fn get_option_set(&self) -> &'r OptionSet<'r, 'set> {
-        self.inner.get_option_set()
     }
 
     // Used by creation of `ItemSet` from iterator only
