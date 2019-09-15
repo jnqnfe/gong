@@ -606,22 +606,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// ```
     ///
     /// [`LongWithUnexpectedData`]: enum.ProblemItem.html#variant.LongWithUnexpectedData
+    #[inline(always)]
     #[must_use]
     pub fn count_instances(&self, option: FindOption<'_>) -> usize {
-        let mut count = 0;
-        for item in &self.items {
-            match *item {
-                // Reminder: one use of this function may be for users who actually want to enforce
-                // a single-use option property, giving users of their program an error if certain
-                // options are used multiple times. They may use this function to retrieve a count,
-                // thus we must keep that in mind with what item types we respond to here, even
-                // though we discourage such enforcement, prefering to just ignore for
-                // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Option(id, _)) if option.matches(id) => { count += 1; },
-                _ => {},
-            }
-        }
-        count
+        self.count_instances_capped(option, usize::max_value())
     }
 
     /// Count the number of times a specified option was used, up to a limit
