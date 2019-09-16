@@ -28,18 +28,18 @@ use term_ctrl::predefined::*;
 use gong::analysis::{ItemClass, Item, ItemW, ItemE, DataLocation};
 use gong::options::OptionsMode;
 
-const COL_HEADER: &str = color1_bold::MAGENTA;
-const COL_O: &str = color1::GREEN;  //okay
-const COL_E: &str = color1::RED;    //error
-const COL_W: &str = color1::YELLOW; //warning
-const COL_CHAR: &str = color2::BLUE;
-const COL_MODE: &str = color2::BLUE;
-const COL_DATA: &str = color2::YELLOW;
+const COL_HEADER: &str = combinations::fg_bold::MAGENTA;
+const COL_O: &str = colours::fg::GREEN;  //okay
+const COL_E: &str = colours::fg::RED;    //error
+const COL_W: &str = colours::fg::YELLOW; //warning
+const COL_CHAR: &str = colours::fg::bright::BLUE;
+const COL_MODE: &str = colours::fg::bright::BLUE;
+const COL_DATA: &str = colours::fg::bright::YELLOW;
 
 /// Config: Used for holding state of stdout formatting support
 pub mod config {
     use std::sync::Once;
-    use term_ctrl::use_fmt_stdout;
+    use term_ctrl::support::use_fmt_stdout;
 
     static mut FORMATTED_STDOUT: bool = false;
     static INIT: Once = Once::new();
