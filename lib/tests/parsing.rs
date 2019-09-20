@@ -317,7 +317,7 @@ mod positionals {
         // Command parser
         eprintln!("trying with command parser");
         let expected = expected!([
-            cmd_indexed_item!(0, UnknownCommand, "a"),
+            cmd_indexed_item!(0, Positional, "a"),
             cmd_indexed_item!(1, Positional, "b"),
             cmd_indexed_item!(2, Positional, "c"),
         ]);
@@ -359,10 +359,10 @@ mod positionals {
         // Command parser
         eprintln!("trying with command parser");
         let expected = expected!([
-            cmd_indexed_item!(0, UnknownCommand, "a"),
+            cmd_indexed_item!(0, Positional, "a"),
             cmd_indexed_item!(1, Long, "foo"),
             cmd_indexed_item!(2, Positional, "b"),
-            cmd_indexed_item!(3, Positional, "c"),
+            cmd_indexed_item!(3, UnexpectedPositional, "c"),
             cmd_indexed_item!(4, UnexpectedPositional, "d"),
             cmd_indexed_item!(5, UnknownLong, "bar"),
             cmd_indexed_item!(6, UnexpectedPositional, "e"),
@@ -456,11 +456,11 @@ mod positionals {
         // Command parser
         eprintln!("trying with command parser");
         let expected = expected!([
-            cmd_indexed_item!(0, UnknownCommand, "a"),
+            cmd_indexed_item!(0, Positional, "a"),
             cmd_indexed_item!(1, Positional, "b"),
             cmd_indexed_item!(2, Long, "foo"),
             cmd_indexed_item!(3, Positional, "c"),
-            cmd_indexed_item!(3, MissingPositionals, 5), //Note, same arg index as last
+            cmd_indexed_item!(3, MissingPositionals, 4), //Note, same arg index as last
         ]);
         let mut parser = get_parser_cmd();
         for policy in &policies {
@@ -1565,6 +1565,27 @@ mod commands {
             )
         );
         check_result!(&CmdActual(parser.parse(&args)), &expected);
+    }
+
+    /// Check unknown-command vs. positional identification
+    #[test]
+    fn unknown_or_positional() {
+        let args = arg_list!("blah");
+        let mut parser = get_parser_cmd();
+
+        // With no positionals accepted, it should be served as an unknown command
+        let expected = expected!([
+            cmd_indexed_item!(0, UnknownCommand, "blah"),
+        ]);
+        parser.set_positionals_policy(PositionalsPolicy::Max(0));
+        check_iter_result!(parser, args, expected);
+
+        // With positionals accepted, it should be served as a positional
+        let expected = expected!([
+            cmd_indexed_item!(0, Positional, "blah"),
+        ]);
+        parser.set_positionals_policy(PositionalsPolicy::Max(1));
+        check_iter_result!(parser, args, expected);
     }
 
     /// Check that the option set is changed following the command, with command that has no option

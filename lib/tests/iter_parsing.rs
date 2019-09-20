@@ -95,8 +95,8 @@ mod change_positionals_policy {
 
         let args = arg_list!("a", "b", "c", "d");
         let expected = expected!([
-            cmd_indexed_item!(0, UnknownCommand, "a"),
-            cmd_indexed_item!(1, Positional, "b"),
+            cmd_indexed_item!(0, Positional, "a"),
+            cmd_indexed_item!(1, UnexpectedPositional, "b"),
             cmd_indexed_item!(2, UnexpectedPositional, "c"),
             cmd_indexed_item!(3, UnexpectedPositional, "d"),
         ]);

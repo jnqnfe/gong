@@ -238,7 +238,9 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                     },
                     NameSearchResult::NoMatch => {
                         self.inner.try_command_matching = false;
-                        if !self.commands.commands.is_empty() {
+                        if !self.commands.commands.is_empty() &&
+                            self.inner.positionals_policy.max == 0
+                        {
                             let suggestion = match self.inner.serve_suggestions() {
                                 #[cfg(feature = "suggestions")]
                                 true => self.commands.suggest(arg),
