@@ -486,17 +486,17 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             // We accept it even if it’s an empty string
                             if let Some(data) = data_included {
                                 self.last_data_loc = Some(DataLocation::SameArg);
-                                Some(Ok(Item::Long(opt_name, Some(data))))
+                                Some(Ok(Item::Option(OptID::Long(opt_name), Some(data))))
                             }
                             // Data consumption is optional
                             else if matched.ty() == OptionType::Mixed {
                                 self.last_data_loc = Some(DataLocation::SameArg);
-                                Some(Ok(Item::Long(opt_name, None)))
+                                Some(Ok(Item::Option(OptID::Long(opt_name), None)))
                             }
                             // Data included in next argument
                             else if let Some((_, next_arg)) = self.arg_iter.next() {
                                 self.last_data_loc = Some(DataLocation::NextArg);
-                                Some(Ok(Item::Long(opt_name, Some(next_arg.as_ref()))))
+                                Some(Ok(Item::Option(OptID::Long(opt_name), Some(next_arg.as_ref()))))
                             }
                             // Data missing
                             else {
@@ -505,7 +505,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                         }
                         // Ignore unexpected data if empty string
                         else if data_included.is_none() || data_included == Some(OsStr::new("")) {
-                            Some(Ok(Item::Long(opt_name, None)))
+                            Some(Ok(Item::Option(OptID::Long(opt_name), None)))
                         }
                         else {
                             let data = data_included.unwrap();
@@ -570,16 +570,16 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             SearchResult::NoMatch => Err(ProblemItem::UnknownShort(ch)),
             SearchResult::Match(matched) => {
                 match matched.ty() {
-                    OptionType::Flag => Ok(Item::Short(ch, None)),
+                    OptionType::Flag => Ok(Item::Option(OptID::Short(ch), None)),
                     OptionType::Mixed => {
                         self.last_data_loc = Some(DataLocation::SameArg);
-                        Ok(Item::Short(ch, None))
+                        Ok(Item::Option(OptID::Short(ch), None))
                     },
                     OptionType::Data => {
                         if let Some((_, next_arg)) = self.arg_iter.next()
                         {
                             self.last_data_loc = Some(DataLocation::NextArg);
-                            Ok(Item::Short(ch, Some(next_arg.as_ref())))
+                            Ok(Item::Option(OptID::Short(ch), Some(next_arg.as_ref())))
                         }
                         // Data missing
                         else {
@@ -675,7 +675,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
             SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(ch))),
             SearchResult::Match(matched) => {
                 match matched.ty() {
-                    OptionType::Flag => Some(Ok(Item::Short(ch, None))),
+                    OptionType::Flag => Some(Ok(Item::Option(OptID::Short(ch), None))),
                     _ => {
                         let bytes_consumed_updated = byte_pos + ch.len_utf8();
 
@@ -688,17 +688,17 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
                             let data = OsStr::from_bytes(
                                 &self.string.as_bytes()[self.bytes_consumed..]);
                             parent.last_data_loc = Some(DataLocation::SameArg);
-                            Some(Ok(Item::Short(ch, Some(data))))
+                            Some(Ok(Item::Option(OptID::Short(ch), Some(data))))
                         }
                         // Data consumption is optional
                         else if matched.ty() == OptionType::Mixed {
                             parent.last_data_loc = Some(DataLocation::SameArg);
-                            Some(Ok(Item::Short(ch, None)))
+                            Some(Ok(Item::Option(OptID::Short(ch), None)))
                         }
                         // Data included in next argument
                         else if let Some((_, next_arg)) = parent.arg_iter.next() {
                             parent.last_data_loc = Some(DataLocation::NextArg);
-                            Some(Ok(Item::Short(ch, Some(next_arg.as_ref()))))
+                            Some(Ok(Item::Option(OptID::Short(ch), Some(next_arg.as_ref()))))
                         }
                         // Data missing
                         else {

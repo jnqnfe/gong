@@ -26,7 +26,7 @@ extern crate term_ctrl;
 use std::ffi::OsStr;
 use term_ctrl::predefined::*;
 use gong::{longopt, shortopt, option_set};
-use gong::analysis::{Item, ProblemItem, DataLocation};
+use gong::analysis::{Item, ProblemItem, DataLocation, OptID};
 use gong::arguments::Args;
 use gong::options::{OptionType, OptionSet};
 use gong::parser::{Parser, OptionsMode};
@@ -125,14 +125,15 @@ fn main() {
 
     while let Some(item) = iter.next() {
         match item {
-            Ok(Item::Short('h', None)) |
-            Ok(Item::Long("help", None)) => { help(); return; },
-            Ok(Item::Short('V', None)) |
-            Ok(Item::Long("version", None)) => { version(); return; },
-            Ok(Item::Short('c', None)) |
-            Ok(Item::Long("config", None)) => { config(); return; },
-            Ok(Item::Short('v', None)) |
-            Ok(Item::Long("verbose", None)) => { verbose = true; },
+            Ok(Item::Option(id, None)) => {
+                match id {
+                    OptID::Short('h') | OptID::Long("help")    => { help();    return; },
+                    OptID::Short('V') | OptID::Long("version") => { version(); return; },
+                    OptID::Short('c') | OptID::Long("config")  => { config();  return; },
+                    OptID::Short('v') | OptID::Long("verbose") => { verbose = true; },
+                    _ => continue,
+                }
+            },
             // Could only happen with early terminator
             Ok(_) => { continue; },
             // If an error returns, it is likely just that user is not trying to use with real args
@@ -195,7 +196,7 @@ fn main() {
         match item {
             Ok(Item::Positional(s)) => printer(i, "Positional", s),
             Ok(Item::EarlyTerminator) => printer(i, "EarlyTerminator", OsStr::new("")),
-            Ok(Item::Long(n, None)) => {
+            Ok(Item::Option(OptID::Long(n), None)) => {
                 match l.is_none() {
                     true => printer(i, "Long", OsStr::new(&n)),
                     false => {
@@ -204,7 +205,7 @@ fn main() {
                     },
                 }
             },
-            Ok(Item::Long(n, Some(d))) => {
+            Ok(Item::Option(OptID::Long(n), Some(d))) => {
                 printer(i, "LongWithData", OsStr::new(&n));
                 print_data(l.unwrap(), Some(d));
             },
@@ -221,7 +222,7 @@ fn main() {
             Err(ProblemItem::AmbiguousLong(n)) => printer(i, "AmbiguousLong", n),
             Err(ProblemItem::AmbiguousCmd(n)) => printer(i, "AmbiguousCmd", n),
             Err(ProblemItem::UnknownLong(n, _)) => printer(i, "UnknownLong", OsStr::new(&n)),
-            Ok(Item::Short(c, None)) => {
+            Ok(Item::Option(OptID::Short(c), None)) => {
                 let desc = desc_char(c);
                 match l.is_none() {
                     true => printer(i, "Short", OsStr::new(&desc)),
@@ -231,7 +232,7 @@ fn main() {
                     },
                 }
             },
-            Ok(Item::Short(c, Some(d))) => {
+            Ok(Item::Option(OptID::Short(c), Some(d))) => {
                 let desc = desc_char(c);
                 printer(i, "ShortWithData", OsStr::new(&desc));
                 print_data(l.unwrap(), Some(d));

@@ -19,7 +19,7 @@ extern crate gong;
 
 use std::ffi::OsStr;
 use gong::{longopt, shortopt, option_set};
-use gong::analysis::{Item, ProblemItem};
+use gong::analysis::{Item, ProblemItem, OptID};
 use gong::arguments::Args;
 use gong::options::OptionSet;
 use gong::parser::{Parser, OptionsMode};
@@ -77,13 +77,13 @@ fn main() {
     // trivial to remodel this.
     while let Some(item) = iter.next() {
         match item {
-            Ok(Item::Short('h', None)) |
-            Ok(Item::Long("help", None)) => {
+            Ok(Item::Option(OptID::Short('h'), None)) |
+            Ok(Item::Option(OptID::Long("help"), None)) => {
                 println!("{}", HELP_TEXT);
                 return;
             },
-            Ok(Item::Short('V', None)) |
-            Ok(Item::Long("version", None)) => {
+            Ok(Item::Option(OptID::Short('V'), None)) |
+            Ok(Item::Option(OptID::Long("version"), None)) => {
                 println!("{}", env!("CARGO_PKG_VERSION"));
                 return;
             },
@@ -118,8 +118,7 @@ fn main() {
                 eprintln!("Error: Option `{}` does not take data, but some was provided", opt);
                 return;
             },
-            Ok(Item::Short(_, _))                   |   // All real ones covered above
-            Ok(Item::Long(_, _))                    |   // All real ones covered above
+            Ok(Item::Option(_, _))                  |   // All real ones covered above
             Ok(Item::EarlyTerminator)               |   // Do not need to know
             Err(ProblemItem::LongMissingData(_))    |   // No data taking options!
             Err(ProblemItem::ShortMissingData(_))   |   // No data taking options!

@@ -120,10 +120,8 @@ pub enum Item<'set, 'arg> {
     Positional(&'arg OsStr),
     /// Early terminator (`--`) encountered.
     EarlyTerminator,
-    /// Long option match, possibly with a data argument.
-    Long(&'set str, Option<&'arg OsStr>),
-    /// Short option match, possibly with a data argument.
-    Short(char, Option<&'arg OsStr>),
+    /// Option match (long or short), possibly with a data argument.
+    Option(OptID<'set>, Option<&'arg OsStr>),
     /// Command match.
     Command(&'set str),
 }
@@ -235,6 +233,29 @@ pub enum FindOption<'a> {
 }
 
 impl<'a> FindOption<'a> {
+    /// Check whether instance matches a given `OptID`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use gong::analysis::{FindOption, OptID};
+    /// assert_eq!(true,  FindOption::Pair('a', "foo").matches(OptID::Long("foo")));
+    /// assert_eq!(true,  FindOption::Pair('a', "foo").matches(OptID::Short('a')));
+    /// assert_eq!(false, FindOption::Pair('a', "foo").matches(OptID::Long("bar")));
+    /// assert_eq!(false, FindOption::Pair('a', "foo").matches(OptID::Short('b')));
+    /// assert_eq!(true,  FindOption::Long("foo").matches(OptID::Long("foo")));
+    /// assert_eq!(true,  FindOption::Short('a').matches(OptID::Short('a')));
+    /// assert_eq!(false, FindOption::Long("foo").matches(OptID::Long("bar")));
+    /// assert_eq!(false, FindOption::Short('a').matches(OptID::Short('b')));
+    /// assert_eq!(false, FindOption::Short('a').matches(OptID::Long("foo")));
+    /// assert_eq!(false, FindOption::Long("foo").matches(OptID::Short('a')));
+    /// ```
+    #[inline(always)]
+    #[must_use]
+    pub fn matches(&self, optid: OptID) -> bool {
+        self.eq(&optid)
+    }
+
     /// Check whether instance matches a given long option name
     ///
     /// # Examples
@@ -560,12 +581,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn option_used(&self, option: FindOption<'_>) -> bool {
         for item in &self.items {
             match *item {
-                Ok(Item::Long(n, _)) => {
-                    if option.matches_long(n) { return true; }
-                },
-                Ok(Item::Short(c, _)) => {
-                    if option.matches_short(c) { return true; }
-                },
+                Ok(Item::Option(id, _)) if option.matches(id) => { return true; },
                 _ => {},
             }
         }
@@ -601,12 +617,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Long(n, _)) => {
-                    if option.matches_long(n) { count += 1; }
-                },
-                Ok(Item::Short(c, _)) => {
-                    if option.matches_short(c) { count += 1; }
-                },
+                Ok(Item::Option(id, _)) if option.matches(id) => { count += 1; },
                 _ => {},
             }
         }
@@ -648,12 +659,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // thus we must keep that in mind with what item types we respond to here, even
                 // though we discourage such enforcement, prefering to just ignore for
                 // non-data-taking options and just taking the last value provided otherwise.
-                Ok(Item::Long(n, _)) => {
-                    if option.matches_long(n) { count += 1; }
-                },
-                Ok(Item::Short(c, _)) => {
-                    if option.matches_short(c) { count += 1; }
-                },
+                Ok(Item::Option(id, _)) if option.matches(id) => { count += 1; },
                 _ => {},
             }
         }
@@ -691,11 +697,8 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         for item in self.items.iter().rev() {
             // Note, this deliberately ignores mixed type options used without a value
             match *item {
-                Ok(Item::Long(n, Some(ref d))) => {
-                    if option.matches_long(n) { return Some(d.clone()); }
-                },
-                Ok(Item::Short(c, Some(ref d))) => {
-                    if option.matches_short(c) { return Some(d.clone()); }
+                Ok(Item::Option(id, Some(ref d))) if option.matches(id) => {
+                    return Some(d.clone());
                 },
                 _ => {},
             }
@@ -733,12 +736,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn get_last_value_mixed(&'r self, option: FindOption<'r>) -> Option<Option<&'arg OsStr>> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(n, d)) => {
-                    if option.matches_long(n) { return Some(d.clone()); }
-                },
-                Ok(Item::Short(c, d)) => {
-                    if option.matches_short(c) { return Some(d.clone()); }
-                },
+                Ok(Item::Option(id, d)) if option.matches(id) => { return Some(d.clone()); },
                 _ => {},
             }
         }
@@ -775,11 +773,8 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         self.items.iter()
             // Note, this deliberately ignores mixed type options used without a value
             .filter_map(move |i| match i {
-                Ok(Item::Long(n, Some(d))) => {
-                    if option.matches_long(n) { Some(*d) } else { None }
-                },
-                Ok(Item::Short(c, Some(d))) => {
-                    if option.matches_short(*c) { Some(*d) } else { None }
+                Ok(Item::Option(id, Some(d))) => {
+                    if option.matches(*id) { Some(*d) } else { None }
                 },
                 _ => None,
             })
@@ -810,17 +805,14 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     {
         self.items.iter()
             .filter_map(move |i| match i {
-                Ok(Item::Long(n, None)) => {
-                    if option.matches_long(n) { Some(None) } else { None }
-                },
-                Ok(Item::Short(c, None)) => {
-                    if option.matches_short(*c) { Some(None) } else { None }
-                },
-                Ok(Item::Long(n, Some(d))) => {
-                    if option.matches_long(n) { Some(Some(*d)) } else { None }
-                },
-                Ok(Item::Short(c, Some(d))) => {
-                    if option.matches_short(*c) { Some(Some(*d)) } else { None }
+                Ok(Item::Option(id, d)) => {
+                    match option.matches(*id) {
+                        false => None,
+                        true => match d {
+                            Some(d) => Some(Some(*d)),
+                            None => Some(None),
+                        },
+                    }
                 },
                 _ => None,
             })
@@ -862,14 +854,16 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
         for item in self.items.iter().rev() {
             match *item {
-                Ok(Item::Long(n, _)) => {
-                    for o in options {
-                        if o.matches_long(n) { return Some(OptID::Long(&n)); }
+                Ok(Item::Option(id, _)) => {
+                    if let OptID::Long(n) = id {
+                        for o in options {
+                            if o.matches_long(n) { return Some(OptID::Long(&n)); }
+                        }
                     }
-                },
-                Ok(Item::Short(c, _)) => {
-                    for o in options {
-                        if o.matches_short(c) { return Some(OptID::Short(c)); }
+                    else if let OptID::Short(c) = id {
+                        for o in options {
+                            if o.matches_short(c) { return Some(OptID::Short(c)); }
+                        }
                     }
                 },
                 _ => {},
@@ -914,14 +908,16 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
         for item in self.items.iter() {
             match *item {
-                Ok(Item::Long(n, _)) => {
-                    for o in options {
-                        if o.matches_long(n) { return Some(OptID::Long(&n)); }
+                Ok(Item::Option(id, _)) => {
+                    if let OptID::Long(n) = id {
+                        for o in options {
+                            if o.matches_long(n) { return Some(OptID::Long(&n)); }
+                        }
                     }
-                },
-                Ok(Item::Short(c, _)) => {
-                    for o in options {
-                        if o.matches_short(c) { return Some(OptID::Short(c)); }
+                    else if let OptID::Short(c) = id {
+                        for o in options {
+                            if o.matches_short(c) { return Some(OptID::Short(c)); }
+                        }
                     }
                 },
                 _ => {},
@@ -983,16 +979,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         #[cfg(debug_assertions)]
         {
             if tag == true { //We always check pos first, we know not in both if neg
-                let mut ambiguous = false;
-                match o {
-                    OptID::Long(name) => {
-                        if negative.matches_long(name) { ambiguous = true; }
-                    },
-                    OptID::Short(ch) => {
-                        if negative.matches_short(ch) { ambiguous = true; }
-                    },
-                }
-                debug_assert_eq!(false, ambiguous, "you put it in both forms");
+                debug_assert_eq!(false, negative.matches(o), "you put it in both forms");
             }
         }
         Some(tag)
@@ -1035,19 +1022,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
         #[cfg(debug_assertions)]
         {
             if tag == true { //We always check pos list first, we know not in both lists if neg
-                let opposite_list = negative;
                 let mut ambiguous = false;
-                match o {
-                    OptID::Long(name) => {
-                        for n in opposite_list {
-                            if n.matches_long(name) { ambiguous = true; break; }
-                        }
-                    },
-                    OptID::Short(ch) => {
-                        for n in opposite_list {
-                            if n.matches_short(ch) { ambiguous = true; break; }
-                        }
-                    },
+                for n in negative {
+                    if n.matches(o) {
+                        ambiguous = true;
+                        break;
+                    }
                 }
                 debug_assert_eq!(false, ambiguous, "you put it in both lists");
             }
@@ -1077,14 +1057,16 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // since not stored in the data-mining objects). We just have to put this down to
                 // being a quirk of this function. Nothing can be done unless the extra data were
                 // stored in the data-mining objects and we cared to check it.
-                Ok(Item::Long(n, None)) => {
-                    for (o, tag) in options.clone() {
-                        if o.matches_long(n) { return Some((OptID::Long(&n), tag)); }
+                Ok(Item::Option(id, None)) => {
+                    if let OptID::Long(n) = id {
+                        for (o, tag) in options.clone() {
+                            if o.matches_long(n) { return Some((OptID::Long(&n), tag)); }
+                        }
                     }
-                },
-                Ok(Item::Short(c, None)) => {
-                    for (o, tag) in options.clone() {
-                        if o.matches_short(c) { return Some((OptID::Short(c), tag)); }
+                    else if let OptID::Short(c) = id {
+                        for (o, tag) in options.clone() {
+                            if o.matches_short(c) { return Some((OptID::Short(c), tag)); }
+                        }
                     }
                 },
                 _ => {},

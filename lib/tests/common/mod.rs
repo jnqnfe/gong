@@ -83,12 +83,12 @@ macro_rules! cmd_part {
 macro_rules! item {
     ( Positional, $s:expr )              => { Ok(Item::Positional(OsStr::new($s))) };
     ( EarlyTerminator )                  => { Ok(Item::EarlyTerminator) };
-    ( Long, $n:expr )                    => { Ok(Item::Long($n, None)) };
-    ( Short, $c:expr )                   => { Ok(Item::Short($c, None)) };
-    ( LongWithData, $n:expr, $d:expr )   => { Ok(Item::Long($n, Some(OsStr::new($d)))) };
-    ( ShortWithData, $c:expr, $d:expr )  => { Ok(Item::Short($c, Some(OsStr::new($d)))) };
-    ( LongWithoutData, $n:expr )         => { Ok(Item::Long($n, None)) };
-    ( ShortWithoutData, $c:expr )        => { Ok(Item::Short($c, None)) };
+    ( Long, $n:expr )                    => { Ok(Item::Option(OptID::Long($n), None)) };
+    ( Short, $c:expr )                   => { Ok(Item::Option(OptID::Short($c), None)) };
+    ( LongWithData, $n:expr, $d:expr )   => { Ok(Item::Option(OptID::Long($n), Some(OsStr::new($d)))) };
+    ( ShortWithData, $c:expr, $d:expr )  => { Ok(Item::Option(OptID::Short($c), Some(OsStr::new($d)))) };
+    ( LongWithoutData, $n:expr )         => { Ok(Item::Option(OptID::Long($n), None)) };
+    ( ShortWithoutData, $c:expr )        => { Ok(Item::Option(OptID::Short($c), None)) };
     ( Command, $n:expr )                 => { Ok(Item::Command($n)) };
     ( UnknownLong, $n:expr )             => { Err(ProblemItem::UnknownLong(OsStr::new($n), None)) };
     // Variant for specifying suggestion
