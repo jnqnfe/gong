@@ -22,7 +22,7 @@
 //! If you use the “one at a time” (iterative) parsing model, then the two just mentioned item types
 //! are the only analysis types of relevance; However, if you use the “all in one” (aka
 //! “data-mining”) model then there are some additional types that come into play, namely
-//! [`ItemSet`], [`FindOption`] and [`FoundOption`], along with [`CommandAnalysis`] and
+//! [`ItemSet`], [`FindOption`] and [`OptID`], along with [`CommandAnalysis`] and
 //! [`CommandBlockPart`] if your program makes use of *command arguments*.
 //!
 //! The “all in one” model is basically a wrapper around the iterative model, collecting the results
@@ -32,8 +32,8 @@
 //!
 //! The [`FindOption`] type is simply one used with certain data-mining methods, for specifying an
 //! option to be searched for. Note that a pair of a related long option and short option can be
-//! specified together, which data mining methods will correctly consider. The [`FoundOption`] type
-//! is the return type equivalent, which differs only in not having a long+short pair variant.
+//! specified together, which data mining methods will correctly consider. The [`OptID`] type is the
+//! return type equivalent, which differs only in not having a long+short pair variant.
 //!
 //! # Command arguments
 //!
@@ -87,7 +87,7 @@
 //! [`CommandBlockPart::ItemSet`]: enum.CommandBlockPart.html#variant.ItemSet
 //! [`CommandBlockPart::Command`]: enum.CommandBlockPart.html#variant.Command
 //! [`FindOption`]: enum.FindOption.html
-//! [`FoundOption`]: enum.FoundOption.html
+//! [`OptID`]: enum.OptID.html
 //! [commands]: ../docs/ch4_commands/index.html
 
 use std::ffi::OsStr;
@@ -95,6 +95,15 @@ use crate::positionals::Quantity as PositionalsQuantity;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
 pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
+
+/// Option identifier
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptID<'a> {
+    /// Long option identifier
+    Long(&'a str),
+    /// Short option identifier
+    Short(char),
+}
 
 /// Non-problematic items
 ///
@@ -225,18 +234,6 @@ pub enum FindOption<'a> {
     Pair(char, &'a str),
 }
 
-/// A *found* option description
-///
-/// Used by data-mining methods that search for options to describe an option they found. This
-/// represents either a short option **or** a long option identifier, never both.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FoundOption<'a> {
-    /// Long option
-    Long(&'a str),
-    /// Short option
-    Short(char),
-}
-
 impl<'a> FindOption<'a> {
     /// Check whether instance matches a given long option name
     ///
@@ -336,87 +333,87 @@ impl<'a> From<super::options::OptionPair<'a>> for FindOption<'a> {
     }
 }
 
-impl<'a> From<super::options::LongOption<'a>> for FoundOption<'a> {
+impl<'a> From<super::options::LongOption<'a>> for OptID<'a> {
     #[inline(always)]
     fn from(o: super::options::LongOption<'a>) -> Self {
-        FoundOption::Long(o.ident())
+        OptID::Long(o.ident())
     }
 }
 
-impl From<super::options::ShortOption> for FoundOption<'_> {
+impl From<super::options::ShortOption> for OptID<'_> {
     #[inline(always)]
     fn from(o: super::options::ShortOption) -> Self {
-        FoundOption::Short(o.ident())
+        OptID::Short(o.ident())
     }
 }
 
-impl<'a> PartialEq<super::options::LongOption<'a>> for FoundOption<'a> {
-    /// Tests that a `FoundOption` result matches a given long option
+impl<'a> PartialEq<super::options::LongOption<'a>> for OptID<'a> {
+    /// Tests that an `OptID` result matches a given long option
     #[inline]
     fn eq(&self, o: &super::options::LongOption<'a>) -> bool {
         match *self {
-            FoundOption::Short(_) => false,
-            FoundOption::Long(name) => name == o.ident(),
+            OptID::Short(_) => false,
+            OptID::Long(name) => name == o.ident(),
         }
     }
 }
 
-impl PartialEq<super::options::ShortOption> for FoundOption<'_> {
-    /// Tests that a `FoundOption` result matches a given short option
+impl PartialEq<super::options::ShortOption> for OptID<'_> {
+    /// Tests that an `OptID` result matches a given short option
     #[inline]
     fn eq(&self, o: &super::options::ShortOption) -> bool {
         match *self {
-            FoundOption::Long(_) => false,
-            FoundOption::Short(ch) => ch == o.ident(),
+            OptID::Long(_) => false,
+            OptID::Short(ch) => ch == o.ident(),
         }
     }
 }
 
-impl<'a> PartialEq<super::options::OptionPair<'a>> for FoundOption<'a> {
-    /// Tests that a `FoundOption` result matches the corresponding identifier in a given option pair
+impl<'a> PartialEq<super::options::OptionPair<'a>> for OptID<'a> {
+    /// Tests that an `OptID` result matches the corresponding identifier in a given option pair
     #[inline]
     fn eq(&self, o: &super::options::OptionPair<'a>) -> bool {
         match *self {
-            FoundOption::Long(name) => name == o.ident_long(),
-            FoundOption::Short(ch) => ch == o.ident_short(),
+            OptID::Long(name) => name == o.ident_long(),
+            OptID::Short(ch) => ch == o.ident_short(),
         }
     }
 }
 
-impl<'a> PartialEq<FoundOption<'a>> for super::options::LongOption<'a> {
+impl<'a> PartialEq<OptID<'a>> for super::options::LongOption<'a> {
     #[inline(always)]
-    fn eq(&self, f: &FoundOption<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a>) -> bool {
         f.eq(self)
     }
 }
 
-impl PartialEq<FoundOption<'_>> for super::options::ShortOption {
+impl PartialEq<OptID<'_>> for super::options::ShortOption {
     #[inline]
-    fn eq(&self, f: &FoundOption<'_>) -> bool {
+    fn eq(&self, f: &OptID<'_>) -> bool {
         f.eq(self)
     }
 }
 
-impl<'a> PartialEq<FoundOption<'a>> for super::options::OptionPair<'a> {
+impl<'a> PartialEq<OptID<'a>> for super::options::OptionPair<'a> {
     #[inline]
-    fn eq(&self, f: &FoundOption<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a>) -> bool {
         f.eq(self)
     }
 }
 
-impl<'a> PartialEq<FindOption<'a>> for FoundOption<'a> {
-    /// Tests that a `FoundOption` result matches the corresponding identifier in a given `FindOption`
+impl<'a> PartialEq<FindOption<'a>> for OptID<'a> {
+    /// Tests that an `OptID` result matches the corresponding identifier in a given `FindOption`
     fn eq(&self, f: &FindOption<'a>) -> bool {
         match *self {
-            FoundOption::Long(name) => f.matches_long(name),
-            FoundOption::Short(ch) => f.matches_short(ch),
+            OptID::Long(name) => f.matches_long(name),
+            OptID::Short(ch) => f.matches_short(ch),
         }
     }
 }
 
-impl<'a> PartialEq<FoundOption<'a>> for FindOption<'a> {
+impl<'a> PartialEq<OptID<'a>> for FindOption<'a> {
     #[inline(always)]
-    fn eq(&self, f: &FoundOption<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a>) -> bool {
         f.eq(self)
     }
 }
@@ -862,17 +859,17 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
     #[must_use]
-    pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
+    pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
         for item in self.items.iter().rev() {
             match *item {
                 Ok(Item::Long(n, _)) => {
                     for o in options {
-                        if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
+                        if o.matches_long(n) { return Some(OptID::Long(&n)); }
                     }
                 },
                 Ok(Item::Short(c, _)) => {
                     for o in options {
-                        if o.matches_short(c) { return Some(FoundOption::Short(c)); }
+                        if o.matches_short(c) { return Some(OptID::Short(c)); }
                     }
                 },
                 _ => {},
@@ -914,17 +911,17 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     /// [`get_last_used`]: #method.get_last_used
     #[must_use]
-    pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<FoundOption<'r>> {
+    pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
         for item in self.items.iter() {
             match *item {
                 Ok(Item::Long(n, _)) => {
                     for o in options {
-                        if o.matches_long(n) { return Some(FoundOption::Long(&n)); }
+                        if o.matches_long(n) { return Some(OptID::Long(&n)); }
                     }
                 },
                 Ok(Item::Short(c, _)) => {
                     for o in options {
-                        if o.matches_short(c) { return Some(FoundOption::Short(c)); }
+                        if o.matches_short(c) { return Some(OptID::Short(c)); }
                     }
                 },
                 _ => {},
@@ -988,10 +985,10 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
             if tag == true { //We always check pos first, we know not in both if neg
                 let mut ambiguous = false;
                 match o {
-                    FoundOption::Long(name) => {
+                    OptID::Long(name) => {
                         if negative.matches_long(name) { ambiguous = true; }
                     },
-                    FoundOption::Short(ch) => {
+                    OptID::Short(ch) => {
                         if negative.matches_short(ch) { ambiguous = true; }
                     },
                 }
@@ -1041,12 +1038,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 let opposite_list = negative;
                 let mut ambiguous = false;
                 match o {
-                    FoundOption::Long(name) => {
+                    OptID::Long(name) => {
                         for n in opposite_list {
                             if n.matches_long(name) { ambiguous = true; break; }
                         }
                     },
-                    FoundOption::Short(ch) => {
+                    OptID::Short(ch) => {
                         for n in opposite_list {
                             if n.matches_short(ch) { ambiguous = true; break; }
                         }
@@ -1067,7 +1064,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     #[must_use]
     fn _get_bool_flag_state(&'r self, options: impl Iterator<Item = (FindOption<'r>, bool)> + Clone)
-        -> Option<(FoundOption<'r>, bool)>
+        -> Option<(OptID<'r>, bool)>
     {
         for item in self.items.iter().rev() {
             // Note, we deliberately ignore data-taking option variants here.
@@ -1082,12 +1079,12 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
                 // stored in the data-mining objects and we cared to check it.
                 Ok(Item::Long(n, None)) => {
                     for (o, tag) in options.clone() {
-                        if o.matches_long(n) { return Some((FoundOption::Long(&n), tag)); }
+                        if o.matches_long(n) { return Some((OptID::Long(&n), tag)); }
                     }
                 },
                 Ok(Item::Short(c, None)) => {
                     for (o, tag) in options.clone() {
-                        if o.matches_short(c) { return Some((FoundOption::Short(c), tag)); }
+                        if o.matches_short(c) { return Some((OptID::Short(c), tag)); }
                     }
                 },
                 _ => {},

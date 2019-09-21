@@ -18,7 +18,7 @@ extern crate gong;
 mod common;
 
 use std::ffi::OsStr;
-use gong::{shortopt, longopt, findopt, foundopt, optpair};
+use gong::{shortopt, longopt, findopt, optid, optpair};
 use gong::analysis::*;
 use gong::positionals::Policy as PositionalsPolicy;
 use self::common::{get_parser, Actual, Expected};
@@ -61,79 +61,79 @@ mod findopt {
     }
 }
 
-mod foundopt {
+mod optid {
     use super::*;
 
-    /// Test various forms of search results
+    /// Test various forms
     #[test]
     fn search_results() {
         // Single
-        assert_eq!(foundopt!(@long "help"), FoundOption::Long("help"));
-        assert_eq!(foundopt!(@short 'h'), FoundOption::Short('h'));
+        assert_eq!(optid!(@long "help"), OptID::Long("help"));
+        assert_eq!(optid!(@short 'h'), OptID::Short('h'));
     }
 
-    /// Test invalid forms of search results
+    /// Test invalid forms
     #[test]
     #[cfg(compile_fail)]
     fn search_results_fail() {
-        let _ = foundopt!(@pair 'h', "help"); // `FoundOption` does not capture a pair
+        let _ = optid!(@pair 'h', "help"); // `OptID` does not capture a pair
     }
 
     /// Test creation from options
     #[test]
     fn opt_conv() {
-        assert_eq!(foundopt!(@long "help"), FoundOption::from(longopt!(@flag "help")));
-        assert_eq!(foundopt!(@short 'h'), FoundOption::from(shortopt!(@flag 'h')));
+        assert_eq!(optid!(@long "help"), OptID::from(longopt!(@flag "help")));
+        assert_eq!(optid!(@short 'h'), OptID::from(shortopt!(@flag 'h')));
     }
 
     #[test]
     fn opt_equality() {
-        // foundopt to opt
-        assert!(foundopt!(@long "help") == longopt!(@flag "help"));
-        assert!(foundopt!(@long "help") != longopt!(@flag "version"));
-        assert!(foundopt!(@long "help") == optpair!(@flag 'h', "help"));
-        assert!(foundopt!(@long "help") != optpair!(@flag 'V', "version"));
-        assert!(foundopt!(@short 'h')   == shortopt!(@flag 'h'));
-        assert!(foundopt!(@short 'h')   != shortopt!(@flag 'V'));
-        assert!(foundopt!(@short 'h')   == optpair!(@flag 'h', "help"));
-        assert!(foundopt!(@short 'h')   != optpair!(@flag 'V', "version"));
+        // optid to opt
+        assert!(optid!(@long "help") == longopt!(@flag "help"));
+        assert!(optid!(@long "help") != longopt!(@flag "version"));
+        assert!(optid!(@long "help") == optpair!(@flag 'h', "help"));
+        assert!(optid!(@long "help") != optpair!(@flag 'V', "version"));
+        assert!(optid!(@short 'h')   == shortopt!(@flag 'h'));
+        assert!(optid!(@short 'h')   != shortopt!(@flag 'V'));
+        assert!(optid!(@short 'h')   == optpair!(@flag 'h', "help"));
+        assert!(optid!(@short 'h')   != optpair!(@flag 'V', "version"));
 
-        // opt to foundopt
-        assert!(longopt!(@flag "help")         == foundopt!(@long "help"));
-        assert!(longopt!(@flag "version")      != foundopt!(@long "help"));
-        assert!(optpair!(@flag 'h', "help")    == foundopt!(@long "help"));
-        assert!(optpair!(@flag 'V', "version") != foundopt!(@long "help"));
-        assert!(shortopt!(@flag 'h')           == foundopt!(@short 'h'));
-        assert!(shortopt!(@flag 'V')           != foundopt!(@short 'h'));
-        assert!(optpair!(@flag 'h', "help")    == foundopt!(@short 'h'));
-        assert!(optpair!(@flag 'V', "version") != foundopt!(@short 'h'));
+        // opt to optid
+        assert!(longopt!(@flag "help")         == optid!(@long "help"));
+        assert!(longopt!(@flag "version")      != optid!(@long "help"));
+        assert!(optpair!(@flag 'h', "help")    == optid!(@long "help"));
+        assert!(optpair!(@flag 'V', "version") != optid!(@long "help"));
+        assert!(shortopt!(@flag 'h')           == optid!(@short 'h'));
+        assert!(shortopt!(@flag 'V')           != optid!(@short 'h'));
+        assert!(optpair!(@flag 'h', "help")    == optid!(@short 'h'));
+        assert!(optpair!(@flag 'V', "version") != optid!(@short 'h'));
     }
 
     #[test]
     fn find_equality() {
-        // foundopt to findopt
-        assert!(foundopt!(@long "help") == findopt!(@long "help"));
-        assert!(foundopt!(@long "help") != findopt!(@long "version"));
-        assert!(foundopt!(@long "help") == findopt!(@pair 'h', "help"));
-        assert!(foundopt!(@long "help") != findopt!(@pair 'V', "version"));
-        assert!(foundopt!(@long "help") != findopt!(@short 'h'));
-        assert!(foundopt!(@short 'h')   != findopt!(@long "help"));
-        assert!(foundopt!(@short 'h')   == findopt!(@pair 'h', "help"));
-        assert!(foundopt!(@short 'h')   != findopt!(@pair 'V', "version"));
-        assert!(foundopt!(@short 'h')   == findopt!(@short 'h'));
-        assert!(foundopt!(@short 'h')   != findopt!(@short 'V'));
+        // optid to findopt
+        assert!(optid!(@long "help") == findopt!(@long "help"));
+        assert!(optid!(@long "help") != findopt!(@long "version"));
+        assert!(optid!(@long "help") == findopt!(@pair 'h', "help"));
+        assert!(optid!(@long "help") != findopt!(@pair 'V', "version"));
+        assert!(optid!(@long "help") != findopt!(@short 'h'));
+        assert!(optid!(@short 'h')   != findopt!(@long "help"));
+        assert!(optid!(@short 'h')   == findopt!(@pair 'h', "help"));
+        assert!(optid!(@short 'h')   != findopt!(@pair 'V', "version"));
+        assert!(optid!(@short 'h')   == findopt!(@short 'h'));
+        assert!(optid!(@short 'h')   != findopt!(@short 'V'));
 
-        // findopt to foundopt
-        assert!(findopt!(@long "help")         == foundopt!(@long "help"));
-        assert!(findopt!(@long "version")      != foundopt!(@long "help"));
-        assert!(findopt!(@pair 'h', "help")    == foundopt!(@long "help"));
-        assert!(findopt!(@pair 'V', "version") != foundopt!(@long "help"));
-        assert!(findopt!(@short 'h')           != foundopt!(@long "help"));
-        assert!(findopt!(@long "help")         != foundopt!(@short 'h'));
-        assert!(findopt!(@pair 'h', "help")    == foundopt!(@short 'h'));
-        assert!(findopt!(@pair 'V', "version") != foundopt!(@short 'h'));
-        assert!(findopt!(@short 'h')           == foundopt!(@short 'h'));
-        assert!(findopt!(@short 'V')           != foundopt!(@short 'h'));
+        // findopt to optid
+        assert!(findopt!(@long "help")         == optid!(@long "help"));
+        assert!(findopt!(@long "version")      != optid!(@long "help"));
+        assert!(findopt!(@pair 'h', "help")    == optid!(@long "help"));
+        assert!(findopt!(@pair 'V', "version") != optid!(@long "help"));
+        assert!(findopt!(@short 'h')           != optid!(@long "help"));
+        assert!(findopt!(@long "help")         != optid!(@short 'h'));
+        assert!(findopt!(@pair 'h', "help")    == optid!(@short 'h'));
+        assert!(findopt!(@pair 'V', "version") != optid!(@short 'h'));
+        assert!(findopt!(@short 'h')           == optid!(@short 'h'));
+        assert!(findopt!(@short 'V')           != optid!(@short 'h'));
     }
 }
 
@@ -872,8 +872,8 @@ mod last_used {
         let find_pos_list = [ FindOption::Long("color"), FindOption::Short('C') ];
         let find_neg_list = [ FindOption::Long("no-color") ];
 
-        assert_eq!(Some(FoundOption::Short('C')), item_set.get_last_used(&find));
-        assert_eq!(Some(FoundOption::Short('C')), item_set.get_last_used(&find2));
+        assert_eq!(Some(OptID::Short('C')), item_set.get_last_used(&find));
+        assert_eq!(Some(OptID::Short('C')), item_set.get_last_used(&find2));
         assert_eq!(Some(true), item_set.get_bool_flag_state(find_pos, find_neg));
         assert_eq!(Some(true), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
@@ -920,8 +920,8 @@ mod last_used {
         let find_pos_list = [ FindOption::Long("color"), FindOption::Short('C') ];
         let find_neg_list = [ FindOption::Long("no-color") ];
 
-        assert_eq!(Some(FoundOption::Long("color")), item_set.get_last_used(&find));
-        assert_eq!(Some(FoundOption::Long("color")), item_set.get_last_used(&find2));
+        assert_eq!(Some(OptID::Long("color")), item_set.get_last_used(&find));
+        assert_eq!(Some(OptID::Long("color")), item_set.get_last_used(&find2));
         assert_eq!(Some(true), item_set.get_bool_flag_state(find_pos, find_neg));
         assert_eq!(Some(true), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
@@ -964,7 +964,7 @@ mod last_used {
         let find_pos_list = [ FindOption::Long("color"), FindOption::Short('C') ];
         let find_neg_list = [ FindOption::Long("no-color") ];
 
-        assert_eq!(Some(FoundOption::Long("no-color")), item_set.get_last_used(&find));
+        assert_eq!(Some(OptID::Long("no-color")), item_set.get_last_used(&find));
         assert_eq!(Some(false), item_set.get_bool_flag_state(find_pos, find_neg));
         assert_eq!(Some(false), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
@@ -1007,7 +1007,7 @@ mod last_used {
         let find_pos_list = [ FindOption::Long("color"), FindOption::Short('C') ];
         let find_neg_list = [ FindOption::Long("no-color") ];
 
-        assert_eq!(Some(FoundOption::Long("no-color")), item_set.get_last_used(&find));
+        assert_eq!(Some(OptID::Long("no-color")), item_set.get_last_used(&find));
         assert_eq!(Some(false), item_set.get_bool_flag_state(find_pos, find_neg));
         assert_eq!(Some(false), item_set.get_bool_flag_state_multi(&find_pos_list, &find_neg_list));
     }
@@ -1150,8 +1150,8 @@ mod first_used {
             FindOption::Pair('V', "version"),
         ];
 
-        assert_eq!(Some(FoundOption::Long("help")), item_set.get_first_used(&find));
-        assert_eq!(Some(FoundOption::Long("help")), item_set.get_first_used(&find2));
+        assert_eq!(Some(OptID::Long("help")), item_set.get_first_used(&find));
+        assert_eq!(Some(OptID::Long("help")), item_set.get_first_used(&find2));
     }
 
     /// Short is first
@@ -1196,8 +1196,8 @@ mod first_used {
             FindOption::Pair('h', "help"),
             FindOption::Pair('V', "version"),
         ];
-        assert_eq!(Some(FoundOption::Short('h')), item_set.get_first_used(&find));
-        assert_eq!(Some(FoundOption::Short('h')), item_set.get_first_used(&find2));
+        assert_eq!(Some(OptID::Short('h')), item_set.get_first_used(&find));
+        assert_eq!(Some(OptID::Short('h')), item_set.get_first_used(&find2));
     }
 
     /// Tests that a different long can be reported other than the first in the set
@@ -1232,8 +1232,8 @@ mod first_used {
             FindOption::Pair('V', "version"),
         ];
 
-        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find));
-        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find2));
+        assert_eq!(Some(OptID::Long("version")), item_set.get_first_used(&find));
+        assert_eq!(Some(OptID::Long("version")), item_set.get_first_used(&find2));
     }
 
     /// Short is first
@@ -1256,8 +1256,8 @@ mod first_used {
             FindOption::Pair('h', "help"),
             FindOption::Pair('V', "version"),
         ];
-        assert_eq!(Some(FoundOption::Short('V')), item_set.get_first_used(&find));
-        assert_eq!(Some(FoundOption::Short('V')), item_set.get_first_used(&find2));
+        assert_eq!(Some(OptID::Short('V')), item_set.get_first_used(&find));
+        assert_eq!(Some(OptID::Short('V')), item_set.get_first_used(&find2));
     }
 
     /// Testing that a long with unexpected data is not considered
@@ -1281,7 +1281,7 @@ mod first_used {
             FindOption::Pair('V', "version"),
         ];
 
-        assert_eq!(Some(FoundOption::Long("version")), item_set.get_first_used(&find));
+        assert_eq!(Some(OptID::Long("version")), item_set.get_first_used(&find));
     }
 
     /// No searched for items given

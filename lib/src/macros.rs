@@ -215,7 +215,7 @@ macro_rules! findopt {
     ( @pair $ch:expr, $name:expr ) => { $crate::analysis::FindOption::Pair($ch, $name) };
 }
 
-/// Constructs a [`FoundOption`](analysis/enum.FoundOption.html)
+/// Constructs an [`OptID`](analysis/enum.OptID.html)
 ///
 /// Takes either a long option name or a short option character. Both must be annotated as
 /// appropriate to indicate which form.
@@ -223,11 +223,11 @@ macro_rules! findopt {
 /// # Examples
 ///
 /// ```rust
-/// let _ = gong::foundopt!(@long "help"); // Long option name only
-/// let _ = gong::foundopt!(@short 'h');   // Short option character only
+/// let _ = gong::optid!(@long "help"); // Long option name only
+/// let _ = gong::optid!(@short 'h');   // Short option character only
 /// ```
 #[macro_export]
-macro_rules! foundopt {
-    ( @long $name:expr ) => { $crate::analysis::FoundOption::Long($name) };
-    ( @short $ch:expr ) => { $crate::analysis::FoundOption::Short($ch) };
+macro_rules! optid {
+    ( @long $name:expr ) => { $crate::analysis::OptID::Long($name) };
+    ( @short $ch:expr ) => { $crate::analysis::OptID::Short($ch) };
 }
