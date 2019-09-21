@@ -160,15 +160,8 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
             }
         }
         // Do next argument, if there is one
-        let mut next = self.get_next();
-        // Throw away early terminator item if not wanted
-        if !self.settings.report_earlyterm {
-            if let Some(Ok(Item::EarlyTerminator)) = next {
-                next = self.get_next();
-            }
-        }
         // Ensure that we issue a missing-positionals item if necessary
-        match next {
+        match self.get_next() {
             Some(item) => Some(item),
             None => match self.positionals_policy.get_remaining_min(self.positionals_count) {
                 0 => None,
@@ -432,9 +425,10 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             ArgTypeBasic::EarlyTerminator => {
                 self.rest_are_positionals = true;
                 self.try_command_matching = false;
-                // Yes, it may be valuable info to the caller to know that one was encountered and
-                // where, so let’s not leave it out of the results.
-                Some(Ok(Item::EarlyTerminator))
+                match self.settings.report_earlyterm {
+                    true => Some(Ok(Item::EarlyTerminator)),
+                    false => self.get_next(),
+                }
             },
             ArgTypeBasic::ShortOptionSet(optset_string) => {
                 // For **very** simple cases we can handle much more efficiently with an optimised
