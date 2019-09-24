@@ -14,23 +14,26 @@
 //!
 //! Positionals do not need to be described to the parser in the way that options are. Instead the
 //! parser is only concerned with quantity, such that it can highlight unexpected positionals as a
-//! problem once you go over a maximum number, that is if you choose to set one (you can
-//! alternatively set the maximum to *unlimited*). See the information in the
-//! [usage documentation][usage_doc].
+//! problem once you go over a certain number, that is if you choose to set one (you can
+//! alternatively set the maximum to *unlimited*), and such that it can highlight the problem of
+//! missing positionals if too few are provided, should you choose to set a minimum. See the
+//! information in the [usage documentation][usage_doc].
 //!
 //! # How do I specify conditions where the quantity of positionals change?
 //!
-//! As in where the number of positionals to accept changes depending upon conditions such as the
-//! use of a particular option? You don't. This libary does not provide a framework for expressing
-//! such logic, considering application-specific logic to be better, as discussed below (see the
-//! answer to the question about option relationships).
+//! As in where the number of positionals to accept or that are required changes depending upon
+//! conditions such as the use of a particular option? You don't. This libary does not provide a
+//! framework for expressing such logic, considering application-specific logic to be better, as
+//! discussed below (see the answer to the question about option relationships).
 //!
-//! However, consider the following: The quantity requirement specified to the parser is a *maximum*
-//! which naturally offers some flexibility on its own. If this is insufficient then note that the
-//! parser iterators provide a method for adjusting the quantity originally set in the parser
-//! inbetween iterations. Currently there is no means of automatically achieving this with
-//! data-mining objects, but you can always use a maximum of unlimited and then just treat some
-//! positionals as unexpected yourself.
+//! However, consider the following: The quantity requirement specified to the parser can be of a
+//! flexible *minimum* or *maximum* form, which naturally offers some flexibility on its own. If
+//! this is insufficient then note that the parser iterators provide a method for adjusting the
+//! quantity originally set in the parser inbetween iterations. Currently there is no means of
+//! automatically achieving this with data-mining objects, but you can always use a maximum of
+//! unlimited and then just react as appropriate to the quantity provided in terms of issuing
+//! unexpected and missing errors to the user; there is no strict need to reply on the parser
+//! doing this for you.
 //!
 //! Note that naturally once an argument has been parsed as being either an expected or unexpected
 //! positional, this is effectively set in stone; use of options that may demand reduction of the

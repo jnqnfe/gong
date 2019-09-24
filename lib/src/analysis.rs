@@ -93,6 +93,7 @@
 use std::ffi::OsStr;
 use crate::commands::CommandSet;
 use crate::options::OptionSet;
+use crate::positionals::Quantity as PositionalsQuantity;
 
 pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'arg>>;
 pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
@@ -131,6 +132,8 @@ pub enum Item<'set, 'arg> {
 pub enum ProblemItem<'set, 'arg> {
     /// An unexpected positional
     UnexpectedPositional(&'arg OsStr),
+    /// Missing positionals (quantity)
+    MissingPositionals(PositionalsQuantity),
     /// Looked like a long option, but no match
     UnknownLong(&'arg OsStr),
     /// Unknown short option `char`

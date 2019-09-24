@@ -37,15 +37,18 @@
 //! ## Choose *positional* argument quantity
 //!
 //! You can choose to either allow an unlimited quantity of *positional* arguments, or you can
-//! specify a maximum quantity; In the latter case, any provided past that number will be reported
-//! as unexpected.
+//! specify a maximum quantity; you can also optionally choose to specify a minumum instead or as
+//! well, or just a fixed number. The parser will take these requirements into account and issue
+//! unexpected-positional or missing-positionals item variants as appropriate. See the variants of
+//! [`positionals::Policy`] for specifics.
 //!
 //! ```rust
 //! use gong::positionals::Policy;
+//! // A couple of examples of some of the sorts of requirements you can express
 //! // Choosing to allow an unlimited quantity
 //! let policy = Policy::Unlimited;
-//! // Choosing to set a specific maximum
-//! let policy = Policy::Max(2);
+//! // Choosing to set a specific fixed quantity
+//! let policy = Policy::Fixed(2);
 //! ```
 //!
 //! We will pass this on to the parser later.
@@ -352,6 +355,7 @@
 //! [`ItemResult`]: ../../analysis/type.ItemResult.html
 //! [`Item`]: ../../analysis/enum.Item.html
 //! [`ProblemItem`]: ../../analysis/enum.ProblemItem.html
+//! [`positionals::Policy`]: ../../positionals/enum.Policy.html
 //! [options_doc]: ../ch3_options/index.html
 //! [commands_doc]: ../ch4_commands/index.html
 //! [unicode_doc]: ../ch5_unicode/index.html

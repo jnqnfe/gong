@@ -21,7 +21,8 @@ use crate::commands::CommandSet;
 use crate::matching::{SearchResult, NameSearchResult, OsStrExt};
 use crate::options::*;
 use crate::parser::*;
-use crate::positionals::{Quantity as PositionalsQuantity, Policy as PositionalsPolicy};
+use crate::positionals::{Quantity as PositionalsQuantity, Policy as PositionalsPolicy,
+                         SimplePolicy as PositionalsSimplePolicy};
 
 /// An argument list parsing iterator
 ///
@@ -51,7 +52,7 @@ pub struct ParseIter<'r, 'set, 'arg, A> where A: AsRef<OsStr> + 'arg, 'set: 'r, 
     /// Whether or not we have gone beyond the maximum number of positionals allowed per policy
     too_many_positionals: bool,
     /// Requirements of positionals
-    positionals_policy: PositionalsPolicy,
+    positionals_policy: PositionalsSimplePolicy,
     /// Number of positionals encounterd
     positionals_count: PositionalsQuantity,
     /// Cached index of previous item
@@ -158,7 +159,24 @@ impl<'r, 'set, 'arg, A> Iterator for ParseIter<'r, 'set, 'arg, A>
             }
         }
         // Do next argument, if there is one
-        self.get_next()
+        match self.get_next() {
+            Some(item) => Some(item),
+            // Ensure that we issue a missing-positionals item if necessary
+            None => match self.positionals_policy.get_remaining_min(self.positionals_count) {
+                0 => None,
+                r => {
+                    // Note, we can set an appropriate data-location value, but we cannot set an
+                    // appropriate index, since there is no index to associate with this, and it is
+                    // not worth adding an `Option` wrapper for setting `None` as would be
+                    // appropriate, so we just allow that to remain as per previous item.
+                    self.last_data_loc = None;
+                    // Clear such that next iteration actually produces `None`
+                    self.positionals_policy = PositionalsPolicy::Min(0).into();
+                    // Report too-few positionals difference as missing
+                    Some(Err(ProblemItem::MissingPositionals(r)))
+                },
+            },
+        }
     }
 }
 
@@ -182,7 +200,7 @@ impl<'r, 'set, 'arg, A> Iterator for CmdParseIter<'r, 'set, 'arg, A>
                     NameSearchResult::AbbreviatedMatch(matched) => {
                         self.commands = &matched.sub_commands;
                         self.inner.options = matched.options;
-                        self.inner.positionals_policy = matched.positionals_policy;
+                        self.inner.positionals_policy = matched.positionals_policy.into();
                         return Some(Ok(Item::Command(matched.name)));
                     },
                     NameSearchResult::AmbiguousMatch => {
@@ -244,7 +262,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             rest_are_positionals: false,
             try_command_matching: command_mode,
             too_many_positionals: false,
-            positionals_policy: parser.positionals_policy,
+            positionals_policy: parser.positionals_policy.into(),
             positionals_count: 0,
             last_index: 0,
             last_data_loc: None,
@@ -308,7 +326,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
         // then it just has no impact and makes no sense. Ultimately it just comes down to there
         // being no valid case of making an update in such circumstances.
         match self.too_many_positionals {
-            false => { self.positionals_policy = policy; Ok(()) },
+            false => { self.positionals_policy = policy.into(); Ok(()) },
             true => Err(()),
         }
     }
@@ -464,7 +482,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             self.too_many_positionals =
                 self.positionals_policy.is_next_unexpected(self.positionals_count);
             if !self.too_many_positionals {
-                self.positionals_count = self.positionals_count.saturating_add(1);
+                self.positionals_count += 1;
             }
         }
     }

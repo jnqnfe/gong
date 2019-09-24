@@ -97,6 +97,7 @@ macro_rules! item {
     ( AmbiguousLong, $n:expr )          => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
     ( AmbiguousCmd, $n:expr )           => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
     ( UnexpectedPositional, $s:expr )   => { Err(ProblemItem::UnexpectedPositional(OsStr::new($s))) };
+    ( MissingPositionals, $c:expr )     => { Err(ProblemItem::MissingPositionals($c)) };
 }
 
 /// Construct an `ItemResultIndexed`.
@@ -105,28 +106,29 @@ macro_rules! item {
 /// be found at in the analysis. The second param is the label of the unique type. The final params
 /// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
 macro_rules! indexed_item {
-    ( $i:expr, Positional, $s:expr )       => { indexed_item!(@n $i, item!(Positional, $s)) };
-    ( $i:expr, EarlyTerminator )           => { indexed_item!(@n $i, item!(EarlyTerminator)) };
-    ( $i:expr, Long, $n:expr )             => { indexed_item!(@n $i, item!(Long, $n)) };
-    ( $i:expr, Short, $c:expr )            => { indexed_item!(@n $i, item!(Short, $c)) };
+    ( $i:expr, Positional, $s:expr )           => { indexed_item!(@n $i, item!(Positional, $s)) };
+    ( $i:expr, EarlyTerminator )               => { indexed_item!(@n $i, item!(EarlyTerminator)) };
+    ( $i:expr, Long, $n:expr )                 => { indexed_item!(@n $i, item!(Long, $n)) };
+    ( $i:expr, Short, $c:expr )                => { indexed_item!(@n $i, item!(Short, $c)) };
     ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
-                                           => { indexed_item!(@s $i, item!(LongWithData, $n, $d), $l) };
+                                               => { indexed_item!(@s $i, item!(LongWithData, $n, $d), $l) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
-                                           => { indexed_item!(@s $i, item!(ShortWithData, $c, $d), $l) };
-    ( $i:expr, LongWithoutData, $n:expr )  => { indexed_item!(@s $i, item!(LongWithoutData, $n), DataLocation::SameArg) };
-    ( $i:expr, ShortWithoutData, $c:expr ) => { indexed_item!(@s $i, item!(ShortWithoutData, $c), DataLocation::SameArg) };
-    ( $i:expr, Command, $n:expr )          => { indexed_item!(@n $i, item!(Command, $n)) };
-    ( $i:expr, UnknownLong, $n:expr )      => { indexed_item!(@n $i, item!(UnknownLong, $n)) };
-    ( $i:expr, UnknownShort, $c:expr )     => { indexed_item!(@n $i, item!(UnknownShort, $c)) };
-    ( $i:expr, UnknownCommand, $n:expr )   => { indexed_item!(@n $i, item!(UnknownCommand, $n)) };
+                                               => { indexed_item!(@s $i, item!(ShortWithData, $c, $d), $l) };
+    ( $i:expr, LongWithoutData, $n:expr )      => { indexed_item!(@s $i, item!(Long, $n), DataLocation::SameArg) };
+    ( $i:expr, ShortWithoutData, $c:expr )     => { indexed_item!(@s $i, item!(Short, $c), DataLocation::SameArg) };
+    ( $i:expr, Command, $n:expr )              => { indexed_item!(@n $i, item!(Command, $n)) };
+    ( $i:expr, UnknownLong, $n:expr )          => { indexed_item!(@n $i, item!(UnknownLong, $n)) };
+    ( $i:expr, UnknownShort, $c:expr )         => { indexed_item!(@n $i, item!(UnknownShort, $c)) };
+    ( $i:expr, UnknownCommand, $n:expr )       => { indexed_item!(@n $i, item!(UnknownCommand, $n)) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
-                                           => { indexed_item!(@n $i, item!(LongWithUnexpectedData, $n, $d)) };
-    ( $i:expr, LongMissingData, $n:expr )  => { indexed_item!(@n $i, item!(LongMissingData, $n)) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { indexed_item!(@n $i, item!(ShortMissingData, $c)) };
-    ( $i:expr, AmbiguousLong, $n:expr )    => { indexed_item!(@n $i, item!(AmbiguousLong, $n)) };
-    ( $i:expr, AmbiguousCmd, $n:expr )     => { indexed_item!(@n $i, item!(AmbiguousCmd, $n)) };
-    ( $i:expr, UnexpectedPositional, $s:expr )
-                                           => { indexed_item!(@n $i, item!(UnexpectedPositional, $s)) };
+                                               => { indexed_item!(@n $i, item!(LongWithUnexpectedData, $n, $d)) };
+    ( $i:expr, LongMissingData, $n:expr )      => { indexed_item!(@n $i, item!(LongMissingData, $n)) };
+    ( $i:expr, ShortMissingData, $c:expr )     => { indexed_item!(@n $i, item!(ShortMissingData, $c)) };
+    ( $i:expr, AmbiguousLong, $n:expr )        => { indexed_item!(@n $i, item!(AmbiguousLong, $n)) };
+    ( $i:expr, AmbiguousCmd, $n:expr )         => { indexed_item!(@n $i, item!(AmbiguousCmd, $n)) };
+    ( $i:expr, UnexpectedPositional, $s:expr ) => { indexed_item!(@n $i, item!(UnexpectedPositional, $s)) };
+    // This does not correspond to an argument, so index not valid, should be index of last item
+    ( $i:expr, MissingPositionals, $c:expr )   => { indexed_item!(@n $i, item!(MissingPositionals, $c)) };
 
     // Inner: @n and @s are short for `None` and `Some(<data-location>)` respectively
     ( @n $i:expr, $item:expr )          => { ($i, $item, Option::<DataLocation>::None) };
@@ -139,28 +141,29 @@ macro_rules! indexed_item {
 /// be found at in the analysis. The second param is the label of the unique type. The final params
 /// as necessary allow for: [<name/char>[, <data-value>, <data-location>]].
 macro_rules! dm_item {
-    ( $i:expr, Positional, $s:expr )       => { item!(Positional, $s) };
-    ( $i:expr, EarlyTerminator )           => { item!(EarlyTerminator) };
-    ( $i:expr, Long, $n:expr )             => { item!(Long, $n) };
-    ( $i:expr, Short, $c:expr )            => { item!(Short, $c) };
+    ( $i:expr, Positional, $s:expr )           => { item!(Positional, $s) };
+    ( $i:expr, EarlyTerminator )               => { item!(EarlyTerminator) };
+    ( $i:expr, Long, $n:expr )                 => { item!(Long, $n) };
+    ( $i:expr, Short, $c:expr )                => { item!(Short, $c) };
     ( $i:expr, LongWithData, $n:expr, $d:expr, $l:expr )
-                                           => { item!(LongWithData, $n, $d) };
+                                               => { item!(LongWithData, $n, $d) };
     ( $i:expr, ShortWithData, $c:expr, $d:expr, $l:expr )
-                                           => { item!(ShortWithData, $c, $d) };
-    ( $i:expr, LongWithoutData, $n:expr )  => { item!(LongWithoutData, $n) };
-    ( $i:expr, ShortWithoutData, $c:expr ) => { item!(ShortWithoutData, $c) };
-    ( $i:expr, Command, $n:expr )          => { item!(Command, $n) };
-    ( $i:expr, UnknownLong, $n:expr )      => { item!(UnknownLong, $n) };
-    ( $i:expr, UnknownShort, $c:expr )     => { item!(UnknownShort, $c) };
-    ( $i:expr, UnknownCommand, $n:expr )   => { item!(UnknownCommand, $n) };
+                                               => { item!(ShortWithData, $c, $d) };
+    ( $i:expr, LongWithoutData, $n:expr )      => { item!(LongWithoutData, $n) };
+    ( $i:expr, ShortWithoutData, $c:expr )     => { item!(ShortWithoutData, $c) };
+    ( $i:expr, Command, $n:expr )              => { item!(Command, $n) };
+    ( $i:expr, UnknownLong, $n:expr )          => { item!(UnknownLong, $n) };
+    ( $i:expr, UnknownShort, $c:expr )         => { item!(UnknownShort, $c) };
+    ( $i:expr, UnknownCommand, $n:expr )       => { item!(UnknownCommand, $n) };
     ( $i:expr, LongWithUnexpectedData, $n:expr, $d:expr )
-                                           => { item!(LongWithUnexpectedData, $n, $d) };
-    ( $i:expr, LongMissingData, $n:expr )  => { item!(LongMissingData, $n) };
-    ( $i:expr, ShortMissingData, $c:expr ) => { item!(ShortMissingData, $c) };
-    ( $i:expr, AmbiguousLong, $n:expr )    => { item!(AmbiguousLong, $n) };
-    ( $i:expr, AmbiguousCmd, $n:expr )     => { item!(AmbiguousCmd, $n) };
-    ( $i:expr, UnexpectedPositional, $s:expr )
-                                           => { item!(UnexpectedPositional, $s) };
+                                               => { item!(LongWithUnexpectedData, $n, $d) };
+    ( $i:expr, LongMissingData, $n:expr )      => { item!(LongMissingData, $n) };
+    ( $i:expr, ShortMissingData, $c:expr )     => { item!(ShortMissingData, $c) };
+    ( $i:expr, AmbiguousLong, $n:expr )        => { item!(AmbiguousLong, $n) };
+    ( $i:expr, AmbiguousCmd, $n:expr )         => { item!(AmbiguousCmd, $n) };
+    ( $i:expr, UnexpectedPositional, $s:expr ) => { item!(UnexpectedPositional, $s) };
+    // This does not correspond to an argument, so index not valid, should be index of last item
+    ( $i:expr, MissingPositionals, $c:expr )   => { item!(MissingPositionals, $c) };
 }
 
 /// Construct a reference to an option set within a nested structure, from a base command set

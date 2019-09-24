@@ -34,7 +34,7 @@ mod change_positionals_policy {
 
         let opts = option_set!();
         let mut parser = Parser::new(&opts);
-        parser.set_positionals_policy(Policy::Max(1));
+        parser.set_positionals_policy(Policy::Fixed(1));
 
         let mut parse_iter = parser.parse_iter(&args).indexed();
 
@@ -43,12 +43,19 @@ mod change_positionals_policy {
         // You can freely change the policy now, though of course reducing the number of accepted
         // positionals below the number so far returned would make little sense.
         assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Unlimited));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Fixed(0)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Fixed(1)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Fixed(3)));
         assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(0)));
         assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(1)));
         assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Max(3)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Min(0)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Min(1)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::Min(3)));
+        assert_eq!(Ok(()), parse_iter.set_positionals_policy(Policy::MinMax(0, 3)));
 
         // Actual to use from this point
-        let _ = parse_iter.set_positionals_policy(Policy::Max(2));
+        let _ = parse_iter.set_positionals_policy(Policy::Fixed(2));
 
         assert_eq!(parse_iter.next(), Some(indexed_item!(1, Positional, "b")));
         assert_eq!(parse_iter.next(), Some(indexed_item!(2, UnexpectedPositional, "c")));
@@ -56,9 +63,16 @@ mod change_positionals_policy {
         // Changing the policy now (after an unexpected-positional) should fail, no matter what you
         // try to change it to
         assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Unlimited));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Fixed(0)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Fixed(1)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Fixed(3)));
         assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(0)));
         assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(1)));
         assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Max(3)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Min(0)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Min(1)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::Min(3)));
+        assert_eq!(Err(()), parse_iter.set_positionals_policy(Policy::MinMax(0, 3)));
 
         // Actual to use from this point
         let _ = parse_iter.set_positionals_policy(Policy::Unlimited);

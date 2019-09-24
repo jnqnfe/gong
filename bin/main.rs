@@ -207,6 +207,10 @@ fn main() {
                 print_data(l.unwrap(), Some(d));
             },
             Err(ProblemItem::UnexpectedPositional(s)) => printer(i, "UnexpectedPositional", s),
+            Err(ProblemItem::MissingPositionals(q)) => {
+                print_arg_na_err("MissingPositionals");
+                println!("    quantity: {}", q)
+            },
             Err(ProblemItem::LongMissingData(n)) => printer(i, "LongMissingData", OsStr::new(&n)),
             Err(ProblemItem::LongWithUnexpectedData(n, d)) => {
                 printer(i, "LongWithUnexpectedData", OsStr::new(&n));
@@ -265,6 +269,10 @@ fn main() {
 
 fn print_arg(col: &str, index: usize, ty: &str, desc: &str) {
     println!("[arg {}] {}{}{}: {}", index, col, ty, c!(RESET), desc)
+}
+
+fn print_arg_na_err(ty: &str) {
+    println!("[arg _] {}{}{}:", c!(COL_E), ty, c!(RESET))
 }
 
 fn print_arg_ok(index: usize, ty: &str, desc: &OsStr) {
