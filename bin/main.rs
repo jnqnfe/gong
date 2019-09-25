@@ -214,7 +214,7 @@ fn main() {
                 print_arg_na_err("MissingPositionals");
                 println!("    quantity: {}", q)
             },
-            Err(ProblemItem::LongMissingData(n)) => printer(i, "LongMissingData", OsStr::new(&n)),
+            Err(ProblemItem::MissingOptionData(OptID::Long(n))) => printer(i, "LongMissingData", OsStr::new(&n)),
             Err(ProblemItem::LongWithUnexpectedData(n, d)) => {
                 printer(i, "LongWithUnexpectedData", OsStr::new(&n));
                 println!("    data: {:?}", d)
@@ -237,7 +237,7 @@ fn main() {
                 printer(i, "ShortWithData", OsStr::new(&desc));
                 print_data(l.unwrap(), Some(d));
             },
-            Err(ProblemItem::ShortMissingData(c)) => {
+            Err(ProblemItem::MissingOptionData(OptID::Short(c))) => {
                 let desc = desc_char(c);
                 printer(i, "ShortMissingData", OsStr::new(&desc));
             },

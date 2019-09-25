@@ -494,7 +494,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             }
                             // Data missing
                             else {
-                                Some(Err(ProblemItem::LongMissingData(opt_name)))
+                                Some(Err(ProblemItem::MissingOptionData(OptID::Long(opt_name))))
                             }
                         }
                         // Ignore unexpected data if empty string
@@ -577,7 +577,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                         }
                         // Data missing
                         else {
-                            Err(ProblemItem::ShortMissingData(ch))
+                            Err(ProblemItem::MissingOptionData(OptID::Short(ch)))
                         }
                     }
                 }
@@ -696,7 +696,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
                         }
                         // Data missing
                         else {
-                            Some(Err(ProblemItem::ShortMissingData(ch)))
+                            Some(Err(ProblemItem::MissingOptionData(OptID::Short(ch))))
                         }
                     },
                 }

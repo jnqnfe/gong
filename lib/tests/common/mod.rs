@@ -99,8 +99,8 @@ macro_rules! item {
     ( UnknownCommand, $n:expr, $s:expr ) => { Err(ProblemItem::UnknownCommand(OsStr::new($n), $s)) };
     ( LongWithUnexpectedData, $n:expr, $d:expr )
                                          => { Err(ProblemItem::LongWithUnexpectedData($n, OsStr::new($d))) };
-    ( LongMissingData, $n:expr )         => { Err(ProblemItem::LongMissingData($n)) };
-    ( ShortMissingData, $c:expr )        => { Err(ProblemItem::ShortMissingData($c)) };
+    ( LongMissingData, $n:expr )         => { Err(ProblemItem::MissingOptionData(OptID::Long($n))) };
+    ( ShortMissingData, $c:expr )        => { Err(ProblemItem::MissingOptionData(OptID::Short($c))) };
     ( AmbiguousLong, $n:expr )           => { Err(ProblemItem::AmbiguousLong(OsStr::new($n))) };
     ( AmbiguousCmd, $n:expr )            => { Err(ProblemItem::AmbiguousCmd(OsStr::new($n))) };
     ( UnexpectedPositional, $s:expr )    => { Err(ProblemItem::UnexpectedPositional(OsStr::new($s))) };

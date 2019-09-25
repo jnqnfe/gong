@@ -96,8 +96,7 @@ fn main() {
                 eprintln!("Error: Option `{}` does not take data, but some was provided", opt);
             },
             // There are no more problems applicable to this example!
-            ProblemItem::LongMissingData(_)    |   // No data taking options!
-            ProblemItem::ShortMissingData(_)   |   // No data taking options!
+            ProblemItem::MissingOptionData(_)  |   // No data taking options!
             ProblemItem::MissingPositionals(_) |   // Minimum is zero!
             ProblemItem::AmbiguousCmd(_)       |   // No commands here!
             ProblemItem::UnknownCommand(_, _) => { // No commands here!

@@ -153,10 +153,8 @@ pub enum ProblemItem<'set, 'arg> {
     /// Ambiguous match with multiple commands. This only occurs when an exact match was not found,
     /// but multiple  abbreviated possible matches were found.
     AmbiguousCmd(&'arg OsStr),
-    /// Long option match, but data argument missing
-    LongMissingData(&'set str),
-    /// Short option match, but data argument missing
-    ShortMissingData(char),
+    /// Option (long or short) match, but data argument missing
+    MissingOptionData(OptID<'set>),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. (The first string is the option name, the second the data).
     LongWithUnexpectedData(&'set str, &'arg OsStr),

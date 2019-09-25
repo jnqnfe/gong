@@ -100,8 +100,7 @@ fn main() {
             },
             Ok(Item::Option(_, _))                  |   // All real ones covered above
             Ok(Item::EarlyTerminator)               |   // Do not need to know
-            Err(ProblemItem::LongMissingData(_))    |   // No data taking options!
-            Err(ProblemItem::ShortMissingData(_))   |   // No data taking options!
+            Err(ProblemItem::MissingOptionData(_))  |   // No data taking options!
             Ok(Item::Positional(_))                 |   // We do not take any here!
             Err(ProblemItem::MissingPositionals(_)) |   // Minimum is zero!
             Ok(Item::Command(_))                    |   // No commands here!
