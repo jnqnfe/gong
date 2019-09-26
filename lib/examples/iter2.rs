@@ -102,12 +102,8 @@ fn main() {
                 eprintln!("Error: Missing {} argument(s). Use `--help` to see usage info.", num);
                 return;
             },
-            Err(ProblemItem::UnknownLong(opt, _)) => {
-                eprintln!("Error: Unknown option `{}`", opt.to_string_lossy());
-                return;
-            },
-            Err(ProblemItem::UnknownShort(opt)) => {
-                eprintln!("Error: Unknown short option `{}`", opt);
+            Err(ProblemItem::UnknownOption(opt, _)) => {
+                eprintln!("Error: Unknown option `{}`", opt);
                 return;
             },
             Err(ProblemItem::AmbiguousLong(opt)) => {

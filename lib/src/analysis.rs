@@ -97,12 +97,40 @@ pub type ItemResult<'set, 'arg> = Result<Item<'set, 'arg>, ProblemItem<'set, 'ar
 pub type ItemResultIndexed<'set, 'arg> = (usize, ItemResult<'set, 'arg>, Option<DataLocation>);
 
 /// Option identifier
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OptID<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum OptID<'a, T: ?Sized> {
     /// Long option identifier
-    Long(&'a str),
+    Long(&'a T),
     /// Short option identifier
     Short(char),
+}
+
+impl<'a, T: ?Sized> Copy for OptID<'a, T> {}
+impl<'a, T: ?Sized> Clone for OptID<'a, T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+// While the derived `Debug` implementation will print `Long("foo")` or `Short('a')`, this should
+// just print `foo` or `a` respectively, for clean use in output such as an unknown-option error.
+impl<'a> std::fmt::Display for OptID<'a, str> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            OptID::Long(name) => write!(f, "{}", name),
+            OptID::Short(ch) => write!(f, "{}", ch),
+        }
+    }
+}
+impl<'a> std::fmt::Display for OptID<'a, OsStr> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            // Note, we need to convert to `str` form here for `OsStr` as it has no `Display`
+            // implementation and its `Debug` implementation adds quotes.
+            OptID::Long(name) => write!(f, "{}", name.to_string_lossy()),
+            OptID::Short(ch) => write!(f, "{}", ch),
+        }
+    }
 }
 
 /// Non-problematic items
@@ -121,7 +149,7 @@ pub enum Item<'set, 'arg> {
     /// Early terminator (`--`) encountered.
     EarlyTerminator,
     /// Option match (long or short), possibly with a data argument.
-    Option(OptID<'set>, Option<&'arg OsStr>),
+    Option(OptID<'set, str>, Option<&'arg OsStr>),
     /// Command match.
     Command(&'set str),
 }
@@ -141,10 +169,8 @@ pub enum ProblemItem<'set, 'arg> {
     UnexpectedPositional(&'arg OsStr),
     /// Missing positionals (quantity)
     MissingPositionals(PositionalsQuantity),
-    /// Looked like a long option, but no match (mismatch suggestion possibly provided)
-    UnknownLong(&'arg OsStr, Option<&'set str>),
-    /// Unknown short option `char`
-    UnknownShort(char),
+    /// Looked like an option (short or long), but no match (mismatch suggestion possibly provided)
+    UnknownOption(OptID<'arg, OsStr>, Option<&'set str>),
     /// Unknown command (mismatch suggestion possibly provided)
     UnknownCommand(&'arg OsStr, Option<&'set str>),
     /// Ambiguous match with multiple long options. This only occurs when an exact match was not
@@ -154,7 +180,7 @@ pub enum ProblemItem<'set, 'arg> {
     /// but multiple  abbreviated possible matches were found.
     AmbiguousCmd(&'arg OsStr),
     /// Option (long or short) match, but data argument missing
-    MissingOptionData(OptID<'set>),
+    MissingOptionData(OptID<'set, str>),
     /// Long option match, but came with unexpected data. For example `--foo=bar` when `--foo` takes
     /// no data. (The first string is the option name, the second the data).
     LongWithUnexpectedData(&'set str, &'arg OsStr),
@@ -250,7 +276,7 @@ impl<'a> FindOption<'a> {
     /// ```
     #[inline(always)]
     #[must_use]
-    pub fn matches(&self, optid: OptID) -> bool {
+    pub fn matches(&self, optid: OptID<str>) -> bool {
         self.eq(&optid)
     }
 
@@ -352,21 +378,21 @@ impl<'a> From<super::options::OptionPair<'a>> for FindOption<'a> {
     }
 }
 
-impl<'a> From<super::options::LongOption<'a>> for OptID<'a> {
+impl<'a> From<super::options::LongOption<'a>> for OptID<'a, str> {
     #[inline(always)]
     fn from(o: super::options::LongOption<'a>) -> Self {
         OptID::Long(o.ident())
     }
 }
 
-impl From<super::options::ShortOption> for OptID<'_> {
+impl From<super::options::ShortOption> for OptID<'_, str> {
     #[inline(always)]
     fn from(o: super::options::ShortOption) -> Self {
         OptID::Short(o.ident())
     }
 }
 
-impl<'a> PartialEq<super::options::LongOption<'a>> for OptID<'a> {
+impl<'a> PartialEq<super::options::LongOption<'a>> for OptID<'a, str> {
     /// Tests that an `OptID` result matches a given long option
     #[inline]
     fn eq(&self, o: &super::options::LongOption<'a>) -> bool {
@@ -377,7 +403,7 @@ impl<'a> PartialEq<super::options::LongOption<'a>> for OptID<'a> {
     }
 }
 
-impl PartialEq<super::options::ShortOption> for OptID<'_> {
+impl PartialEq<super::options::ShortOption> for OptID<'_, str> {
     /// Tests that an `OptID` result matches a given short option
     #[inline]
     fn eq(&self, o: &super::options::ShortOption) -> bool {
@@ -388,7 +414,7 @@ impl PartialEq<super::options::ShortOption> for OptID<'_> {
     }
 }
 
-impl<'a> PartialEq<super::options::OptionPair<'a>> for OptID<'a> {
+impl<'a> PartialEq<super::options::OptionPair<'a>> for OptID<'a, str> {
     /// Tests that an `OptID` result matches the corresponding identifier in a given option pair
     #[inline]
     fn eq(&self, o: &super::options::OptionPair<'a>) -> bool {
@@ -399,28 +425,28 @@ impl<'a> PartialEq<super::options::OptionPair<'a>> for OptID<'a> {
     }
 }
 
-impl<'a> PartialEq<OptID<'a>> for super::options::LongOption<'a> {
+impl<'a> PartialEq<OptID<'a, str>> for super::options::LongOption<'a> {
     #[inline(always)]
-    fn eq(&self, f: &OptID<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a, str>) -> bool {
         f.eq(self)
     }
 }
 
-impl PartialEq<OptID<'_>> for super::options::ShortOption {
+impl PartialEq<OptID<'_, str>> for super::options::ShortOption {
     #[inline]
-    fn eq(&self, f: &OptID<'_>) -> bool {
+    fn eq(&self, f: &OptID<'_, str>) -> bool {
         f.eq(self)
     }
 }
 
-impl<'a> PartialEq<OptID<'a>> for super::options::OptionPair<'a> {
+impl<'a> PartialEq<OptID<'a, str>> for super::options::OptionPair<'a> {
     #[inline]
-    fn eq(&self, f: &OptID<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a, str>) -> bool {
         f.eq(self)
     }
 }
 
-impl<'a> PartialEq<FindOption<'a>> for OptID<'a> {
+impl<'a> PartialEq<FindOption<'a>> for OptID<'a, str> {
     /// Tests that an `OptID` result matches the corresponding identifier in a given `FindOption`
     fn eq(&self, f: &FindOption<'a>) -> bool {
         match *self {
@@ -430,9 +456,9 @@ impl<'a> PartialEq<FindOption<'a>> for OptID<'a> {
     }
 }
 
-impl<'a> PartialEq<OptID<'a>> for FindOption<'a> {
+impl<'a> PartialEq<OptID<'a, str>> for FindOption<'a> {
     #[inline(always)]
-    fn eq(&self, f: &OptID<'a>) -> bool {
+    fn eq(&self, f: &OptID<'a, str>) -> bool {
         f.eq(self)
     }
 }
@@ -837,7 +863,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     /// [`get_bool_flag_state_multi`]: #method.get_bool_flag_state_multi
     #[must_use]
-    pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
+    pub fn get_last_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r, str>> {
         for item in self.items.iter().rev() {
             match *item {
                 Ok(Item::Option(id, _)) => {
@@ -891,7 +917,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     /// [`get_last_used`]: #method.get_last_used
     #[must_use]
-    pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r>> {
+    pub fn get_first_used(&'r self, options: &'r [FindOption<'r>]) -> Option<OptID<'r, str>> {
         for item in self.items.iter() {
             match *item {
                 Ok(Item::Option(id, _)) => {
@@ -1030,7 +1056,7 @@ impl<'r, 'set: 'r, 'arg: 'r> ItemSet<'set, 'arg> {
     /// [`FindOption`]: enum.FindOption.html
     #[must_use]
     fn _get_bool_flag_state(&'r self, options: impl Iterator<Item = (FindOption<'r>, bool)> + Clone)
-        -> Option<(OptID<'r>, bool)>
+        -> Option<(OptID<'r, str>, bool)>
     {
         for item in self.items.iter().rev() {
             // Note, we deliberately ignore data-taking option variants here.

@@ -97,11 +97,8 @@ fn main() {
                 bypass = true;
                 missing_positionals = *num;
             },
-            ProblemItem::UnknownLong(opt, _) => {
-                eprintln!("Error: Unknown option `{}`", opt.to_string_lossy());
-            },
-            ProblemItem::UnknownShort(opt) => {
-                eprintln!("Error: Unknown short option `{}`", opt);
+            ProblemItem::UnknownOption(opt, _) => {
+                eprintln!("Error: Unknown option `{}`", opt);
             },
             ProblemItem::AmbiguousLong(opt) => {
                 eprintln!("Error: Ambiguous abbreviated option name `{}`", opt.to_string_lossy());

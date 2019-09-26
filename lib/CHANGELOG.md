@@ -50,7 +50,8 @@
  * Merged the four option match variants (`Long`, `Short`, `LongWithData` and `ShortWithData`)
    together into a single new `Item::Option` variant.
  * Similarly, merged the `LongMissingData` and `ShortMissingData` problem variants into a single new
-   `MissingOptionData` variant.
+   `MissingOptionData` variant, and `UnknownLong` and `UnknownShort` into a single new
+   `UnknownOption` variant.
  * Removed the `LongWithNoName` item type, now `UnknownLong` is used, with an empty name string
  * Simplified problematic item reporting:
     - Merged the `ItemE` and `ItemW` enums into one `ProblemItem` enum

@@ -83,11 +83,8 @@ fn main() {
             ProblemItem::UnexpectedPositional(arg) => {
                 eprintln!("Error: Unexpected argument {:?}", arg);
             },
-            ProblemItem::UnknownLong(opt, _) => {
-                eprintln!("Error: Unknown option `{}`", opt.to_string_lossy());
-            },
-            ProblemItem::UnknownShort(opt) => {
-                eprintln!("Error: Unknown short option `{}`", opt);
+            ProblemItem::UnknownOption(opt, _) => {
+                eprintln!("Error: Unknown option `{}`", opt);
             },
             ProblemItem::AmbiguousLong(opt) => {
                 eprintln!("Error: Ambiguous abbreviated option name `{}`", opt.to_string_lossy());

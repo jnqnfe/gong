@@ -90,10 +90,10 @@ macro_rules! item {
     ( LongWithoutData, $n:expr )         => { Ok(Item::Option(OptID::Long($n), None)) };
     ( ShortWithoutData, $c:expr )        => { Ok(Item::Option(OptID::Short($c), None)) };
     ( Command, $n:expr )                 => { Ok(Item::Command($n)) };
-    ( UnknownLong, $n:expr )             => { Err(ProblemItem::UnknownLong(OsStr::new($n), None)) };
+    ( UnknownLong, $n:expr )             => { Err(ProblemItem::UnknownOption(OptID::Long(OsStr::new($n)), None)) };
     // Variant for specifying suggestion
-    ( UnknownLong, $n:expr, $s:expr )    => { Err(ProblemItem::UnknownLong(OsStr::new($n), $s)) };
-    ( UnknownShort, $c:expr )            => { Err(ProblemItem::UnknownShort($c)) };
+    ( UnknownLong, $n:expr, $s:expr )    => { Err(ProblemItem::UnknownOption(OptID::Long(OsStr::new($n)), $s)) };
+    ( UnknownShort, $c:expr )            => { Err(ProblemItem::UnknownOption(OptID::Short($c), None)) };
     ( UnknownCommand, $n:expr )          => { Err(ProblemItem::UnknownCommand(OsStr::new($n), None)) };
     // Variant for specifying suggestion
     ( UnknownCommand, $n:expr, $s:expr ) => { Err(ProblemItem::UnknownCommand(OsStr::new($n), $s)) };

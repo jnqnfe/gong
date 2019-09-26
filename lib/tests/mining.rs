@@ -373,7 +373,7 @@ fn first_problem() {
 
     assert_eq!(2, item_set.get_problem_items().count());
 
-    assert_eq!(item_set.get_first_problem(), Some(&ProblemItem::UnknownLong(OsStr::new("why"), None)));
+    assert_eq!(item_set.get_first_problem(), Some(&ProblemItem::UnknownOption(OptID::Long(OsStr::new("why")), None)));
 }
 
 /// Testing iterators over collections of item types
@@ -431,7 +431,7 @@ mod iter {
 
         // Problem items
         let mut iter = item_set.get_problem_items();
-        assert_eq!(iter.next(), Some(&ProblemItem::UnknownLong(OsStr::new("why"), None)));
+        assert_eq!(iter.next(), Some(&ProblemItem::UnknownOption(OptID::Long(OsStr::new("why")), None)));
         assert_eq!(iter.next(), Some(&ProblemItem::AmbiguousLong(OsStr::new("fo"))));
         assert_eq!(iter.next(), Some(&ProblemItem::LongWithUnexpectedData("help", OsStr::new("blah"))));
         assert_eq!(iter.next(), None);

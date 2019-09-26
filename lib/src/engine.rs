@@ -459,7 +459,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
 
                 // This occurs with `--=` or `--=foo` (`-=` or `-=foo` in alt mode)
                 if name.is_empty() {
-                    return Some(Err(ProblemItem::UnknownLong(OsStr::new(""), None)));
+                    return Some(Err(ProblemItem::UnknownOption(OptID::Long(OsStr::new("")), None)));
                 }
 
                 let lookup = match self.settings.allow_opt_abbreviations {
@@ -513,7 +513,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
                             _ => None,
                         };
                         // Again, we ignore any possibly included data in the argument
-                        Some(Err(ProblemItem::UnknownLong(name, suggestion)))
+                        Some(Err(ProblemItem::UnknownOption(OptID::Long(name), suggestion)))
                     },
                     NameSearchResult::AmbiguousMatch => {
                         Some(Err(ProblemItem::AmbiguousLong(name)))
@@ -561,7 +561,7 @@ impl<'r, 'set, 'arg, A> ParseIter<'r, 'set, 'arg, A>
             self.options.short.iter(), |&o| { o.ident() }).into();
 
         match lookup {
-            SearchResult::NoMatch => Err(ProblemItem::UnknownShort(ch)),
+            SearchResult::NoMatch => Err(ProblemItem::UnknownOption(OptID::Short(ch), None)),
             SearchResult::Match(matched) => {
                 match matched.ty() {
                     OptionType::Flag => Ok(Item::Option(OptID::Short(ch), None)),
@@ -666,7 +666,7 @@ impl<'r, 'arg: 'r> ShortSetIter<'r, 'arg> {
         }
 
         match lookup {
-            SearchResult::NoMatch => Some(Err(ProblemItem::UnknownShort(ch))),
+            SearchResult::NoMatch => Some(Err(ProblemItem::UnknownOption(OptID::Short(ch), None))),
             SearchResult::Match(matched) => {
                 match matched.ty() {
                     OptionType::Flag => Some(Ok(Item::Option(OptID::Short(ch), None))),

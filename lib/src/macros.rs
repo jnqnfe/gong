@@ -228,6 +228,6 @@ macro_rules! findopt {
 /// ```
 #[macro_export]
 macro_rules! optid {
-    ( @long $name:expr ) => { $crate::analysis::OptID::Long($name) };
-    ( @short $ch:expr ) => { $crate::analysis::OptID::Short($ch) };
+    ( @long $name:expr ) => { $crate::analysis::OptID::<str>::Long($name) };
+    ( @short $ch:expr ) => { $crate::analysis::OptID::<str>::Short($ch) };
 }

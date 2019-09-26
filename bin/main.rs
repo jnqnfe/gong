@@ -221,7 +221,7 @@ fn main() {
             },
             Err(ProblemItem::AmbiguousLong(n)) => printer(i, "AmbiguousLong", n),
             Err(ProblemItem::AmbiguousCmd(n)) => printer(i, "AmbiguousCmd", n),
-            Err(ProblemItem::UnknownLong(n, _)) => printer(i, "UnknownLong", OsStr::new(&n)),
+            Err(ProblemItem::UnknownOption(OptID::Long(n), _)) => printer(i, "UnknownLong", OsStr::new(&n)),
             Ok(Item::Option(OptID::Short(c), None)) => {
                 let desc = desc_char(c);
                 match l.is_none() {
@@ -241,7 +241,7 @@ fn main() {
                 let desc = desc_char(c);
                 printer(i, "ShortMissingData", OsStr::new(&desc));
             },
-            Err(ProblemItem::UnknownShort(c)) => {
+            Err(ProblemItem::UnknownOption(OptID::Short(c), _)) => {
                 let desc = desc_char(c);
                 printer(i, "UnknownShort", OsStr::new(&desc));
             },

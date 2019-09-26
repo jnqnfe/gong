@@ -82,11 +82,7 @@ fn main() {
                 eprintln!("Error: Unexpected argument {:?}", arg);
                 return;
             },
-            Err(ProblemItem::UnknownLong(opt, _)) => {
-                eprintln!("Error: Unknown option `{}`", opt.to_string_lossy());
-                return;
-            },
-            Err(ProblemItem::UnknownShort(opt)) => {
+            Err(ProblemItem::UnknownOption(opt, _)) => {
                 eprintln!("Error: Unknown option `{}`", opt);
                 return;
             },
