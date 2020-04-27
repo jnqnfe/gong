@@ -4,6 +4,13 @@ Overview
 This repository contains `gong`, a lightweight, flexible and simple-to-use library provided to
 assist in processing command line arguments in Rust based programs.
 
+You can help fund my work through one of the following platforms: [patreon][patreon],
+[liberapay][liberapay], or [buy-me-a-coffee][buymeacoffee].
+
+[patreon]: https://www.patreon.com/jnqnfe
+[liberapay]: https://liberapay.com/jnqnfe/
+[buymeacoffee]: https://www.buymeacoffee.com/jnqnfe
+
 Copyright & Licensing
 =====================
 
