@@ -1,3 +1,7 @@
+# 1.4.1 (November 25th, 2020)
+
+ * Added badges to readme
+
 # 1.4.0 (December 31st, 2018)
 
  * Improved efficiency of `is_valid` for option sets
