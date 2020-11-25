@@ -1,6 +1,9 @@
 Overview
 ========
 
+[<img alt="travis.com" src="https://img.shields.io/travis/com/jnqnfe/gong?style=for-the-badge" height="24">](https://travis-ci.com/jnqnfe/gong)
+<img alt="license" src="https://img.shields.io/crates/l/gong.svg?style=for-the-badge" height="24">
+
 This repository contains `gong`, a lightweight, flexible and simple-to-use library provided to
 assist in processing command line arguments in Rust based programs.
 
