@@ -2,7 +2,7 @@
 name = "gong-playground"
 version = "1.2.1"
 authors = ["Lyndon Brown <jnqnfe@gmail.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 description = """
 An interactive “playground” program for testing out the `gong` library crate’s functionality. It
