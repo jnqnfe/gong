@@ -1,4 +1,4 @@
-# [unreleased]
+# 1.4.2 (December 15th, 2020)
 
  * Moved CI to github actions
 
