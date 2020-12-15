@@ -12,6 +12,3 @@ A lightweight, flexible and simple-to-use command line argument processor.
 keywords = ["gong", "getopt", "terminal", "command-line"]
 
 [dependencies]
-
-[badges]
-travis-ci = { repository = "jnqnfe/gong" }

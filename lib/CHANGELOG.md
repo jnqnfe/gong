@@ -1,3 +1,7 @@
+# [unreleased]
+
+ * Moved CI to github actions
+
 # 1.4.1 (November 25th, 2020)
 
  * Added badges to readme

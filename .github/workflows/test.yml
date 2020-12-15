@@ -1,0 +1,47 @@
+# NOTE: this name is used in the badge links in used in the readme files.
+# Don't break them by changing it!
+name: Build & Test
+
+on:
+  push:
+    branches: [master]
+    paths: ['**.rs', '**.toml', '**.yml']
+  pull_request:
+    branches: [master, next]
+    paths: ['**.rs', '**.toml', '**.yml']
+
+jobs:
+  # NOTE: I'm leaving this with no descriptive name so it is not too long in the list of jobs.
+  # Previously I assigned a name of "Check building & testing" which resulted in entries like:
+  # "Check building & testing (ubuntu-latest, stable, false)" and "stable" was barely visible.
+  test:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        rustc:
+          - 1.26.0 # MSRV (Minimum supported rust version)
+          - stable
+          - beta
+        experimental: [false]
+        include:
+          - os: ubuntu-latest
+            rustc: nightly
+            experimental: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rustc }}
+          override: true
+      - name: Check building lib
+        working-directory: ./lib
+        run: cargo build --verbose
+      - name: Run tests for lib
+        working-directory: ./lib
+        run: cargo test --verbose
